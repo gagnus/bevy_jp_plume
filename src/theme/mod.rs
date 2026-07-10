@@ -1,6 +1,6 @@
 //! A framework for theming.
 use bevy_app::{Propagate, PropagateOver};
-use bevy_color::{palettes, Alpha, Color, Oklcha};
+use bevy_color::{Alpha, Color, Oklcha, palettes};
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
@@ -14,12 +14,10 @@ use bevy_ecs::{
 };
 use bevy_log::warn_once;
 use bevy_platform::collections::HashMap;
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{BackgroundColor, BorderColor};
 use smol_str::SmolStr;
-
-use crate::tokens;
 
 /// A design token for the theme. This serves as the lookup key for the theme properties.
 #[derive(Clone, PartialEq, Eq, Hash, Reflect, Default)]
@@ -223,21 +221,20 @@ pub(crate) fn on_changed_font_color(
 /// a theme.
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 pub enum Slot {
-    /// Window & top pane-header backgrounds: `WINDOW_BG`, `PANE_HEADER_BG`.
+    /// Window background: `WINDOW_BG`.
     #[default]
     Neutral0,
-    /// Surface bodies & menus: `PANE_BODY_BG`, `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`, `COLOR_PLANE_BG`.
+    /// Surface bodies & menus: `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`.
     Neutral1,
-    /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`, `MENUITEM_BG_HOVER`,
+    /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`,
     /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`,
     Neutral2,
     /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_HEADER_BG`/`_BORDER`,
     /// `GROUP_BODY_BG`/`_BORDER`, `DIALOG_HEADER_BG`.
     Neutral3,
     /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BG`/`_BORDER`, `RADIO_BORDER`,
-    /// `SWITCH_BG`/`_BORDER`, `TEXT_INPUT_LABEL_BG`, `MENUITEM_BG_PRESSED`/`_FOCUSED`,
-    /// `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`, `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`.
-    /// `PANE_HEADER_BORDER`/`_DIVIDER`, `DIALOG_BORDER`, `MENU_BORDER`.
+    /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`,
+    /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`.
     Neutral4,
     /// Control hover: `BUTTON_BG_HOVER`, `BUTTON_PLAIN_BG_HOVER`, `CHECKBOX_BG`/`_BORDER_HOVER`,
     /// `RADIO_BORDER_HOVER`, `SWITCH_BG`/`_BORDER_HOVER`.
@@ -245,14 +242,14 @@ pub enum Slot {
     /// Control pressed: `BUTTON_BG_PRESSED`, `BUTTON_PLAIN_BG_PRESSED`, `CHECKBOX_BG`/`_BORDER_PRESSED`,
     /// `RADIO_BORDER_PRESSED`, `SWITCH_BG`/`_BORDER_PRESSED`.
     Neutral6,
-    /// Bright on-surface labels: `BUTTON_TEXT`, `MENUITEM_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
-    /// `PANE_HEADER_TEXT`, `SUBPANE_HEADER_TEXT`, `GROUP_HEADER_TEXT`.
+    /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
+    /// `SUBPANE_HEADER_TEXT`, `GROUP_HEADER_TEXT`.
     Text0,
     /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
     /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed).
     Text1,
     /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
-    /// `SLIDER_TEXT_DISABLED`, `MENUITEM_TEXT_DISABLED`, `TEXT_INPUT_TEXT_DISABLED`,
+    /// `SLIDER_TEXT_DISABLED`, `TEXT_INPUT_TEXT_DISABLED`,
     /// `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
     TextDim0,
     /// Disabled checkbox/radio/switch borders, marks, knob & label text: the
@@ -277,13 +274,13 @@ pub enum Slot {
     /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `SLIDER_TEXT`, `CHECKBOX_MARK`,
     /// `SWITCH_SLIDE_BG`/`_BORDER_CHECKED` (+ hover/pressed).
     Contrast,
-    /// Keyboard focus ring: `FOCUS_RING`.
+    /// Focus/selection ring color (reserved; no token maps here yet).
     FocusRing,
-    /// Red axis: `TEXT_INPUT_X_AXIS`.
+    /// Red axis (reserved for axis-colored widgets).
     XAxis,
-    /// Green axis: `TEXT_INPUT_Y_AXIS`.
+    /// Green axis (reserved for axis-colored widgets).
     YAxis,
-    /// Blue axis: `TEXT_INPUT_Z_AXIS`.
+    /// Blue axis (reserved for axis-colored widgets).
     ZAxis,
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
     /// all `RADIO_BG*`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED` (checkbox/switch),
@@ -451,7 +448,6 @@ pub fn default_axis_colors() -> [Oklcha; 3] {
 
 static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::WINDOW_BG, Slot::Neutral0),
-    (tokens::FOCUS_RING, Slot::FocusRing),
     (tokens::TEXT_MAIN, Slot::Text1),
     (tokens::TEXT_DIM, Slot::TextDim0),
     (tokens::BUTTON_BG, Slot::Neutral4),
@@ -558,30 +554,15 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::SWITCH_SLIDE_BORDER_CHECKED_HOVER, Slot::Contrast),
     (tokens::SWITCH_SLIDE_BORDER_CHECKED_PRESSED, Slot::Contrast),
     (tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED, Slot::TextDim1),
-    (tokens::COLOR_PLANE_BG, Slot::Neutral1),
     (tokens::MENU_BG, Slot::Neutral1),
     (tokens::MENU_BORDER, Slot::Neutral4),
-    (tokens::MENUITEM_BG_HOVER, Slot::Neutral2),
-    (tokens::MENUITEM_BG_PRESSED, Slot::Neutral4),
-    (tokens::MENUITEM_BG_FOCUSED, Slot::Neutral4),
-    (tokens::MENUITEM_TEXT, Slot::Text0),
-    (tokens::MENUITEM_TEXT_DISABLED, Slot::TextDim0),
     (tokens::TEXT_INPUT_BG, Slot::Neutral2),
-    (tokens::TEXT_INPUT_LABEL_BG, Slot::Neutral4),
     (tokens::TEXT_INPUT_TEXT, Slot::Text0),
     (tokens::TEXT_INPUT_TEXT_DISABLED, Slot::TextDim0),
     (tokens::TEXT_INPUT_CURSOR, Slot::Accent3),
     (tokens::TEXT_INPUT_SELECTION, Slot::Accent0),
     (tokens::TEXT_INPUT_SELECTION_UNFOCUSED, Slot::Transparent),
-    (tokens::TEXT_INPUT_X_AXIS, Slot::XAxis),
-    (tokens::TEXT_INPUT_Y_AXIS, Slot::YAxis),
-    (tokens::TEXT_INPUT_Z_AXIS, Slot::ZAxis),
     (tokens::TEXT_INPUT_BORDER, Slot::Transparent),
-    (tokens::PANE_HEADER_BG, Slot::Neutral0),
-    (tokens::PANE_HEADER_BORDER, Slot::Neutral4),
-    (tokens::PANE_HEADER_TEXT, Slot::Text0),
-    (tokens::PANE_HEADER_DIVIDER, Slot::Neutral4),
-    (tokens::PANE_BODY_BG, Slot::Neutral1),
     (tokens::SUBPANE_HEADER_BG, Slot::Neutral3),
     (tokens::SUBPANE_HEADER_BORDER, Slot::Neutral4),
     (tokens::SUBPANE_HEADER_TEXT, Slot::Text0),
@@ -608,3 +589,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
 pub fn default_token_slots() -> &'static [(ThemeToken, Slot)] {
     &DEFAULT_TOKEN_SLOTS
 }
+
+pub mod dark_theme;
+pub mod light_theme;
+pub mod tokens;

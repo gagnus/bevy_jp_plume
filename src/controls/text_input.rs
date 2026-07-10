@@ -1,3 +1,4 @@
+//! Editable text field and its decorative container.
 use bevy_app::{Plugin, PreUpdate, PropagateOver};
 use bevy_asset::AssetServer;
 use bevy_ecs::{
@@ -10,22 +11,20 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::template,
 };
-use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::PickingSystems;
-use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::Reflect;
+use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_text::{
     EditableText, FontSource, FontWeight, LineBreak, TextCursorStyle, TextFont, TextLayout,
 };
 use bevy_ui::{
-    px, AlignItems, BorderRadius, Display, InteractionDisabled, JustifyContent, Node, UiRect,
+    AlignItems, BorderRadius, Display, InteractionDisabled, JustifyContent, Node, UiRect, px,
 };
 
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
-    focus::FocusWithinIndicator,
     font_styles::InheritableFont,
     theme::{
         InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, ThemedText, UiTheme,
@@ -59,7 +58,6 @@ impl FeathersTextInputContainer {
                 column_gap: px(4),
             }
             FeathersTextInputContainer
-            FocusWithinIndicator
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
             ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
             InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
@@ -119,7 +117,6 @@ impl FeathersTextInput {
             TextLayout {
                 linebreak: LineBreak::NoWrap,
             }
-            TabIndex(0)
             template(|ctx| {
                 Ok(TextFont {
                     font: FontSource::Handle(ctx.resource::<AssetServer>().load(fonts::REGULAR)),

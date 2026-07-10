@@ -9,7 +9,7 @@ use bevy_ecs::{
     system::{Query, Res},
     world::FromWorld,
 };
-use bevy_reflect::{prelude::ReflectDefault, Reflect, TypePath};
+use bevy_reflect::{Reflect, TypePath, prelude::ReflectDefault};
 use bevy_render::render_resource::AsBindGroup;
 use bevy_shader::ShaderRef;
 use bevy_ui_render::ui_material::{MaterialNode, UiMaterial};

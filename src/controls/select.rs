@@ -1,3 +1,4 @@
+//! Dropdown select control built on an internal menu popup and list view.
 use bevy_app::{Plugin, Update};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
@@ -11,14 +12,13 @@ use bevy_ecs::{
     system::{Commands, Query, ResMut},
 };
 use bevy_input_focus::{FocusCause, InputFocus, InputFocusVisible};
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{px, widget::Text, ComputedNode, Node, Selected};
-use bevy_ui_widgets::{listbox_update_selection, ListBox, SetSelected, ValueChange};
+use bevy_ui::{ComputedNode, Node, Selected, px, widget::Text};
+use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
 
-use super::{
-    FeathersListRow, FeathersListView, FeathersMenu, FeathersMenuButton, FeathersMenuPopup,
-};
+use super::listview::{FeathersListRow, FeathersListView};
+use super::menu::{FeathersMenu, FeathersMenuButton, FeathersMenuPopup};
 use crate::{display::caption, rounded_corners::RoundedCorners};
 
 const SELECT_ROW_PX: f32 = 28.0;

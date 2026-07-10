@@ -9,9 +9,6 @@ use crate::theme::ThemeToken;
 /// Window background
 pub const WINDOW_BG: ThemeToken = ThemeToken::new_static("feathers.window.bg");
 
-/// Focus ring
-pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("feathers.focus.ring");
-
 /// Regular text
 pub const TEXT_MAIN: ThemeToken = ThemeToken::new_static("feathers.text.main");
 /// Dim text
@@ -304,28 +301,12 @@ pub const SWITCH_SLIDE_BORDER_CHECKED_PRESSED: ThemeToken =
 pub const SWITCH_SLIDE_BORDER_CHECKED_DISABLED: ThemeToken =
     ThemeToken::new_static("feathers.switch.slide.border.checked.disabled");
 
-// Color Plane
-
-/// Color plane frame background
-pub const COLOR_PLANE_BG: ThemeToken = ThemeToken::new_static("feathers.colorplane.bg");
-
 // Menus
 
 /// Menu background
 pub const MENU_BG: ThemeToken = ThemeToken::new_static("feathers.menu.bg");
 /// Menu border
 pub const MENU_BORDER: ThemeToken = ThemeToken::new_static("feathers.menu.border");
-/// Menu item hovered
-pub const MENUITEM_BG_HOVER: ThemeToken = ThemeToken::new_static("feathers.menuitem.bg.hover");
-/// Menu item pressed
-pub const MENUITEM_BG_PRESSED: ThemeToken = ThemeToken::new_static("feathers.menuitem.bg.pressed");
-/// Menu item focused
-pub const MENUITEM_BG_FOCUSED: ThemeToken = ThemeToken::new_static("feathers.menuitem.bg.focused");
-/// Menu item text
-pub const MENUITEM_TEXT: ThemeToken = ThemeToken::new_static("feathers.menuitem.text");
-/// Menu item text (disabled)
-pub const MENUITEM_TEXT_DISABLED: ThemeToken =
-    ThemeToken::new_static("feathers.menuitem.text.disabled");
 
 // Text Input
 
@@ -343,29 +324,8 @@ pub const TEXT_INPUT_SELECTION: ThemeToken = ThemeToken::new_static("feathers.te
 /// Selection color for unfocused text input
 pub const TEXT_INPUT_SELECTION_UNFOCUSED: ThemeToken =
     ThemeToken::new_static("feathers.textinput.selection.unfocused");
-/// Background color for label text
-pub const TEXT_INPUT_LABEL_BG: ThemeToken = ThemeToken::new_static("feathers.textinput.label.bg");
-/// Sigil color for X
-pub const TEXT_INPUT_X_AXIS: ThemeToken = ThemeToken::new_static("feathers.textinput.axis.x");
-/// Sigil color for Y
-pub const TEXT_INPUT_Y_AXIS: ThemeToken = ThemeToken::new_static("feathers.textinput.axis.y");
-/// Sigil color for Z
-pub const TEXT_INPUT_Z_AXIS: ThemeToken = ThemeToken::new_static("feathers.textinput.axis.z");
 /// Border for text input
 pub const TEXT_INPUT_BORDER: ThemeToken = ThemeToken::new_static("feathers.textinput.border");
-
-// Pane
-
-/// Pane header background
-pub const PANE_HEADER_BG: ThemeToken = ThemeToken::new_static("feathers.pane.header.bg");
-/// Pane header border
-pub const PANE_HEADER_BORDER: ThemeToken = ThemeToken::new_static("feathers.pane.header.border");
-/// Pane header text color
-pub const PANE_HEADER_TEXT: ThemeToken = ThemeToken::new_static("feathers.pane.header.text");
-/// Pane header divider color
-pub const PANE_HEADER_DIVIDER: ThemeToken = ThemeToken::new_static("feathers.pane.header.divider");
-/// Pane body background
-pub const PANE_BODY_BG: ThemeToken = ThemeToken::new_static("feathers.pane.body.bg");
 
 // Subpane
 

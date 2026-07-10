@@ -1,9 +1,8 @@
+//! On/off toggle switch control.
 use accesskit::Role;
 use bevy_a11y::AccessibilityNode;
 use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
-    bundle::Bundle,
-    children,
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -14,19 +13,15 @@ use bevy_ecs::{
     system::{Commands, Query},
     world::Mut,
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{hover::Hovered, PickingSystems};
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{
-    percent, px, BorderRadius, Checked, InteractionDisabled, Node, PositionType, Pressed, UiRect,
-};
+use bevy_ui::{Checked, InteractionDisabled, Node, PositionType, Pressed, percent, px};
 use bevy_ui_widgets::{ActivateOnPress, Checkbox};
 
 use crate::{
     constants::size,
     cursor::EntityCursor,
-    focus::FocusIndicator,
     theme::{ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
@@ -35,10 +30,8 @@ use crate::{
 ///
 /// This is spawnable by inheriting it as a "scene component".
 ///
-/// # Emitted events
-/// * [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the toggle switch changes state.
-///
-/// These events can be disabled by adding an [`bevy_ui::InteractionDisabled`] component to the bundle
+/// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the switch changes
+/// state; disabled by adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct FeathersToggleSwitch;
@@ -59,8 +52,6 @@ impl FeathersToggleSwitch {
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
-            TabIndex(0)
-            FocusIndicator
             Children [(
                 Node {
                     position_type: PositionType::Absolute,
@@ -83,54 +74,6 @@ impl FeathersToggleSwitch {
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchSlide;
-
-/// Template function to spawn a toggle switch.
-///
-/// # Arguments
-/// * `props` - construction properties for the toggle switch.
-/// * `overrides` - a bundle of components that are merged in with the normal toggle switch components.
-///
-/// # Emitted events
-/// * [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the toggle switch changes state.
-///
-/// These events can be disabled by adding an [`bevy_ui::InteractionDisabled`] component to the bundle
-#[deprecated(since = "0.19.0", note = "Use the toggle_switch() BSN function")]
-pub fn toggle_switch_bundle<B: Bundle>(overrides: B) -> impl Bundle {
-    (
-        Node {
-            width: size::TOGGLE_WIDTH,
-            height: size::TOGGLE_HEIGHT,
-            border: UiRect::all(px(2)),
-            border_radius: BorderRadius::all(px(5)),
-            ..Default::default()
-        },
-        Checkbox,
-        FeathersToggleSwitch,
-        ThemeBackgroundColor(tokens::SWITCH_BG),
-        ThemeBorderColor(tokens::SWITCH_BORDER),
-        AccessibilityNode(accesskit::Node::new(Role::Switch)),
-        Hovered::default(),
-        EntityCursor::System(bevy_window::SystemCursorIcon::Pointer),
-        TabIndex(0),
-        FocusIndicator,
-        overrides,
-        children![(
-            Node {
-                position_type: PositionType::Absolute,
-                left: percent(0),
-                top: px(0),
-                bottom: px(0),
-                width: percent(50),
-                border: UiRect::all(px(2)),
-                border_radius: BorderRadius::all(px(3)),
-                ..Default::default()
-            },
-            ToggleSwitchSlide,
-            ThemeBackgroundColor(tokens::SWITCH_SLIDE_BG),
-            ThemeBorderColor(tokens::SWITCH_SLIDE_BORDER)
-        )],
-    )
-}
 
 fn update_switch_styles(
     q_switches: Query<

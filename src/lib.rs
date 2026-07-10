@@ -33,7 +33,6 @@ use bevy_app::{
 };
 use bevy_asset::embedded_asset;
 use bevy_ecs::{query::With, schedule::IntoScheduleConfigs};
-use bevy_input_focus::tab_navigation::TabNavigationPlugin;
 use bevy_text::{TextColor, TextFont};
 use bevy_ui::UiSystems;
 use bevy_ui_render::UiMaterialPlugin;
@@ -46,19 +45,14 @@ use crate::{
 };
 
 mod alpha_pattern;
-pub mod constants;
 pub mod containers;
 pub mod controls;
-pub mod cursor;
-pub mod dark_theme;
 pub mod display;
-pub mod focus;
-pub mod font_styles;
-pub mod light_theme;
-pub mod palette;
-pub mod rounded_corners;
 pub mod theme;
-pub mod tokens;
+pub mod utils;
+
+pub use theme::{dark_theme, light_theme, tokens};
+pub use utils::{constants, cursor, font_styles, rounded_corners};
 
 /// Plugin which installs observers and systems for feathers themes, cursors, and all controls.
 pub struct FeathersCorePlugin;
@@ -81,7 +75,6 @@ impl Plugin for FeathersCorePlugin {
 
         // Embedded shader
         embedded_asset!(app, "assets/shaders/alpha_pattern.wgsl");
-        embedded_asset!(app, "assets/shaders/color_plane.wgsl");
 
         app.add_plugins((
             ControlsPlugin,
@@ -89,7 +82,6 @@ impl Plugin for FeathersCorePlugin {
             HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate),
             HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
             UiMaterialPlugin::<AlphaPatternMaterial>::default(),
-            focus::FocusOutlinesPlugin,
         ));
 
         // This needs to run in UiSystems::Propagate so the fonts are up-to-date for `measure_text_system`
@@ -125,8 +117,6 @@ pub struct FeathersPlugins;
 
 impl PluginGroup for FeathersPlugins {
     fn build(self) -> PluginGroupBuilder {
-        PluginGroupBuilder::start::<Self>()
-            .add(TabNavigationPlugin)
-            .add(FeathersCorePlugin)
+        PluginGroupBuilder::start::<Self>().add(FeathersCorePlugin)
     }
 }

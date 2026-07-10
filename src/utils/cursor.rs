@@ -12,8 +12,8 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::FromTemplate,
 };
-use bevy_picking::{hover::HoverMap, pointer::PointerId, PickingSystems};
-use bevy_reflect::{std_traits::ReflectDefault, Reflect};
+use bevy_picking::{PickingSystems, hover::HoverMap, pointer::PointerId};
+use bevy_reflect::{Reflect, std_traits::ReflectDefault};
 #[cfg(feature = "custom_cursor")]
 use bevy_window::CustomCursor;
 use bevy_window::{CursorIcon, SystemCursorIcon, Window};

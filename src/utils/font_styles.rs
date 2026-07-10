@@ -9,7 +9,7 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::FromTemplate,
 };
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::{Font, FontSize, FontWeight, TextFont};
 
 use crate::theme::ThemedText;

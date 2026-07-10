@@ -1,3 +1,4 @@
+//! Themed scrollbar control.
 use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
     component::Component,
@@ -9,10 +10,10 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::EntityTemplate,
 };
-use bevy_picking::{hover::Hovered, PickingSystems};
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{px, BorderRadius, Node};
+use bevy_ui::{BorderRadius, Node, px};
 use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
 use crate::{cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};

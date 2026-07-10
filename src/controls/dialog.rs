@@ -1,14 +1,15 @@
+//! Modal and floating dialogs.
 use bevy_color::{Alpha, Srgba};
 use bevy_ecs::{
     event::EntityEvent, hierarchy::Children, observer::On, reflect::ReflectComponent,
     system::Commands,
 };
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
-use bevy_scene::{bsn, bsn_list, on, Scene, SceneComponent, SceneList};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
+use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    px, vh, vw, widget::Text, AlignItems, BorderRadius, BoxShadow, Display, FixedNode,
-    FlexDirection, GlobalZIndex, JustifyContent, Node, OverrideClip, PositionType, UiRect, Val,
+    AlignItems, BorderRadius, BoxShadow, Display, FixedNode, FlexDirection, GlobalZIndex,
+    JustifyContent, Node, OverrideClip, PositionType, UiRect, Val, px, vh, vw, widget::Text,
 };
 use bevy_ui_widgets::{
     Activate, Dialog, DialogDragHandle, ModalDialog, ModalDialogBarrier, RequestClose,

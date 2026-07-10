@@ -1,6 +1,6 @@
 //! The standard `bevy_feathers` dark theme.
 use crate::theme::{
-    build_theme, default_axis_colors, default_token_slots, EditablePalette, OklchaArray, ThemeProps,
+    EditablePalette, OklchaArray, ThemeProps, build_theme, default_axis_colors, default_token_slots,
 };
 use bevy_color::Oklcha;
 

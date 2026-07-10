@@ -1,4 +1,4 @@
-use bevy_scene::{bsn, Scene};
+use bevy_scene::{Scene, bsn};
 use bevy_ui::Node;
 
 /// An invisible UI node that takes up space, and which has a positive `flex_grow` setting.

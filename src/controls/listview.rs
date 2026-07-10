@@ -1,34 +1,32 @@
+//! Internal scrolling list view and its selectable rows.
 use accesskit::Role;
 use bevy_a11y::AccessibilityNode;
-use bevy_app::{Plugin, PostUpdate, PreUpdate};
+use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
-    change_detection::DetectChanges,
-    component::Component,
     entity::Entity,
-    hierarchy::{ChildOf, Children},
+    hierarchy::Children,
     lifecycle::RemovedComponents,
     query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs as _,
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
-use bevy_input_focus::{tab_navigation::TabIndex, InputFocus, InputFocusVisible};
-use bevy_picking::{hover::Hovered, PickingSystems};
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
-use bevy_scene::{bsn, bsn_list, Scene, SceneComponent, SceneList};
+use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
+use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
 use bevy_text::{FontSize, FontWeight};
 use bevy_ui::{
-    px, AlignItems, BorderRadius, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    Node, Overflow, PositionType, Selected, UiRect,
+    AlignItems, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow,
+    PositionType, Selected, UiRect, px,
 };
-use bevy_ui_widgets::{ActiveDescendant, ControlOrientation, ListBox, ListItem, ScrollArea};
+use bevy_ui_widgets::{ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
     constants::{fonts, size},
     controls::FeathersScrollbar,
     cursor::EntityCursor,
     font_styles::InheritableFont,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
 };
 
@@ -68,7 +66,6 @@ impl FeathersListView {
             }
             ListBox
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
-            TabIndex(0)
             Children [
                 // Inner part that scrolls
                 (
@@ -133,11 +130,6 @@ impl FeathersListRow {
         }
     }
 }
-
-/// Marker for the listrow check mark
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-struct ActiveRowOutline;
 
 fn update_listrow_styles(
     q_listrows: Query<
@@ -254,71 +246,6 @@ fn set_listrow_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
-fn on_change_focus(
-    focus: Res<InputFocus>,
-    focus_visible: Res<InputFocusVisible>,
-    q_listbox: Query<&ActiveDescendant, With<ListBox>>,
-    q_row_outline: Query<(Entity, &ChildOf), With<ActiveRowOutline>>,
-    mut commands: Commands,
-) {
-    if focus.is_changed() || focus_visible.is_changed() {
-        if let Some(focus_entity) = focus.get()
-            && let Ok(active_descendant) = q_listbox.get(focus_entity)
-        {
-            // Highlight the active descendant of the current focused listbox, clear all others.
-            highlight_active(
-                &q_row_outline,
-                &mut commands,
-                active_descendant.0,
-                focus_visible.0,
-            );
-        } else {
-            // Clear all highlights
-            highlight_active(&q_row_outline, &mut commands, None, focus_visible.0);
-        }
-    }
-}
-
-fn highlight_active(
-    q_row_outline: &Query<'_, '_, (Entity, &ChildOf), With<ActiveRowOutline>>,
-    commands: &mut Commands<'_, '_>,
-    active_row: Option<Entity>,
-    show_highlight: bool,
-) {
-    // Despawn all active outlines that aren't the current active descendant.
-    let mut needs_spawn = show_highlight;
-    for (outline_id, ChildOf(outline_parent)) in q_row_outline.iter() {
-        let is_active = Some(*outline_parent) == active_row;
-        if is_active && show_highlight {
-            // If we already have a highlight for the active element, then do nothing.
-            needs_spawn = false;
-        } else if !is_active || !show_highlight {
-            // If this isn't the active highlight, or we are not showing highlights, then
-            // despawn any highlight entities.
-            commands.entity(outline_id).despawn();
-        }
-    }
-
-    if let Some(active_item) = active_row
-        && needs_spawn
-    {
-        commands.entity(active_item).with_child((
-            Node {
-                position_type: PositionType::Absolute,
-                left: px(0),
-                right: px(0),
-                top: px(0),
-                bottom: px(0),
-                border: UiRect::all(px(2)),
-                border_radius: BorderRadius::all(px(3)),
-                ..Default::default()
-            },
-            ThemeBorderColor(tokens::FOCUS_RING),
-            ActiveRowOutline,
-        ));
-    }
-}
-
 /// Plugin which registers the systems for updating the listrow styles.
 pub struct ListViewPlugin;
 
@@ -328,6 +255,5 @@ impl Plugin for ListViewPlugin {
             PreUpdate,
             (update_listrow_styles, update_listrow_styles_remove).in_set(PickingSystems::Last),
         );
-        app.add_systems(PostUpdate, on_change_focus);
     }
 }

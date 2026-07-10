@@ -1,33 +1,29 @@
+//! Radio button control.
 use bevy_app::{Plugin, PreUpdate};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
-    bundle::Bundle,
-    children,
     component::Component,
     entity::Entity,
-    hierarchy::{ChildOf, Children},
+    hierarchy::Children,
     lifecycle::RemovedComponents,
     query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
-    spawn::{Spawn, SpawnRelated, SpawnableList},
     system::{Commands, Query},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{hover::Hovered, PickingSystems};
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    px, AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled,
-    JustifyContent, LayoutConfig, Node, Pressed, UiRect,
+    AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
+    LayoutConfig, Node, Pressed, px,
 };
 use bevy_ui_widgets::{ActivateOnPress, RadioButton};
 
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
-    focus::FocusIndicator,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
@@ -37,11 +33,8 @@ use crate::{
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional [`FeathersRadioProps`].
 ///
-/// # Emitted events
-/// * [`bevy_ui_widgets::ValueChange<bool>`] with the value true when it becomes checked.
-/// * [`bevy_ui_widgets::ValueChange<Entity>`] with the selected entity's id when a new radio button is selected.
-///
-///  These events can be disabled by adding an [`bevy_ui::InteractionDisabled`] component to the entity
+/// Emits [`bevy_ui_widgets::ValueChange<bool>`] (true) when checked, and the radio group emits
+/// [`bevy_ui_widgets::ValueChange<Entity>`] with the newly selected radio.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(FeathersRadioProps)]
 #[derive(Reflect)]
@@ -76,7 +69,6 @@ impl FeathersRadio {
             RadioButton
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
-            TabIndex(0)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
             InheritableFont {
                 font: fonts::REGULAR,
@@ -94,7 +86,6 @@ impl FeathersRadio {
                     border_radius: BorderRadius::MAX,
                 }
                 RadioOutline
-                FocusIndicator
                 ThemeBorderColor(tokens::RADIO_BORDER)
                 ThemeBackgroundColor(tokens::RADIO_BG)
                 Children [(
@@ -125,72 +116,6 @@ struct RadioOutline;
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioMark;
-
-/// Template function to spawn a radio.
-///
-/// This version does not take any props. A caption can be set by appending a child entity.
-///
-/// # Emitted events
-/// * [`bevy_ui_widgets::ValueChange<bool>`] with the value true when it becomes checked.
-/// * [`bevy_ui_widgets::ValueChange<Entity>`] with the selected entity's id when a new radio button is selected.
-///
-///  These events can be disabled by adding an [`bevy_ui::InteractionDisabled`] component to the entity
-#[deprecated(since = "0.19.0", note = "Use the radio() BSN function")]
-pub fn radio_bundle<C: SpawnableList<ChildOf> + Send + Sync + 'static, B: Bundle>(
-    overrides: B,
-    label: C,
-) -> impl Bundle {
-    (
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Row,
-            justify_content: JustifyContent::Start,
-            align_items: AlignItems::Center,
-            column_gap: px(4),
-            ..Default::default()
-        },
-        RadioButton,
-        Hovered::default(),
-        EntityCursor::System(bevy_window::SystemCursorIcon::Pointer),
-        TabIndex(0),
-        InheritableThemeTextColor(tokens::RADIO_TEXT),
-        InheritableFont {
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-            ..Default::default()
-        },
-        overrides,
-        Children::spawn((
-            Spawn((
-                Node {
-                    display: Display::Flex,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    width: size::RADIO_SIZE,
-                    height: size::RADIO_SIZE,
-                    border: UiRect::all(px(2)),
-                    border_radius: BorderRadius::MAX,
-                    ..Default::default()
-                },
-                RadioOutline,
-                FocusIndicator,
-                ThemeBorderColor(tokens::RADIO_BORDER),
-                ThemeBackgroundColor(tokens::RADIO_BG),
-                children![(
-                    Node {
-                        width: px(8),
-                        height: px(8),
-                        border_radius: BorderRadius::MAX,
-                        ..Default::default()
-                    },
-                    RadioMark,
-                    ThemeBackgroundColor(tokens::RADIO_MARK),
-                )],
-            )),
-            label,
-        )),
-    )
-}
 
 fn update_radio_styles(
     q_radioes: Query<

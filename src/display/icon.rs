@@ -3,9 +3,9 @@ use bevy_ecs::query::{Changed, With};
 use bevy_ecs::reflect::ReflectComponent;
 use bevy_ecs::{component::Component, system::Query};
 use bevy_reflect::Reflect;
-use bevy_scene::{bsn, Scene};
+use bevy_scene::{Scene, bsn};
 use bevy_text::TextColor;
-use bevy_ui::{px, widget::ImageNode, Node};
+use bevy_ui::{Node, px, widget::ImageNode};
 
 use crate::theme::ThemedText;
 
