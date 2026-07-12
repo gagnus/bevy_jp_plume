@@ -11,6 +11,7 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::template,
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::PickingSystems;
 use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
@@ -108,6 +109,8 @@ impl PlumeTextInput {
                 } ,
             }
             PlumeTextInput
+            // Click-to-focus marker only; plume registers no Tab-key navigation.
+            TabIndex(0)
             EditableText {
                 cursor_width: 0.3,
                 visible_width: {props.visible_width},

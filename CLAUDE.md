@@ -32,8 +32,12 @@ conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 There is no modal dialog. No panes; `group`/`subpane` for structure.
 
 ### Mouse-only interaction
-No tab navigation, focus ring, or keyboard activation of controls.
-Text entry keeps click-to-focus and keyboard input.
+No Tab-key navigation, focus ring, or keyboard activation of controls.
+Text entry keeps click-to-focus and keyboard input. `TabIndex` survives
+purely as the click-to-focus marker (`acquire_focus_tab_index` is
+registered; `TabNavigationPlugin` and its Tab-key handler are not) —
+without it, `PointerFocusPlugin` blurs on every press and focus-dependent
+widgets (text input, select popups) break.
 
 ## Layout
 

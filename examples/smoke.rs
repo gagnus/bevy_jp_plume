@@ -12,8 +12,8 @@ use bevy_jp_plume::{
     constants::icons,
     containers::{flex_spacer, group, group_body, group_header},
     controls::{
-        PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDialog, PlumeRadio, PlumeSelect,
-        PlumeSlider, PlumeTextInput, PlumeTextInputContainer, PlumeToggleSwitch,
+        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDialog, PlumeRadio,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeTextInputContainer, PlumeToggleSwitch,
         list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
@@ -64,6 +64,9 @@ fn root() -> impl Scene {
             height: percent(100),
             display: Display::Flex,
             flex_direction: FlexDirection::Row,
+            // Start, not Stretch: several controls have flex_grow and would fill a
+            // full-height column vertically.
+            align_items: AlignItems::Start,
         }
         ThemeBackgroundColor(tokens::WINDOW_BG)
         Children [
@@ -135,14 +138,17 @@ fn controls_column() -> impl Scene {
                     @options: {list_rows_from_strings(["Alpha", "Beta", "Gamma", "Delta"], Some(0))},
                     @max_visible: 4,
                 }
-                on(listbox_update_selection)
+                on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
+                    info!("select clicked");
+                    if let Ok(option) = q_options.get(change.value) {
+                        info!("select -> option {}", option.0);
+                    }
+                })
             ),
             (
                 @PlumeTextInputContainer
                 Children [
-                    @PlumeTextInput {
-                        @visible_width: {Some(12f32)},
-                    }
+                    @PlumeTextInput
                 ]
             ),
             (

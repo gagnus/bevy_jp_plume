@@ -11,6 +11,7 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs as _,
     system::{Commands, Query},
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
@@ -65,6 +66,8 @@ impl PlumeListView {
                 }
             }
             ListBox
+            // Click-to-focus marker only; plume registers no Tab-key navigation.
+            TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
             Children [
                 // Inner part that scrolls
