@@ -38,6 +38,9 @@ smol_str = { version = "0.2", default-features = false }
 # other
 accesskit = "0.24"
 
+[dev-dependencies]
+bevy = { path = "../3rdParty/bevy", features = ["bevy_ui_widgets", "png"] }
+
 [features]
 default = []
 custom_cursor = ["bevy_window/custom_cursor"]
