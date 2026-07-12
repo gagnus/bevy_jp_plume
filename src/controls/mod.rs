@@ -17,7 +17,7 @@ pub use button::*;
 pub use checkbox::*;
 pub use color_swatch::*;
 pub use dialog::*;
-pub use listview::FeathersListRow;
+pub use listview::PlumeListRow;
 pub use radio::*;
 pub use scrollbar::*;
 pub use select::*;

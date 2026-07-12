@@ -23,7 +23,7 @@ use bevy_ui_widgets::{ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
     constants::{fonts, size},
-    controls::FeathersScrollbar,
+    controls::PlumeScrollbar,
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
@@ -32,17 +32,17 @@ use crate::{
 
 /// A container that displays a scrolling list of items
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(FeathersListViewProps)]
+#[scene(PlumeListViewProps)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersListView;
+pub struct PlumeListView;
 
-/// Props used to construct a [`FeathersListView`] scene.
-pub struct FeathersListViewProps {
+/// Props used to construct a [`PlumeListView`] scene.
+pub struct PlumeListViewProps {
     /// The list of items to be displayed in the list view.
     pub rows: Box<dyn SceneList>,
 }
 
-impl Default for FeathersListViewProps {
+impl Default for PlumeListViewProps {
     fn default() -> Self {
         Self {
             rows: Box::new(bsn_list!()),
@@ -50,9 +50,9 @@ impl Default for FeathersListViewProps {
     }
 }
 
-impl FeathersListView {
+impl PlumeListView {
     /// Scene function for list view.
-    pub fn scene(props: FeathersListViewProps) -> impl Scene {
+    pub fn scene(props: PlumeListViewProps) -> impl Scene {
         bsn! {
             // Outer frame that holds the scrollbar
             Node {
@@ -83,7 +83,7 @@ impl FeathersListView {
                     ]
                 ),
 
-                @FeathersScrollbar {
+                @PlumeScrollbar {
                     @target: #inner,
                     @orientation: {ControlOrientation::Vertical}
                 }
@@ -102,9 +102,9 @@ impl FeathersListView {
 /// A selectable row in a list of items
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersListRow;
+pub struct PlumeListRow;
 
-impl FeathersListRow {
+impl PlumeListRow {
     /// Scene function for list row.
     pub fn scene() -> impl Scene {
         bsn! {
@@ -142,7 +142,7 @@ fn update_listrow_styles(
             &InheritableThemeTextColor,
         ),
         (
-            With<FeathersListRow>,
+            With<PlumeListRow>,
             Or<(
                 Changed<Hovered>,
                 Added<Selected>,
@@ -175,7 +175,7 @@ fn update_listrow_styles_remove(
             &ThemeBackgroundColor,
             &InheritableThemeTextColor,
         ),
-        With<FeathersListRow>,
+        With<PlumeListRow>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_selected: RemovedComponents<Selected>,

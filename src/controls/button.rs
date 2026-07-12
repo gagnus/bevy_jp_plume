@@ -43,18 +43,18 @@ pub enum ButtonVariant {
 
 /// A button widget.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersButtonProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeButtonProps`].
 ///
 /// Emits [`bevy_ui_widgets::Activate`] when the pointer is released while hovering over the
 /// button; disabled by adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersButtonProps)]
+#[scene(PlumeButtonProps)]
 #[derive(Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersButton;
+pub struct PlumeButton;
 
-/// Props used to construct a [`FeathersButton`] scene.
-pub struct FeathersButtonProps {
+/// Props used to construct a [`PlumeButton`] scene.
+pub struct PlumeButtonProps {
     /// Label for this button. This can contain multiple entities, which will be contained
     /// in a horizontal flexbox.
     pub caption: Box<dyn SceneList>,
@@ -64,7 +64,7 @@ pub struct FeathersButtonProps {
     pub corners: RoundedCorners,
 }
 
-impl Default for FeathersButtonProps {
+impl Default for PlumeButtonProps {
     fn default() -> Self {
         Self {
             caption: Box::new(bsn_list!()),
@@ -74,8 +74,8 @@ impl Default for FeathersButtonProps {
     }
 }
 
-impl FeathersButton {
-    fn scene(props: FeathersButtonProps) -> impl Scene {
+impl PlumeButton {
+    fn scene(props: PlumeButtonProps) -> impl Scene {
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -104,20 +104,20 @@ impl FeathersButton {
 
 /// Tool button scene function: a smaller button for embedding in panel headers.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersButtonProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeButtonProps`].
 ///
 /// Emits [`bevy_ui_widgets::Activate`] when the pointer is released while hovering over the
 /// button; disabled by adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersButtonProps)]
+#[scene(PlumeButtonProps)]
 #[derive(Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersToolButton;
+pub struct PlumeToolButton;
 
-impl FeathersToolButton {
-    fn scene(props: FeathersButtonProps) -> impl Scene {
+impl PlumeToolButton {
+    fn scene(props: PlumeButtonProps) -> impl Scene {
         bsn! {
-            @FeathersButton {
+            @PlumeButton {
                 @caption: {props.caption},
                 @variant: {props.variant},
                 @corners: {props.corners}

@@ -17,8 +17,8 @@ use bevy_scene::prelude::*;
 use bevy_ui::{ComputedNode, Node, Selected, px, widget::Text};
 use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
 
-use super::listview::{FeathersListRow, FeathersListView};
-use super::menu::{FeathersMenu, FeathersMenuButton, FeathersMenuPopup};
+use super::listview::{PlumeListRow, PlumeListView};
+use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
 use crate::{display::caption, rounded_corners::RoundedCorners};
 
 const SELECT_ROW_PX: f32 = 28.0;
@@ -27,12 +27,12 @@ const SELECT_ROW_PX: f32 = 28.0;
 /// # Emitted events
 /// * [`ValueChange<Entity>`](bevy_ui_widgets::ValueChange) when the selected option is changed.
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersSelectProps)]
+#[scene(PlumeSelectProps)]
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersSelect;
+pub struct PlumeSelect;
 
-/// Entirely optional component to store a usize on a `FeathersListRow`
+/// Entirely optional component to store a usize on a `PlumeListRow`
 /// Added by [`list_rows_from_strings`] so there's a value
 /// on a string based select you can use to work out which of the array
 /// of strings was selected
@@ -40,7 +40,7 @@ pub struct FeathersSelect;
 #[reflect(Component, Default)]
 pub struct OptionIndex(pub usize);
 
-/// Convert an iterator of strings into `FeathersListRow` scenes with `OptionIndex`
+/// Convert an iterator of strings into `PlumeListRow` scenes with `OptionIndex`
 /// on each one containing its index, optionally mark one selected
 pub fn list_rows_from_strings(
     options: impl IntoIterator<Item: AsRef<str>>,
@@ -53,10 +53,10 @@ pub fn list_rows_from_strings(
             .map(|(i, label)| -> Box<dyn SceneList> {
                 let label: String = label.as_ref().into();
                 if Some(i) == selected {
-                    bsn! { @FeathersListRow Selected OptionIndex(i) Children [ caption(label) ] }
+                    bsn! { @PlumeListRow Selected OptionIndex(i) Children [ caption(label) ] }
                         .into()
                 } else {
-                    bsn! { @FeathersListRow OptionIndex(i) Children [ caption(label) ] }.into()
+                    bsn! { @PlumeListRow OptionIndex(i) Children [ caption(label) ] }.into()
                 }
             })
             .collect::<Vec<_>>(),
@@ -69,7 +69,7 @@ pub fn list_rows_from_strings(
 struct SelectCaption;
 
 /// Props for the control
-pub struct FeathersSelectProps {
+pub struct PlumeSelectProps {
     /// String options
     pub options: Box<dyn SceneList>,
     /// Corner roundedness
@@ -78,7 +78,7 @@ pub struct FeathersSelectProps {
     pub max_visible: usize,
 }
 
-impl Default for FeathersSelectProps {
+impl Default for PlumeSelectProps {
     fn default() -> Self {
         Self {
             options: Box::new(bsn_list!()),
@@ -88,18 +88,18 @@ impl Default for FeathersSelectProps {
     }
 }
 
-// Implements as a [`FeathersMenu`] under the hood with a row per option
-impl FeathersSelect {
-    fn scene(props: FeathersSelectProps) -> impl Scene {
+// Implements as a [`PlumeMenu`] under the hood with a row per option
+impl PlumeSelect {
+    fn scene(props: PlumeSelectProps) -> impl Scene {
         let max_visible = props.max_visible.max(1);
         let max_height = px(max_visible as f32 * SELECT_ROW_PX);
 
         bsn! {
-            @FeathersMenu
-            FeathersSelect
+            @PlumeMenu
+            PlumeSelect
             Children [
                 (
-                    @FeathersMenuButton {
+                    @PlumeMenuButton {
                         @caption: bsn! { caption("") SelectCaption },
                         @corners: {props.corners},
                     }
@@ -108,10 +108,10 @@ impl FeathersSelect {
                     }
                 ),
                 (
-                    @FeathersMenuPopup
+                    @PlumeMenuPopup
                     Children [
                         (
-                            @FeathersListView {
+                            @PlumeListView {
                                 @rows: {props.options}
                             }
                             on(listbox_update_selection)
@@ -129,9 +129,9 @@ impl FeathersSelect {
 
 fn re_emit_listbox_value(
     ev: On<ValueChange<Entity>>,
-    q_select: Query<(), With<FeathersSelect>>,
+    q_select: Query<(), With<PlumeSelect>>,
     q_parents: Query<&ChildOf>,
-    q_popup: Query<(), With<FeathersMenuPopup>>,
+    q_popup: Query<(), With<PlumeMenuPopup>>,
     mut commands: Commands,
 ) {
     let mut select_ent = None;
@@ -161,7 +161,7 @@ fn re_emit_listbox_value(
 
 fn select_on_set_selected(
     ev: On<SetSelected>,
-    q_select: Query<(), With<FeathersSelect>>,
+    q_select: Query<(), With<PlumeSelect>>,
     q_listbox: Query<(), With<ListBox>>,
     q_children: Query<&Children>,
     mut commands: Commands,
@@ -181,11 +181,11 @@ fn select_on_set_selected(
 }
 
 fn sync_caption(
-    q_newly_selected: Query<Entity, (Added<Selected>, With<FeathersListRow>)>,
+    q_newly_selected: Query<Entity, (Added<Selected>, With<PlumeListRow>)>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
     q_text: Query<&Text, Without<SelectCaption>>,
-    q_select: Query<(), With<FeathersSelect>>,
+    q_select: Query<(), With<PlumeSelect>>,
     mut q_caption: Query<&mut Text, With<SelectCaption>>,
 ) {
     for row in q_newly_selected.iter() {
@@ -216,10 +216,10 @@ fn sync_caption(
 }
 
 fn focus_select_popup(
-    q_popups: Query<(Entity, &Visibility), (With<FeathersMenuPopup>, Changed<Visibility>)>,
-    q_select: Query<(), With<FeathersSelect>>,
+    q_popups: Query<(Entity, &Visibility), (With<PlumeMenuPopup>, Changed<Visibility>)>,
+    q_select: Query<(), With<PlumeSelect>>,
     q_listbox: Query<(), With<ListBox>>,
-    q_button: Query<(), With<FeathersMenuButton>>,
+    q_button: Query<(), With<PlumeMenuButton>>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
     mut focus: ResMut<InputFocus>,
@@ -262,9 +262,9 @@ fn focus_select_popup(
 }
 
 fn sync_select_width(
-    q_selects: Query<(Entity, &ComputedNode), With<FeathersSelect>>,
+    q_selects: Query<(Entity, &ComputedNode), With<PlumeSelect>>,
     q_children: Query<&Children>,
-    q_popup: Query<(), With<FeathersMenuPopup>>,
+    q_popup: Query<(), With<PlumeMenuPopup>>,
     mut q_node: Query<&mut Node>,
 ) {
     for (select_ent, computed) in q_selects.iter() {
@@ -286,7 +286,7 @@ fn sync_select_width(
     }
 }
 
-/// Plugin which runs the [`FeathersSelect`] control
+/// Plugin which runs the [`PlumeSelect`] control
 pub struct SelectPlugin;
 
 impl Plugin for SelectPlugin {

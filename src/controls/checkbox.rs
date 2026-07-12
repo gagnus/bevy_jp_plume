@@ -33,24 +33,24 @@ use crate::{
 
 /// A checkbox widget.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersCheckboxProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeCheckboxProps`].
 ///
 /// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the checkbox changes
 /// state; disabled by adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, FromTemplate)]
-#[scene(FeathersCheckboxProps)]
+#[scene(PlumeCheckboxProps)]
 #[derive(Reflect)]
 #[reflect(Component)]
-pub struct FeathersCheckbox;
+pub struct PlumeCheckbox;
 
-/// Props used to construct a [`FeathersCheckbox`] scene.
-pub struct FeathersCheckboxProps {
+/// Props used to construct a [`PlumeCheckbox`] scene.
+pub struct PlumeCheckboxProps {
     /// Label for this checkbox. This can contain multiple entities, which will be contained
     /// in a flexbox.
     pub caption: Box<dyn SceneList>,
 }
 
-impl Default for FeathersCheckboxProps {
+impl Default for PlumeCheckboxProps {
     fn default() -> Self {
         Self {
             caption: Box::new(bsn_list!()),
@@ -58,8 +58,8 @@ impl Default for FeathersCheckboxProps {
     }
 }
 
-impl FeathersCheckbox {
-    fn scene(props: FeathersCheckboxProps) -> impl Scene {
+impl PlumeCheckbox {
+    fn scene(props: PlumeCheckboxProps) -> impl Scene {
         bsn! {
             Node {
                 display: Display::Flex,

@@ -21,15 +21,15 @@ use crate::{
 /// A color swatch widget.
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional
-/// [`FeathersColorSwatchProps`].
+/// [`PlumeColorSwatchProps`].
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-#[scene(FeathersColorSwatchProps)]
-pub struct FeathersColorSwatch;
+#[scene(PlumeColorSwatchProps)]
+pub struct PlumeColorSwatch;
 
-/// Props used to construct a [`FeathersColorSwatch`] scene.
+/// Props used to construct a [`PlumeColorSwatch`] scene.
 #[derive(Default)]
-pub struct FeathersColorSwatchProps {
+pub struct PlumeColorSwatchProps {
     /// Set a percentage of the swatch to display the opaque version of the
     /// current color.
     pub opaque_color_percentage: f32,
@@ -48,8 +48,8 @@ pub struct ColorSwatchValue(pub Color);
 #[reflect(Component, Clone, Default)]
 pub struct ColorSwatchFg;
 
-impl FeathersColorSwatch {
-    fn scene(props: FeathersColorSwatchProps) -> impl Scene {
+impl PlumeColorSwatch {
+    fn scene(props: PlumeColorSwatchProps) -> impl Scene {
         let non_alpha_fg = (props.opaque_color_percentage > 0.0).then(|| {
             bsn! {
                 Node {
@@ -72,7 +72,7 @@ impl FeathersColorSwatch {
                 min_width: size::ROW_HEIGHT,
                 border_radius: px(5),
             }
-            FeathersColorSwatch
+            PlumeColorSwatch
             ColorSwatchValue
             AlphaPattern
             MaterialNode::<AlphaPatternMaterial>

@@ -1,15 +1,15 @@
-//! The standard `bevy_feathers` dark theme.
+//! The standard Plume dark theme.
 use crate::theme::{
     EditablePalette, OklchaArray, ThemeProps, build_theme, default_axis_colors, default_token_slots,
 };
 use bevy_color::Oklcha;
 
-/// Default feathers dark palette
+/// Default plume dark palette
 pub fn create_dark_theme() -> ThemeProps {
     build_theme(&default_dark_palette().resolve(), default_token_slots())
 }
 
-/// Default feathers dark palette editable inputs
+/// Default plume dark palette editable inputs
 pub fn default_dark_palette() -> EditablePalette {
     EditablePalette {
         neutrals: OklchaArray {

@@ -1,27 +1,27 @@
-//! Various non-themable constants for the Feathers look and feel.
+//! Various non-themable constants for the Plume look and feel.
 
 /// Font asset paths
 pub mod fonts {
     /// Default regular font path
-    pub const REGULAR: &str = "embedded://bevy_feathers/assets/fonts/FiraSans-Regular.ttf";
+    pub const REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/FiraSans-Regular.ttf";
     /// Regular italic font path
-    pub const ITALIC: &str = "embedded://bevy_feathers/assets/fonts/FiraSans-Italic.ttf";
+    pub const ITALIC: &str = "embedded://bevy_jp_plume/assets/fonts/FiraSans-Italic.ttf";
     /// Bold font path
-    pub const BOLD: &str = "embedded://bevy_feathers/assets/fonts/FiraSans-Bold.ttf";
+    pub const BOLD: &str = "embedded://bevy_jp_plume/assets/fonts/FiraSans-Bold.ttf";
     /// Bold italic font path
-    pub const BOLD_ITALIC: &str = "embedded://bevy_feathers/assets/fonts/FiraSans-BoldItalic.ttf";
+    pub const BOLD_ITALIC: &str = "embedded://bevy_jp_plume/assets/fonts/FiraSans-BoldItalic.ttf";
     /// Monospace font path
-    pub const MONO: &str = "embedded://bevy_feathers/assets/fonts/FiraMono-Medium.ttf";
+    pub const MONO: &str = "embedded://bevy_jp_plume/assets/fonts/FiraMono-Medium.ttf";
 }
 
 /// Icon paths
 pub mod icons {
     /// Downward-pointing chevron
-    pub const CHEVRON_DOWN: &str = "embedded://bevy_feathers/assets/icons/chevron-down.png";
+    pub const CHEVRON_DOWN: &str = "embedded://bevy_jp_plume/assets/icons/chevron-down.png";
     /// Right-pointing chevron
-    pub const CHEVRON_RIGHT: &str = "embedded://bevy_feathers/assets/icons/chevron-right.png";
+    pub const CHEVRON_RIGHT: &str = "embedded://bevy_jp_plume/assets/icons/chevron-right.png";
     /// Diagonal Cross
-    pub const X: &str = "embedded://bevy_feathers/assets/icons/x.png";
+    pub const X: &str = "embedded://bevy_jp_plume/assets/icons/x.png";
 }
 
 /// Size constants

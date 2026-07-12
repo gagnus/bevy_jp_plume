@@ -31,24 +31,24 @@ use crate::{
 
 /// A radio widget.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersRadioProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeRadioProps`].
 ///
 /// Emits [`bevy_ui_widgets::ValueChange<bool>`] (true) when checked, and the radio group emits
 /// [`bevy_ui_widgets::ValueChange<Entity>`] with the newly selected radio.
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersRadioProps)]
+#[scene(PlumeRadioProps)]
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersRadio;
+pub struct PlumeRadio;
 
-/// Props used to construct a [`FeathersRadio`] scene.
-pub struct FeathersRadioProps {
+/// Props used to construct a [`PlumeRadio`] scene.
+pub struct PlumeRadioProps {
     /// Label for this radio button. This can contain multiple entities, which will be contained
     /// in a flexbox.
     pub caption: Box<dyn SceneList>,
 }
 
-impl Default for FeathersRadioProps {
+impl Default for PlumeRadioProps {
     fn default() -> Self {
         Self {
             caption: Box::new(bsn_list!()),
@@ -56,8 +56,8 @@ impl Default for FeathersRadioProps {
     }
 }
 
-impl FeathersRadio {
-    fn scene(props: FeathersRadioProps) -> impl Scene {
+impl PlumeRadio {
+    fn scene(props: PlumeRadioProps) -> impl Scene {
         bsn! {
             Node {
                 display: Display::Flex,

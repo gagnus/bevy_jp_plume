@@ -427,7 +427,7 @@ impl EditablePalette {
     }
 }
 
-/// Build Feathers theme properties by resolving every token's [`Slot`] against `p`.
+/// Build Plume theme properties by resolving every token's [`Slot`] against `p`.
 pub fn build_theme(palette: &ResolvedPalette, token_slots: &[(ThemeToken, Slot)]) -> ThemeProps {
     ThemeProps {
         color: token_slots

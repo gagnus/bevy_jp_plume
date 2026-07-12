@@ -21,13 +21,13 @@ use crate::{cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
 /// A scrollbar. The `target` property should point to an entity whose
 /// [`ScrollPosition`](bevy_ui::ScrollPosition) will be synchronized with the scrollbar.
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(FeathersScrollbarProps)]
+#[scene(PlumeScrollbarProps)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersScrollbar;
+pub struct PlumeScrollbar;
 
-/// Props used to construct a [`FeathersScrollbar`] scene.
+/// Props used to construct a [`PlumeScrollbar`] scene.
 #[derive(Default, Clone)]
-pub struct FeathersScrollbarProps {
+pub struct PlumeScrollbarProps {
     /// The entity whose scroll position will be synchronized with this scrollbar.
     pub target: EntityTemplate,
     /// Whether this is a vertical or horizontal scrollbar.
@@ -36,11 +36,11 @@ pub struct FeathersScrollbarProps {
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct FeathersScrollbarThumb;
+struct PlumeScrollbarThumb;
 
-impl FeathersScrollbar {
+impl PlumeScrollbar {
     /// Scene function for scrollbar.
-    pub fn scene(props: FeathersScrollbarProps) -> impl Scene {
+    pub fn scene(props: PlumeScrollbarProps) -> impl Scene {
         bsn! {
             Scrollbar {
                 target: {props.target},
@@ -57,7 +57,7 @@ impl FeathersScrollbar {
                 ScrollbarThumb {
                     border_radius: BorderRadius::all(px(3))
                 }
-                FeathersScrollbarThumb
+                PlumeScrollbarThumb
                 EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             )]
         }
@@ -68,7 +68,7 @@ fn update_scrollbar_thumb_styles(
     q_thumbs: Query<
         (Entity, &Hovered, &ThemeBackgroundColor, &ScrollbarDragState),
         (
-            With<FeathersScrollbarThumb>,
+            With<PlumeScrollbarThumb>,
             Or<(Changed<Hovered>, Changed<ScrollbarDragState>)>,
         ),
     >,

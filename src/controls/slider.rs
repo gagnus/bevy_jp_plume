@@ -39,32 +39,32 @@ use crate::{
 
 /// A slider widget.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersSliderProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeSliderProps`].
 ///
 /// Emits [`bevy_ui_widgets::ValueChange<f32>`] when the slider value is changed; disabled by
 /// adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(FeathersSliderProps)]
+#[scene(PlumeSliderProps)]
 #[require(Slider)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersSlider;
+pub struct PlumeSlider;
 
-/// Props used to construct the [`FeathersSlider`] scene.
-pub struct FeathersSliderProps {
+/// Props used to construct the [`PlumeSlider`] scene.
+pub struct PlumeSliderProps {
     /// Slider minimum value
     pub min: f32,
     /// Slider maximum value
     pub max: f32,
 }
 
-impl Default for FeathersSliderProps {
+impl Default for PlumeSliderProps {
     fn default() -> Self {
         Self { min: 0.0, max: 1.0 }
     }
 }
 
-impl FeathersSlider {
-    fn scene(props: FeathersSliderProps) -> impl Scene {
+impl PlumeSlider {
+    fn scene(props: PlumeSliderProps) -> impl Scene {
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -81,7 +81,7 @@ impl FeathersSlider {
                 track_click: TrackClick::Drag,
                 orientation: SliderOrientation::Horizontal,
             }
-            FeathersSlider
+            PlumeSlider
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
             EntityCursor::System(bevy_window::SystemCursorIcon::EwResize)
@@ -133,7 +133,7 @@ fn update_slider_styles(
             &InheritableThemeTextColor,
         ),
         (
-            With<FeathersSlider>,
+            With<PlumeSlider>,
             Or<(
                 Spawned,
                 Added<InteractionDisabled>,
@@ -169,7 +169,7 @@ fn update_slider_styles_remove(
             &mut BackgroundGradient,
             &InheritableThemeTextColor,
         ),
-        With<FeathersSlider>,
+        With<PlumeSlider>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
@@ -208,7 +208,7 @@ fn update_slider_styles_theme(
             &mut BackgroundGradient,
             &InheritableThemeTextColor,
         ),
-        With<FeathersSlider>,
+        With<PlumeSlider>,
     >,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -301,7 +301,7 @@ fn update_slider_pos(
             &mut BackgroundGradient,
         ),
         (
-            With<FeathersSlider>,
+            With<PlumeSlider>,
             Or<(
                 Changed<SliderValue>,
                 Changed<SliderRange>,

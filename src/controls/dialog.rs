@@ -1,4 +1,4 @@
-//! Modal and floating dialogs.
+//! Movable floating dialog with a draggable title bar and close button.
 use bevy_color::{Alpha, Srgba};
 use bevy_ecs::{
     event::EntityEvent, hierarchy::Children, observer::On, reflect::ReflectComponent,
@@ -8,96 +8,22 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Display, FixedNode, FlexDirection, GlobalZIndex,
-    JustifyContent, Node, OverrideClip, PositionType, UiRect, Val, px, vh, vw, widget::Text,
+    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, Node,
+    PositionType, UiRect, Val, px, widget::Text,
 };
-use bevy_ui_widgets::{
-    Activate, Dialog, DialogDragHandle, ModalDialog, ModalDialogBarrier, RequestClose,
-};
+use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
     constants::{fonts, icons, size},
-    controls::{ButtonVariant, FeathersToolButton},
+    controls::{ButtonVariant, PlumeToolButton},
     display::icon,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, ThemedText},
     tokens,
 };
 
-/// Props used to construct a [`FeathersDialog`] scene.
-pub struct FeathersDialogProps {
-    /// Content of this dialog box.
-    pub contents: Box<dyn SceneList>,
-    /// How wide this dialog box should be.
-    pub width: Val,
-}
-
-impl Default for FeathersDialogProps {
-    fn default() -> Self {
-        Self {
-            contents: Box::new(bsn_list!()),
-            width: Val::Auto,
-        }
-    }
-}
-
-/// A modal dialog box
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(FeathersDialogProps)]
-#[reflect(Component, Clone, Default)]
-pub struct FeathersDialog;
-
-impl FeathersDialog {
-    /// Scene function for modal dialog.
-    pub fn scene(props: FeathersDialogProps) -> impl Scene {
-        bsn! {
-            Node {
-                display: Display::Flex,
-                position_type: PositionType::Absolute,
-                left: px(0),
-                right: px(0),
-                top: px(0),
-                bottom: px(0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                padding: UiRect::axes(vw(0.05), vh(0.05)),
-            }
-            ModalDialogBarrier
-            FixedNode
-            OverrideClip
-            GlobalZIndex(99) // One less than menu layer
-            Children [
-                Node {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Stretch,
-                    border_radius: BorderRadius::all(px(4)),
-                    padding: UiRect::all(px(6.0)),
-                    border: UiRect::all(px(1.0)),
-                    row_gap: px(6.0),
-                    width: {props.width},
-                }
-                ModalDialog
-                ThemeBackgroundColor(tokens::DIALOG_BG)
-                ThemeBorderColor(tokens::DIALOG_BORDER)
-                InheritableThemeTextColor(tokens::DIALOG_TEXT)
-                BoxShadow::new(
-                    Srgba::BLACK.with_alpha(0.9).into(),
-                    px(0),
-                    px(0),
-                    px(1),
-                    px(4),
-                )
-                Children [
-                    {props.contents}
-                ]
-            ]
-        }
-    }
-}
-
-/// Props used to construct a [`FeathersFloatingDialog`] scene.
-pub struct FeathersFloatingDialogProps {
+/// Props used to construct a [`PlumeDialog`] scene.
+pub struct PlumeDialogProps {
     /// Title shown in the window's drag bar.
     pub title: String,
     /// Body content of the window.
@@ -110,7 +36,7 @@ pub struct FeathersFloatingDialogProps {
     pub top: Val,
 }
 
-impl Default for FeathersFloatingDialogProps {
+impl Default for PlumeDialogProps {
     fn default() -> Self {
         Self {
             title: String::new(),
@@ -122,15 +48,15 @@ impl Default for FeathersFloatingDialogProps {
     }
 }
 
-/// A non-modal, movable floating dialog with a draggable title bar and a close button.
+/// A movable floating dialog with a draggable title bar and a close button.
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(FeathersFloatingDialogProps)]
+#[scene(PlumeDialogProps)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersFloatingDialog;
+pub struct PlumeDialog;
 
-impl FeathersFloatingDialog {
-    /// Scene function for a floating window.
-    pub fn scene(props: FeathersFloatingDialogProps) -> impl Scene {
+impl PlumeDialog {
+    /// Scene function for a floating dialog window.
+    pub fn scene(props: PlumeDialogProps) -> impl Scene {
         bsn! {
             Node {
                 display: Display::Flex,
@@ -178,11 +104,11 @@ impl FeathersFloatingDialog {
                     }
                     Children [
                         (Text({props.title}) ThemedText),
-                        @FeathersDialogClose
+                        @PlumeDialogClose
                     ]
                 ),
                 (
-                    @FeathersDialogBody
+                    @PlumeDialogBody
                     Children [
                         {props.contents}
                     ]
@@ -192,13 +118,13 @@ impl FeathersFloatingDialog {
     }
 }
 
-/// Header section for a modal dialog
+/// Header section for a dialog
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersDialogHeader;
+pub struct PlumeDialogHeader;
 
-impl FeathersDialogHeader {
-    /// Scene function for modal dialog header.
+impl PlumeDialogHeader {
+    /// Scene function for dialog header.
     pub fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -221,13 +147,13 @@ impl FeathersDialogHeader {
 /// Close button for dialog header
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersDialogClose;
+pub struct PlumeDialogClose;
 
-impl FeathersDialogClose {
+impl PlumeDialogClose {
     /// Scene function for dialog close button.
     pub fn scene() -> impl Scene {
         bsn! {
-        @FeathersToolButton {
+        @PlumeToolButton {
             @variant: ButtonVariant::Plain,
             @caption: bsn! { icon(icons::X) }
         }
@@ -238,13 +164,13 @@ impl FeathersDialogClose {
     }
 }
 
-/// Central body section for a modal dialog
+/// Central body section for a dialog
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersDialogBody;
+pub struct PlumeDialogBody;
 
-impl FeathersDialogBody {
-    /// Scene function for modal dialog body.
+impl PlumeDialogBody {
+    /// Scene function for dialog body.
     pub fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -262,13 +188,13 @@ impl FeathersDialogBody {
     }
 }
 
-/// Footer section for a modal dialog
+/// Footer section for a dialog
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersDialogFooter;
+pub struct PlumeDialogFooter;
 
-impl FeathersDialogFooter {
-    /// Scene function for modal dialog footer.
+impl PlumeDialogFooter {
+    /// Scene function for dialog footer.
     pub fn scene() -> impl Scene {
         bsn! {
             Node {

@@ -38,9 +38,9 @@ use crate::{
 /// This is spawnable by inheriting it as a "scene component".
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersTextInputContainer;
+pub struct PlumeTextInputContainer;
 
-impl FeathersTextInputContainer {
+impl PlumeTextInputContainer {
     fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -57,7 +57,7 @@ impl FeathersTextInputContainer {
                 border_radius: {BorderRadius::all(px(4.0))},
                 column_gap: px(4),
             }
-            FeathersTextInputContainer
+            PlumeTextInputContainer
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
             ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
             InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
@@ -70,33 +70,33 @@ impl FeathersTextInputContainer {
     }
 }
 
-/// Scene function to spawn a text input. For proper styling, this should be enclosed by a [`FeathersTextInputContainer`].
+/// Scene function to spawn a text input. For proper styling, this should be enclosed by a [`PlumeTextInputContainer`].
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersTextInputProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeTextInputProps`].
 ///
 /// ```ignore
-/// @FeathersTextInputContainer
+/// @PlumeTextInputContainer
 /// Children [
-///     :FeathersTextInput
+///     :PlumeTextInput
 /// ]
 /// ```
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersTextInputProps)]
+#[scene(PlumeTextInputProps)]
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersTextInput;
+pub struct PlumeTextInput;
 
-/// Props used to construct the [`FeathersTextInput`] scene.
+/// Props used to construct the [`PlumeTextInput`] scene.
 #[derive(Default, Clone)]
-pub struct FeathersTextInputProps {
+pub struct PlumeTextInputProps {
     /// Visible width
     pub visible_width: Option<f32>,
     /// Max characters
     pub max_characters: Option<usize>,
 }
 
-impl FeathersTextInput {
-    fn scene(props: FeathersTextInputProps) -> impl Scene {
+impl PlumeTextInput {
+    fn scene(props: PlumeTextInputProps) -> impl Scene {
         bsn! {
             Node {
                 flex_grow: {
@@ -107,7 +107,7 @@ impl FeathersTextInput {
                     }
                 } ,
             }
-            FeathersTextInput
+            PlumeTextInput
             EditableText {
                 cursor_width: 0.3,
                 visible_width: {props.visible_width},
@@ -133,7 +133,7 @@ impl FeathersTextInput {
 }
 
 fn update_text_cursor_color(
-    mut q_text_input: Query<&mut TextCursorStyle, With<FeathersTextInput>>,
+    mut q_text_input: Query<&mut TextCursorStyle, With<PlumeTextInput>>,
     theme: Res<UiTheme>,
 ) {
     if theme.is_changed() {
@@ -149,7 +149,7 @@ fn update_text_cursor_color(
 fn update_text_input_styles(
     q_inputs: Query<
         (Entity, Has<InteractionDisabled>, &InheritableThemeTextColor),
-        (With<FeathersTextInput>, Added<InteractionDisabled>),
+        (With<PlumeTextInput>, Added<InteractionDisabled>),
     >,
     mut commands: Commands,
 ) {
@@ -161,7 +161,7 @@ fn update_text_input_styles(
 fn update_text_input_styles_remove(
     q_inputs: Query<
         (Entity, Has<InteractionDisabled>, &InheritableThemeTextColor),
-        With<FeathersTextInput>,
+        With<PlumeTextInput>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut commands: Commands,

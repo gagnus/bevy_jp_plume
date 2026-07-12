@@ -24,12 +24,12 @@ reach down (e.g. `RadioGroup`), plume provides its own variant.
 ### Controls work when dropped in
 Every control must behave sensibly with nothing but its `@PlumeX { ... }`
 constructor — no obscure companion components required. Controls
-self-update their own value by default (still emitting `ValueChange`);
-apps opt out per entity with the `ExternalValue` marker.
+self-update their own value (still emitting `ValueChange`); app-vs-widget
+conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 
 ### Dialog-first
-`PlumeDialog` is the movable/floating dialog and the primary container;
-modal is an opt-in on it. No panes; `group`/`subpane` for structure.
+`PlumeDialog` is the movable/floating dialog and the primary container.
+There is no modal dialog. No panes; `group`/`subpane` for structure.
 
 ### Mouse-only interaction
 No tab navigation, focus ring, or keyboard activation of controls.
@@ -38,5 +38,5 @@ Text entry keeps click-to-focus and keyboard input.
 ## Layout
 
 `src/controls/`, `src/theme/` (palette → slot → token pipeline),
-`src/utils/` (cursor, fonts, corners, constants), `src/binding.rs`,
-`src/display/`, `src/containers/`.
+`src/utils/` (cursor, fonts, corners, constants), `src/imm/`
+(immediate-mode API — the public surface), `src/display/`, `src/containers/`.

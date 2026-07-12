@@ -1,30 +1,7 @@
-//! `bevy_feathers` is a collection of styled and themed widgets for building editors and
-//! inspectors.
+//! Plume: styled, themed bevy_ui controls for game editors, forked from `bevy_feathers`.
 //!
-//! The aesthetic choices made here are designed with a future Bevy Editor in mind,
-//! but this crate is deliberately exposed to the public to allow the broader ecosystem to easily create
-//! tooling for themselves and others that fits cohesively together.
-//!
-//! While it may be tempting to use this crate for your game's UI, it's deliberately not intended for that.
-//! We've opted for a clean, functional style, and prioritized consistency over customization.
-//! That said, if you like what you see, it can be a helpful learning tool.
-//! Consider copying this code into your own project,
-//! and refining the styles and abstractions provided to meet your needs.
-//!
-//! ## Best practices for event propagation
-//!
-//! Generally, when a widget handles an event,
-//! propagation of that event to parent entities should be stopped.
-//! This is important when writing your custom widgets, and understanding the behavior of existing widgets.
-//!
-//! For more guidance on this, see the documentation for [`EntityEvent`](bevy_ecs::event::EntityEvent).
-//!
-//! ## Warning: Experimental!
-//! All that said, this crate is still experimental and unfinished!
-//! It will change in breaking ways, and there will be both bugs and limitations.
-//!
-//! Please report issues, submit fixes and propose changes.
-//! Thanks for stress-testing; let's build something better together.
+//! Controls self-update their own value and work when simply dropped into a dialog.
+//! The parametric theme pipeline (palette → slot → token) styles everything.
 
 extern crate alloc;
 
@@ -54,10 +31,10 @@ pub mod utils;
 pub use theme::{dark_theme, light_theme, tokens};
 pub use utils::{constants, cursor, font_styles, rounded_corners};
 
-/// Plugin which installs observers and systems for feathers themes, cursors, and all controls.
-pub struct FeathersCorePlugin;
+/// Plugin which installs observers and systems for plume themes, cursors, and all controls.
+pub struct PlumeCorePlugin;
 
-impl Plugin for FeathersCorePlugin {
+impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.init_resource::<UiTheme>();
 
@@ -112,11 +89,11 @@ impl Plugin for FeathersCorePlugin {
     }
 }
 
-/// A plugin group that adds all dependencies for Feathers
-pub struct FeathersPlugins;
+/// A plugin group that adds all dependencies for Plume
+pub struct PlumePlugins;
 
-impl PluginGroup for FeathersPlugins {
+impl PluginGroup for PlumePlugins {
     fn build(self) -> PluginGroupBuilder {
-        PluginGroupBuilder::start::<Self>().add(FeathersCorePlugin)
+        PluginGroupBuilder::start::<Self>().add(PlumeCorePlugin)
     }
 }

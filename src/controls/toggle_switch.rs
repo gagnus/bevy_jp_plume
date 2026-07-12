@@ -34,9 +34,9 @@ use crate::{
 /// state; disabled by adding [`bevy_ui::InteractionDisabled`].
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct FeathersToggleSwitch;
+pub struct PlumeToggleSwitch;
 
-impl FeathersToggleSwitch {
+impl PlumeToggleSwitch {
     fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -46,7 +46,7 @@ impl FeathersToggleSwitch {
                 border_radius: px(5),
             }
             Checkbox
-            FeathersToggleSwitch
+            PlumeToggleSwitch
             ThemeBackgroundColor(tokens::SWITCH_BG)
             ThemeBorderColor(tokens::SWITCH_BORDER)
             AccessibilityNode(accesskit::Node::new(Role::Switch))
@@ -88,7 +88,7 @@ fn update_switch_styles(
             &ThemeBorderColor,
         ),
         (
-            With<FeathersToggleSwitch>,
+            With<PlumeToggleSwitch>,
             Or<(
                 Changed<Hovered>,
                 Added<Checked>,
@@ -154,7 +154,7 @@ fn update_switch_styles_remove(
             &ThemeBackgroundColor,
             &ThemeBorderColor,
         ),
-        With<FeathersToggleSwitch>,
+        With<PlumeToggleSwitch>,
     >,
     q_children: Query<&Children>,
     mut q_slide: Query<

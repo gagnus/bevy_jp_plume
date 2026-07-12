@@ -1,15 +1,15 @@
-//! The standard `bevy_feathers` light theme. NOT APPROVED YET
+//! The standard Plume light theme. NOT APPROVED YET
 use crate::theme::{
     EditablePalette, OklchaArray, ThemeProps, build_theme, default_axis_colors, default_token_slots,
 };
 use bevy_color::Oklcha;
 
-/// Default feathers light palette
+/// Default plume light palette
 pub fn create_light_theme() -> ThemeProps {
     build_theme(&default_light_palette().resolve(), default_token_slots())
 }
 
-/// Default feathers light palette editable inputs
+/// Default plume light palette editable inputs
 pub fn default_light_palette() -> EditablePalette {
     EditablePalette {
         neutrals: OklchaArray {

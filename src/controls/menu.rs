@@ -23,7 +23,7 @@ use bevy_ui_widgets::{
 
 use crate::{
     constants::{icons, size},
-    controls::{ButtonVariant, FeathersButton},
+    controls::{ButtonVariant, PlumeButton},
     display::icon,
     rounded_corners::RoundedCorners,
     theme::{ThemeBackgroundColor, ThemeBorderColor},
@@ -36,9 +36,9 @@ use bevy_input_focus::{FocusCause, InputFocus, tab_navigation::NavAction};
 /// This is spawnable by inheriting it as a "scene component".
 #[derive(SceneComponent, Clone, Default, Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersMenu;
+pub struct PlumeMenu;
 
-impl FeathersMenu {
+impl PlumeMenu {
     fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -46,7 +46,7 @@ impl FeathersMenu {
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
             }
-            FeathersMenu
+            PlumeMenu
             on(on_menu_event)
         }
     }
@@ -55,8 +55,8 @@ impl FeathersMenu {
 fn on_menu_event(
     mut ev: On<MenuEvent>,
     q_menu_children: Query<&Children>,
-    q_popovers: Query<&mut Visibility, With<FeathersMenuPopup>>,
-    q_buttons: Query<(), With<FeathersMenuButton>>,
+    q_popovers: Query<&mut Visibility, With<PlumeMenuPopup>>,
+    q_buttons: Query<(), With<PlumeMenuButton>>,
     mut commands: Commands,
     mut focus: ResMut<InputFocus>,
 ) {
@@ -124,15 +124,15 @@ fn on_menu_event(
 
 /// A menu button widget. This produces a button that has a dropdown arrow.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`FeathersMenuButtonProps`].
+/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeMenuButtonProps`].
 #[derive(SceneComponent, Default, Clone)]
-#[scene(FeathersMenuButtonProps)]
+#[scene(PlumeMenuButtonProps)]
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersMenuButton;
+pub struct PlumeMenuButton;
 
-/// Props used to construct a [`FeathersMenuButton`] scene.
-pub struct FeathersMenuButtonProps {
+/// Props used to construct a [`PlumeMenuButton`] scene.
+pub struct PlumeMenuButtonProps {
     /// Label for this menu button
     pub caption: Box<dyn SceneList>,
     /// Rounded corners options
@@ -141,7 +141,7 @@ pub struct FeathersMenuButtonProps {
     pub arrow: bool,
 }
 
-impl Default for FeathersMenuButtonProps {
+impl Default for PlumeMenuButtonProps {
     fn default() -> Self {
         Self {
             caption: Box::new(bsn_list!()),
@@ -150,17 +150,17 @@ impl Default for FeathersMenuButtonProps {
         }
     }
 }
-impl FeathersMenuButton {
-    fn scene(props: FeathersMenuButtonProps) -> impl Scene {
+impl PlumeMenuButton {
+    fn scene(props: PlumeMenuButtonProps) -> impl Scene {
         bsn! {
-            @FeathersButton {
+            @PlumeButton {
                 @caption: {props.caption},
                 @variant: ButtonVariant::Normal,
                 @corners: {props.corners},
             }
             ActivateOnPress
             MenuButton
-            FeathersMenuButton
+            PlumeMenuButton
             // Additional children for menu chevron
             Children [
                 {
@@ -179,9 +179,9 @@ impl FeathersMenuButton {
 /// A menu popup widget.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct FeathersMenuPopup;
+pub struct PlumeMenuPopup;
 
-impl FeathersMenuPopup {
+impl PlumeMenuPopup {
     fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -194,7 +194,7 @@ impl FeathersMenuPopup {
                 padding: UiRect::axes(px(0), px(4)),
                 border_radius: {RoundedCorners::All.to_border_radius(4.0)},
             }
-            FeathersMenuPopup
+            PlumeMenuPopup
             MenuPopup
             Visibility::Hidden
             ThemeBackgroundColor(tokens::MENU_BG)
