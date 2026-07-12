@@ -10,7 +10,9 @@ use bevy::{
 use bevy_jp_plume::{
     PlumePlugins,
     constants::icons,
-    containers::{flex_spacer, group, group_body, group_header},
+    containers::{
+        flex_spacer, group, group_body, group_header, subpane, subpane_body, subpane_header,
+    },
     controls::{
         OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDialog, PlumeRadio,
         PlumeSelect, PlumeSlider, PlumeTextInput, PlumeTextInputContainer, PlumeToggleSwitch,
@@ -165,12 +167,20 @@ fn controls_column() -> impl Scene {
                     icon(icons::CHEVRON_DOWN),
                 ]
             ),
-            group() Children [
-                group_header() Children [
-                    caption("Group"),
+            subpane() Children [
+                subpane_header() Children [
+                    caption("Subpane"),
                 ],
-                group_body() Children [
-                    label_dim("Group body"),
+                subpane_body() Children [
+                    label_dim("Subpane body"),
+                    group() Children [
+                        group_header() Children [
+                            caption("Group"),
+                        ],
+                        group_body() Children [
+                            label_dim("Group body"),
+                        ],
+                    ],
                 ],
             ],
         ]
