@@ -78,7 +78,7 @@ impl PlumeSlider {
             Hovered
             ThemeBorderColor(tokens::SLIDER_BORDER)
             Slider {
-                track_click: TrackClick::Drag,
+                track_click: TrackClick::Snap,
                 orientation: SliderOrientation::Horizontal,
             }
             PlumeSlider
