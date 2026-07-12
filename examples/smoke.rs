@@ -3,8 +3,8 @@ use bevy::{
     prelude::*,
     ui::Checked,
     ui_widgets::{
-        Activate, RadioGroup, SliderValue, ValueChange, checkbox_self_update,
-        listbox_update_selection, radio_self_update, slider_self_update,
+        Activate, RadioGroup, SliderValue, ValueChange, checkbox_self_update, radio_self_update,
+        slider_self_update,
     },
 };
 use bevy_jp_plume::{
