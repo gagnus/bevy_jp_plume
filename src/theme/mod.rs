@@ -257,20 +257,20 @@ pub enum Slot {
     /// fills are [`Slot::Transparent`].
     TextDim1,
     /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SLIDER_THUMB`, `SCROLLBAR_THUMB`,
-    /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/switch), `RADIO_BORDER_CHECKED`, `RADIO_MARK`,
+    /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/switch), `RADIO_BORDER_CHECKED`, `RADIO_BG_CHECKED`,
     /// `TEXT_INPUT_SELECTION`.
     Accent0,
     /// Call-to-action hover: `BUTTON_PRIMARY_BG_HOVER`, `SLIDER_BAR_HOVER`/`_PRESSED`,
     /// `*_BG_CHECKED_HOVER`/`*_BORDER_CHECKED_HOVER` (checkbox/switch), `RADIO_BORDER_CHECKED_HOVER`,
-    /// `RADIO_MARK_HOVER`.
+    /// `RADIO_BG_CHECKED_HOVER`.
     Accent1,
     /// Call-to-action pressed: `BUTTON_PRIMARY_BG_PRESSED`, `SCROLLBAR_THUMB_HOVER`,
     /// `*_BG_CHECKED_PRESSED`/`*_BORDER_CHECKED_PRESSED` (checkbox/switch),
-    /// `RADIO_BORDER_CHECKED_PRESSED`, `RADIO_MARK_PRESSED`.
+    /// `RADIO_BORDER_CHECKED_PRESSED`, `RADIO_BG_CHECKED_PRESSED`.
     Accent2,
     /// Brightest accent: `TEXT_INPUT_CURSOR`.
     Accent3,
-    /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`,
+    /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`, `RADIO_MARK`,
     /// `SWITCH_SLIDE_BG`/`_BORDER_CHECKED` (+ hover/pressed).
     Contrast,
     /// Focus/selection ring color (reserved; no token maps here yet).
@@ -282,7 +282,7 @@ pub enum Slot {
     /// Blue axis (reserved for axis-colored widgets).
     ZAxis,
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
-    /// all `RADIO_BG*`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED` (checkbox/switch),
+    /// unchecked `RADIO_BG*`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED` (checkbox/switch),
     /// `TEXT_INPUT_SELECTION_UNFOCUSED`, `LISTROW_BG`.
     Transparent,
 }
@@ -504,9 +504,9 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::RADIO_BG_HOVER, Slot::Transparent),
     (tokens::RADIO_BG_PRESSED, Slot::Transparent),
     (tokens::RADIO_BG_DISABLED, Slot::Transparent),
-    (tokens::RADIO_BG_CHECKED, Slot::Transparent),
-    (tokens::RADIO_BG_CHECKED_HOVER, Slot::Transparent),
-    (tokens::RADIO_BG_CHECKED_PRESSED, Slot::Transparent),
+    (tokens::RADIO_BG_CHECKED, Slot::Accent0),
+    (tokens::RADIO_BG_CHECKED_HOVER, Slot::Accent1),
+    (tokens::RADIO_BG_CHECKED_PRESSED, Slot::Accent2),
     (tokens::RADIO_BG_CHECKED_DISABLED, Slot::Transparent),
     (tokens::RADIO_BORDER, Slot::Neutral4),
     (tokens::RADIO_BORDER_HOVER, Slot::Neutral5),
@@ -516,9 +516,9 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::RADIO_BORDER_CHECKED_HOVER, Slot::Accent1),
     (tokens::RADIO_BORDER_CHECKED_PRESSED, Slot::Accent2),
     (tokens::RADIO_BORDER_CHECKED_DISABLED, Slot::TextDim1),
-    (tokens::RADIO_MARK, Slot::Accent0),
-    (tokens::RADIO_MARK_HOVER, Slot::Accent1),
-    (tokens::RADIO_MARK_PRESSED, Slot::Accent2),
+    (tokens::RADIO_MARK, Slot::Contrast),
+    (tokens::RADIO_MARK_HOVER, Slot::Contrast),
+    (tokens::RADIO_MARK_PRESSED, Slot::Contrast),
     (tokens::RADIO_MARK_DISABLED, Slot::TextDim1),
     (tokens::RADIO_TEXT, Slot::Text1),
     (tokens::RADIO_TEXT_DISABLED, Slot::TextDim1),
