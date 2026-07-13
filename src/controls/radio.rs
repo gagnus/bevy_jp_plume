@@ -6,6 +6,7 @@ use bevy_ecs::{
     entity::Entity,
     hierarchy::Children,
     lifecycle::RemovedComponents,
+    observer::On,
     query::{Added, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
@@ -19,7 +20,7 @@ use bevy_ui::{
     AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
     LayoutConfig, Node, px,
 };
-use bevy_ui_widgets::RadioButton;
+use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
     constants::{fonts, size},
@@ -68,6 +69,7 @@ impl PlumeRadio {
                 min_height: size::ROW_HEIGHT,
             }
             RadioButton
+            on(radio_check_self)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
             InheritableFont {
@@ -105,6 +107,52 @@ impl PlumeRadio {
                 {props.caption}
             ]
         }
+    }
+}
+
+/// Groups [`PlumeRadio`] children into a column and keeps their checks mutually
+/// exclusive. A radio outside any group still checks itself when clicked; only
+/// the unchecking of siblings needs the group.
+///
+/// This is spawnable by inheriting it as a "scene component".
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+pub struct PlumeRadioGroup;
+
+impl PlumeRadioGroup {
+    fn scene() -> impl Scene {
+        bsn! {
+            Node {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                row_gap: px(4),
+            }
+            RadioGroup
+            PlumeRadioGroup
+            on(radio_group_uncheck_others)
+        }
+    }
+}
+
+// The clicked radio checks itself ([`radio_check_self`]); the group only clears siblings.
+fn radio_group_uncheck_others(
+    ev: On<ValueChange<Entity>>,
+    q_children: Query<&Children>,
+    q_radio: Query<(), With<RadioButton>>,
+    mut commands: Commands,
+) {
+    for descendant in q_children.iter_descendants(ev.source) {
+        if q_radio.contains(descendant) && descendant != ev.value {
+            commands.entity(descendant).remove::<Checked>();
+        }
+    }
+}
+
+// The headless widget only emits `ValueChange<bool>` (always `true`) for an enabled,
+// unchecked radio, so no re-checks are needed here.
+fn radio_check_self(ev: On<ValueChange<bool>>, mut commands: Commands) {
+    if ev.value {
+        commands.entity(ev.source).insert(Checked);
     }
 }
 

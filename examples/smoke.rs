@@ -2,15 +2,15 @@
 use bevy::{
     prelude::*,
     ui::Checked,
-    ui_widgets::{Activate, RadioGroup, SliderValue, ValueChange, radio_self_update},
+    ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_jp_plume::{
     PlumePlugins,
     constants::{font_awesome, icons},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
-        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeSelect,
-        PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
+        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeRadioGroup,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
     display::{caption, fa_icon_solid, icon, label, label_dim},
@@ -97,13 +97,7 @@ fn controls_column() -> impl Scene {
             controls_row(Some(tokens::GROUP_BG), false),
             controls_row(Some(tokens::GROUP_BG), true),
             (
-                Node {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    row_gap: px(4),
-                }
-                RadioGroup
-                on(radio_self_update)
+                @PlumeRadioGroup
                 Children [
                     (
                         @PlumeRadio {
@@ -119,14 +113,7 @@ fn controls_column() -> impl Scene {
                 ]
             ),
             (
-                // TODO: make this not needed
-                Node {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    row_gap: px(4),
-                }
-                RadioGroup
-                on(radio_self_update)
+                @PlumeRadioGroup
                 Children [
                     (
                         @PlumeRadio {
@@ -192,7 +179,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
             @PlumeToggleSwitch maybe_disabled(disabled),
             @PlumeToggleSwitch Checked maybe_disabled(disabled),
             (
-                // TODO: this ones don't work and they should...
+                // Group-less: checks itself when clicked, nothing unchecks it.
                 @PlumeRadio
                 maybe_disabled(disabled)
             ),
