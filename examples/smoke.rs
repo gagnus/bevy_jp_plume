@@ -7,10 +7,10 @@ use bevy::{
 use bevy_jp_plume::{
     PlumePlugins,
     constants::icons,
-    containers::{flex_spacer, group, subpane, subpane_body, subpane_header},
+    containers::{PlumeDialog, flex_spacer, group, subpane, subpane_body, subpane_header},
     controls::{
-        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDialog, PlumeRadio,
-        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
+        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeSelect,
+        PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
     display::{caption, icon, label, label_dim},
@@ -182,7 +182,7 @@ fn controls_column() -> impl Scene {
 fn dialog() -> impl Scene {
     bsn! {
         @PlumeDialog {
-            @title: {"Dialog".to_string()},
+            @title: bsn! { caption("Dialog") },
             @width: px(280),
             @left: px(320),
             @top: px(40),

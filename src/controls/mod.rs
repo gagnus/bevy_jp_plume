@@ -3,7 +3,6 @@
 mod button;
 mod checkbox;
 mod color_swatch;
-mod dialog;
 mod listview;
 mod menu;
 mod radio;
@@ -16,7 +15,6 @@ mod toggle_switch;
 pub use button::*;
 pub use checkbox::*;
 pub use color_swatch::*;
-pub use dialog::*;
 pub use listview::PlumeListRow;
 pub use radio::*;
 pub use scrollbar::*;

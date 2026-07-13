@@ -9,7 +9,7 @@ use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, Node,
-    PositionType, UiRect, Val, px, widget::Text,
+    PositionType, UiRect, Val, px,
 };
 use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 
@@ -18,14 +18,14 @@ use crate::{
     controls::{ButtonVariant, PlumeToolButton},
     display::icon,
     font_styles::InheritableFont,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, ThemedText},
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
 
 /// Props used to construct a [`PlumeDialog`] scene.
 pub struct PlumeDialogProps {
-    /// Title shown in the window's drag bar.
-    pub title: String,
+    /// Title content shown in the window's drag bar (e.g. `bsn! { caption("…") }`).
+    pub title: Box<dyn SceneList>,
     /// Body content of the window.
     pub contents: Box<dyn SceneList>,
     /// How wide the window should be.
@@ -39,7 +39,7 @@ pub struct PlumeDialogProps {
 impl Default for PlumeDialogProps {
     fn default() -> Self {
         Self {
-            title: String::new(),
+            title: Box::new(bsn_list!()),
             contents: Box::new(bsn_list!()),
             width: Val::Auto,
             left: px(120),
@@ -103,7 +103,7 @@ impl PlumeDialog {
                         weight: FontWeight::BOLD,
                     }
                     Children [
-                        (Text({props.title}) ThemedText),
+                        {props.title},
                         @PlumeDialogClose
                     ]
                 ),
