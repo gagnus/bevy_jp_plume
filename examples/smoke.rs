@@ -2,10 +2,7 @@
 use bevy::{
     prelude::*,
     ui::Checked,
-    ui_widgets::{
-        Activate, RadioGroup, SliderValue, ValueChange, checkbox_self_update, radio_self_update,
-        slider_self_update,
-    },
+    ui_widgets::{Activate, RadioGroup, SliderValue, ValueChange, radio_self_update},
 };
 use bevy_jp_plume::{
     PlumePlugins,
@@ -101,13 +98,10 @@ fn controls_column() -> impl Scene {
                 }
                 on(|_: On<Activate>| info!("button clicked"))
             ),
-            (
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                on(checkbox_self_update)
-            ),
-            (@PlumeToggleSwitch on(checkbox_self_update)),
+            @PlumeCheckbox {
+                @caption: bsn! { caption("Checkbox") }
+            },
+            @PlumeToggleSwitch,
             (
                 Node {
                     display: Display::Flex,
@@ -136,7 +130,6 @@ fn controls_column() -> impl Scene {
                     @max: 100.0,
                 }
                 SliderValue(20.0)
-                on(slider_self_update)
                 on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
             ),
             (

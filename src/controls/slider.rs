@@ -25,6 +25,7 @@ use bevy_ui::{
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderPrecision, SliderRange, SliderValue, TrackClick,
+    slider_self_update,
 };
 
 use crate::{
@@ -82,6 +83,7 @@ impl PlumeSlider {
                 orientation: SliderOrientation::Horizontal,
             }
             PlumeSlider
+            on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
             EntityCursor::System(bevy_window::SystemCursorIcon::EwResize)

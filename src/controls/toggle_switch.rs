@@ -17,7 +17,7 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{Checked, InteractionDisabled, Node, PositionType, Pressed, percent, px};
-use bevy_ui_widgets::{ActivateOnPress, Checkbox};
+use bevy_ui_widgets::{ActivateOnPress, Checkbox, checkbox_self_update};
 
 use crate::{
     constants::size,
@@ -47,6 +47,7 @@ impl PlumeToggleSwitch {
             }
             Checkbox
             PlumeToggleSwitch
+            on(checkbox_self_update)
             ThemeBackgroundColor(tokens::SWITCH_BG)
             ThemeBorderColor(tokens::SWITCH_BORDER)
             AccessibilityNode(accesskit::Node::new(Role::Switch))

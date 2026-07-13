@@ -21,7 +21,7 @@ use bevy_ui::{
     AlignItems, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
     PositionType, Pressed, UiRect, UiTransform, px,
 };
-use bevy_ui_widgets::{ActivateOnPress, Checkbox};
+use bevy_ui_widgets::{ActivateOnPress, Checkbox, checkbox_self_update};
 
 use crate::{
     constants::{fonts, size},
@@ -70,6 +70,7 @@ impl PlumeCheckbox {
             }
             Checkbox
             CheckboxFrame
+            on(checkbox_self_update)
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::CHECKBOX_TEXT)
