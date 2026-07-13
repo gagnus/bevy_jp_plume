@@ -10,8 +10,7 @@ use bevy_jp_plume::{
     containers::{flex_spacer, group, subpane, subpane_body, subpane_header},
     controls::{
         OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDialog, PlumeRadio,
-        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeTextInputContainer, PlumeToggleSwitch,
-        list_rows_from_strings,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
     display::{caption, icon, label, label_dim},
@@ -150,12 +149,7 @@ fn controls_column() -> impl Scene {
                 @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
                 @max_visible: 4,
             },
-            (
-                @PlumeTextInputContainer
-                Children [
-                    @PlumeTextInput
-                ]
-            ),
+            @PlumeTextInput,
             (
                 Node {
                     display: Display::Flex,

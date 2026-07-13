@@ -19,68 +19,21 @@ use bevy_scene::prelude::*;
 use bevy_text::{
     EditableText, FontSource, FontWeight, LineBreak, TextCursorStyle, TextFont, TextLayout,
 };
-use bevy_ui::{
-    AlignItems, BorderRadius, Display, InteractionDisabled, JustifyContent, Node, UiRect, px,
-};
+use bevy_ui::{BorderRadius, InteractionDisabled, Node, UiRect, px};
 
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
-    font_styles::InheritableFont,
     theme::{
         InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, ThemedText, UiTheme,
     },
     tokens,
 };
 
-/// Decorative frame around a text input widget. This is a separate entity to allow icons
-/// (such as "search" or "clear") to be inserted adjacent to the input.
-///
-/// This is spawnable by inheriting it as a "scene component".
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[reflect(Component, Default, Clone)]
-pub struct PlumeTextInputContainer;
-
-impl PlumeTextInputContainer {
-    fn scene() -> impl Scene {
-        bsn! {
-            Node {
-                height: size::ROW_HEIGHT,
-                display: Display::Flex,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect {
-                    right: px(3.0),
-                    left: px(3.0),
-                },
-                flex_grow: 1.0,
-                border: px(2),
-                border_radius: {BorderRadius::all(px(4.0))},
-                column_gap: px(4),
-            }
-            PlumeTextInputContainer
-            ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
-            ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
-            InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::COMPACT_FONT,
-                weight: FontWeight::NORMAL,
-            }
-        }
-    }
-}
-
-/// Scene function to spawn a text input. For proper styling, this should be enclosed by a [`PlumeTextInputContainer`].
+/// A single-line editable text field, self-framed (background, border, and sizing
+/// live on this entity — no wrapper container needed).
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional [`PlumeTextInputProps`].
-///
-/// ```ignore
-/// @PlumeTextInputContainer
-/// Children [
-///     :PlumeTextInput
-/// ]
-/// ```
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeTextInputProps)]
 #[derive(Reflect)]
@@ -100,6 +53,9 @@ impl PlumeTextInput {
     fn scene(props: PlumeTextInputProps) -> impl Scene {
         bsn! {
             Node {
+                padding: UiRect::axes(px(5.0), px(3.0)),
+                border: px(2),
+                border_radius: {BorderRadius::all(px(4.0))},
                 flex_grow: {
                     if props.visible_width.is_some() {
                         0_f32
@@ -109,6 +65,9 @@ impl PlumeTextInput {
                 } ,
             }
             PlumeTextInput
+            ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
+            ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
+            InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)
             EditableText {
