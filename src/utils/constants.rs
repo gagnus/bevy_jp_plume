@@ -78,20 +78,8 @@ pub mod size {
     /// Gutter reserved beside scrollable content for the scrollbar plus clearance
     pub const SCROLLBAR_GUTTER: Val = Val::Px(10.0);
 
-    /// Font size used for dialog box titles
-    pub const HEADER_FONT: FontSize = FontSize::Px(16.0);
-
-    /// Regular font size, used for most widget captions
+    /// The one font size: every control and container uses this.
     pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
-
-    /// Slightly smaller font size, used for text inputs
-    pub const COMPACT_FONT: FontSize = FontSize::Px(13.0);
-
-    /// Small font size
-    pub const SMALL_FONT: FontSize = FontSize::Px(12.0);
-
-    /// Extra-small font size
-    pub const EXTRA_SMALL_FONT: FontSize = FontSize::Px(11.0);
 }
 
 /// FontAwesome glyph constants (`"\u{...}"` strings) for use in labels and buttons.

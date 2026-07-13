@@ -82,7 +82,7 @@ impl PlumeTextInput {
             template(|ctx| {
                 Ok(TextFont {
                     font: FontSource::Handle(ctx.resource::<AssetServer>().load(fonts::REGULAR)),
-                    font_size: size::COMPACT_FONT,
+                    font_size: size::MEDIUM_FONT,
                     weight: FontWeight::NORMAL,
                     ..Default::default()
                 })

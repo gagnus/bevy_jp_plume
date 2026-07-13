@@ -15,7 +15,7 @@ use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
-use bevy_text::{FontSize, FontWeight};
+use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow,
     PositionType, Selected, UiRect, px,
@@ -123,7 +123,7 @@ impl PlumeListRow {
             ThemeBackgroundColor(tokens::LISTROW_BG)
             InheritableFont {
                 font: fonts::REGULAR,
-                font_size: FontSize::Px(14.0),
+                font_size: size::MEDIUM_FONT,
                 weight: FontWeight::NORMAL,
             }
             Hovered
