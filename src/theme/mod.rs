@@ -562,7 +562,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::TEXT_INPUT_CURSOR, Slot::Accent3),
     (tokens::TEXT_INPUT_SELECTION, Slot::Accent0),
     (tokens::TEXT_INPUT_SELECTION_UNFOCUSED, Slot::Transparent),
-    (tokens::TEXT_INPUT_BORDER, Slot::Transparent),
+    (tokens::TEXT_INPUT_BORDER, Slot::Neutral2),
     (tokens::SUBPANE_HEADER_BG, Slot::Neutral3),
     (tokens::SUBPANE_HEADER_BORDER, Slot::Neutral4),
     (tokens::SUBPANE_HEADER_TEXT, Slot::Text0),

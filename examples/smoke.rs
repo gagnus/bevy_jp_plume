@@ -89,16 +89,46 @@ fn controls_column() -> impl Scene {
         Children [
             label("Plume smoke test"),
             label_dim("Bare controls, minimal wiring"),
-            (
-                @PlumeButton {
-                    @caption: bsn! { caption("Button") }
-                }
-                on(|_: On<Activate>| info!("button clicked"))
-            ),
-            @PlumeCheckbox {
-                @caption: bsn! { caption("Checkbox") }
-            },
-            @PlumeToggleSwitch,
+            row() Node { width: px(800.) } Children [
+                (
+                    @PlumeButton {
+                        @caption: bsn! { caption("Button") }
+                    }
+                    on(|_: On<Activate>| info!("button clicked"))
+                ),
+                @PlumeCheckbox {
+                    @caption: bsn! { caption("Checkbox") }
+                },
+                @PlumeToggleSwitch,
+                (
+                    @PlumeSlider {
+                        @max: 100.0,
+                    }
+                    SliderValue(20.0)
+                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
+                ),
+                (
+                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
+                    @PlumeSelect {
+                        @options: {list_rows_from_strings(
+                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
+                            Some(0),
+                        )},
+                        @max_visible: 4,
+                    }
+                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
+                        if let Ok(option) = q_options.get(change.value) {
+                            info!("select -> option {}", option.0);
+                        }
+                    })
+                ),
+                // 3 options / 4 visible: fits, scrollbar hidden.
+                @PlumeSelect {
+                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
+                    @max_visible: 4,
+                },
+                @PlumeTextInput,
+            ],
             (
                 Node {
                     display: Display::Flex,
@@ -122,34 +152,6 @@ fn controls_column() -> impl Scene {
                     },
                 ]
             ),
-            (
-                @PlumeSlider {
-                    @max: 100.0,
-                }
-                SliderValue(20.0)
-                on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-            ),
-            (
-                // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(
-                        ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                        Some(0),
-                    )},
-                    @max_visible: 4,
-                }
-                on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                    if let Ok(option) = q_options.get(change.value) {
-                        info!("select -> option {}", option.0);
-                    }
-                })
-            ),
-            // 3 options / 4 visible: fits, scrollbar hidden.
-            @PlumeSelect {
-                @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                @max_visible: 4,
-            },
-            @PlumeTextInput,
             row() Children [
                 label("Swatch"),
                 flex_spacer(),
