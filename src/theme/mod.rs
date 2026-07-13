@@ -245,8 +245,8 @@ pub enum Slot {
     /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
     /// `SUBPANE_HEADER_TEXT`.
     Text0,
-    /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
-    /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed).
+    /// Body text & knobs: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
+    /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed), `SLIDER_THUMB`.
     Text1,
     /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
     /// `SLIDER_TEXT_DISABLED`, `TEXT_INPUT_TEXT_DISABLED`,
@@ -477,6 +477,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::SLIDER_TEXT, Slot::Text0),
     (tokens::SLIDER_TEXT_DISABLED, Slot::TextDim0),
     (tokens::SLIDER_BORDER, Slot::Transparent),
+    (tokens::SLIDER_THUMB, Slot::Text1),
     (tokens::SCROLLBAR_BG, Slot::Neutral2),
     (tokens::SCROLLBAR_THUMB, Slot::Accent0),
     (tokens::SCROLLBAR_THUMB_HOVER, Slot::Accent2),

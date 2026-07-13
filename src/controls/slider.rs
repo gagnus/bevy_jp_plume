@@ -19,7 +19,7 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
+    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Display, FlexDirection, Gradient,
     InteractionDisabled, InterpolationColorSpace, JustifyContent, LinearGradient, Node,
     PositionType, Pressed, UiRect, percent, px, widget::Text,
 };
@@ -34,7 +34,7 @@ use crate::{
     display::caption,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBorderColor, UiTheme},
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, UiTheme},
     tokens,
 };
 
@@ -105,22 +105,41 @@ impl PlumeSlider {
                     color_space: InterpolationColorSpace::LinearRgba,
                 })]))
             })
-            Children [(
-                // Text container
-                Node {
-                    display: Display::Flex,
-                    position_type: PositionType::Absolute,
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                }
-                InheritableFont {
-                    font: fonts::MONO,
-                    font_size: size::SMALL_FONT,
-                    weight: FontWeight::NORMAL,
-                }
-                Children [(caption("10.0") SliderValueText)]
-            )]
+            Children [
+                (
+                    // Thumb; update_slider_pos moves it to the value position.
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: percent(0),
+                        top: percent(50),
+                        width: px(14),
+                        height: px(14),
+                        margin: UiRect {
+                            left: px(-7),
+                            top: px(-7),
+                        },
+                        border_radius: {BorderRadius::all(px(7))},
+                    }
+                    PlumeSliderThumb
+                    ThemeBackgroundColor(tokens::SLIDER_THUMB)
+                ),
+                (
+                    // Text container
+                    Node {
+                        display: Display::Flex,
+                        position_type: PositionType::Absolute,
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                    }
+                    InheritableFont {
+                        font: fonts::MONO,
+                        font_size: size::SMALL_FONT,
+                        weight: FontWeight::NORMAL,
+                    }
+                    Children [(caption("10.0") SliderValueText)]
+                )
+            ]
         }
     }
 }
@@ -129,6 +148,11 @@ impl PlumeSlider {
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SliderValueText;
+
+/// Marker for the thumb
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct PlumeSliderThumb;
 
 fn update_slider_styles(
     mut q_sliders: Query<
@@ -321,13 +345,20 @@ fn update_slider_pos(
     >,
     q_children: Query<&Children>,
     mut q_slider_text: Query<&mut Text, With<SliderValueText>>,
+    mut q_thumbs: Query<&mut Node, With<PlumeSliderThumb>>,
 ) {
     for (slider_ent, value, range, precision, mut gradient) in q_sliders.iter_mut() {
+        let percent_value = (range.thumb_position(value.0) * 100.0).clamp(0.0, 100.0);
         if let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..] {
-            let percent_value = (range.thumb_position(value.0) * 100.0).clamp(0.0, 100.0);
             linear_gradient.stops[1].point = percent(percent_value);
             linear_gradient.stops[2].point = percent(percent_value);
         }
+
+        q_children.iter_descendants(slider_ent).for_each(|child| {
+            if let Ok(mut thumb) = q_thumbs.get_mut(child) {
+                thumb.left = percent(percent_value);
+            }
+        });
 
         // Find slider text child entity and update its text with the formatted value
         let precision = precision.cloned().unwrap_or_default().0;

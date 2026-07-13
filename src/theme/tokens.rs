@@ -85,6 +85,8 @@ pub const SLIDER_TEXT: ThemeToken = ThemeToken::new_static("plume.slider.text");
 pub const SLIDER_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.text.disabled");
 /// Border for slider
 pub const SLIDER_BORDER: ThemeToken = ThemeToken::new_static("plume.slider.border");
+/// Slider thumb
+pub const SLIDER_THUMB: ThemeToken = ThemeToken::new_static("plume.slider.thumb");
 
 // Scrollbar
 
