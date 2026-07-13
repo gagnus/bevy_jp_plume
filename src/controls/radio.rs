@@ -131,7 +131,7 @@ fn update_radio_styles(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    mut q_outline: Query<(&ThemeBorderColor, &ThemeBackgroundColor), With<RadioOutline>>,
     mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut commands: Commands,
 ) {
@@ -148,7 +148,7 @@ fn update_radio_styles(
         else {
             continue;
         };
-        let outline_border = q_outline.get_mut(outline_ent).unwrap();
+        let (outline_border, outline_bg) = q_outline.get_mut(outline_ent).unwrap();
         let mark_color = q_mark.get_mut(mark_ent).unwrap();
         set_radio_styles(
             radio_ent,
@@ -157,6 +157,7 @@ fn update_radio_styles(
             disabled,
             checked,
             outline_border,
+            outline_bg,
             mark_color,
             font_color,
             &mut commands,
@@ -175,7 +176,7 @@ fn update_radio_styles_remove(
         With<RadioButton>,
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    mut q_outline: Query<(&ThemeBorderColor, &ThemeBackgroundColor), With<RadioOutline>>,
     mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -198,7 +199,7 @@ fn update_radio_styles_remove(
                 else {
                     return;
                 };
-                let outline_border = q_outline.get_mut(outline_ent).unwrap();
+                let (outline_border, outline_bg) = q_outline.get_mut(outline_ent).unwrap();
                 let mark_color = q_mark.get_mut(mark_ent).unwrap();
                 set_radio_styles(
                     radio_ent,
@@ -207,6 +208,7 @@ fn update_radio_styles_remove(
                     disabled,
                     checked,
                     outline_border,
+                    outline_bg,
                     mark_color,
                     font_color,
                     &mut commands,
@@ -222,6 +224,7 @@ fn set_radio_styles(
     disabled: bool,
     checked: bool,
     outline_border: &ThemeBorderColor,
+    outline_bg: &ThemeBackgroundColor,
     mark_color: &ThemeBackgroundColor,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
@@ -251,11 +254,15 @@ fn set_radio_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change outline border
+    // Change outline border or bg
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(outline_border_token))
+            .insert(ThemeBorderColor(outline_border_token));
+    }
+    if outline_bg.0 != outline_bg_token {
+        commands
+            .entity(outline_ent)
             .insert(ThemeBackgroundColor(outline_bg_token));
     }
 
