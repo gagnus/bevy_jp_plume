@@ -1,4 +1,4 @@
-//! Horizontal drag slider with inline value text.
+//! Horizontal slider: thin track with a round draggable thumb.
 use core::f32::consts::PI;
 
 use bevy_app::{Plugin, PreUpdate};
@@ -17,24 +17,18 @@ use bevy_ecs::{
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Display, FlexDirection, Gradient,
-    InteractionDisabled, InterpolationColorSpace, JustifyContent, LinearGradient, Node,
-    PositionType, Pressed, UiRect, percent, px, widget::Text,
+    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Gradient, InteractionDisabled,
+    InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
 };
 use bevy_ui_widgets::{
-    Slider, SliderOrientation, SliderPrecision, SliderRange, SliderValue, TrackClick,
-    slider_self_update,
+    Slider, SliderOrientation, SliderRange, SliderValue, TrackClick, slider_self_update,
 };
 
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     cursor::EntityCursor,
-    display::caption,
-    font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, UiTheme},
+    theme::{ThemeBackgroundColor, UiTheme},
     tokens,
 };
 
@@ -43,7 +37,8 @@ use crate::{
 /// This is spawnable by inheriting it as a "scene component" with optional [`PlumeSliderProps`].
 ///
 /// Emits [`bevy_ui_widgets::ValueChange<f32>`] when the slider value is changed; disabled by
-/// adding [`bevy_ui::InteractionDisabled`].
+/// adding [`bevy_ui::InteractionDisabled`]. Shows no value text — pair it with a separate
+/// display element when the number matters.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSliderProps)]
 #[require(Slider)]
@@ -67,17 +62,14 @@ impl Default for PlumeSliderProps {
 impl PlumeSlider {
     fn scene(props: PlumeSliderProps) -> impl Scene {
         bsn! {
+            // Full-height hit area; the visible track is a thin child strip.
             Node {
                 height: size::ROW_HEIGHT,
-                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 padding: UiRect::horizontal(px(8)),
                 flex_grow: 1.0,
-                border: px(2),
-                border_radius: {RoundedCorners::All.to_border_radius(6.0)},
             }
             Hovered
-            ThemeBorderColor(tokens::SLIDER_BORDER)
             Slider {
                 track_click: TrackClick::Snap,
                 orientation: SliderOrientation::Horizontal,
@@ -87,67 +79,58 @@ impl PlumeSlider {
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
             EntityCursor::System(bevy_window::SystemCursorIcon::EwResize)
-            InheritableThemeTextColor(tokens::SLIDER_TEXT)
-            // Use a gradient to draw the moving bar, seeded from the theme so the
-            // slider is styled on its first frame regardless of scene-application order.
-            template(|ctx| {
-                let theme = ctx.resource::<UiTheme>();
-                let bar = theme.color(&tokens::SLIDER_BAR);
-                let bg = theme.color(&tokens::SLIDER_BG);
-                Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
-                    angle: PI * 0.5,
-                    stops: vec![
-                        ColorStop::new(bar, percent(0)),
-                        ColorStop::new(bar, percent(50)),
-                        ColorStop::new(bg, percent(50)),
-                        ColorStop::new(bg, percent(100)),
-                    ],
-                    color_space: InterpolationColorSpace::LinearRgba,
-                })]))
-            })
             Children [
+                (
+                    Node {
+                        height: px(4),
+                        flex_grow: 1.0,
+                        border_radius: {BorderRadius::all(px(2))},
+                    }
+                    PlumeSliderTrack
+                    // Bar/track drawn as a gradient, seeded from the theme so the
+                    // slider is styled on its first frame regardless of scene-application order.
+                    template(|ctx| {
+                        let theme = ctx.resource::<UiTheme>();
+                        let bar = theme.color(&tokens::SLIDER_BAR);
+                        let bg = theme.color(&tokens::SLIDER_BG);
+                        Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
+                            angle: PI * 0.5,
+                            stops: vec![
+                                ColorStop::new(bar, percent(0)),
+                                ColorStop::new(bar, percent(50)),
+                                ColorStop::new(bg, percent(50)),
+                                ColorStop::new(bg, percent(100)),
+                            ],
+                            color_space: InterpolationColorSpace::LinearRgba,
+                        })]))
+                    })
+                ),
                 (
                     // Thumb; update_slider_pos moves it to the value position.
                     Node {
                         position_type: PositionType::Absolute,
                         left: percent(0),
                         top: percent(50),
-                        width: px(14),
-                        height: px(14),
+                        width: px(16),
+                        height: px(16),
                         margin: UiRect {
-                            left: px(-7),
-                            top: px(-7),
+                            left: px(-8),
+                            top: px(-8),
                         },
-                        border_radius: {BorderRadius::all(px(7))},
+                        border_radius: {BorderRadius::all(px(8))},
                     }
                     PlumeSliderThumb
                     ThemeBackgroundColor(tokens::SLIDER_THUMB)
-                ),
-                (
-                    // Text container
-                    Node {
-                        display: Display::Flex,
-                        position_type: PositionType::Absolute,
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                    }
-                    InheritableFont {
-                        font: fonts::MONO,
-                        font_size: size::SMALL_FONT,
-                        weight: FontWeight::NORMAL,
-                    }
-                    Children [(caption("10.0") SliderValueText)]
                 )
             ]
         }
     }
 }
 
-/// Marker for the text
+/// Marker for the track strip
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SliderValueText;
+struct PlumeSliderTrack;
 
 /// Marker for the thumb
 #[derive(Component, Default, Clone, Reflect)]
@@ -155,58 +138,38 @@ struct SliderValueText;
 struct PlumeSliderThumb;
 
 fn update_slider_styles(
-    mut q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            &mut BackgroundGradient,
-            &InheritableThemeTextColor,
-        ),
+    q_sliders: Query<
+        (Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered),
         (
             With<PlumeSlider>,
-            // Added<BackgroundGradient>, not Spawned: scene application can insert the
-            // gradient after the entity spawns, and the query only matches once it exists.
-            Or<(
-                Added<BackgroundGradient>,
-                Added<InteractionDisabled>,
-                Changed<Hovered>,
-                Added<Pressed>,
-            )>,
+            Or<(Added<InteractionDisabled>, Changed<Hovered>, Added<Pressed>)>,
         ),
     >,
+    q_children: Query<&Children>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    for (slider_ent, disabled, pressed, hovered, mut gradient, font_color) in q_sliders.iter_mut() {
+    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
         set_slider_styles(
             slider_ent,
             &theme,
             disabled,
             pressed,
             hovered.0,
-            gradient.as_mut(),
-            font_color,
+            &q_children,
+            &mut q_tracks,
             &mut commands,
         );
     }
 }
 
 fn update_slider_styles_remove(
-    mut q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            &mut BackgroundGradient,
-            &InheritableThemeTextColor,
-        ),
-        With<PlumeSlider>,
-    >,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
+    q_children: Query<&Children>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -214,17 +177,15 @@ fn update_slider_styles_remove(
         .read()
         .chain(remove_pressed.read())
         .for_each(|ent| {
-            if let Ok((slider_ent, disabled, pressed, hovered, mut gradient, font_color)) =
-                q_sliders.get_mut(ent)
-            {
+            if let Ok((slider_ent, disabled, pressed, hovered)) = q_sliders.get(ent) {
                 set_slider_styles(
                     slider_ent,
                     &theme,
                     disabled,
                     pressed,
                     hovered.0,
-                    gradient.as_mut(),
-                    font_color,
+                    &q_children,
+                    &mut q_tracks,
                     &mut commands,
                 );
             }
@@ -233,32 +194,24 @@ fn update_slider_styles_remove(
 
 /// Re-apply slider styles to every slider when the theme changes.
 fn update_slider_styles_theme(
-    mut q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            &mut BackgroundGradient,
-            &InheritableThemeTextColor,
-        ),
-        With<PlumeSlider>,
-    >,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
+    q_children: Query<&Children>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
     if !theme.is_changed() {
         return;
     }
-    for (slider_ent, disabled, pressed, hovered, mut gradient, font_color) in q_sliders.iter_mut() {
+    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
         set_slider_styles(
             slider_ent,
             &theme,
             disabled,
             pressed,
             hovered.0,
-            gradient.as_mut(),
-            font_color,
+            &q_children,
+            &mut q_tracks,
             &mut commands,
         );
     }
@@ -270,8 +223,8 @@ fn set_slider_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
-    gradient: &mut BackgroundGradient,
-    font_color: &InheritableThemeTextColor,
+    q_children: &Query<&Children>,
+    q_tracks: &mut Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
     commands: &mut Commands,
 ) {
     let bar_color = theme.color(&if disabled {
@@ -294,30 +247,21 @@ fn set_slider_styles(
         tokens::SLIDER_BG
     });
 
-    let text_token = if disabled {
-        tokens::SLIDER_TEXT_DISABLED
-    } else {
-        tokens::SLIDER_TEXT
-    };
-
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
         false => bevy_window::SystemCursorIcon::EwResize,
     };
 
-    if let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..] {
-        linear_gradient.stops[0].color = bar_color;
-        linear_gradient.stops[1].color = bar_color;
-        linear_gradient.stops[2].color = bg_color;
-        linear_gradient.stops[3].color = bg_color;
-    }
-
-    // Change value-text color (dim when disabled)
-    if font_color.0 != text_token {
-        commands
-            .entity(slider_ent)
-            .insert(InheritableThemeTextColor(text_token));
-    }
+    q_children.iter_descendants(slider_ent).for_each(|child| {
+        if let Ok(mut gradient) = q_tracks.get_mut(child)
+            && let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..]
+        {
+            linear_gradient.stops[0].color = bar_color;
+            linear_gradient.stops[1].color = bar_color;
+            linear_gradient.stops[2].color = bg_color;
+            linear_gradient.stops[3].color = bg_color;
+        }
+    });
 
     // Change cursor shape
     commands
@@ -326,14 +270,8 @@ fn set_slider_styles(
 }
 
 fn update_slider_pos(
-    mut q_sliders: Query<
-        (
-            Entity,
-            &SliderValue,
-            &SliderRange,
-            Option<&SliderPrecision>,
-            &mut BackgroundGradient,
-        ),
+    q_sliders: Query<
+        (Entity, &SliderValue, &SliderRange),
         (
             With<PlumeSlider>,
             Or<(
@@ -344,39 +282,20 @@ fn update_slider_pos(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_slider_text: Query<&mut Text, With<SliderValueText>>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
     mut q_thumbs: Query<&mut Node, With<PlumeSliderThumb>>,
 ) {
-    for (slider_ent, value, range, precision, mut gradient) in q_sliders.iter_mut() {
+    for (slider_ent, value, range) in q_sliders.iter() {
         let percent_value = (range.thumb_position(value.0) * 100.0).clamp(0.0, 100.0);
-        if let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..] {
-            linear_gradient.stops[1].point = percent(percent_value);
-            linear_gradient.stops[2].point = percent(percent_value);
-        }
-
         q_children.iter_descendants(slider_ent).for_each(|child| {
+            if let Ok(mut gradient) = q_tracks.get_mut(child)
+                && let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..]
+            {
+                linear_gradient.stops[1].point = percent(percent_value);
+                linear_gradient.stops[2].point = percent(percent_value);
+            }
             if let Ok(mut thumb) = q_thumbs.get_mut(child) {
                 thumb.left = percent(percent_value);
-            }
-        });
-
-        // Find slider text child entity and update its text with the formatted value
-        let precision = precision.cloned().unwrap_or_default().0;
-
-        q_children.iter_descendants(slider_ent).for_each(|child| {
-            if let Ok(mut text) = q_slider_text.get_mut(child) {
-                let label = format!("{}", value.0);
-                let decimals_len = label
-                    .split_once('.')
-                    .map(|(_, decimals)| decimals.len() as i32)
-                    .unwrap_or(precision);
-
-                // Don't format with precision if the value has more decimals than the precision
-                text.0 = if precision >= 0 && decimals_len <= precision {
-                    format!("{:.precision$}", value.0, precision = precision as usize)
-                } else {
-                    label
-                };
             }
         });
     }

@@ -79,12 +79,6 @@ pub const SLIDER_BAR_HOVER: ThemeToken = ThemeToken::new_static("plume.slider.ba
 pub const SLIDER_BAR_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.bar.pressed");
 /// Fill color for slider (disabled)
 pub const SLIDER_BAR_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.bar.disabled");
-/// Background for slider text
-pub const SLIDER_TEXT: ThemeToken = ThemeToken::new_static("plume.slider.text");
-/// Background for slider text (disabled)
-pub const SLIDER_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.text.disabled");
-/// Border for slider
-pub const SLIDER_BORDER: ThemeToken = ThemeToken::new_static("plume.slider.border");
 /// Slider thumb
 pub const SLIDER_THUMB: ThemeToken = ThemeToken::new_static("plume.slider.thumb");
 

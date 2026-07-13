@@ -245,19 +245,18 @@ pub enum Slot {
     /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
     /// `SUBPANE_HEADER_TEXT`.
     Text0,
-    /// Body text & knobs: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
-    /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed), `SLIDER_THUMB`.
+    /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
+    /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed).
     Text1,
     /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
-    /// `SLIDER_TEXT_DISABLED`, `TEXT_INPUT_TEXT_DISABLED`,
-    /// `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
+    /// `TEXT_INPUT_TEXT_DISABLED`, `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
     TextDim0,
     /// Disabled checkbox/radio/switch borders, marks, knob & label text: the
     /// `BORDER`/`BORDER_CHECKED`/`MARK`/`TEXT` `_DISABLED` variants of `CHECKBOX_*`/`RADIO_*`, plus
     /// `SWITCH`'s `BORDER`/`SLIDE_BG`/`SLIDE_BORDER` `_DISABLED` (+ checked). Their `BG*_DISABLED`
     /// fills are [`Slot::Transparent`].
     TextDim1,
-    /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SCROLLBAR_THUMB`,
+    /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SLIDER_THUMB`, `SCROLLBAR_THUMB`,
     /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/switch), `RADIO_BORDER_CHECKED`, `RADIO_MARK`,
     /// `TEXT_INPUT_SELECTION`.
     Accent0,
@@ -271,7 +270,7 @@ pub enum Slot {
     Accent2,
     /// Brightest accent: `TEXT_INPUT_CURSOR`.
     Accent3,
-    /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `SLIDER_TEXT`, `CHECKBOX_MARK`,
+    /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`,
     /// `SWITCH_SLIDE_BG`/`_BORDER_CHECKED` (+ hover/pressed).
     Contrast,
     /// Focus/selection ring color (reserved; no token maps here yet).
@@ -474,10 +473,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::SLIDER_BAR_HOVER, Slot::Accent1),
     (tokens::SLIDER_BAR_PRESSED, Slot::Accent1),
     (tokens::SLIDER_BAR_DISABLED, Slot::Neutral4),
-    (tokens::SLIDER_TEXT, Slot::Text0),
-    (tokens::SLIDER_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::SLIDER_BORDER, Slot::Transparent),
-    (tokens::SLIDER_THUMB, Slot::Text1),
+    (tokens::SLIDER_THUMB, Slot::Accent0),
     (tokens::SCROLLBAR_BG, Slot::Neutral2),
     (tokens::SCROLLBAR_THUMB, Slot::Accent0),
     (tokens::SCROLLBAR_THUMB_HOVER, Slot::Accent2),
