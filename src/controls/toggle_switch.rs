@@ -44,7 +44,7 @@ impl PlumeToggleSwitch {
                 width: size::TOGGLE_WIDTH,
                 height: size::TOGGLE_HEIGHT,
                 margin: UiRect::vertical(px(2)),
-                border: px(2),
+                border: size::CONTROL_BORDER,
                 border_radius: px(10),
             }
             Checkbox
@@ -62,9 +62,9 @@ impl PlumeToggleSwitch {
                     position_type: PositionType::Absolute,
                     left: px(0),
                     top: px(0),
-                    width: px(16),
-                    height: px(16),
-                    border: px(2),
+                    width: size::KNOB_SIZE,
+                    height: size::KNOB_SIZE,
+                    border: size::CONTROL_BORDER,
                     border_radius: px(8),
                 }
                 ToggleSwitchSlide

@@ -66,8 +66,8 @@ impl PlumeDialog {
                 position_type: PositionType::Absolute,
                 left: {props.left},
                 top: {props.top},
-                border_radius: BorderRadius::all(px(4)),
-                border: UiRect::all(px(1.0)),
+                border_radius: BorderRadius::all(px(size::CORNER_RADIUS)),
+                border: UiRect::all(size::CONTAINER_BORDER),
                 width: {props.width},
             }
             Dialog
@@ -95,10 +95,10 @@ impl PlumeDialog {
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::SpaceBetween,
-                        padding: UiRect::horizontal(px(10)),
+                        padding: UiRect::horizontal(size::HEADER_PAD_X),
                         min_height: size::HEADER_HEIGHT,
-                        column_gap: px(4),
-                        border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
+                        column_gap: size::GAP_TIGHT,
+                        border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
                     }
                     DialogDragHandle
                     InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
@@ -138,10 +138,10 @@ impl PlumeDialogHeader {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(size::HEADER_PAD_X),
                 min_height: size::HEADER_HEIGHT,
-                column_gap: px(4),
-                border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
+                column_gap: size::GAP_TIGHT,
+                border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
             }
             ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
             InheritableFont {
@@ -186,7 +186,7 @@ impl PlumeDialogBody {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
-                padding: UiRect::all(px(6.0)),
+                padding: UiRect::all(size::PAD),
             }
             InheritableFont {
                 font: fonts::REGULAR,
@@ -211,8 +211,8 @@ impl PlumeDialogFooter {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::FlexEnd,
-                column_gap: px(6.0),
-                padding: UiRect::all(px(6.0)),
+                column_gap: size::GAP,
+                padding: UiRect::all(size::PAD),
             }
             InheritableFont {
                 font: fonts::REGULAR,

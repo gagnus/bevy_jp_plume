@@ -109,14 +109,14 @@ impl PlumeSubpane {
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Start,
                         border: UiRect {
-                            left: px(1),
-                            top: px(1),
-                            right: px(1),
+                            left: size::CONTAINER_BORDER,
+                            top: size::CONTAINER_BORDER,
+                            right: size::CONTAINER_BORDER,
                         },
-                        padding: UiRect::horizontal(px(10)),
+                        padding: UiRect::horizontal(size::HEADER_PAD_X),
                         min_height: size::HEADER_HEIGHT,
-                        column_gap: px(4),
-                        border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
+                        column_gap: size::GAP_TIGHT,
+                        border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
                     }
                     SubpaneHeader
                     ThemeBackgroundColor(tokens::SUBPANE_HEADER_BG)
@@ -138,13 +138,13 @@ impl PlumeSubpane {
                         display: Display::Flex,
                         flex_direction: FlexDirection::Column,
                         border: UiRect {
-                            left: px(1),
-                            right: px(1),
-                            bottom: px(1),
+                            left: size::CONTAINER_BORDER,
+                            right: size::CONTAINER_BORDER,
+                            bottom: size::CONTAINER_BORDER,
                         },
-                        row_gap: px(4),
-                        padding: px(6),
-                        border_radius: {RoundedCorners::Bottom.to_border_radius(4.0)}
+                        row_gap: size::GAP_TIGHT,
+                        padding: size::PAD,
+                        border_radius: {RoundedCorners::Bottom.to_border_radius(size::CORNER_RADIUS)}
                     }
                     SubpaneBody
                     ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
@@ -217,8 +217,12 @@ fn update_subpane_collapse(
                     } else {
                         RoundedCorners::Top
                     };
-                    node.border_radius = corners.to_border_radius(4.0);
-                    node.border.bottom = if collapsed { px(1) } else { px(0) };
+                    node.border_radius = corners.to_border_radius(size::CORNER_RADIUS);
+                    node.border.bottom = if collapsed {
+                        size::CONTAINER_BORDER
+                    } else {
+                        px(0)
+                    };
                 }
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {

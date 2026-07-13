@@ -62,7 +62,7 @@ impl PlumeListView {
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
             }
-            ScrollbarGutter(px(10))
+            ScrollbarGutter(size::SCROLLBAR_GUTTER)
             ListBox
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)
@@ -93,7 +93,7 @@ impl PlumeListView {
                     right: px(0),
                     top: px(0),
                     bottom: px(0),
-                    width: px(6),
+                    width: size::SCROLLBAR_WIDTH,
                 }
             ]
         }
@@ -116,7 +116,7 @@ impl PlumeListRow {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                padding: UiRect::axes(px(8), px(2)),
+                padding: UiRect::axes(size::GAP, px(2)),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextColor(tokens::LISTROW_TEXT)

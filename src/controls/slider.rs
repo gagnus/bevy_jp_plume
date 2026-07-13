@@ -68,8 +68,9 @@ impl PlumeSlider {
             Node {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
+                // Horizontal margin reserves the half-knob overhang at the track ends.
                 margin: UiRect::horizontal(px(8.0)),
-                width: px(180)
+                width: size::CONTROL_WIDTH
             }
             Hovered
             Slider {
@@ -112,8 +113,8 @@ impl PlumeSlider {
                         position_type: PositionType::Absolute,
                         left: percent(0),
                         top: percent(50),
-                        width: px(16),
-                        height: px(16),
+                        width: size::KNOB_SIZE,
+                        height: size::KNOB_SIZE,
                         margin: UiRect {
                             left: px(-8),
                             top: px(-8),

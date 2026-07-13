@@ -14,7 +14,7 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, InteractionDisabled, JustifyContent, Node, Pressed, UiRect, px};
+use bevy_ui::{AlignItems, InteractionDisabled, JustifyContent, Node, Pressed, UiRect};
 use bevy_ui_widgets::Button;
 
 use crate::{
@@ -81,8 +81,8 @@ impl PlumeButton {
                 height: size::ROW_HEIGHT,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                padding: UiRect::horizontal(px(8)),
-                border_radius: {props.corners.to_border_radius(4.0)},
+                padding: UiRect::horizontal(size::GAP),
+                border_radius: {props.corners.to_border_radius(size::CORNER_RADIUS)},
             }
             Button
             template_value(props.variant)
@@ -123,7 +123,7 @@ impl PlumeToolButton {
                 @corners: {props.corners}
             }
             Node {
-                padding: UiRect::horizontal(px(4)),
+                padding: UiRect::horizontal(size::GAP_TIGHT),
                 min_width: size::ROW_HEIGHT,
             }
         }

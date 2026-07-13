@@ -55,10 +55,11 @@ impl PlumeTextInput {
             // line overflows and makes the edit viewport re-clamp (1px jitter) while typing.
             Node {
                 height: size::ROW_HEIGHT,
-                padding: UiRect::horizontal(px(5.0)),
-                border: px(2),
-                border_radius: {BorderRadius::all(px(4.0))},
-                width: px(180),
+                // Border + padding = GAP: text aligns with button captions.
+                padding: UiRect::horizontal(px(6.0)),
+                border: size::CONTROL_BORDER,
+                border_radius: {BorderRadius::all(px(size::CORNER_RADIUS))},
+                width: size::CONTROL_WIDTH,
             }
             PlumeTextInput
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)

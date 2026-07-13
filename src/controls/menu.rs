@@ -190,9 +190,9 @@ impl PlumeMenuPopup {
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
-                border: px(1),
-                padding: UiRect::axes(px(0), px(4)),
-                border_radius: {RoundedCorners::All.to_border_radius(4.0)},
+                border: size::CONTAINER_BORDER,
+                padding: UiRect::axes(px(0), size::GAP_TIGHT),
+                border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)},
             }
             PlumeMenuPopup
             MenuPopup

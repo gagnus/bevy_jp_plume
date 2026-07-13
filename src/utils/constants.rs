@@ -45,6 +45,39 @@ pub mod size {
     /// Height of a toggle switch
     pub const TOGGLE_HEIGHT: Val = Val::Px(20.0);
 
+    /// Standard corner radius for controls and containers
+    pub const CORNER_RADIUS: f32 = 4.0;
+
+    /// Border width of control chrome (checkbox, radio, toggle, text input)
+    pub const CONTROL_BORDER: Val = Val::Px(2.0);
+
+    /// Border width of containers (dialog, group, subpane, menu popup)
+    pub const CONTAINER_BORDER: Val = Val::Px(1.0);
+
+    /// Tight gap: control-to-label and stacked container content
+    pub const GAP_TIGHT: Val = Val::Px(4.0);
+
+    /// Gap between elements in a row; also buttons' and list rows' horizontal padding
+    pub const GAP: Val = Val::Px(8.0);
+
+    /// Container body padding (dialog, group, subpane)
+    pub const PAD: Val = Val::Px(6.0);
+
+    /// Header horizontal padding (dialog, subpane)
+    pub const HEADER_PAD_X: Val = Val::Px(10.0);
+
+    /// Knob diameter (slider thumb, toggle knob)
+    pub const KNOB_SIZE: Val = Val::Px(16.0);
+
+    /// Default width of sliders and text inputs
+    pub const CONTROL_WIDTH: Val = Val::Px(180.0);
+
+    /// Scrollbar thumb width
+    pub const SCROLLBAR_WIDTH: Val = Val::Px(6.0);
+
+    /// Gutter reserved beside scrollable content for the scrollbar plus clearance
+    pub const SCROLLBAR_GUTTER: Val = Val::Px(10.0);
+
     /// Font size used for dialog box titles
     pub const HEADER_FONT: FontSize = FontSize::Px(16.0);
 

@@ -3,7 +3,7 @@ use bevy_ecs::{hierarchy::Children, reflect::ReflectComponent};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
 use bevy_text::FontWeight;
-use bevy_ui::{Display, FlexDirection, Node, UiRect, px};
+use bevy_ui::{Display, FlexDirection, Node, UiRect};
 
 use crate::{
     constants::{fonts, size},
@@ -40,10 +40,10 @@ impl PlumeGroup {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                border: UiRect::all(px(1)),
-                row_gap: px(4),
-                padding: px(6),
-                border_radius: {RoundedCorners::All.to_border_radius(4.0)}
+                border: UiRect::all(size::CONTAINER_BORDER),
+                row_gap: size::GAP_TIGHT,
+                padding: size::PAD,
+                border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)}
             }
             PlumeGroup
             ThemeBackgroundColor(tokens::GROUP_BG)

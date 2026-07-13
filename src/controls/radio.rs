@@ -65,7 +65,7 @@ impl PlumeRadio {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                column_gap: px(4),
+                column_gap: size::GAP_TIGHT,
                 min_height: size::ROW_HEIGHT,
             }
             RadioButton
@@ -84,7 +84,7 @@ impl PlumeRadio {
                     justify_content: JustifyContent::Center,
                     width: size::RADIO_SIZE,
                     height: size::RADIO_SIZE,
-                    border: px(2),
+                    border: size::CONTROL_BORDER,
                     border_radius: BorderRadius::MAX,
                 }
                 RadioOutline
@@ -125,7 +125,7 @@ impl PlumeRadioGroup {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                row_gap: px(4),
+                row_gap: size::GAP_TIGHT,
             }
             RadioGroup
             PlumeRadioGroup
