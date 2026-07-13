@@ -242,13 +242,13 @@ pub(crate) fn on_changed_font_color(
 
 // [`EditablePalette`] is the *parametric* form an editor manipulates
 // [`EditablePalette::resolve`] bakes it into a [`ResolvedPalette`] — one [`Color`]
-// per [`Slot`]. [`build_theme`] then maps each theme token to a slot using
+// per [`ThemeSlot`]. [`build_theme`] then maps each theme token to a slot using
 // a mapping which can be got from [`default_token_slots`] and looks up its color
 
 /// A single semantic color role, these are all the colors that make up
 /// a theme.
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
-pub enum Slot {
+pub enum ThemeSlot {
     /// Window background: `WINDOW_BG`.
     #[default]
     Neutral0,
@@ -331,30 +331,30 @@ pub enum Slot {
     Transparent,
 }
 
-impl Slot {
+impl ThemeSlot {
     /// Every slot, in discriminant order (matches [`ResolvedPalette`] storage).
-    pub const ALL: [Slot; 21] = [
-        Slot::Neutral0,
-        Slot::Neutral1,
-        Slot::Neutral2,
-        Slot::Neutral3,
-        Slot::Neutral4,
-        Slot::Neutral5,
-        Slot::Neutral6,
-        Slot::Text0,
-        Slot::Text1,
-        Slot::TextDim0,
-        Slot::TextDim1,
-        Slot::Accent0,
-        Slot::Accent1,
-        Slot::Accent2,
-        Slot::Accent3,
-        Slot::Contrast,
-        Slot::FocusRing,
-        Slot::XAxis,
-        Slot::YAxis,
-        Slot::ZAxis,
-        Slot::Transparent,
+    pub const ALL: [ThemeSlot; 21] = [
+        ThemeSlot::Neutral0,
+        ThemeSlot::Neutral1,
+        ThemeSlot::Neutral2,
+        ThemeSlot::Neutral3,
+        ThemeSlot::Neutral4,
+        ThemeSlot::Neutral5,
+        ThemeSlot::Neutral6,
+        ThemeSlot::Text0,
+        ThemeSlot::Text1,
+        ThemeSlot::TextDim0,
+        ThemeSlot::TextDim1,
+        ThemeSlot::Accent0,
+        ThemeSlot::Accent1,
+        ThemeSlot::Accent2,
+        ThemeSlot::Accent3,
+        ThemeSlot::Contrast,
+        ThemeSlot::FocusRing,
+        ThemeSlot::XAxis,
+        ThemeSlot::YAxis,
+        ThemeSlot::ZAxis,
+        ThemeSlot::Transparent,
     ];
 
     /// Number of slots — the backing size of [`ResolvedPalette`].
@@ -363,39 +363,39 @@ impl Slot {
     /// Human-readable name, for editor UI / pickers.
     pub fn label(self) -> &'static str {
         match self {
-            Slot::Neutral0 => "Neutral 0",
-            Slot::Neutral1 => "Neutral 1",
-            Slot::Neutral2 => "Neutral 2",
-            Slot::Neutral3 => "Neutral 3",
-            Slot::Neutral4 => "Neutral 4",
-            Slot::Neutral5 => "Neutral 5",
-            Slot::Neutral6 => "Neutral 6",
-            Slot::Text0 => "Text 0",
-            Slot::Text1 => "Text 1",
-            Slot::TextDim0 => "Text Dim 0",
-            Slot::TextDim1 => "Text Dim 1",
-            Slot::Accent0 => "Accent 0",
-            Slot::Accent1 => "Accent 1",
-            Slot::Accent2 => "Accent 2",
-            Slot::Accent3 => "Accent 3",
-            Slot::Contrast => "Contrast",
-            Slot::FocusRing => "Focus Ring",
-            Slot::XAxis => "X Axis",
-            Slot::YAxis => "Y Axis",
-            Slot::ZAxis => "Z Axis",
-            Slot::Transparent => "Transparent",
+            ThemeSlot::Neutral0 => "Neutral 0",
+            ThemeSlot::Neutral1 => "Neutral 1",
+            ThemeSlot::Neutral2 => "Neutral 2",
+            ThemeSlot::Neutral3 => "Neutral 3",
+            ThemeSlot::Neutral4 => "Neutral 4",
+            ThemeSlot::Neutral5 => "Neutral 5",
+            ThemeSlot::Neutral6 => "Neutral 6",
+            ThemeSlot::Text0 => "Text 0",
+            ThemeSlot::Text1 => "Text 1",
+            ThemeSlot::TextDim0 => "Text Dim 0",
+            ThemeSlot::TextDim1 => "Text Dim 1",
+            ThemeSlot::Accent0 => "Accent 0",
+            ThemeSlot::Accent1 => "Accent 1",
+            ThemeSlot::Accent2 => "Accent 2",
+            ThemeSlot::Accent3 => "Accent 3",
+            ThemeSlot::Contrast => "Contrast",
+            ThemeSlot::FocusRing => "Focus Ring",
+            ThemeSlot::XAxis => "X Axis",
+            ThemeSlot::YAxis => "Y Axis",
+            ThemeSlot::ZAxis => "Z Axis",
+            ThemeSlot::Transparent => "Transparent",
         }
     }
 }
 
-/// Fully-resolved colors: one [`Color`] per [`Slot`], built by
+/// Fully-resolved colors: one [`Color`] per [`ThemeSlot`], built by
 /// [`EditablePalette::resolve`] and read by [`build_theme`]. Indexed by slot.
 #[derive(Clone, Debug)]
-pub struct ResolvedPalette([Color; Slot::COUNT]);
+pub struct ResolvedPalette([Color; ThemeSlot::COUNT]);
 
-impl core::ops::Index<Slot> for ResolvedPalette {
+impl core::ops::Index<ThemeSlot> for ResolvedPalette {
     type Output = Color;
-    fn index(&self, slot: Slot) -> &Color {
+    fn index(&self, slot: ThemeSlot) -> &Color {
         &self.0[slot as usize]
     }
 }
@@ -424,32 +424,32 @@ impl<const N: usize> OklchaArray<N> {
 /// Call [`Self::resolve`] to bake it into a [`ResolvedPalette`].
 #[derive(Clone, Debug)]
 pub struct EditablePalette {
-    /// Lightness of each neutral ramp stop; forms [`Slot::Neutral0`]..=[`Slot::Neutral6`].
+    /// Lightness of each neutral ramp stop; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
     pub neutrals: OklchaArray<7>,
 
-    /// Lightness of each accent stop; forms [`Slot::Accent0`]..=[`Slot::Accent3`]
-    /// (and [`Slot::FocusRing`], derived from `accent[0]`).
+    /// Lightness of each accent stop; forms [`ThemeSlot::Accent0`]..=[`ThemeSlot::Accent3`]
+    /// (and [`ThemeSlot::FocusRing`], derived from `accent[0]`).
     pub accent: OklchaArray<4>,
 
-    /// Foreground on accent-filled components (white in most themes); forms [`Slot::Contrast`].
+    /// Foreground on accent-filled components (white in most themes); forms [`ThemeSlot::Contrast`].
     pub contrast: Oklcha,
 
-    /// Lightness of each text stop; forms [`Slot::Text0`]..=[`Slot::Text1`]
-    /// (and [`Slot::TextDim0`]..=[`Slot::TextDim1`], derived).
+    /// Lightness of each text stop; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`]
+    /// (and [`ThemeSlot::TextDim0`]..=[`ThemeSlot::TextDim1`], derived).
     pub text: OklchaArray<2>,
 
-    /// Alpha applied to `text` to derive [`Slot::TextDim0`]..=[`Slot::TextDim1`].
+    /// Alpha applied to `text` to derive [`ThemeSlot::TextDim0`]..=[`ThemeSlot::TextDim1`].
     pub dim_text_alpha_modifier: f32,
 
-    /// RGB axis colors; form [`Slot::XAxis`], [`Slot::YAxis`], [`Slot::ZAxis`].
+    /// RGB axis colors; form [`ThemeSlot::XAxis`], [`ThemeSlot::YAxis`], [`ThemeSlot::ZAxis`].
     pub axes: [Oklcha; 3],
 }
 
 impl EditablePalette {
-    /// Bake the parametric palette into one resolved color per [`Slot`].
+    /// Bake the parametric palette into one resolved color per [`ThemeSlot`].
     ///
     /// The `copy_from_slice` blocks below rely on each ramp's variants being
-    /// contiguous and in order within [`Slot`] (Neutral0..=Neutral6, etc.).
+    /// contiguous and in order within [`ThemeSlot`] (Neutral0..=Neutral6, etc.).
     pub fn resolve(&self) -> ResolvedPalette {
         let neutral = self.neutrals.to_array();
         let accent = self.accent.to_array();
@@ -457,15 +457,15 @@ impl EditablePalette {
         let text_dim = text.map(|c| c.with_alpha(self.dim_text_alpha_modifier));
         let axes: [Color; 3] = self.axes.map(Into::into);
 
-        let mut c = [Color::NONE; Slot::COUNT];
-        c[Slot::Neutral0 as usize..=Slot::Neutral6 as usize].copy_from_slice(&neutral);
-        c[Slot::Text0 as usize..=Slot::Text1 as usize].copy_from_slice(&text);
-        c[Slot::TextDim0 as usize..=Slot::TextDim1 as usize].copy_from_slice(&text_dim);
-        c[Slot::Accent0 as usize..=Slot::Accent3 as usize].copy_from_slice(&accent);
-        c[Slot::Contrast as usize] = self.contrast.into();
-        c[Slot::FocusRing as usize] = accent[0].with_alpha(0.5);
-        c[Slot::XAxis as usize..=Slot::ZAxis as usize].copy_from_slice(&axes);
-        // Slot::Transparent stays Color::NONE.
+        let mut c = [Color::NONE; ThemeSlot::COUNT];
+        c[ThemeSlot::Neutral0 as usize..=ThemeSlot::Neutral6 as usize].copy_from_slice(&neutral);
+        c[ThemeSlot::Text0 as usize..=ThemeSlot::Text1 as usize].copy_from_slice(&text);
+        c[ThemeSlot::TextDim0 as usize..=ThemeSlot::TextDim1 as usize].copy_from_slice(&text_dim);
+        c[ThemeSlot::Accent0 as usize..=ThemeSlot::Accent3 as usize].copy_from_slice(&accent);
+        c[ThemeSlot::Contrast as usize] = self.contrast.into();
+        c[ThemeSlot::FocusRing as usize] = accent[0].with_alpha(0.5);
+        c[ThemeSlot::XAxis as usize..=ThemeSlot::ZAxis as usize].copy_from_slice(&axes);
+        // ThemeSlot::Transparent stays Color::NONE.
         ResolvedPalette(c)
     }
 
@@ -487,7 +487,7 @@ impl EditablePalette {
 
     pub fn token(&self, token: &ThemeToken) -> Color {
         let resolved = self.resolve();
-        let lookup: HashMap<ThemeToken, Slot> = DEFAULT_TOKEN_SLOTS.iter().cloned().collect();
+        let lookup: HashMap<ThemeToken, ThemeSlot> = DEFAULT_TOKEN_SLOTS.iter().cloned().collect();
         lookup
             .get(token)
             .map(|slot| resolved[*slot])
@@ -496,8 +496,11 @@ impl EditablePalette {
     }
 }
 
-/// Build Plume theme properties by resolving every token's [`Slot`] against `p`.
-pub fn build_theme(palette: &ResolvedPalette, token_slots: &[(ThemeToken, Slot)]) -> ThemeProps {
+/// Build Plume theme properties by resolving every token's [`ThemeSlot`] against `p`.
+pub fn build_theme(
+    palette: &ResolvedPalette,
+    token_slots: &[(ThemeToken, ThemeSlot)],
+) -> ThemeProps {
     ThemeProps {
         color: token_slots
             .iter()
@@ -515,112 +518,124 @@ pub fn default_axis_colors() -> [Oklcha; 3] {
     ]
 }
 
-static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
-    (tokens::WINDOW_BG, Slot::Neutral0),
-    (tokens::TEXT_MAIN, Slot::Text1),
-    (tokens::TEXT_DIM, Slot::TextDim0),
-    (tokens::BUTTON_BG, Slot::Neutral4),
-    (tokens::BUTTON_BG_HOVER, Slot::Neutral5),
-    (tokens::BUTTON_BG_PRESSED, Slot::Neutral6),
-    (tokens::BUTTON_BG_DISABLED, Slot::Neutral3),
-    (tokens::BUTTON_PRIMARY_BG, Slot::Accent0),
-    (tokens::BUTTON_PRIMARY_BG_HOVER, Slot::Accent1),
-    (tokens::BUTTON_PRIMARY_BG_PRESSED, Slot::Accent2),
-    (tokens::BUTTON_PRIMARY_BG_DISABLED, Slot::Neutral3),
-    (tokens::BUTTON_PLAIN_BG, Slot::Transparent),
-    (tokens::BUTTON_PLAIN_BG_HOVER, Slot::Neutral5),
-    (tokens::BUTTON_PLAIN_BG_PRESSED, Slot::Neutral6),
-    (tokens::BUTTON_PLAIN_BG_DISABLED, Slot::Transparent),
-    (tokens::BUTTON_TEXT, Slot::Text0),
-    (tokens::BUTTON_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::BUTTON_PRIMARY_TEXT, Slot::Contrast),
-    (tokens::BUTTON_PRIMARY_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::SLIDER_BG, Slot::Neutral3),
-    (tokens::SLIDER_BG_HOVER, Slot::Neutral3),
-    (tokens::SLIDER_BG_PRESSED, Slot::Neutral3),
-    (tokens::SLIDER_BG_DISABLED, Slot::Neutral3),
-    (tokens::SLIDER_BAR, Slot::Accent0),
-    (tokens::SLIDER_BAR_HOVER, Slot::Accent1),
-    (tokens::SLIDER_BAR_PRESSED, Slot::Accent2),
-    (tokens::SLIDER_BAR_DISABLED, Slot::Neutral4),
-    (tokens::SLIDER_THUMB, Slot::Accent0),
-    (tokens::SLIDER_THUMB_HOVER, Slot::Accent1),
-    (tokens::SLIDER_THUMB_PRESSED, Slot::Accent2),
-    (tokens::SLIDER_THUMB_DISABLED, Slot::Neutral4),
-    (tokens::SCROLLBAR_BG, Slot::Neutral3),
-    (tokens::SCROLLBAR_THUMB, Slot::Accent0),
-    (tokens::SCROLLBAR_THUMB_HOVER, Slot::Accent1),
-    (tokens::SCROLLBAR_THUMB_PRESSED, Slot::Accent2),
-    (tokens::CHECKBOX_BG, Slot::Transparent),
-    (tokens::CHECKBOX_BG_DISABLED, Slot::Transparent),
-    (tokens::CHECKBOX_BG_CHECKED, Slot::Accent0),
-    (tokens::CHECKBOX_BG_CHECKED_DISABLED, Slot::Transparent),
-    (tokens::CHECKBOX_BORDER, Slot::Neutral4),
-    (tokens::CHECKBOX_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::CHECKBOX_BORDER_CHECKED, Slot::Accent0),
-    (tokens::CHECKBOX_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::CHECKBOX_MARK, Slot::Contrast),
-    (tokens::CHECKBOX_MARK_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::CHECKBOX_TEXT, Slot::Text1),
-    (tokens::CHECKBOX_TEXT_DISABLED, Slot::TextDim1),
-    (tokens::RADIO_BG, Slot::Transparent),
-    (tokens::RADIO_BG_DISABLED, Slot::Transparent),
-    (tokens::RADIO_BG_CHECKED, Slot::Accent0),
-    (tokens::RADIO_BG_CHECKED_DISABLED, Slot::Transparent),
-    (tokens::RADIO_BORDER, Slot::Neutral4),
-    (tokens::RADIO_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::RADIO_BORDER_CHECKED, Slot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::RADIO_MARK, Slot::Contrast),
-    (tokens::RADIO_MARK_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::RADIO_TEXT, Slot::Text1),
-    (tokens::RADIO_TEXT_DISABLED, Slot::TextDim1),
-    (tokens::SWITCH_BG, Slot::Neutral4),
-    (tokens::SWITCH_BG_DISABLED, Slot::Transparent),
-    (tokens::SWITCH_BG_CHECKED, Slot::Accent0),
-    (tokens::SWITCH_BG_CHECKED_DISABLED, Slot::Transparent),
-    (tokens::SWITCH_BORDER, Slot::Neutral4),
-    (tokens::SWITCH_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::SWITCH_BORDER_CHECKED, Slot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::SWITCH_SLIDE_BG, Slot::Text0),
-    (tokens::SWITCH_SLIDE_BG_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::SWITCH_SLIDE_BG_CHECKED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::SWITCH_SLIDE_BORDER, Slot::Text0),
-    (tokens::SWITCH_SLIDE_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
-    (tokens::MENU_BG, Slot::Neutral1),
-    (tokens::MENU_BORDER, Slot::Neutral4),
-    (tokens::TEXT_INPUT_BG, Slot::Neutral3),
-    (tokens::TEXT_INPUT_TEXT, Slot::Text0),
-    (tokens::TEXT_INPUT_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::TEXT_INPUT_CURSOR, Slot::Accent3),
-    (tokens::TEXT_INPUT_SELECTION, Slot::Accent0),
-    (tokens::TEXT_INPUT_SELECTION_UNFOCUSED, Slot::Transparent),
-    (tokens::TEXT_INPUT_BORDER, Slot::Neutral3),
-    (tokens::SUBPANE_HEADER_BG, Slot::Neutral2),
-    (tokens::SUBPANE_HEADER_BORDER, Slot::Neutral4),
-    (tokens::SUBPANE_HEADER_TEXT, Slot::Text0),
-    (tokens::SUBPANE_BODY_BG, Slot::Neutral1),
-    (tokens::SUBPANE_BODY_BORDER, Slot::Neutral4),
-    (tokens::GROUP_BG, Slot::Neutral2),
-    (tokens::GROUP_BORDER, Slot::Neutral2),
-    (tokens::LISTROW_BG, Slot::Transparent),
-    (tokens::LISTROW_BG_HOVER, Slot::Neutral3),
-    (tokens::LISTROW_BG_SELECTED, Slot::Neutral4),
-    (tokens::LISTROW_TEXT, Slot::Text0),
-    (tokens::LISTROW_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::DIALOG_BG, Slot::Neutral1),
-    (tokens::DIALOG_BORDER, Slot::Neutral4),
-    (tokens::DIALOG_HEADER_BG, Slot::Neutral2),
-    (tokens::DIALOG_TEXT, Slot::Text1),
-    (tokens::DIALOG_HEADER_TEXT, Slot::Text0),
+static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
+    (tokens::WINDOW_BG, ThemeSlot::Neutral0),
+    (tokens::TEXT_MAIN, ThemeSlot::Text1),
+    (tokens::TEXT_DIM, ThemeSlot::TextDim0),
+    (tokens::BUTTON_BG, ThemeSlot::Neutral4),
+    (tokens::BUTTON_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::BUTTON_BG_PRESSED, ThemeSlot::Neutral6),
+    (tokens::BUTTON_BG_DISABLED, ThemeSlot::Neutral3),
+    (tokens::BUTTON_PRIMARY_BG, ThemeSlot::Accent0),
+    (tokens::BUTTON_PRIMARY_BG_HOVER, ThemeSlot::Accent1),
+    (tokens::BUTTON_PRIMARY_BG_PRESSED, ThemeSlot::Accent2),
+    (tokens::BUTTON_PRIMARY_BG_DISABLED, ThemeSlot::Neutral3),
+    (tokens::BUTTON_PLAIN_BG, ThemeSlot::Transparent),
+    (tokens::BUTTON_PLAIN_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::BUTTON_PLAIN_BG_PRESSED, ThemeSlot::Neutral6),
+    (tokens::BUTTON_PLAIN_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::BUTTON_TEXT, ThemeSlot::Text0),
+    (tokens::BUTTON_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::BUTTON_PRIMARY_TEXT, ThemeSlot::Contrast),
+    (tokens::BUTTON_PRIMARY_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::SLIDER_BG, ThemeSlot::Neutral3),
+    (tokens::SLIDER_BG_HOVER, ThemeSlot::Neutral3),
+    (tokens::SLIDER_BG_PRESSED, ThemeSlot::Neutral3),
+    (tokens::SLIDER_BG_DISABLED, ThemeSlot::Neutral3),
+    (tokens::SLIDER_BAR, ThemeSlot::Accent0),
+    (tokens::SLIDER_BAR_HOVER, ThemeSlot::Accent1),
+    (tokens::SLIDER_BAR_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_BAR_DISABLED, ThemeSlot::Neutral4),
+    (tokens::SLIDER_THUMB, ThemeSlot::Accent0),
+    (tokens::SLIDER_THUMB_HOVER, ThemeSlot::Accent1),
+    (tokens::SLIDER_THUMB_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral4),
+    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral3),
+    (tokens::SCROLLBAR_THUMB, ThemeSlot::Accent0),
+    (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Accent1),
+    (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Accent2),
+    (tokens::CHECKBOX_BG, ThemeSlot::Transparent),
+    (tokens::CHECKBOX_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::CHECKBOX_BG_CHECKED, ThemeSlot::Accent0),
+    (tokens::CHECKBOX_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
+    (tokens::CHECKBOX_BORDER, ThemeSlot::Neutral4),
+    (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::CHECKBOX_BORDER_CHECKED, ThemeSlot::Accent0),
+    (
+        tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
+        ThemeSlot::Neutral3,
+    ), // was TextDim1
+    (tokens::CHECKBOX_MARK, ThemeSlot::Contrast),
+    (tokens::CHECKBOX_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::CHECKBOX_TEXT, ThemeSlot::Text1),
+    (tokens::CHECKBOX_TEXT_DISABLED, ThemeSlot::TextDim1),
+    (tokens::RADIO_BG, ThemeSlot::Transparent),
+    (tokens::RADIO_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::RADIO_BG_CHECKED, ThemeSlot::Accent0),
+    (tokens::RADIO_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
+    (tokens::RADIO_BORDER, ThemeSlot::Neutral4),
+    (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_BORDER_CHECKED, ThemeSlot::Accent0),
+    (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_MARK, ThemeSlot::Contrast),
+    (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_TEXT, ThemeSlot::Text1),
+    (tokens::RADIO_TEXT_DISABLED, ThemeSlot::TextDim1),
+    (tokens::SWITCH_BG, ThemeSlot::Neutral4),
+    (tokens::SWITCH_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::SWITCH_BG_CHECKED, ThemeSlot::Accent0),
+    (tokens::SWITCH_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
+    (tokens::SWITCH_BORDER, ThemeSlot::Neutral4),
+    (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Accent0),
+    (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BG, ThemeSlot::Text0),
+    (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BG_CHECKED, ThemeSlot::Contrast),
+    (
+        tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
+        ThemeSlot::Neutral3,
+    ), // was TextDim1
+    (tokens::SWITCH_SLIDE_BORDER, ThemeSlot::Text0),
+    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BORDER_CHECKED, ThemeSlot::Contrast),
+    (
+        tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED,
+        ThemeSlot::Neutral3,
+    ), // was TextDim1
+    (tokens::MENU_BG, ThemeSlot::Neutral1),
+    (tokens::MENU_BORDER, ThemeSlot::Neutral4),
+    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral3),
+    (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
+    (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),
+    (tokens::TEXT_INPUT_SELECTION, ThemeSlot::Accent0),
+    (
+        tokens::TEXT_INPUT_SELECTION_UNFOCUSED,
+        ThemeSlot::Transparent,
+    ),
+    (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral3),
+    (tokens::SUBPANE_HEADER_BG, ThemeSlot::Neutral2),
+    (tokens::SUBPANE_HEADER_BORDER, ThemeSlot::Neutral4),
+    (tokens::SUBPANE_HEADER_TEXT, ThemeSlot::Text0),
+    (tokens::SUBPANE_BODY_BG, ThemeSlot::Neutral1),
+    (tokens::SUBPANE_BODY_BORDER, ThemeSlot::Neutral4),
+    (tokens::GROUP_BG, ThemeSlot::Neutral2),
+    (tokens::GROUP_BORDER, ThemeSlot::Neutral2),
+    (tokens::LISTROW_BG, ThemeSlot::Transparent),
+    (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral3),
+    (tokens::LISTROW_BG_SELECTED, ThemeSlot::Neutral4),
+    (tokens::LISTROW_TEXT, ThemeSlot::Text0),
+    (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::DIALOG_BG, ThemeSlot::Neutral1),
+    (tokens::DIALOG_BORDER, ThemeSlot::Neutral4),
+    (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral2),
+    (tokens::DIALOG_TEXT, ThemeSlot::Text1),
+    (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
 ];
 
-/// Default mapping from each token to a [`Slot`]
-pub fn default_token_slots() -> &'static [(ThemeToken, Slot)] {
+/// Default mapping from each token to a [`ThemeSlot`]
+pub fn default_token_slots() -> &'static [(ThemeToken, ThemeSlot)] {
     &DEFAULT_TOKEN_SLOTS
 }
 
