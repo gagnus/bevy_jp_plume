@@ -42,10 +42,10 @@ pub mod size {
     pub const RADIO_SIZE: Val = Val::Px(18.0);
 
     /// Width of a toggle switch
-    pub const TOGGLE_WIDTH: Val = Val::Px(32.0);
+    pub const TOGGLE_WIDTH: Val = Val::Px(40.0);
 
     /// Height of a toggle switch
-    pub const TOGGLE_HEIGHT: Val = Val::Px(18.0);
+    pub const TOGGLE_HEIGHT: Val = Val::Px(20.0);
 
     /// Font size used for dialog box titles
     pub const HEADER_FONT: FontSize = FontSize::Px(16.0);

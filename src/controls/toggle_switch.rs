@@ -16,7 +16,7 @@ use bevy_ecs::{
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{Checked, InteractionDisabled, Node, PositionType, Pressed, percent, px};
+use bevy_ui::{Checked, InteractionDisabled, Node, PositionType, Pressed, UiRect, Val, px};
 use bevy_ui_widgets::{ActivateOnPress, Checkbox, checkbox_self_update};
 
 use crate::{
@@ -39,11 +39,13 @@ pub struct PlumeToggleSwitch;
 impl PlumeToggleSwitch {
     fn scene() -> impl Scene {
         bsn! {
+            // Pill outline; vertical margin pads the outer box up to ROW_HEIGHT.
             Node {
                 width: size::TOGGLE_WIDTH,
                 height: size::TOGGLE_HEIGHT,
+                margin: UiRect::vertical(px(2)),
                 border: px(2),
-                border_radius: px(5),
+                border_radius: px(10),
             }
             Checkbox
             PlumeToggleSwitch
@@ -54,14 +56,15 @@ impl PlumeToggleSwitch {
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             Children [(
+                // Circular knob; styles slide it between the left/right insets.
                 Node {
                     position_type: PositionType::Absolute,
-                    left: percent(0),
-                    top: px(0),
-                    bottom: px(0),
-                    width: percent(50),
+                    left: px(1),
+                    top: px(1),
+                    width: px(14),
+                    height: px(14),
                     border: px(2),
-                    border_radius: px(3),
+                    border_radius: px(7),
                 }
                 ToggleSwitchSlide
                 ThemeBackgroundColor(tokens::SWITCH_SLIDE_BG)
@@ -316,9 +319,9 @@ fn set_switch_styles(
         }
     };
 
-    let slide_pos = match checked {
-        true => percent(50),
-        false => percent(0),
+    let (slide_left, slide_right) = match checked {
+        true => (Val::Auto, px(1)),
+        false => (px(1), Val::Auto),
     };
 
     let cursor_shape = match disabled {
@@ -355,8 +358,11 @@ fn set_switch_styles(
     }
 
     // Change slide position
-    if slide_pos != slide_style.left {
-        slide_style.left = slide_pos;
+    if slide_style.left != slide_left {
+        slide_style.left = slide_left;
+    }
+    if slide_style.right != slide_right {
+        slide_style.right = slide_right;
     }
 
     // Change cursor shape
