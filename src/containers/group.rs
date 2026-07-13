@@ -1,4 +1,7 @@
-use bevy_scene::{Scene, bsn};
+//! Bordered box for visually grouping related controls.
+use bevy_ecs::{hierarchy::Children, reflect::ReflectComponent};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
+use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
 use bevy_text::FontWeight;
 use bevy_ui::{Display, FlexDirection, Node, UiRect, px};
 
@@ -10,23 +13,49 @@ use crate::{
     tokens,
 };
 
-/// A bordered box for visually grouping related controls; content goes in `Children`.
-pub fn group() -> impl Scene {
-    bsn! {
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            border: UiRect::all(px(1)),
-            row_gap: px(4),
-            padding: px(6),
-            border_radius: {RoundedCorners::All.to_border_radius(4.0)}
+/// A bordered box for visually grouping related controls.
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[scene(PlumeGroupProps)]
+#[reflect(Component, Clone, Default)]
+pub struct PlumeGroup;
+
+/// Props used to construct a [`PlumeGroup`] scene.
+pub struct PlumeGroupProps {
+    /// Grouped content.
+    pub contents: Box<dyn SceneList>,
+}
+
+impl Default for PlumeGroupProps {
+    fn default() -> Self {
+        Self {
+            contents: Box::new(bsn_list!()),
         }
-        ThemeBackgroundColor(tokens::GROUP_BG)
-        ThemeBorderColor(tokens::GROUP_BORDER)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
+    }
+}
+
+impl PlumeGroup {
+    /// Scene function for a group.
+    pub fn scene(props: PlumeGroupProps) -> impl Scene {
+        bsn! {
+            Node {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                border: UiRect::all(px(1)),
+                row_gap: px(4),
+                padding: px(6),
+                border_radius: {RoundedCorners::All.to_border_radius(4.0)}
+            }
+            PlumeGroup
+            ThemeBackgroundColor(tokens::GROUP_BG)
+            ThemeBorderColor(tokens::GROUP_BORDER)
+            InheritableFont {
+                font: fonts::REGULAR,
+                font_size: size::MEDIUM_FONT,
+                weight: FontWeight::NORMAL,
+            }
+            Children [
+                {props.contents}
+            ]
         }
     }
 }

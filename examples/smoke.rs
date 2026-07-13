@@ -7,7 +7,7 @@ use bevy::{
 use bevy_jp_plume::{
     PlumePlugins,
     constants::icons,
-    containers::{PlumeDialog, PlumeSubpane, flex_spacer, group},
+    containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer},
     controls::{
         OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeSelect,
         PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
@@ -168,9 +168,11 @@ fn controls_column() -> impl Scene {
                 @header: bsn! { caption("Subpane") },
                 @contents: bsn_list! {
                     label_dim("Subpane body"),
-                    group() Children [
-                        label_dim("Group content"),
-                    ],
+                    @PlumeGroup {
+                        @contents: bsn_list! {
+                            label_dim("Group content"),
+                        },
+                    },
                 },
             },
         ]
