@@ -104,6 +104,7 @@ impl PlumeCheckbox {
                     }
                     UiTransform::from_rotation(Rot2::FRAC_PI_4)
                     CheckboxMark
+                    Visibility::Hidden
                     ThemeBorderColor(tokens::CHECKBOX_MARK)
                 )]),
                 {props.caption}
@@ -137,7 +138,12 @@ fn update_checkbox_styles(
         ),
         (
             With<CheckboxFrame>,
-            Or<(Added<Checked>, Added<InteractionDisabled>)>,
+            // Added<CheckboxFrame> guarantees the initial style pass on spawn.
+            Or<(
+                Added<CheckboxFrame>,
+                Added<Checked>,
+                Added<InteractionDisabled>,
+            )>,
         ),
     >,
     q_children: Query<&Children>,

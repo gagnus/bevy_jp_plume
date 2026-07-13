@@ -99,6 +99,7 @@ impl PlumeRadio {
                         use_rounding: false,
                     }
                     RadioMark
+                    Visibility::Hidden
                     ThemeBackgroundColor(tokens::RADIO_MARK)
                 )]),
                 {props.caption}
@@ -127,7 +128,12 @@ fn update_radio_styles(
         ),
         (
             With<RadioButton>,
-            Or<(Added<Checked>, Added<InteractionDisabled>)>,
+            // Added<PlumeRadio> guarantees the initial style pass on spawn.
+            Or<(
+                Added<PlumeRadio>,
+                Added<Checked>,
+                Added<InteractionDisabled>,
+            )>,
         ),
     >,
     q_children: Query<&Children>,

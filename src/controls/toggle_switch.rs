@@ -91,7 +91,12 @@ fn update_switch_styles(
         ),
         (
             With<PlumeToggleSwitch>,
-            Or<(Added<Checked>, Added<InteractionDisabled>)>,
+            // Added<PlumeToggleSwitch> guarantees the initial style pass on spawn.
+            Or<(
+                Added<PlumeToggleSwitch>,
+                Added<Checked>,
+                Added<InteractionDisabled>,
+            )>,
         ),
     >,
     q_children: Query<&Children>,
