@@ -119,7 +119,7 @@ struct RadioOutline;
 struct RadioMark;
 
 fn update_radio_styles(
-    q_radioes: Query<
+    q_radios: Query<
         (
             Entity,
             Has<InteractionDisabled>,
@@ -141,7 +141,7 @@ fn update_radio_styles(
     mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut commands: Commands,
 ) {
-    for (radio_ent, disabled, checked, font_color) in q_radioes.iter() {
+    for (radio_ent, disabled, checked, font_color) in q_radios.iter() {
         let Some(outline_ent) = q_children
             .iter_descendants(radio_ent)
             .find(|en| q_outline.contains(*en))
@@ -172,7 +172,7 @@ fn update_radio_styles(
 }
 
 fn update_radio_styles_remove(
-    q_radioes: Query<
+    q_radios: Query<
         (
             Entity,
             Has<InteractionDisabled>,
@@ -192,7 +192,7 @@ fn update_radio_styles_remove(
         .read()
         .chain(removed_checked.read())
         .for_each(|ent| {
-            if let Ok((radio_ent, disabled, checked, font_color)) = q_radioes.get(ent) {
+            if let Ok((radio_ent, disabled, checked, font_color)) = q_radios.get(ent) {
                 let Some(outline_ent) = q_children
                     .iter_descendants(radio_ent)
                     .find(|en| q_outline.contains(*en))

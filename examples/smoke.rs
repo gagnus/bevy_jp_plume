@@ -6,15 +6,15 @@ use bevy::{
 };
 use bevy_jp_plume::{
     PlumePlugins,
-    constants::icons,
+    constants::{font_awesome, icons},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
         OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeSelect,
         PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
-    display::{caption, icon, label, label_dim},
-    theme::{ThemeBackgroundColor, ThemedText, UiTheme},
+    display::{caption, fa_icon_solid, icon, label, label_dim},
+    theme::{ThemeBackgroundColor, ThemeToken, ThemedText, UiTheme},
     tokens,
 };
 use bevy_ui::InteractionDisabled;
@@ -90,294 +90,12 @@ fn controls_column() -> impl Scene {
         Children [
             label("Plume smoke test"),
             label_dim("Bare controls, minimal wiring"),
-            row() Node { width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                },
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                } Checked,
-                @PlumeToggleSwitch,
-                @PlumeToggleSwitch Checked,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                },
-                @PlumeTextInput,
-            ],
-            row() Node { width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                    InteractionDisabled
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                InteractionDisabled,
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                Checked
-                InteractionDisabled,
-                @PlumeToggleSwitch InteractionDisabled,
-                @PlumeToggleSwitch Checked InteractionDisabled,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                    InteractionDisabled
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                    InteractionDisabled
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                }
-                InteractionDisabled,
-                @PlumeTextInput
-                InteractionDisabled,
-            ],
-            row() ThemeBackgroundColor(tokens::SUBPANE_BODY_BG) Node { height: px(80.), width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                },
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                } Checked,
-                @PlumeToggleSwitch,
-                @PlumeToggleSwitch Checked,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                },
-                @PlumeTextInput,
-            ],
-            row() ThemeBackgroundColor(tokens::SUBPANE_BODY_BG) Node { height: px(80.), width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                    InteractionDisabled
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                InteractionDisabled,
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                Checked
-                InteractionDisabled,
-                @PlumeToggleSwitch InteractionDisabled,
-                @PlumeToggleSwitch Checked InteractionDisabled,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                    InteractionDisabled
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                    InteractionDisabled
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                }
-                InteractionDisabled,
-                @PlumeTextInput
-                InteractionDisabled,
-            ],
-            row() ThemeBackgroundColor(tokens::GROUP_BG) Node { height: px(80.), width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                },
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                } Checked,
-                @PlumeToggleSwitch,
-                @PlumeToggleSwitch Checked,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                },
-                @PlumeTextInput,
-            ],
-            row() ThemeBackgroundColor(tokens::GROUP_BG) Node { height: px(80.), width: px(1200.) } Children [
-                (
-                    @PlumeButton {
-                        @caption: bsn! { caption("Button") }
-                    }
-                    on(|_: On<Activate>| info!("button clicked"))
-                    InteractionDisabled
-                ),
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                InteractionDisabled,
-                @PlumeCheckbox {
-                    @caption: bsn! { caption("Checkbox") }
-                }
-                Checked
-                InteractionDisabled,
-                @PlumeToggleSwitch InteractionDisabled,
-                @PlumeToggleSwitch Checked InteractionDisabled,
-                (
-                    @PlumeSlider {
-                        @max: 100.0,
-                    }
-                    SliderValue(20.0)
-                    on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
-                    InteractionDisabled
-                ),
-                (
-                    // 8 options / 4 visible: popup scrolls, scrollbar shown.
-                    @PlumeSelect {
-                        @options: {list_rows_from_strings(
-                            ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
-                            Some(0),
-                        )},
-                        @max_visible: 4,
-                    }
-                    on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                        if let Ok(option) = q_options.get(change.value) {
-                            info!("select -> option {}", option.0);
-                        }
-                    })
-                    InteractionDisabled
-                ),
-                // 3 options / 4 visible: fits, scrollbar hidden.
-                @PlumeSelect {
-                    @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
-                    @max_visible: 4,
-                }
-                InteractionDisabled,
-                @PlumeTextInput
-                InteractionDisabled,
-            ],
+            controls_row(None, false),
+            controls_row(None, true),
+            controls_row(Some(tokens::SUBPANE_BODY_BG), false),
+            controls_row(Some(tokens::SUBPANE_BODY_BG), true),
+            controls_row(Some(tokens::GROUP_BG), false),
+            controls_row(Some(tokens::GROUP_BG), true),
             (
                 Node {
                     display: Display::Flex,
@@ -401,6 +119,7 @@ fn controls_column() -> impl Scene {
                 ]
             ),
             (
+                // TODO: make this not needed
                 Node {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Column,
@@ -443,6 +162,84 @@ fn controls_column() -> impl Scene {
             },
         ]
     }
+}
+
+/// One of each control on a single row. `bg` tints the row (`None` keeps the window
+/// background); `disabled` puts `InteractionDisabled` on every control.
+fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
+    let bg = bg.map(|token| bsn! { ThemeBackgroundColor({token}) });
+    bsn! {
+        row()
+        {bg}
+        Node { height: px(80.), width: px(1200.) }
+        Children [
+            (
+                @PlumeButton {
+                    @caption: bsn_list! { fa_icon_solid(font_awesome::FA_BUILDING_CIRCLE_ARROW_RIGHT), Node { width: px(10), }, caption("Button") }
+                }
+                on(|_: On<Activate>| info!("button clicked"))
+                maybe_disabled(disabled)
+            ),
+            @PlumeCheckbox {
+                @caption: bsn! { caption("Checkbox") }
+            }
+            maybe_disabled(disabled),
+            @PlumeCheckbox {
+                @caption: bsn! { caption("Checkbox") }
+            }
+            Checked
+            maybe_disabled(disabled),
+            @PlumeToggleSwitch maybe_disabled(disabled),
+            @PlumeToggleSwitch Checked maybe_disabled(disabled),
+            (
+                // TODO: this ones don't work and they should...
+                @PlumeRadio
+                maybe_disabled(disabled)
+            ),
+            (
+                @PlumeRadio
+                Checked
+                maybe_disabled(disabled)
+            ),
+            (
+                @PlumeSlider {
+                    @max: 100.0,
+                }
+                SliderValue(20.0)
+                on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
+                maybe_disabled(disabled)
+            ),
+            (
+                // 8 options / 4 visible: popup scrolls, scrollbar shown.
+                @PlumeSelect {
+                    @options: {list_rows_from_strings(
+                        ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
+                        Some(0),
+                    )},
+                    @max_visible: 4,
+                }
+                on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
+                    if let Ok(option) = q_options.get(change.value) {
+                        info!("select -> option {}", option.0);
+                    }
+                })
+                maybe_disabled(disabled)
+            ),
+            // 3 options / 4 visible: fits, scrollbar hidden.
+            @PlumeSelect {
+                @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
+                @max_visible: 4,
+            }
+            maybe_disabled(disabled),
+            @PlumeTextInput
+            maybe_disabled(disabled),
+        ]
+    }
+}
+
+/// `InteractionDisabled` as an optional patch, so the same row scene covers both variants.
+fn maybe_disabled(disabled: bool) -> impl Scene {
+    disabled.then(|| bsn! { InteractionDisabled })
 }
 
 fn dialog() -> impl Scene {

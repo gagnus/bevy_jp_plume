@@ -37,11 +37,10 @@ pub struct PlumeCorePlugin;
 impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy_app::App) {
         // Embedded font
-        embedded_asset!(app, "assets/fonts/FiraSans-Bold.ttf");
-        embedded_asset!(app, "assets/fonts/FiraSans-BoldItalic.ttf");
-        embedded_asset!(app, "assets/fonts/FiraSans-Regular.ttf");
-        embedded_asset!(app, "assets/fonts/FiraSans-Italic.ttf");
-        embedded_asset!(app, "assets/fonts/FiraMono-Medium.ttf");
+        embedded_asset!(app, "assets/fonts/Inter-Bold.ttf");
+        embedded_asset!(app, "assets/fonts/Inter-Regular.ttf");
+        embedded_asset!(app, "assets/fonts/FontAwesome-Solid.otf");
+        embedded_asset!(app, "assets/fonts/FontAwesome-Regular.otf");
 
         // Embedded icons
         embedded_asset!(app, "assets/icons/chevron-down.png");

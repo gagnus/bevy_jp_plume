@@ -510,7 +510,6 @@ impl EditablePalette {
             .get(token)
             .map(|slot| resolved[*slot])
             .unwrap_or(Color::NONE)
-            .clone()
     }
 }
 
@@ -656,7 +655,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
 
 /// Default mapping from each token to a [`ThemeSlot`]
 pub fn default_token_slots() -> &'static [(ThemeToken, ThemeSlot)] {
-    &DEFAULT_TOKEN_SLOTS
+    DEFAULT_TOKEN_SLOTS
 }
 
 pub mod dark_theme;

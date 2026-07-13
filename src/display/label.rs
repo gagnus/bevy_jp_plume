@@ -18,6 +18,32 @@ pub fn caption(text: impl Into<String>) -> impl Scene {
     }
 }
 
+/// A caption within, say, a button.
+pub fn fa_icon_solid(icon_text: &'static str) -> impl Scene {
+    bsn! {
+        Text(icon_text)
+        PropagateOver<TextFont>
+        ThemedText
+        TextFont {
+            font: FontSourceTemplate::Handle(fonts::FA_SOLID),
+            font_size: size::MEDIUM_FONT,
+        }
+    }
+}
+
+/// A caption within, say, a button.
+pub fn fa_icon_regular(icon_text: &'static str) -> impl Scene {
+    bsn! {
+        Text(icon_text)
+        PropagateOver<TextFont>
+        ThemedText
+        TextFont {
+            font: FontSourceTemplate::Handle(fonts::FA_REGULAR),
+            font_size: size::MEDIUM_FONT,
+        }
+    }
+}
+
 /// A text label.
 pub fn label(text: impl Into<String>) -> impl Scene {
     bsn! {
