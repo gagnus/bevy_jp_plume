@@ -11,7 +11,7 @@ use bevy_ecs::{
     query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
+    system::{Commands, Query, Res, SystemParam},
     template::template,
 };
 use bevy_picking::{PickingSystems, hover::Hovered};
@@ -63,10 +63,11 @@ impl PlumeSlider {
     fn scene(props: PlumeSliderProps) -> impl Scene {
         bsn! {
             // Full-height hit area; the visible track is a thin child strip.
+            // No padding: the thumb's percent-left resolves against the padding box,
+            // so track and thumb must share the same width basis.
             Node {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
-                padding: UiRect::horizontal(px(8)),
                 flex_grow: 1.0,
             }
             Hovered
@@ -137,6 +138,16 @@ struct PlumeSliderTrack;
 #[reflect(Component, Clone, Default)]
 struct PlumeSliderThumb;
 
+/// Shared lookups for applying slider styles.
+#[derive(SystemParam)]
+struct SliderStyleCtx<'w, 's> {
+    q_children: Query<'w, 's, &'static Children>,
+    q_tracks: Query<'w, 's, &'static mut BackgroundGradient, With<PlumeSliderTrack>>,
+    q_thumbs: Query<'w, 's, &'static ThemeBackgroundColor, With<PlumeSliderThumb>>,
+    theme: Res<'w, UiTheme>,
+    commands: Commands<'w, 's>,
+}
+
 fn update_slider_styles(
     q_sliders: Query<
         (Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered),
@@ -145,22 +156,10 @@ fn update_slider_styles(
             Or<(Added<InteractionDisabled>, Changed<Hovered>, Added<Pressed>)>,
         ),
     >,
-    q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    theme: Res<UiTheme>,
-    mut commands: Commands,
+    mut ctx: SliderStyleCtx,
 ) {
     for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
-        set_slider_styles(
-            slider_ent,
-            &theme,
-            disabled,
-            pressed,
-            hovered.0,
-            &q_children,
-            &mut q_tracks,
-            &mut commands,
-        );
+        set_slider_styles(slider_ent, disabled, pressed, hovered.0, &mut ctx);
     }
 }
 
@@ -168,26 +167,14 @@ fn update_slider_styles_remove(
     q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
-    q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    theme: Res<UiTheme>,
-    mut commands: Commands,
+    mut ctx: SliderStyleCtx,
 ) {
     removed_disabled
         .read()
         .chain(remove_pressed.read())
         .for_each(|ent| {
             if let Ok((slider_ent, disabled, pressed, hovered)) = q_sliders.get(ent) {
-                set_slider_styles(
-                    slider_ent,
-                    &theme,
-                    disabled,
-                    pressed,
-                    hovered.0,
-                    &q_children,
-                    &mut q_tracks,
-                    &mut commands,
-                );
+                set_slider_styles(slider_ent, disabled, pressed, hovered.0, &mut ctx);
             }
         });
 }
@@ -195,38 +182,30 @@ fn update_slider_styles_remove(
 /// Re-apply slider styles to every slider when the theme changes.
 fn update_slider_styles_theme(
     q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
-    q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    theme: Res<UiTheme>,
-    mut commands: Commands,
+    mut ctx: SliderStyleCtx,
 ) {
-    if !theme.is_changed() {
+    if !ctx.theme.is_changed() {
         return;
     }
     for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
-        set_slider_styles(
-            slider_ent,
-            &theme,
-            disabled,
-            pressed,
-            hovered.0,
-            &q_children,
-            &mut q_tracks,
-            &mut commands,
-        );
+        set_slider_styles(slider_ent, disabled, pressed, hovered.0, &mut ctx);
     }
 }
 
 fn set_slider_styles(
     slider_ent: Entity,
-    theme: &Res<'_, UiTheme>,
     disabled: bool,
     pressed: bool,
     hovered: bool,
-    q_children: &Query<&Children>,
-    q_tracks: &mut Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    commands: &mut Commands,
+    ctx: &mut SliderStyleCtx,
 ) {
+    let SliderStyleCtx {
+        q_children,
+        q_tracks,
+        q_thumbs,
+        theme,
+        commands,
+    } = ctx;
     let bar_color = theme.color(&if disabled {
         tokens::SLIDER_BAR_DISABLED
     } else if pressed {
@@ -247,6 +226,16 @@ fn set_slider_styles(
         tokens::SLIDER_BG
     });
 
+    let thumb_token = if disabled {
+        tokens::SLIDER_THUMB_DISABLED
+    } else if pressed {
+        tokens::SLIDER_THUMB_PRESSED
+    } else if hovered {
+        tokens::SLIDER_THUMB_HOVER
+    } else {
+        tokens::SLIDER_THUMB
+    };
+
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
         false => bevy_window::SystemCursorIcon::EwResize,
@@ -260,6 +249,13 @@ fn set_slider_styles(
             linear_gradient.stops[1].color = bar_color;
             linear_gradient.stops[2].color = bg_color;
             linear_gradient.stops[3].color = bg_color;
+        }
+        if let Ok(thumb_bg) = q_thumbs.get(child)
+            && thumb_bg.0 != thumb_token
+        {
+            commands
+                .entity(child)
+                .insert(ThemeBackgroundColor(thumb_token.clone()));
         }
     });
 
