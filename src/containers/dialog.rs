@@ -18,6 +18,7 @@ use crate::{
     controls::{ButtonVariant, PlumeToolButton},
     display::icon,
     font_styles::InheritableFont,
+    rounded_corners::RoundedCorners,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
@@ -74,11 +75,11 @@ impl PlumeDialog {
             ThemeBorderColor(tokens::DIALOG_BORDER)
             InheritableThemeTextColor(tokens::DIALOG_TEXT)
             BoxShadow::new(
-                Srgba::BLACK.with_alpha(0.9).into(),
+                Srgba::BLACK.with_alpha(0.7).into(),
                 px(0),
-                px(0),
-                px(1),
                 px(4),
+                px(2),
+                px(16),
             )
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {
@@ -87,20 +88,25 @@ impl PlumeDialog {
             Children [
                 // Title bar; dragging it moves the window.
                 (
+                    // Same chrome as the subpane header; the dialog is distinguished
+                    // by its drop shadow, not a different header.
                     Node {
                         display: Display::Flex,
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::SpaceBetween,
-                        padding: UiRect::all(px(6.0)),
+                        padding: UiRect::horizontal(px(10)),
+                        min_height: size::HEADER_HEIGHT,
+                        column_gap: px(4),
+                        border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
                     }
                     DialogDragHandle
                     InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
                     ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
                     InheritableFont {
                         font: fonts::REGULAR,
-                        font_size: size::HEADER_FONT,
-                        weight: FontWeight::BOLD,
+                        font_size: size::MEDIUM_FONT,
+                        weight: FontWeight::NORMAL,
                     }
                     Children [
                         {props.title},
@@ -132,13 +138,16 @@ impl PlumeDialogHeader {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::all(px(6.0)),
+                padding: UiRect::horizontal(px(10)),
+                min_height: size::HEADER_HEIGHT,
+                column_gap: px(4),
+                border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
             }
             ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
             InheritableFont {
                 font: fonts::REGULAR,
-                font_size: size::HEADER_FONT,
-                weight: FontWeight::BOLD,
+                font_size: size::MEDIUM_FONT,
+                weight: FontWeight::NORMAL,
             }
         }
     }
