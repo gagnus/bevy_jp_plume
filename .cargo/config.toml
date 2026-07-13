@@ -1,0 +1,13 @@
+# Silence Vulkan validation-layer spam from wgpu in debug builds.
+# wgpu enables the Vulkan validation + debug instance flags by default in debug
+# builds; these turn them off so `cargo run` doesn't flood stderr with
+# VUID-RuntimeSpirv-vulkanMemoryModel-06265 (and similar) messages.
+[env]
+WGPU_VALIDATION = "0"
+WGPU_DEBUG = "0"
+
+# Debug-mode BSN scene spawning is deeply recursive with large stack frames; big
+# scenes (e.g. the 25-item accent dropdown) overflow the default 1 MB main-thread
+# stack. Reserve 16 MB so spawning has headroom.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/STACK:16777216"]

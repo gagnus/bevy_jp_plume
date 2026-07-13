@@ -60,13 +60,7 @@ impl PlumeTextInput {
                 padding: UiRect::horizontal(px(5.0)),
                 border: px(2),
                 border_radius: {BorderRadius::all(px(4.0))},
-                flex_grow: {
-                    if props.visible_width.is_some() {
-                        0_f32
-                    } else {
-                        1_f32
-                    }
-                } ,
+                width: px(180),
             }
             PlumeTextInput
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)

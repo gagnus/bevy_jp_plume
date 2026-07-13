@@ -6,20 +6,20 @@ use bevy_ecs::{
     entity::Entity,
     hierarchy::Children,
     lifecycle::RemovedComponents,
-    query::{Added, Changed, Has, Or, With},
+    query::{Added, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    LayoutConfig, Node, Pressed, px,
+    LayoutConfig, Node, px,
 };
-use bevy_ui_widgets::{ActivateOnPress, RadioButton};
+use bevy_ui_widgets::RadioButton;
 
 use crate::{
     constants::{fonts, size},
@@ -68,7 +68,6 @@ impl PlumeRadio {
                 min_height: size::ROW_HEIGHT,
             }
             RadioButton
-            Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
             InheritableFont {
@@ -124,19 +123,11 @@ fn update_radio_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Pressed>,
-            Has<ActivateOnPress>,
-            &Hovered,
             &InheritableThemeTextColor,
         ),
         (
             With<RadioButton>,
-            Or<(
-                Changed<Hovered>,
-                Added<Checked>,
-                Added<Pressed>,
-                Added<InteractionDisabled>,
-            )>,
+            Or<(Added<Checked>, Added<InteractionDisabled>)>,
         ),
     >,
     q_children: Query<&Children>,
@@ -144,9 +135,7 @@ fn update_radio_styles(
     mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut commands: Commands,
 ) {
-    for (radio_ent, disabled, checked, pressed, activate_on_press, hovered, font_color) in
-        q_radioes.iter()
-    {
+    for (radio_ent, disabled, checked, font_color) in q_radioes.iter() {
         let Some(outline_ent) = q_children
             .iter_descendants(radio_ent)
             .find(|en| q_outline.contains(*en))
@@ -167,9 +156,6 @@ fn update_radio_styles(
             mark_ent,
             disabled,
             checked,
-            pressed,
-            hovered.0,
-            activate_on_press,
             outline_border,
             mark_color,
             font_color,
@@ -184,9 +170,6 @@ fn update_radio_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Pressed>,
-            Has<ActivateOnPress>,
-            &Hovered,
             &InheritableThemeTextColor,
         ),
         With<RadioButton>,
@@ -196,26 +179,13 @@ fn update_radio_styles_remove(
     mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
-    mut remove_pressed: RemovedComponents<Pressed>,
-    mut remove_activate_on_press: RemovedComponents<ActivateOnPress>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
-        .chain(remove_pressed.read())
-        .chain(remove_activate_on_press.read())
         .for_each(|ent| {
-            if let Ok((
-                radio_ent,
-                disabled,
-                checked,
-                pressed,
-                activate_on_press,
-                hovered,
-                font_color,
-            )) = q_radioes.get(ent)
-            {
+            if let Ok((radio_ent, disabled, checked, font_color)) = q_radioes.get(ent) {
                 let Some(outline_ent) = q_children
                     .iter_descendants(radio_ent)
                     .find(|en| q_outline.contains(*en))
@@ -236,9 +206,6 @@ fn update_radio_styles_remove(
                     mark_ent,
                     disabled,
                     checked,
-                    pressed,
-                    hovered.0,
-                    activate_on_press,
                     outline_border,
                     mark_color,
                     font_color,
@@ -254,66 +221,24 @@ fn set_radio_styles(
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
-    pressed: bool,
-    hovered: bool,
-    activate_on_press: bool,
     outline_border: &ThemeBorderColor,
     mark_color: &ThemeBackgroundColor,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let outline_bg_token = if checked {
-        if disabled {
-            tokens::RADIO_BG_CHECKED_DISABLED
-        } else if pressed && !activate_on_press {
-            tokens::RADIO_BG_CHECKED_PRESSED
-        } else if hovered {
-            tokens::RADIO_BG_CHECKED_HOVER
-        } else {
-            tokens::RADIO_BG_CHECKED
-        }
-    } else {
-        if disabled {
-            tokens::RADIO_BG_DISABLED
-        } else if pressed && !activate_on_press {
-            tokens::RADIO_BG_PRESSED
-        } else if hovered {
-            tokens::RADIO_BG_HOVER
-        } else {
-            tokens::RADIO_BG
-        }
+    let (outline_border_token, outline_bg_token) = match (checked, disabled) {
+        (true, true) => (
+            tokens::RADIO_BORDER_CHECKED_DISABLED,
+            tokens::RADIO_BG_CHECKED_DISABLED,
+        ),
+        (true, false) => (tokens::RADIO_BORDER_CHECKED, tokens::RADIO_BG_CHECKED),
+        (false, true) => (tokens::RADIO_BORDER_DISABLED, tokens::RADIO_BG_DISABLED),
+        (false, false) => (tokens::RADIO_BORDER, tokens::RADIO_BG),
     };
 
-    let outline_border_token = if checked {
-        if disabled {
-            tokens::RADIO_BORDER_CHECKED_DISABLED
-        } else if pressed && !activate_on_press {
-            tokens::RADIO_BORDER_CHECKED_PRESSED
-        } else if hovered {
-            tokens::RADIO_BORDER_CHECKED_HOVER
-        } else {
-            tokens::RADIO_BORDER_CHECKED
-        }
-    } else {
-        if disabled {
-            tokens::RADIO_BORDER_DISABLED
-        } else if pressed && !activate_on_press {
-            tokens::RADIO_BORDER_PRESSED
-        } else if hovered {
-            tokens::RADIO_BORDER_HOVER
-        } else {
-            tokens::RADIO_BORDER
-        }
-    };
-
-    let mark_token = if disabled {
-        tokens::RADIO_MARK_DISABLED
-    } else if pressed && !activate_on_press {
-        tokens::RADIO_MARK_PRESSED
-    } else if hovered {
-        tokens::RADIO_MARK_HOVER
-    } else {
-        tokens::RADIO_MARK
+    let mark_token = match disabled {
+        true => tokens::RADIO_MARK_DISABLED,
+        false => tokens::RADIO_MARK,
     };
 
     let font_color_token = match disabled {

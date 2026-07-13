@@ -224,60 +224,78 @@ pub enum Slot {
     /// Window background: `WINDOW_BG`.
     #[default]
     Neutral0,
+
     /// Surface bodies & menus: `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`.
     Neutral1,
-    /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`,
-    /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`,
-    Neutral2,
+
     /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_BG`/`_BORDER`,
     /// `DIALOG_HEADER_BG`.
+    Neutral2,
+
+    /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`,
+    /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`,
+    // TODO: redo comment having a look below at all the other stuff we've reassigned
     Neutral3,
+
     /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BORDER`, `RADIO_BORDER`,
     /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`,
     /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`.
-    /// Checkbox/radio/switch hover+pressed variants also map here: Radix-style,
-    /// they change only with checked state.
+    /// Checkbox/radio/switch have no hover/pressed variants (Radix-style: they
+    /// change only with checked state).
     Neutral4,
+
     /// Control hover: `BUTTON_BG_HOVER`, `BUTTON_PLAIN_BG_HOVER`.
     Neutral5,
+
     /// Control pressed: `BUTTON_BG_PRESSED`, `BUTTON_PLAIN_BG_PRESSED`.
     Neutral6,
+
     /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
-    /// `SUBPANE_HEADER_TEXT`.
+    /// `SUBPANE_HEADER_TEXT`, `SWITCH_SLIDE_BG` / `SWITCH_SLIDE_BORDER`.
     Text0,
+
     /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
-    /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed).
     Text1,
+
     /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
     /// `TEXT_INPUT_TEXT_DISABLED`, `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
     TextDim0,
-    /// Disabled checkbox/radio/switch borders, marks, knob & label text: the
-    /// `BORDER`/`BORDER_CHECKED`/`MARK`/`TEXT` `_DISABLED` variants of `CHECKBOX_*`/`RADIO_*`, plus
-    /// `SWITCH`'s `BORDER`/`SLIDE_BG`/`SLIDE_BORDER` `_DISABLED` (+ checked). Their `BG*_DISABLED`
-    /// fills are [`Slot::Transparent`].
+
+    /// TODO: redo this is just text now right?
     TextDim1,
+
     /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SLIDER_THUMB`, `SCROLLBAR_THUMB`,
     /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/switch), `RADIO_BORDER_CHECKED`, `RADIO_BG_CHECKED`,
-    /// `TEXT_INPUT_SELECTION`. Checked hover+pressed variants also map here (Radix-style).
+    /// `TEXT_INPUT_SELECTION`.
     Accent0,
-    /// Call-to-action hover: `BUTTON_PRIMARY_BG_HOVER`, `SLIDER_BAR_HOVER`/`_PRESSED`,
-    /// `SLIDER_THUMB_HOVER`/`_PRESSED`.
+
+    /// Call-to-action hover: `BUTTON_PRIMARY_BG_HOVER`, `SLIDER_BAR_HOVER`,
+    /// `SLIDER_THUMB_HOVER`, `SCROLLBAR_THUMB_HOVER`.
     Accent1,
-    /// Call-to-action pressed: `BUTTON_PRIMARY_BG_PRESSED`, `SCROLLBAR_THUMB_HOVER`.
+
+    /// Call-to-action pressed: `BUTTON_PRIMARY_BG_PRESSED`, `SLIDER_BAR_PRESSED`, `SLIDER_THUMB_PRESSED`,
+    /// `SCROLLBAR_THUMB_PRESSED`.
     Accent2,
+
     /// Brightest accent: `TEXT_INPUT_CURSOR`.
     Accent3,
+
     /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`, `RADIO_MARK`,
     /// `SWITCH_SLIDE_BG`/`_BORDER_CHECKED` (+ hover/pressed).
     Contrast,
+
     /// Focus/selection ring color (reserved; no token maps here yet).
     FocusRing,
+
     /// Red axis (reserved for axis-colored widgets).
     XAxis,
+
     /// Green axis (reserved for axis-colored widgets).
     YAxis,
+
     /// Blue axis (reserved for axis-colored widgets).
     ZAxis,
+
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
     /// unchecked `RADIO_BG*`/`CHECKBOX_BG*`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED` (checkbox/switch),
     /// `TEXT_INPUT_SELECTION_UNFOCUSED`, `LISTROW_BG`.
@@ -421,6 +439,32 @@ impl EditablePalette {
         // Slot::Transparent stays Color::NONE.
         ResolvedPalette(c)
     }
+
+    pub fn neutral(&self, index: usize) -> Color {
+        self.neutrals.to_color(index)
+    }
+    pub fn accent(&self, index: usize) -> Color {
+        self.accent.to_color(index)
+    }
+    pub fn text(&self, index: usize) -> Color {
+        self.text.to_color(index)
+    }
+    pub fn text_dim(&self, index: usize) -> Color {
+        self.text(index).with_alpha(self.dim_text_alpha_modifier)
+    }
+    pub fn axis(&self, index: usize) -> Color {
+        self.axes[index].into()
+    }
+
+    pub fn token(&self, token: &ThemeToken) -> Color {
+        let resolved = self.resolve();
+        let lookup: HashMap<ThemeToken, Slot> = DEFAULT_TOKEN_SLOTS.iter().cloned().collect();
+        lookup
+            .get(token)
+            .map(|slot| resolved[*slot])
+            .unwrap_or(Color::NONE)
+            .clone()
+    }
 }
 
 /// Build Plume theme properties by resolving every token's [`Slot`] against `p`.
@@ -449,11 +493,11 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::BUTTON_BG, Slot::Neutral4),
     (tokens::BUTTON_BG_HOVER, Slot::Neutral5),
     (tokens::BUTTON_BG_PRESSED, Slot::Neutral6),
-    (tokens::BUTTON_BG_DISABLED, Slot::Neutral2),
+    (tokens::BUTTON_BG_DISABLED, Slot::Neutral3),
     (tokens::BUTTON_PRIMARY_BG, Slot::Accent0),
     (tokens::BUTTON_PRIMARY_BG_HOVER, Slot::Accent1),
     (tokens::BUTTON_PRIMARY_BG_PRESSED, Slot::Accent2),
-    (tokens::BUTTON_PRIMARY_BG_DISABLED, Slot::Neutral2),
+    (tokens::BUTTON_PRIMARY_BG_DISABLED, Slot::Neutral3),
     (tokens::BUTTON_PLAIN_BG, Slot::Transparent),
     (tokens::BUTTON_PLAIN_BG_HOVER, Slot::Neutral5),
     (tokens::BUTTON_PLAIN_BG_PRESSED, Slot::Neutral6),
@@ -462,119 +506,86 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::BUTTON_TEXT_DISABLED, Slot::TextDim0),
     (tokens::BUTTON_PRIMARY_TEXT, Slot::Contrast),
     (tokens::BUTTON_PRIMARY_TEXT_DISABLED, Slot::TextDim0),
-    (tokens::SLIDER_BG, Slot::Neutral2),
-    (tokens::SLIDER_BG_HOVER, Slot::Neutral2),
-    (tokens::SLIDER_BG_PRESSED, Slot::Neutral2),
-    (tokens::SLIDER_BG_DISABLED, Slot::Neutral2),
+    (tokens::SLIDER_BG, Slot::Neutral3),
+    (tokens::SLIDER_BG_HOVER, Slot::Neutral3),
+    (tokens::SLIDER_BG_PRESSED, Slot::Neutral3),
+    (tokens::SLIDER_BG_DISABLED, Slot::Neutral3),
     (tokens::SLIDER_BAR, Slot::Accent0),
     (tokens::SLIDER_BAR_HOVER, Slot::Accent1),
-    (tokens::SLIDER_BAR_PRESSED, Slot::Accent1),
+    (tokens::SLIDER_BAR_PRESSED, Slot::Accent2),
     (tokens::SLIDER_BAR_DISABLED, Slot::Neutral4),
     (tokens::SLIDER_THUMB, Slot::Accent0),
     (tokens::SLIDER_THUMB_HOVER, Slot::Accent1),
-    (tokens::SLIDER_THUMB_PRESSED, Slot::Accent1),
+    (tokens::SLIDER_THUMB_PRESSED, Slot::Accent2),
     (tokens::SLIDER_THUMB_DISABLED, Slot::Neutral4),
-    (tokens::SCROLLBAR_BG, Slot::Neutral2),
+    (tokens::SCROLLBAR_BG, Slot::Neutral3),
     (tokens::SCROLLBAR_THUMB, Slot::Accent0),
-    (tokens::SCROLLBAR_THUMB_HOVER, Slot::Accent2),
+    (tokens::SCROLLBAR_THUMB_HOVER, Slot::Accent1),
+    (tokens::SCROLLBAR_THUMB_PRESSED, Slot::Accent2),
     (tokens::CHECKBOX_BG, Slot::Transparent),
-    (tokens::CHECKBOX_BG_HOVER, Slot::Transparent),
-    (tokens::CHECKBOX_BG_PRESSED, Slot::Transparent),
     (tokens::CHECKBOX_BG_DISABLED, Slot::Transparent),
     (tokens::CHECKBOX_BG_CHECKED, Slot::Accent0),
-    (tokens::CHECKBOX_BG_CHECKED_HOVER, Slot::Accent0),
-    (tokens::CHECKBOX_BG_CHECKED_PRESSED, Slot::Accent0),
     (tokens::CHECKBOX_BG_CHECKED_DISABLED, Slot::Transparent),
     (tokens::CHECKBOX_BORDER, Slot::Neutral4),
-    (tokens::CHECKBOX_BORDER_HOVER, Slot::Neutral4),
-    (tokens::CHECKBOX_BORDER_PRESSED, Slot::Neutral4),
-    (tokens::CHECKBOX_BORDER_DISABLED, Slot::TextDim1),
+    (tokens::CHECKBOX_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::CHECKBOX_BORDER_CHECKED, Slot::Accent0),
-    (tokens::CHECKBOX_BORDER_CHECKED_HOVER, Slot::Accent0),
-    (tokens::CHECKBOX_BORDER_CHECKED_PRESSED, Slot::Accent0),
-    (tokens::CHECKBOX_BORDER_CHECKED_DISABLED, Slot::TextDim1),
+    (tokens::CHECKBOX_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::CHECKBOX_MARK, Slot::Contrast),
-    (tokens::CHECKBOX_MARK_DISABLED, Slot::TextDim1),
+    (tokens::CHECKBOX_MARK_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::CHECKBOX_TEXT, Slot::Text1),
     (tokens::CHECKBOX_TEXT_DISABLED, Slot::TextDim1),
     (tokens::RADIO_BG, Slot::Transparent),
-    (tokens::RADIO_BG_HOVER, Slot::Transparent),
-    (tokens::RADIO_BG_PRESSED, Slot::Transparent),
     (tokens::RADIO_BG_DISABLED, Slot::Transparent),
     (tokens::RADIO_BG_CHECKED, Slot::Accent0),
-    (tokens::RADIO_BG_CHECKED_HOVER, Slot::Accent0),
-    (tokens::RADIO_BG_CHECKED_PRESSED, Slot::Accent0),
     (tokens::RADIO_BG_CHECKED_DISABLED, Slot::Transparent),
     (tokens::RADIO_BORDER, Slot::Neutral4),
-    (tokens::RADIO_BORDER_HOVER, Slot::Neutral4),
-    (tokens::RADIO_BORDER_PRESSED, Slot::Neutral4),
-    (tokens::RADIO_BORDER_DISABLED, Slot::TextDim1),
+    (tokens::RADIO_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::RADIO_BORDER_CHECKED, Slot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_HOVER, Slot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_PRESSED, Slot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_DISABLED, Slot::TextDim1),
+    (tokens::RADIO_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::RADIO_MARK, Slot::Contrast),
-    (tokens::RADIO_MARK_HOVER, Slot::Contrast),
-    (tokens::RADIO_MARK_PRESSED, Slot::Contrast),
-    (tokens::RADIO_MARK_DISABLED, Slot::TextDim1),
+    (tokens::RADIO_MARK_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::RADIO_TEXT, Slot::Text1),
     (tokens::RADIO_TEXT_DISABLED, Slot::TextDim1),
     (tokens::SWITCH_BG, Slot::Neutral4),
-    (tokens::SWITCH_BG_HOVER, Slot::Neutral4),
-    (tokens::SWITCH_BG_PRESSED, Slot::Neutral4),
     (tokens::SWITCH_BG_DISABLED, Slot::Transparent),
     (tokens::SWITCH_BG_CHECKED, Slot::Accent0),
-    (tokens::SWITCH_BG_CHECKED_HOVER, Slot::Accent0),
-    (tokens::SWITCH_BG_CHECKED_PRESSED, Slot::Accent0),
     (tokens::SWITCH_BG_CHECKED_DISABLED, Slot::Transparent),
     (tokens::SWITCH_BORDER, Slot::Neutral4),
-    (tokens::SWITCH_BORDER_HOVER, Slot::Neutral4),
-    (tokens::SWITCH_BORDER_PRESSED, Slot::Neutral4),
-    (tokens::SWITCH_BORDER_DISABLED, Slot::TextDim1),
+    (tokens::SWITCH_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::SWITCH_BORDER_CHECKED, Slot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_HOVER, Slot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_PRESSED, Slot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_DISABLED, Slot::TextDim1),
-    (tokens::SWITCH_SLIDE_BG, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BG_HOVER, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BG_PRESSED, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BG_DISABLED, Slot::TextDim1),
+    (tokens::SWITCH_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BG, Slot::Text0),
+    (tokens::SWITCH_SLIDE_BG_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::SWITCH_SLIDE_BG_CHECKED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BG_CHECKED_HOVER, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BG_CHECKED_PRESSED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED, Slot::TextDim1),
-    (tokens::SWITCH_SLIDE_BORDER, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BORDER_HOVER, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BORDER_PRESSED, Slot::Text1),
-    (tokens::SWITCH_SLIDE_BORDER_DISABLED, Slot::TextDim1),
+    (tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BORDER, Slot::Text0),
+    (tokens::SWITCH_SLIDE_BORDER_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::SWITCH_SLIDE_BORDER_CHECKED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED_HOVER, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED_PRESSED, Slot::Contrast),
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED, Slot::TextDim1),
+    (tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED, Slot::Neutral3), // was TextDim1
     (tokens::MENU_BG, Slot::Neutral1),
     (tokens::MENU_BORDER, Slot::Neutral4),
-    (tokens::TEXT_INPUT_BG, Slot::Neutral2),
+    (tokens::TEXT_INPUT_BG, Slot::Neutral3),
     (tokens::TEXT_INPUT_TEXT, Slot::Text0),
     (tokens::TEXT_INPUT_TEXT_DISABLED, Slot::TextDim0),
     (tokens::TEXT_INPUT_CURSOR, Slot::Accent3),
     (tokens::TEXT_INPUT_SELECTION, Slot::Accent0),
     (tokens::TEXT_INPUT_SELECTION_UNFOCUSED, Slot::Transparent),
-    (tokens::TEXT_INPUT_BORDER, Slot::Neutral2),
-    (tokens::SUBPANE_HEADER_BG, Slot::Neutral3),
+    (tokens::TEXT_INPUT_BORDER, Slot::Neutral3),
+    (tokens::SUBPANE_HEADER_BG, Slot::Neutral2),
     (tokens::SUBPANE_HEADER_BORDER, Slot::Neutral4),
     (tokens::SUBPANE_HEADER_TEXT, Slot::Text0),
     (tokens::SUBPANE_BODY_BG, Slot::Neutral1),
     (tokens::SUBPANE_BODY_BORDER, Slot::Neutral4),
-    (tokens::GROUP_BG, Slot::Neutral3),
-    (tokens::GROUP_BORDER, Slot::Neutral3),
+    (tokens::GROUP_BG, Slot::Neutral2),
+    (tokens::GROUP_BORDER, Slot::Neutral2),
     (tokens::LISTROW_BG, Slot::Transparent),
-    (tokens::LISTROW_BG_HOVER, Slot::Neutral2),
+    (tokens::LISTROW_BG_HOVER, Slot::Neutral3),
     (tokens::LISTROW_BG_SELECTED, Slot::Neutral4),
     (tokens::LISTROW_TEXT, Slot::Text0),
     (tokens::LISTROW_TEXT_DISABLED, Slot::TextDim0),
     (tokens::DIALOG_BG, Slot::Neutral1),
     (tokens::DIALOG_BORDER, Slot::Neutral4),
-    (tokens::DIALOG_HEADER_BG, Slot::Neutral3),
+    (tokens::DIALOG_HEADER_BG, Slot::Neutral2),
     (tokens::DIALOG_TEXT, Slot::Text1),
     (tokens::DIALOG_HEADER_TEXT, Slot::Text0),
 ];

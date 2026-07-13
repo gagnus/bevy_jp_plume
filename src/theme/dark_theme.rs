@@ -13,13 +13,14 @@ pub fn create_dark_theme() -> ThemeProps {
 pub fn default_dark_palette() -> EditablePalette {
     EditablePalette {
         neutrals: OklchaArray {
-            hue: 280.0,
+            hue: 293.0,
             chroma: 0.008,
-            l: [0.2414, 0.287, 0.362, 0.3373, 0.399, 0.452, 0.485],
+            //    l: [0.2414, 0.287, 0.3373, 0.35, 0.376, 0.399, 0.452],
+            l: [0.16, 0.22, 0.25, 0.30, 0.35, 0.40, 0.45],
         },
         accent: OklchaArray {
-            hue: 255.4,
-            chroma: 0.1594,
+            hue: 293.29,
+            chroma: 0.2088,
             l: [0.542, 0.592, 0.642, 0.742],
         },
         text: OklchaArray {

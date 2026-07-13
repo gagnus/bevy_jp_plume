@@ -84,7 +84,9 @@ fn update_scrollbar_thumb_styles(
     mut commands: Commands,
 ) {
     for (scrollbar_ent, hovered, bg_color, drag_state) in q_thumbs.iter() {
-        let bg_token = if hovered.0 || drag_state.dragging {
+        let bg_token = if drag_state.dragging {
+            tokens::SCROLLBAR_THUMB_PRESSED
+        } else if hovered.0 {
             tokens::SCROLLBAR_THUMB_HOVER
         } else {
             tokens::SCROLLBAR_THUMB

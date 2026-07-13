@@ -68,7 +68,8 @@ impl PlumeSlider {
             Node {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
-                flex_grow: 1.0,
+                margin: UiRect::horizontal(px(8.0)),
+                width: px(180)
             }
             Hovered
             Slider {
@@ -83,7 +84,7 @@ impl PlumeSlider {
                 (
                     Node {
                         height: px(4),
-                        flex_grow: 1.0,
+                        width: percent(100.),
                         border_radius: {BorderRadius::all(px(2))},
                     }
                     PlumeSliderTrack
@@ -237,7 +238,7 @@ fn set_slider_styles(
 
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::EwResize,
+        false => bevy_window::SystemCursorIcon::Pointer,
     };
 
     q_children.iter_descendants(slider_ent).for_each(|child| {
