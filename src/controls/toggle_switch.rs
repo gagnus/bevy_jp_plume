@@ -57,14 +57,16 @@ impl PlumeToggleSwitch {
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             Children [(
                 // Circular knob; styles slide it between the left/right insets.
+                // Diameter fills the pill's content height and its radius (8) nests
+                // concentrically inside the pill's outer radius (10) minus the border.
                 Node {
                     position_type: PositionType::Absolute,
-                    left: px(1),
-                    top: px(1),
-                    width: px(14),
-                    height: px(14),
+                    left: px(0),
+                    top: px(0),
+                    width: px(16),
+                    height: px(16),
                     border: px(2),
-                    border_radius: px(7),
+                    border_radius: px(8),
                 }
                 ToggleSwitchSlide
                 ThemeBackgroundColor(tokens::SWITCH_SLIDE_BG)
@@ -320,8 +322,8 @@ fn set_switch_styles(
     };
 
     let (slide_left, slide_right) = match checked {
-        true => (Val::Auto, px(1)),
-        false => (px(1), Val::Auto),
+        true => (Val::Auto, px(0)),
+        false => (px(0), Val::Auto),
     };
 
     let cursor_shape = match disabled {

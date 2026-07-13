@@ -79,7 +79,6 @@ impl PlumeSlider {
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
-            EntityCursor::System(bevy_window::SystemCursorIcon::EwResize)
             Children [
                 (
                     Node {
