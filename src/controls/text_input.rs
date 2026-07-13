@@ -8,10 +8,10 @@ use bevy_ecs::{
     query::{Added, Has, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
+    system::{Commands, Query, Res, ResMut},
     template::template,
 };
-use bevy_input_focus::tab_navigation::TabIndex;
+use bevy_input_focus::{InputFocus, tab_navigation::TabIndex};
 use bevy_picking::PickingSystems;
 use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
@@ -25,9 +25,7 @@ use bevy_ui::{BorderRadius, InteractionDisabled, Node, UiRect, px};
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
-    theme::{
-        InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, ThemedText, UiTheme,
-    },
+    theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
     tokens,
 };
 
@@ -65,7 +63,9 @@ impl PlumeTextInput {
             PlumeTextInput
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
             ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
-            InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
+            // The input is itself the text entity, so the inheritable color (which only
+            // propagates to descendants) would never reach it.
+            ThemeTextColor(tokens::TEXT_INPUT_TEXT)
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)
             EditableText {
@@ -109,27 +109,41 @@ fn update_text_cursor_color(
 
 fn update_text_input_styles(
     q_inputs: Query<
-        (Entity, Has<InteractionDisabled>, &InheritableThemeTextColor),
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            &ThemeBackgroundColor,
+            &ThemeTextColor,
+        ),
         (With<PlumeTextInput>, Added<InteractionDisabled>),
     >,
+    mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
-    for (input_ent, disabled, font_color) in q_inputs.iter() {
-        set_text_input_styles(input_ent, disabled, font_color, &mut commands);
+    for (input_ent, disabled, bg_color, font_color) in q_inputs.iter() {
+        if focus.get() == Some(input_ent) {
+            focus.clear();
+        }
+        set_text_input_styles(input_ent, disabled, bg_color, font_color, &mut commands);
     }
 }
 
 fn update_text_input_styles_remove(
     q_inputs: Query<
-        (Entity, Has<InteractionDisabled>, &InheritableThemeTextColor),
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            &ThemeBackgroundColor,
+            &ThemeTextColor,
+        ),
         With<PlumeTextInput>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut commands: Commands,
 ) {
     removed_disabled.read().for_each(|ent| {
-        if let Ok((input_ent, disabled, font_color)) = q_inputs.get(ent) {
-            set_text_input_styles(input_ent, disabled, font_color, &mut commands);
+        if let Ok((input_ent, disabled, bg_color, font_color)) = q_inputs.get(ent) {
+            set_text_input_styles(input_ent, disabled, bg_color, font_color, &mut commands);
         }
     });
 }
@@ -137,12 +151,16 @@ fn update_text_input_styles_remove(
 fn set_text_input_styles(
     input_ent: Entity,
     disabled: bool,
-    font_color: &InheritableThemeTextColor,
+    bg_color: &ThemeBackgroundColor,
+    font_color: &ThemeTextColor,
     commands: &mut Commands,
 ) {
-    let font_color_token = match disabled {
-        true => tokens::TEXT_INPUT_TEXT_DISABLED,
-        false => tokens::TEXT_INPUT_TEXT,
+    let (bg_token, font_color_token) = match disabled {
+        true => (
+            tokens::TEXT_INPUT_BG_DISABLED,
+            tokens::TEXT_INPUT_TEXT_DISABLED,
+        ),
+        false => (tokens::TEXT_INPUT_BG, tokens::TEXT_INPUT_TEXT),
     };
 
     let cursor_shape = match disabled {
@@ -150,11 +168,18 @@ fn set_text_input_styles(
         false => bevy_window::SystemCursorIcon::Text,
     };
 
+    // Change background color
+    if bg_color.0 != bg_token {
+        commands
+            .entity(input_ent)
+            .insert(ThemeBackgroundColor(bg_token));
+    }
+
     // Change font color
     if font_color.0 != font_color_token {
         commands
             .entity(input_ent)
-            .insert(InheritableThemeTextColor(font_color_token));
+            .insert(ThemeTextColor(font_color_token));
     }
 
     // Change cursor shape

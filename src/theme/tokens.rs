@@ -218,6 +218,9 @@ pub const MENU_BORDER: ThemeToken = ThemeToken::new_static("plume.menu.border");
 
 /// Background for text input
 pub const TEXT_INPUT_BG: ThemeToken = ThemeToken::new_static("plume.textinput.bg");
+/// Background for text input (disabled)
+pub const TEXT_INPUT_BG_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.textinput.bg.disabled");
 /// Text color for text input
 pub const TEXT_INPUT_TEXT: ThemeToken = ThemeToken::new_static("plume.textinput.text");
 /// Text color for text input (disabled)

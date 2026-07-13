@@ -327,7 +327,8 @@ pub enum ThemeSlot {
 
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
     /// unchecked `RADIO_BG`/`CHECKBOX_BG`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED`
-    /// (checkbox/radio/switch), `TEXT_INPUT_SELECTION_UNFOCUSED`, `LISTROW_BG`.
+    /// (checkbox/radio/switch), `TEXT_INPUT_BG_DISABLED`, `TEXT_INPUT_SELECTION_UNFOCUSED`,
+    /// `LISTROW_BG`.
     Transparent,
 }
 
@@ -606,6 +607,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral3),
+    (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
     (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDim0),
     (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),
