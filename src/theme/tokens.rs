@@ -333,15 +333,9 @@ pub const SUBPANE_BODY_BORDER: ThemeToken = ThemeToken::new_static("plume.subpan
 // Group
 
 /// Group background
-pub const GROUP_HEADER_BG: ThemeToken = ThemeToken::new_static("plume.group.header.bg");
-/// Group header border
-pub const GROUP_HEADER_BORDER: ThemeToken = ThemeToken::new_static("plume.group.header.border");
-/// Group header text color
-pub const GROUP_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.group.header.text");
-/// Group body background
-pub const GROUP_BODY_BG: ThemeToken = ThemeToken::new_static("plume.group.body.bg");
-/// Group body border
-pub const GROUP_BODY_BORDER: ThemeToken = ThemeToken::new_static("plume.group.body.border");
+pub const GROUP_BG: ThemeToken = ThemeToken::new_static("plume.group.bg");
+/// Group border
+pub const GROUP_BORDER: ThemeToken = ThemeToken::new_static("plume.group.border");
 
 // Listview
 

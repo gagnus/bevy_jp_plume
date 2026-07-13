@@ -1,72 +1,28 @@
 use bevy_scene::{Scene, bsn};
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px};
+use bevy_ui::{Display, FlexDirection, Node, UiRect, px};
 
 use crate::{
     constants::{fonts, size},
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
 
-/// Group
+/// A bordered box for visually grouping related controls; content goes in `Children`.
 pub fn group() -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-        }
-    }
-}
-
-/// Group header
-pub fn group_header() -> impl Scene {
-    bsn! {
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::SpaceBetween,
-            border: UiRect {
-                left: px(1),
-                top: px(1),
-                right: px(1),
-            },
-            padding: UiRect::horizontal(px(10)),
-            min_height: size::HEADER_HEIGHT,
-            column_gap: px(4),
-            border_radius: {RoundedCorners::Top.to_border_radius(4.0)}
-        }
-        ThemeBackgroundColor(tokens::GROUP_HEADER_BG)
-        ThemeBorderColor(tokens::GROUP_HEADER_BORDER)
-        InheritableThemeTextColor(tokens::GROUP_HEADER_TEXT)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-    }
-}
-
-/// Group body
-pub fn group_body() -> impl Scene {
-    bsn! {
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            border: UiRect {
-                left: px(1),
-                right: px(1),
-                bottom: px(1),
-            },
+            border: UiRect::all(px(1)),
             row_gap: px(4),
             padding: px(6),
-            border_radius: {RoundedCorners::Bottom.to_border_radius(4.0)}
+            border_radius: {RoundedCorners::All.to_border_radius(4.0)}
         }
-        ThemeBackgroundColor(tokens::GROUP_BODY_BG)
-        ThemeBorderColor(tokens::GROUP_BODY_BORDER)
+        ThemeBackgroundColor(tokens::GROUP_BG)
+        ThemeBorderColor(tokens::GROUP_BORDER)
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,

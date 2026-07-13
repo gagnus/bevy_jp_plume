@@ -229,8 +229,8 @@ pub enum Slot {
     /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`,
     /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`,
     Neutral2,
-    /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_HEADER_BG`/`_BORDER`,
-    /// `GROUP_BODY_BG`/`_BORDER`, `DIALOG_HEADER_BG`.
+    /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_BG`/`_BORDER`,
+    /// `DIALOG_HEADER_BG`.
     Neutral3,
     /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BG`/`_BORDER`, `RADIO_BORDER`,
     /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`,
@@ -243,7 +243,7 @@ pub enum Slot {
     /// `RADIO_BORDER_PRESSED`, `SWITCH_BG`/`_BORDER_PRESSED`.
     Neutral6,
     /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
-    /// `SUBPANE_HEADER_TEXT`, `GROUP_HEADER_TEXT`.
+    /// `SUBPANE_HEADER_TEXT`.
     Text0,
     /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
     /// `SWITCH_SLIDE_BG`/`_BORDER` (+ hover/pressed).
@@ -568,11 +568,8 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, Slot)] = &[
     (tokens::SUBPANE_HEADER_TEXT, Slot::Text0),
     (tokens::SUBPANE_BODY_BG, Slot::Neutral1),
     (tokens::SUBPANE_BODY_BORDER, Slot::Neutral4),
-    (tokens::GROUP_HEADER_BG, Slot::Neutral3),
-    (tokens::GROUP_HEADER_BORDER, Slot::Neutral3),
-    (tokens::GROUP_HEADER_TEXT, Slot::Text0),
-    (tokens::GROUP_BODY_BG, Slot::Neutral3),
-    (tokens::GROUP_BODY_BORDER, Slot::Neutral3),
+    (tokens::GROUP_BG, Slot::Neutral3),
+    (tokens::GROUP_BORDER, Slot::Neutral3),
     (tokens::LISTROW_BG, Slot::Transparent),
     (tokens::LISTROW_BG_HOVER, Slot::Neutral2),
     (tokens::LISTROW_BG_SELECTED, Slot::Neutral4),
