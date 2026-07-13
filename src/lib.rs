@@ -18,7 +18,7 @@ use crate::{
     alpha_pattern::{AlphaPatternMaterial, AlphaPatternResource},
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
-    theme::{ThemedText, UiTheme},
+    theme::{ThemePlugin, ThemedText},
 };
 
 mod alpha_pattern;
@@ -36,8 +36,6 @@ pub struct PlumeCorePlugin;
 
 impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy_app::App) {
-        app.init_resource::<UiTheme>();
-
         // Embedded font
         embedded_asset!(app, "assets/fonts/FiraSans-Bold.ttf");
         embedded_asset!(app, "assets/fonts/FiraSans-BoldItalic.ttf");
@@ -57,7 +55,7 @@ impl Plugin for PlumeCorePlugin {
             ControlsPlugin,
             containers::SubpanePlugin,
             CursorIconPlugin,
-            HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate),
+            ThemePlugin,
             HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
             UiMaterialPlugin::<AlphaPatternMaterial>::default(),
         ));
@@ -75,15 +73,8 @@ impl Plugin for PlumeCorePlugin {
 
         app.add_systems(
             PostUpdate,
-            (
-                theme::update_theme,
-                display::update_themed_icons.after(PropagateSet::<TextColor>::default()),
-            ),
+            display::update_themed_icons.after(PropagateSet::<TextColor>::default()),
         )
-        .add_observer(theme::on_changed_background)
-        .add_observer(theme::on_changed_border)
-        .add_observer(theme::on_changed_font_color)
-        .add_observer(theme::on_changed_text_color)
         .add_observer(font_styles::on_changed_font)
         // Click-to-focus resolver for `TabIndex` targets. Deliberately not
         // `TabNavigationPlugin`, which would also install Tab-key navigation.

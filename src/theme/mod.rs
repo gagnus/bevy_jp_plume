@@ -1,5 +1,5 @@
 //! A framework for theming.
-use bevy_app::{Propagate, PropagateOver};
+use bevy_app::{App, HierarchyPropagatePlugin, Plugin, PostUpdate, Propagate, PropagateOver};
 use bevy_color::{Alpha, Color, Oklcha, palettes};
 use bevy_ecs::{
     change_detection::DetectChanges,
@@ -7,7 +7,7 @@ use bevy_ecs::{
     entity::Entity,
     lifecycle::Insert,
     observer::On,
-    query::Changed,
+    query::{Changed, With},
     reflect::{ReflectComponent, ReflectResource},
     resource::Resource,
     system::{Commands, Query, Res},
@@ -155,7 +155,23 @@ pub struct ThemeTextColor(pub ThemeToken);
 #[reflect(Component)]
 pub struct ThemedText;
 
-pub(crate) fn update_theme(
+/// Installs the [`UiTheme`] resource, the theme refresh system, the themed
+/// text-color propagation, and the token-change observers.
+pub struct ThemePlugin;
+
+impl Plugin for ThemePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<UiTheme>()
+            .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
+            .add_systems(PostUpdate, update_theme)
+            .add_observer(on_changed_background)
+            .add_observer(on_changed_border)
+            .add_observer(on_changed_font_color)
+            .add_observer(on_changed_text_color);
+    }
+}
+
+fn update_theme(
     mut q_background: Query<(&mut BackgroundColor, &ThemeBackgroundColor)>,
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor)>,
     mut q_text_color: Query<(&mut TextColor, &ThemeTextColor)>,
@@ -188,7 +204,7 @@ pub(crate) fn update_theme(
     }
 }
 
-pub(crate) fn on_changed_background(
+fn on_changed_background(
     insert: On<Insert, ThemeBackgroundColor>,
     mut q_background: Query<
         (&mut BackgroundColor, &ThemeBackgroundColor),
@@ -202,7 +218,7 @@ pub(crate) fn on_changed_background(
     }
 }
 
-pub(crate) fn on_changed_border(
+fn on_changed_border(
     insert: On<Insert, ThemeBorderColor>,
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor), Changed<ThemeBorderColor>>,
     theme: Res<UiTheme>,
@@ -213,7 +229,7 @@ pub(crate) fn on_changed_border(
     }
 }
 
-pub(crate) fn on_changed_text_color(
+fn on_changed_text_color(
     insert: On<Insert, ThemeTextColor>,
     mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
     theme: Res<UiTheme>,
@@ -226,7 +242,7 @@ pub(crate) fn on_changed_text_color(
 
 /// An observer which looks for changes to the [`InheritableThemeTextColor`] component on an entity,
 /// and propagates downward the text color to all participating text entities.
-pub(crate) fn on_changed_font_color(
+fn on_changed_font_color(
     insert: On<Insert, InheritableThemeTextColor>,
     font_color: Query<&InheritableThemeTextColor>,
     theme: Res<UiTheme>,
