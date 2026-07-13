@@ -24,7 +24,7 @@ use bevy_ui_widgets::{ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
     constants::{fonts, size},
-    controls::PlumeScrollbar,
+    controls::{PlumeScrollbar, ScrollbarGutter},
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
@@ -61,10 +61,8 @@ impl PlumeListView {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
-                padding: UiRect {
-                    right: px(10) // Room for scrollbar
-                }
             }
+            ScrollbarGutter(px(10))
             ListBox
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)

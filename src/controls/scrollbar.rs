@@ -4,7 +4,7 @@ use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    hierarchy::Children,
+    hierarchy::{ChildOf, Children},
     query::{Changed, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
@@ -15,7 +15,7 @@ use bevy_math::Vec2;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{BorderRadius, ComputedNode, Node, UiSystems, px};
+use bevy_ui::{BorderRadius, ComputedNode, Node, UiSystems, Val, px};
 use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
 use crate::{cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
@@ -39,6 +39,12 @@ pub struct PlumeScrollbarProps {
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct PlumeScrollbarThumb;
+
+/// Put this on a scrollbar's parent: `padding.right` reserved for the scrollbar
+/// while it is visible, reclaimed when the content fits.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct ScrollbarGutter(pub Val);
 
 impl PlumeScrollbar {
     /// Scene function for scrollbar.
@@ -93,12 +99,15 @@ fn update_scrollbar_thumb_styles(
 }
 
 /// Hide scrollbars whose target content fits its viewport (same overflow math as
-/// the headless widget, which otherwise renders a full-length thumb).
+/// the headless widget, which otherwise renders a full-length thumb), and
+/// reclaim the parent's [`ScrollbarGutter`] while hidden.
 fn update_scrollbar_visibility(
-    mut q_scrollbars: Query<(&Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
+    mut q_scrollbars: Query<(Entity, &Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
     q_scroll_area: Query<&ComputedNode>,
+    q_parents: Query<&ChildOf>,
+    mut q_gutters: Query<(&ScrollbarGutter, &mut Node)>,
 ) {
-    for (scrollbar, mut visibility) in q_scrollbars.iter_mut() {
+    for (scrollbar_ent, scrollbar, mut visibility) in q_scrollbars.iter_mut() {
         let Ok(area) = q_scroll_area.get(scrollbar.target) else {
             continue;
         };
@@ -114,6 +123,14 @@ fn update_scrollbar_visibility(
         };
         if *visibility != target {
             *visibility = target;
+        }
+        if let Ok(child_of) = q_parents.get(scrollbar_ent)
+            && let Ok((gutter, mut node)) = q_gutters.get_mut(child_of.parent())
+        {
+            let padding = if overflows { gutter.0 } else { px(0) };
+            if node.padding.right != padding {
+                node.padding.right = padding;
+            }
         }
     }
 }
