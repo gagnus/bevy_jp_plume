@@ -1,6 +1,7 @@
 //! Dropdown select control built on an internal menu popup and list view.
 use bevy_app::{Plugin, Update};
 use bevy_camera::visibility::Visibility;
+use bevy_ecs::lifecycle::RemovedComponents;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -14,7 +15,7 @@ use bevy_ecs::{
 use bevy_input_focus::{FocusCause, InputFocus, InputFocusVisible};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{ComputedNode, Node, Selected, px, widget::Text};
+use bevy_ui::{ComputedNode, InteractionDisabled, Node, Selected, px, widget::Text};
 use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
 
 use super::listview::{PlumeListRow, PlumeListView};
@@ -261,6 +262,37 @@ fn focus_select_popup(
     }
 }
 
+// The headless `MenuButton` checks `InteractionDisabled` on itself, so the marker on the
+// select root must be mirrored onto the internal menu button (which also restyles it).
+fn sync_select_disabled(
+    q_newly_disabled: Query<Entity, (With<PlumeSelect>, Added<InteractionDisabled>)>,
+    mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    q_select: Query<(), With<PlumeSelect>>,
+    q_children: Query<&Children>,
+    q_button: Query<(), With<PlumeMenuButton>>,
+    q_popup: Query<(), With<PlumeMenuPopup>>,
+    mut commands: Commands,
+) {
+    for select_ent in q_newly_disabled.iter() {
+        for descendant in q_children.iter_descendants(select_ent) {
+            if q_button.contains(descendant) {
+                commands.entity(descendant).insert(InteractionDisabled);
+            } else if q_popup.contains(descendant) {
+                commands.entity(descendant).insert(Visibility::Hidden);
+            }
+        }
+    }
+    removed_disabled.read().for_each(|ent| {
+        if q_select.contains(ent) {
+            for descendant in q_children.iter_descendants(ent) {
+                if q_button.contains(descendant) {
+                    commands.entity(descendant).remove::<InteractionDisabled>();
+                }
+            }
+        }
+    });
+}
+
 fn sync_select_width(
     q_selects: Query<(Entity, &ComputedNode), With<PlumeSelect>>,
     q_children: Query<&Children>,
@@ -293,7 +325,12 @@ impl Plugin for SelectPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_systems(
             Update,
-            (sync_caption, focus_select_popup, sync_select_width),
+            (
+                sync_caption,
+                focus_select_popup,
+                sync_select_width,
+                sync_select_disabled,
+            ),
         )
         .add_observer(select_on_set_selected);
     }
