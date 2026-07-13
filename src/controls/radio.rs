@@ -65,6 +65,7 @@ impl PlumeRadio {
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
                 column_gap: px(4),
+                min_height: size::ROW_HEIGHT,
             }
             RadioButton
             Hovered

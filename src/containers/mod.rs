@@ -2,9 +2,11 @@
 mod dialog;
 mod flex_spacer;
 mod group;
+mod row;
 mod subpane;
 
 pub use dialog::*;
 pub use flex_spacer::*;
 pub use group::*;
+pub use row::*;
 pub use subpane::*;

@@ -53,6 +53,7 @@ impl PlumeTextInput {
     fn scene(props: PlumeTextInputProps) -> impl Scene {
         bsn! {
             Node {
+                height: size::ROW_HEIGHT,
                 padding: UiRect::axes(px(5.0), px(3.0)),
                 border: px(2),
                 border_radius: {BorderRadius::all(px(4.0))},
