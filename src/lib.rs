@@ -55,6 +55,7 @@ impl Plugin for PlumeCorePlugin {
 
         app.add_plugins((
             ControlsPlugin,
+            containers::SubpanePlugin,
             CursorIconPlugin,
             HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate),
             HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
