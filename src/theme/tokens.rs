@@ -278,3 +278,51 @@ pub const DIALOG_HEADER_BG: ThemeToken = ThemeToken::new_static("plume.dialog.he
 pub const DIALOG_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.text");
 /// Dialog header text
 pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.header.text");
+
+/// Interaction-state groups over the constants above, for [`InteractionTokens::pick`].
+pub mod sets {
+    use crate::theme::InteractionTokens;
+
+    /// Regular button background
+    pub const BUTTON_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_BG,
+        hover: super::BUTTON_BG_HOVER,
+        pressed: super::BUTTON_BG_PRESSED,
+        disabled: super::BUTTON_BG_DISABLED,
+    };
+    /// Primary button background
+    pub const BUTTON_PRIMARY_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_PRIMARY_BG,
+        hover: super::BUTTON_PRIMARY_BG_HOVER,
+        pressed: super::BUTTON_PRIMARY_BG_PRESSED,
+        disabled: super::BUTTON_PRIMARY_BG_DISABLED,
+    };
+    /// Plain button background
+    pub const BUTTON_PLAIN_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_PLAIN_BG,
+        hover: super::BUTTON_PLAIN_BG_HOVER,
+        pressed: super::BUTTON_PLAIN_BG_PRESSED,
+        disabled: super::BUTTON_PLAIN_BG_DISABLED,
+    };
+    /// Slider track background
+    pub const SLIDER_BG: InteractionTokens = InteractionTokens {
+        base: super::SLIDER_BG,
+        hover: super::SLIDER_BG_HOVER,
+        pressed: super::SLIDER_BG_PRESSED,
+        disabled: super::SLIDER_BG_DISABLED,
+    };
+    /// Slider fill bar
+    pub const SLIDER_BAR: InteractionTokens = InteractionTokens {
+        base: super::SLIDER_BAR,
+        hover: super::SLIDER_BAR_HOVER,
+        pressed: super::SLIDER_BAR_PRESSED,
+        disabled: super::SLIDER_BAR_DISABLED,
+    };
+    /// Slider thumb
+    pub const SLIDER_THUMB: InteractionTokens = InteractionTokens {
+        base: super::SLIDER_THUMB,
+        hover: super::SLIDER_THUMB_HOVER,
+        pressed: super::SLIDER_THUMB_PRESSED,
+        disabled: super::SLIDER_THUMB_DISABLED,
+    };
+}

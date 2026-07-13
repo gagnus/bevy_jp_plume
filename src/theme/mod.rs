@@ -47,6 +47,34 @@ impl core::fmt::Debug for ThemeToken {
     }
 }
 
+/// One token per pointer-interaction state; see [`InteractionTokens::pick`].
+#[derive(Clone, Reflect)]
+pub struct InteractionTokens {
+    /// Rest state.
+    pub base: ThemeToken,
+    /// Pointer over the control.
+    pub hover: ThemeToken,
+    /// Pointer pressed on the control.
+    pub pressed: ThemeToken,
+    /// Interaction disabled.
+    pub disabled: ThemeToken,
+}
+
+impl InteractionTokens {
+    /// Token for the given interaction state (disabled > pressed > hover > base).
+    pub fn pick(&self, disabled: bool, pressed: bool, hovered: bool) -> ThemeToken {
+        if disabled {
+            self.disabled.clone()
+        } else if pressed {
+            self.pressed.clone()
+        } else if hovered {
+            self.hover.clone()
+        } else {
+            self.base.clone()
+        }
+    }
+}
+
 /// A collection of properties that make up a theme.
 #[derive(Default, Clone, Reflect, Debug)]
 #[reflect(Default, Debug)]

@@ -210,20 +210,12 @@ fn set_button_styles(
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let bg_token = match (variant, disabled, pressed, hovered) {
-        (ButtonVariant::Normal, true, _, _) => tokens::BUTTON_BG_DISABLED,
-        (ButtonVariant::Normal, false, true, _) => tokens::BUTTON_BG_PRESSED,
-        (ButtonVariant::Normal, false, false, true) => tokens::BUTTON_BG_HOVER,
-        (ButtonVariant::Normal, false, false, false) => tokens::BUTTON_BG,
-        (ButtonVariant::Primary, true, _, _) => tokens::BUTTON_PRIMARY_BG_DISABLED,
-        (ButtonVariant::Primary, false, true, _) => tokens::BUTTON_PRIMARY_BG_PRESSED,
-        (ButtonVariant::Primary, false, false, true) => tokens::BUTTON_PRIMARY_BG_HOVER,
-        (ButtonVariant::Primary, false, false, false) => tokens::BUTTON_PRIMARY_BG,
-        (ButtonVariant::Plain, true, _, _) => tokens::BUTTON_PLAIN_BG_DISABLED,
-        (ButtonVariant::Plain, false, true, _) => tokens::BUTTON_PLAIN_BG_PRESSED,
-        (ButtonVariant::Plain, false, false, true) => tokens::BUTTON_PLAIN_BG_HOVER,
-        (ButtonVariant::Plain, false, false, false) => tokens::BUTTON_PLAIN_BG,
+    let bg_set = match variant {
+        ButtonVariant::Normal => tokens::sets::BUTTON_BG,
+        ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
+        ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
     };
+    let bg_token = bg_set.pick(disabled, pressed, hovered);
 
     let font_color_token = match (variant, disabled) {
         (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,

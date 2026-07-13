@@ -206,35 +206,9 @@ fn set_slider_styles(
         theme,
         commands,
     } = ctx;
-    let bar_color = theme.color(&if disabled {
-        tokens::SLIDER_BAR_DISABLED
-    } else if pressed {
-        tokens::SLIDER_BAR_PRESSED
-    } else if hovered {
-        tokens::SLIDER_BAR_HOVER
-    } else {
-        tokens::SLIDER_BAR
-    });
-
-    let bg_color = theme.color(&if disabled {
-        tokens::SLIDER_BG_DISABLED
-    } else if pressed {
-        tokens::SLIDER_BG_PRESSED
-    } else if hovered {
-        tokens::SLIDER_BG_HOVER
-    } else {
-        tokens::SLIDER_BG
-    });
-
-    let thumb_token = if disabled {
-        tokens::SLIDER_THUMB_DISABLED
-    } else if pressed {
-        tokens::SLIDER_THUMB_PRESSED
-    } else if hovered {
-        tokens::SLIDER_THUMB_HOVER
-    } else {
-        tokens::SLIDER_THUMB
-    };
+    let bar_color = theme.color(&tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered));
+    let bg_color = theme.color(&tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered));
+    let thumb_token = tokens::sets::SLIDER_THUMB.pick(disabled, pressed, hovered);
 
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
