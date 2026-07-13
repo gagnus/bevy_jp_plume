@@ -2,17 +2,17 @@
 use core::f32::consts::PI;
 
 use bevy_app::{Plugin, PreUpdate};
-use bevy_color::Color;
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
     hierarchy::Children,
     lifecycle::RemovedComponents,
-    query::{Added, Changed, Has, Or, Spawned, With},
+    query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res},
+    template::template,
 };
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
@@ -86,17 +86,23 @@ impl PlumeSlider {
             SliderRange::new(props.min, props.max)
             EntityCursor::System(bevy_window::SystemCursorIcon::EwResize)
             InheritableThemeTextColor(tokens::SLIDER_TEXT)
-            // Use a gradient to draw the moving bar
-            BackgroundGradient(vec![Gradient::Linear(LinearGradient {
-                angle: PI * 0.5,
-                stops: vec![
-                    ColorStop::new(Color::NONE, percent(0)),
-                    ColorStop::new(Color::NONE, percent(50)),
-                    ColorStop::new(Color::NONE, percent(50)),
-                    ColorStop::new(Color::NONE, percent(100)),
-                ],
-                color_space: InterpolationColorSpace::LinearRgba,
-            })])
+            // Use a gradient to draw the moving bar, seeded from the theme so the
+            // slider is styled on its first frame regardless of scene-application order.
+            template(|ctx| {
+                let theme = ctx.resource::<UiTheme>();
+                let bar = theme.color(&tokens::SLIDER_BAR);
+                let bg = theme.color(&tokens::SLIDER_BG);
+                Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
+                    angle: PI * 0.5,
+                    stops: vec![
+                        ColorStop::new(bar, percent(0)),
+                        ColorStop::new(bar, percent(50)),
+                        ColorStop::new(bg, percent(50)),
+                        ColorStop::new(bg, percent(100)),
+                    ],
+                    color_space: InterpolationColorSpace::LinearRgba,
+                })]))
+            })
             Children [(
                 // Text container
                 Node {
@@ -134,8 +140,10 @@ fn update_slider_styles(
         ),
         (
             With<PlumeSlider>,
+            // Added<BackgroundGradient>, not Spawned: scene application can insert the
+            // gradient after the entity spawns, and the query only matches once it exists.
             Or<(
-                Spawned,
+                Added<BackgroundGradient>,
                 Added<InteractionDisabled>,
                 Changed<Hovered>,
                 Added<Pressed>,

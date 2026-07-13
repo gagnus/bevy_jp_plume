@@ -42,15 +42,19 @@ fn screenshot_and_exit(
     mut exit: MessageWriter<AppExit>,
 ) {
     use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+    let shot_frame = std::env::var("SMOKE_SHOT_FRAME")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(40u32);
     *frames += 1;
-    if *frames == 40
+    if *frames == shot_frame
         && let Some(path) = std::env::var_os("SMOKE_SHOT")
     {
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(std::path::PathBuf::from(path)));
     }
-    if *frames == 90 {
+    if *frames == shot_frame + 50 {
         exit.write(AppExit::Success);
     }
 }
