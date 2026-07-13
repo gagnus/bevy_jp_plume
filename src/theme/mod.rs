@@ -265,69 +265,144 @@ fn on_changed_font_color(
 /// a theme.
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ThemeSlot {
-    /// Window background: `WINDOW_BG`.
+    /// Deepest background: the window and surfaces flush with it.
+    /// - `TEXT_INPUT_BG`
+    /// - `TEXT_INPUT_BG_DISABLED`
+    /// - `WINDOW_BG`
     #[default]
     Neutral0,
 
-    /// Surface bodies & menus: `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`, `TEXT_INPUT_BG_DISABLED`,
-    /// `TEXT_INPUT_BG`.
+    /// Surface bodies sitting on the window.
+    /// - `DIALOG_BG`
+    /// - `MENU_BG`
+    /// - `SUBPANE_BODY_BG`
     Neutral1,
 
-    /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_BG`/`_BORDER`,
-    /// `DIALOG_HEADER_BG`.
+    /// Raised container chrome: headers and the group box.
+    /// - `DIALOG_HEADER_BG`
+    /// - `GROUP_BG`
+    /// - `GROUP_BORDER`
+    /// - `SUBPANE_HEADER_BG`
     Neutral2,
 
-    /// Weak fills & disabled chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`,
-    /// `BUTTON_PRIMARY_BG_DISABLED`, plus every
-    /// disabled border/mark/knob on checkbox/radio/switch/text input (`*_BORDER_DISABLED`,
-    /// `*_BORDER_CHECKED_DISABLED`, `*_MARK_DISABLED`, `SWITCH_SLIDE_*_DISABLED`).
+    /// Weak fills and all disabled chrome.
+    /// - `BUTTON_BG_DISABLED`
+    /// - `BUTTON_PRIMARY_BG_DISABLED`
+    /// - `CHECKBOX_BORDER_CHECKED_DISABLED`
+    /// - `CHECKBOX_BORDER_DISABLED`
+    /// - `CHECKBOX_MARK_DISABLED`
+    /// - `LISTROW_BG_HOVER`
+    /// - `RADIO_BORDER_CHECKED_DISABLED`
+    /// - `RADIO_BORDER_DISABLED`
+    /// - `RADIO_MARK_DISABLED`
+    /// - `SCROLLBAR_BG`
+    /// - `SLIDER_BG`
+    /// - `SLIDER_BG_DISABLED`
+    /// - `SLIDER_BG_HOVER`
+    /// - `SLIDER_BG_PRESSED`
+    /// - `SWITCH_BORDER_CHECKED_DISABLED`
+    /// - `SWITCH_BORDER_DISABLED`
+    /// - `SWITCH_SLIDE_BG_CHECKED_DISABLED`
+    /// - `SWITCH_SLIDE_BG_DISABLED`
+    /// - `SWITCH_SLIDE_BORDER_CHECKED_DISABLED`
+    /// - `SWITCH_SLIDE_BORDER_DISABLED`
+    /// - `TEXT_INPUT_BORDER_DISABLED`
     Neutral3,
 
-    /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BORDER`, `RADIO_BORDER`,
-    /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`, `SLIDER_THUMB_DISABLED`,
-    /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`, `TEXT_INPUT_BORDER`.
-    /// Checkbox/radio/switch have no hover/pressed variants (Radix-style: they
-    /// change only with checked state).
+    /// Control rest backgrounds and borders, plus the selected row.
+    /// - `BUTTON_BG`
+    /// - `CHECKBOX_BORDER`
+    /// - `DIALOG_BORDER`
+    /// - `LISTROW_BG_SELECTED`
+    /// - `MENU_BORDER`
+    /// - `RADIO_BORDER`
+    /// - `SLIDER_BAR_DISABLED`
+    /// - `SLIDER_THUMB_DISABLED`
+    /// - `SUBPANE_BODY_BORDER`
+    /// - `SUBPANE_HEADER_BORDER`
+    /// - `SWITCH_BG`
+    /// - `SWITCH_BORDER`
+    /// - `TEXT_INPUT_BORDER`
     Neutral4,
 
-    /// Control hover: `BUTTON_BG_HOVER`, `BUTTON_PLAIN_BG_HOVER`.
+    /// Neutral control hover.
+    /// - `BUTTON_BG_HOVER`
+    /// - `BUTTON_PLAIN_BG_HOVER`
     Neutral5,
 
-    /// Control pressed: `BUTTON_BG_PRESSED`, `BUTTON_PLAIN_BG_PRESSED`.
+    /// Neutral control pressed.
+    /// - `BUTTON_BG_PRESSED`
+    /// - `BUTTON_PLAIN_BG_PRESSED`
     Neutral6,
 
-    /// Bright on-surface labels & unchecked switch knob: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`,
-    /// `LISTROW_TEXT`, `SUBPANE_HEADER_TEXT`, `DIALOG_HEADER_TEXT`,
-    /// `SWITCH_SLIDE_BG`/`_BORDER`.
+    /// Bright on-surface text and the unchecked switch knob.
+    /// - `BUTTON_TEXT`
+    /// - `DIALOG_HEADER_TEXT`
+    /// - `LISTROW_TEXT`
+    /// - `SUBPANE_HEADER_TEXT`
+    /// - `SWITCH_SLIDE_BG`
+    /// - `SWITCH_SLIDE_BORDER`
+    /// - `TEXT_INPUT_TEXT`
+    /// - `TEXT_MAIN`
     Text0,
 
-    /// Body text: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`.
+    /// Body text.
+    /// - `CHECKBOX_TEXT`
+    /// - `DIALOG_TEXT`
+    /// - `RADIO_TEXT`
+    /// - `TEXT_DIM`
     Text1,
 
-    /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
-    /// `TEXT_INPUT_TEXT_DISABLED`, `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
-    TextDim0,
+    /// Disabled bright text.
+    /// - `BUTTON_PRIMARY_TEXT_DISABLED`
+    /// - `BUTTON_TEXT_DISABLED`
+    /// - `LISTROW_TEXT_DISABLED`
+    /// - `TEXT_INPUT_TEXT_DISABLED`
+    TextDisabled0,
 
-    /// Disabled body-text labels: `CHECKBOX_TEXT_DISABLED`, `RADIO_TEXT_DISABLED`.
-    TextDim1,
+    /// Disabled body text.
+    /// - `CHECKBOX_TEXT_DISABLED`
+    /// - `RADIO_TEXT_DISABLED`
+    TextDisabled1,
 
-    /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SLIDER_THUMB`, `SCROLLBAR_THUMB`,
-    /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/radio/switch), `TEXT_INPUT_SELECTION`.
+    /// Base call-to-action and checked-state color.
+    /// - `BUTTON_PRIMARY_BG`
+    /// - `CHECKBOX_BG_CHECKED`
+    /// - `CHECKBOX_BORDER_CHECKED`
+    /// - `RADIO_BG_CHECKED`
+    /// - `RADIO_BORDER_CHECKED`
+    /// - `SCROLLBAR_THUMB`
+    /// - `SLIDER_BAR`
+    /// - `SLIDER_THUMB`
+    /// - `SWITCH_BG_CHECKED`
+    /// - `SWITCH_BORDER_CHECKED`
+    /// - `TEXT_INPUT_SELECTION`
     Accent0,
 
-    /// Call-to-action hover: `BUTTON_PRIMARY_BG_HOVER`, `SLIDER_BAR_HOVER`,
-    /// `SLIDER_THUMB_HOVER`, `SCROLLBAR_THUMB_HOVER`.
+    /// Call-to-action hover.
+    /// - `BUTTON_PRIMARY_BG_HOVER`
+    /// - `SCROLLBAR_THUMB_HOVER`
+    /// - `SLIDER_BAR_HOVER`
+    /// - `SLIDER_THUMB_HOVER`
     Accent1,
 
-    /// Call-to-action pressed: `BUTTON_PRIMARY_BG_PRESSED`, `SLIDER_BAR_PRESSED`, `SLIDER_THUMB_PRESSED`,
-    /// `SCROLLBAR_THUMB_PRESSED`.
+    /// Call-to-action pressed.
+    /// - `BUTTON_PRIMARY_BG_PRESSED`
+    /// - `SCROLLBAR_THUMB_PRESSED`
+    /// - `SLIDER_BAR_PRESSED`
+    /// - `SLIDER_THUMB_PRESSED`
     Accent2,
 
-    /// Brightest accent: `TEXT_INPUT_CURSOR`.
+    /// Brightest accent.
+    /// - `TEXT_INPUT_CURSOR`
     Accent3,
 
-    /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`, `RADIO_MARK`,
-    /// `SWITCH_SLIDE_BG_CHECKED`/`SWITCH_SLIDE_BORDER_CHECKED`.
+    /// Foreground over accent-filled components.
+    /// - `BUTTON_PRIMARY_TEXT`
+    /// - `CHECKBOX_MARK`
+    /// - `RADIO_MARK`
+    /// - `SWITCH_SLIDE_BG_CHECKED`
+    /// - `SWITCH_SLIDE_BORDER_CHECKED`
     Contrast,
 
     /// Focus/selection ring color (reserved; no token maps here yet).
@@ -342,10 +417,19 @@ pub enum ThemeSlot {
     /// Blue axis (reserved for axis-colored widgets).
     ZAxis,
 
-    /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
-    /// unchecked `RADIO_BG`/`CHECKBOX_BG`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED`
-    /// (checkbox/radio/switch), `TEXT_INPUT_SELECTION_UNFOCUSED`,
-    /// `LISTROW_BG`.
+    /// Always [`Color::NONE`]; for tokens that paint nothing.
+    /// - `BUTTON_PLAIN_BG`
+    /// - `BUTTON_PLAIN_BG_DISABLED`
+    /// - `CHECKBOX_BG`
+    /// - `CHECKBOX_BG_CHECKED_DISABLED`
+    /// - `CHECKBOX_BG_DISABLED`
+    /// - `LISTROW_BG`
+    /// - `RADIO_BG`
+    /// - `RADIO_BG_CHECKED_DISABLED`
+    /// - `RADIO_BG_DISABLED`
+    /// - `SWITCH_BG_CHECKED_DISABLED`
+    /// - `SWITCH_BG_DISABLED`
+    /// - `TEXT_INPUT_SELECTION_UNFOCUSED`
     Transparent,
 }
 
@@ -361,8 +445,8 @@ impl ThemeSlot {
         ThemeSlot::Neutral6,
         ThemeSlot::Text0,
         ThemeSlot::Text1,
-        ThemeSlot::TextDim0,
-        ThemeSlot::TextDim1,
+        ThemeSlot::TextDisabled0,
+        ThemeSlot::TextDisabled1,
         ThemeSlot::Accent0,
         ThemeSlot::Accent1,
         ThemeSlot::Accent2,
@@ -390,8 +474,8 @@ impl ThemeSlot {
             ThemeSlot::Neutral6 => "Neutral 6",
             ThemeSlot::Text0 => "Text 0",
             ThemeSlot::Text1 => "Text 1",
-            ThemeSlot::TextDim0 => "Text Dim 0",
-            ThemeSlot::TextDim1 => "Text Dim 1",
+            ThemeSlot::TextDisabled0 => "Text Disabled 0",
+            ThemeSlot::TextDisabled1 => "Text Disabled 1",
             ThemeSlot::Accent0 => "Accent 0",
             ThemeSlot::Accent1 => "Accent 1",
             ThemeSlot::Accent2 => "Accent 2",
@@ -453,11 +537,11 @@ pub struct EditablePalette {
     pub contrast: Oklcha,
 
     /// Lightness of each text stop; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`]
-    /// (and [`ThemeSlot::TextDim0`]..=[`ThemeSlot::TextDim1`], derived).
+    /// (and [`ThemeSlot::TextDisabled0`]..=[`ThemeSlot::TextDisabled1`], derived).
     pub text: OklchaArray<2>,
 
-    /// Alpha applied to `text` to derive [`ThemeSlot::TextDim0`]..=[`ThemeSlot::TextDim1`].
-    pub dim_text_alpha_modifier: f32,
+    /// Alpha applied to `text` to derive [`ThemeSlot::TextDisabled0`]..=[`ThemeSlot::TextDisabled1`].
+    pub disabled_text_alpha_modifier: f32,
 
     /// RGB axis colors; form [`ThemeSlot::XAxis`], [`ThemeSlot::YAxis`], [`ThemeSlot::ZAxis`].
     pub axes: [Oklcha; 3],
@@ -472,13 +556,14 @@ impl EditablePalette {
         let neutral = self.neutrals.to_array();
         let accent = self.accent.to_array();
         let text = self.text.to_array();
-        let text_dim = text.map(|c| c.with_alpha(self.dim_text_alpha_modifier));
+        let text_dim = text.map(|c| c.with_alpha(self.disabled_text_alpha_modifier));
         let axes: [Color; 3] = self.axes.map(Into::into);
 
         let mut c = [Color::NONE; ThemeSlot::COUNT];
         c[ThemeSlot::Neutral0 as usize..=ThemeSlot::Neutral6 as usize].copy_from_slice(&neutral);
         c[ThemeSlot::Text0 as usize..=ThemeSlot::Text1 as usize].copy_from_slice(&text);
-        c[ThemeSlot::TextDim0 as usize..=ThemeSlot::TextDim1 as usize].copy_from_slice(&text_dim);
+        c[ThemeSlot::TextDisabled0 as usize..=ThemeSlot::TextDisabled1 as usize]
+            .copy_from_slice(&text_dim);
         c[ThemeSlot::Accent0 as usize..=ThemeSlot::Accent3 as usize].copy_from_slice(&accent);
         c[ThemeSlot::Contrast as usize] = self.contrast.into();
         c[ThemeSlot::FocusRing as usize] = accent[0].with_alpha(0.5);
@@ -497,7 +582,8 @@ impl EditablePalette {
         self.text.to_color(index)
     }
     pub fn text_dim(&self, index: usize) -> Color {
-        self.text(index).with_alpha(self.dim_text_alpha_modifier)
+        self.text(index)
+            .with_alpha(self.disabled_text_alpha_modifier)
     }
     pub fn axis(&self, index: usize) -> Color {
         self.axes[index].into()
@@ -537,8 +623,8 @@ pub fn default_axis_colors() -> [Oklcha; 3] {
 
 static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::WINDOW_BG, ThemeSlot::Neutral0),
-    (tokens::TEXT_MAIN, ThemeSlot::Text1),
-    (tokens::TEXT_DIM, ThemeSlot::TextDim0),
+    (tokens::TEXT_MAIN, ThemeSlot::Text0),
+    (tokens::TEXT_DIM, ThemeSlot::Text1),
     (tokens::BUTTON_BG, ThemeSlot::Neutral4),
     (tokens::BUTTON_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::BUTTON_BG_PRESSED, ThemeSlot::Neutral6),
@@ -552,9 +638,12 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::BUTTON_PLAIN_BG_PRESSED, ThemeSlot::Neutral6),
     (tokens::BUTTON_PLAIN_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::BUTTON_TEXT, ThemeSlot::Text0),
-    (tokens::BUTTON_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::BUTTON_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::BUTTON_PRIMARY_TEXT, ThemeSlot::Contrast),
-    (tokens::BUTTON_PRIMARY_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (
+        tokens::BUTTON_PRIMARY_TEXT_DISABLED,
+        ThemeSlot::TextDisabled0,
+    ),
     (tokens::SLIDER_BG, ThemeSlot::Neutral3),
     (tokens::SLIDER_BG_HOVER, ThemeSlot::Neutral3),
     (tokens::SLIDER_BG_PRESSED, ThemeSlot::Neutral3),
@@ -576,56 +665,56 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::CHECKBOX_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::CHECKBOX_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BORDER, ThemeSlot::Neutral4),
-    (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::CHECKBOX_BORDER_CHECKED, ThemeSlot::Accent0),
     (
         tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDim1
+    ), // was TextDisabled1
     (tokens::CHECKBOX_MARK, ThemeSlot::Contrast),
-    (tokens::CHECKBOX_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::CHECKBOX_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::CHECKBOX_TEXT, ThemeSlot::Text1),
-    (tokens::CHECKBOX_TEXT_DISABLED, ThemeSlot::TextDim1),
+    (tokens::CHECKBOX_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::RADIO_BG, ThemeSlot::Transparent),
     (tokens::RADIO_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::RADIO_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::RADIO_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::RADIO_BORDER, ThemeSlot::Neutral4),
-    (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::RADIO_BORDER_CHECKED, ThemeSlot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::RADIO_MARK, ThemeSlot::Contrast),
-    (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::RADIO_TEXT, ThemeSlot::Text1),
-    (tokens::RADIO_TEXT_DISABLED, ThemeSlot::TextDim1),
+    (tokens::RADIO_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::SWITCH_BG, ThemeSlot::Neutral4),
     (tokens::SWITCH_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::SWITCH_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::SWITCH_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::SWITCH_BORDER, ThemeSlot::Neutral4),
-    (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::SWITCH_SLIDE_BG, ThemeSlot::Text0),
-    (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::SWITCH_SLIDE_BG_CHECKED, ThemeSlot::Contrast),
     (
         tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDim1
+    ), // was TextDisabled1
     (tokens::SWITCH_SLIDE_BORDER, ThemeSlot::Text0),
-    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDim1
+    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
     (tokens::SWITCH_SLIDE_BORDER_CHECKED, ThemeSlot::Contrast),
     (
         tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDim1
+    ), // was TextDisabled1
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
-    (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),
     (tokens::TEXT_INPUT_SELECTION, ThemeSlot::Accent0),
     (
@@ -645,7 +734,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral3),
     (tokens::LISTROW_BG_SELECTED, ThemeSlot::Neutral4),
     (tokens::LISTROW_TEXT, ThemeSlot::Text0),
-    (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDim0),
+    (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::DIALOG_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_BORDER, ThemeSlot::Neutral4),
     (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral2),
