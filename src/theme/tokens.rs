@@ -235,6 +235,9 @@ pub const TEXT_INPUT_SELECTION_UNFOCUSED: ThemeToken =
     ThemeToken::new_static("plume.textinput.selection.unfocused");
 /// Border for text input
 pub const TEXT_INPUT_BORDER: ThemeToken = ThemeToken::new_static("plume.textinput.border");
+/// Border for text input when disabled
+pub const TEXT_INPUT_BORDER_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.textinput.border.disabled");
 
 // Subpane
 

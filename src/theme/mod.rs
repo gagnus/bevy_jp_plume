@@ -269,22 +269,23 @@ pub enum ThemeSlot {
     #[default]
     Neutral0,
 
-    /// Surface bodies & menus: `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`.
+    /// Surface bodies & menus: `SUBPANE_BODY_BG`, `DIALOG_BG`, `MENU_BG`, `TEXT_INPUT_BG_DISABLED`,
+    /// `TEXT_INPUT_BG`.
     Neutral1,
 
     /// Raised container headers & borders: `SUBPANE_HEADER_BG`, `GROUP_BG`/`_BORDER`,
     /// `DIALOG_HEADER_BG`.
     Neutral2,
 
-    /// Weak fills & disabled chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`/`_BORDER`,
-    /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`, plus every
-    /// disabled border/mark/knob on checkbox/radio/switch (`*_BORDER_DISABLED`,
+    /// Weak fills & disabled chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`,
+    /// `BUTTON_PRIMARY_BG_DISABLED`, plus every
+    /// disabled border/mark/knob on checkbox/radio/switch/text input (`*_BORDER_DISABLED`,
     /// `*_BORDER_CHECKED_DISABLED`, `*_MARK_DISABLED`, `SWITCH_SLIDE_*_DISABLED`).
     Neutral3,
 
     /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BORDER`, `RADIO_BORDER`,
     /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`, `SLIDER_THUMB_DISABLED`,
-    /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`.
+    /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`, `TEXT_INPUT_BORDER`.
     /// Checkbox/radio/switch have no hover/pressed variants (Radix-style: they
     /// change only with checked state).
     Neutral4,
@@ -343,7 +344,7 @@ pub enum ThemeSlot {
 
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
     /// unchecked `RADIO_BG`/`CHECKBOX_BG`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED`
-    /// (checkbox/radio/switch), `TEXT_INPUT_BG_DISABLED`, `TEXT_INPUT_SELECTION_UNFOCUSED`,
+    /// (checkbox/radio/switch), `TEXT_INPUT_SELECTION_UNFOCUSED`,
     /// `LISTROW_BG`.
     Transparent,
 }
@@ -622,8 +623,8 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     ), // was TextDim1
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
-    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral3),
-    (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
+    (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
     (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDim0),
     (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),
@@ -632,7 +633,8 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         tokens::TEXT_INPUT_SELECTION_UNFOCUSED,
         ThemeSlot::Transparent,
     ),
-    (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral3),
+    (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral4),
+    (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SUBPANE_HEADER_BG, ThemeSlot::Neutral2),
     (tokens::SUBPANE_HEADER_BORDER, ThemeSlot::Neutral4),
     (tokens::SUBPANE_HEADER_TEXT, ThemeSlot::Text0),

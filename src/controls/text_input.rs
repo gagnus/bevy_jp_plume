@@ -113,6 +113,7 @@ fn update_text_input_styles(
             Entity,
             Has<InteractionDisabled>,
             &ThemeBackgroundColor,
+            &ThemeBorderColor,
             &ThemeTextColor,
         ),
         (With<PlumeTextInput>, Added<InteractionDisabled>),
@@ -120,11 +121,18 @@ fn update_text_input_styles(
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
-    for (input_ent, disabled, bg_color, font_color) in q_inputs.iter() {
+    for (input_ent, disabled, bg_color, border_color, font_color) in q_inputs.iter() {
         if focus.get() == Some(input_ent) {
             focus.clear();
         }
-        set_text_input_styles(input_ent, disabled, bg_color, font_color, &mut commands);
+        set_text_input_styles(
+            input_ent,
+            disabled,
+            bg_color,
+            border_color,
+            font_color,
+            &mut commands,
+        );
     }
 }
 
@@ -134,6 +142,7 @@ fn update_text_input_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             &ThemeBackgroundColor,
+            &ThemeBorderColor,
             &ThemeTextColor,
         ),
         With<PlumeTextInput>,
@@ -142,8 +151,15 @@ fn update_text_input_styles_remove(
     mut commands: Commands,
 ) {
     removed_disabled.read().for_each(|ent| {
-        if let Ok((input_ent, disabled, bg_color, font_color)) = q_inputs.get(ent) {
-            set_text_input_styles(input_ent, disabled, bg_color, font_color, &mut commands);
+        if let Ok((input_ent, disabled, bg_color, border_color, font_color)) = q_inputs.get(ent) {
+            set_text_input_styles(
+                input_ent,
+                disabled,
+                bg_color,
+                border_color,
+                font_color,
+                &mut commands,
+            );
         }
     });
 }
@@ -152,15 +168,21 @@ fn set_text_input_styles(
     input_ent: Entity,
     disabled: bool,
     bg_color: &ThemeBackgroundColor,
+    border_color: &ThemeBorderColor,
     font_color: &ThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (bg_token, font_color_token) = match disabled {
+    let (bg_token, font_token, border_token) = match disabled {
         true => (
             tokens::TEXT_INPUT_BG_DISABLED,
             tokens::TEXT_INPUT_TEXT_DISABLED,
+            tokens::TEXT_INPUT_BORDER_DISABLED,
         ),
-        false => (tokens::TEXT_INPUT_BG, tokens::TEXT_INPUT_TEXT),
+        false => (
+            tokens::TEXT_INPUT_BG,
+            tokens::TEXT_INPUT_TEXT,
+            tokens::TEXT_INPUT_BORDER,
+        ),
     };
 
     let cursor_shape = match disabled {
@@ -175,17 +197,32 @@ fn set_text_input_styles(
             .insert(ThemeBackgroundColor(bg_token));
     }
 
-    // Change font color
-    if font_color.0 != font_color_token {
+    // Change border color
+    if border_color.0 != border_token {
         commands
             .entity(input_ent)
-            .insert(ThemeTextColor(font_color_token));
+            .insert(ThemeBorderColor(border_token));
+    }
+
+    // Change font color
+    if font_color.0 != font_token {
+        commands
+            .entity(input_ent)
+            .insert(ThemeTextColor(font_token));
     }
 
     // Change cursor shape
     commands
         .entity(input_ent)
         .insert(EntityCursor::System(cursor_shape));
+
+    // Without this a disabled input still acquires focus through the click-to-focus
+    // resolver (`acquire_focus_tab_index`), and focus draws the blinking caret.
+    if disabled {
+        commands.entity(input_ent).remove::<TabIndex>();
+    } else {
+        commands.entity(input_ent).insert(TabIndex(0));
+    }
 }
 
 /// Plugin which registers the systems for updating the text input styles.
