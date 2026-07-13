@@ -17,7 +17,8 @@ use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_text::{
-    EditableText, FontSource, FontWeight, LineBreak, TextCursorStyle, TextFont, TextLayout,
+    EditableText, FontSource, FontWeight, LineBreak, LineHeight, TextCursorStyle, TextFont,
+    TextLayout,
 };
 use bevy_ui::{BorderRadius, InteractionDisabled, Node, UiRect, px};
 
@@ -52,9 +53,11 @@ pub struct PlumeTextInputProps {
 impl PlumeTextInput {
     fn scene(props: PlumeTextInputProps) -> impl Scene {
         bsn! {
+            // Line height fills the content box exactly (24 - 2*2 border): a taller
+            // line overflows and makes the edit viewport re-clamp (1px jitter) while typing.
             Node {
                 height: size::ROW_HEIGHT,
-                padding: UiRect::axes(px(5.0), px(3.0)),
+                padding: UiRect::horizontal(px(5.0)),
                 border: px(2),
                 border_radius: {BorderRadius::all(px(4.0))},
                 flex_grow: {
@@ -80,6 +83,7 @@ impl PlumeTextInput {
             TextLayout {
                 linebreak: LineBreak::NoWrap,
             }
+            template(|_| Ok(LineHeight::Px(20.0)))
             template(|ctx| {
                 Ok(TextFont {
                     font: FontSource::Handle(ctx.resource::<AssetServer>().load(fonts::REGULAR)),
