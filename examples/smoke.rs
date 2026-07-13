@@ -28,7 +28,43 @@ fn main() {
     if std::env::var_os("SMOKE_SHOT").is_some() {
         app.add_systems(Update, screenshot_and_exit);
     }
+    // SMOKE_FONT_AUDIT=1: log every text entity's resolved font and exit; entities on
+    // the default handle are falling back to Bevy's embedded font.
+    if std::env::var_os("SMOKE_FONT_AUDIT").is_some() {
+        app.add_systems(Update, font_audit_and_exit);
+    }
     app.run();
+}
+
+fn font_audit_and_exit(
+    mut frames: Local<u32>,
+    q_text: Query<(Entity, &TextFont, Option<&Text>, Option<&TextSpan>)>,
+    assets: Res<AssetServer>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    use bevy::text::FontSource;
+    *frames += 1;
+    if *frames != 60 {
+        return;
+    }
+    for (entity, text_font, text, span) in q_text.iter() {
+        let snippet: String = text
+            .map(|t| t.0.as_str())
+            .or(span.map(|s| s.0.as_str()))
+            .unwrap_or("")
+            .chars()
+            .take(24)
+            .collect();
+        let font = match &text_font.font {
+            FontSource::Handle(handle) => match assets.get_path(handle.id()) {
+                Some(path) => format!("{path}"),
+                None => "DEFAULT-FALLBACK".into(),
+            },
+            other => format!("{other:?}"),
+        };
+        info!("font_audit {entity} [{font}] {snippet:?}");
+    }
+    exit.write(AppExit::Success);
 }
 
 fn screenshot_and_exit(
