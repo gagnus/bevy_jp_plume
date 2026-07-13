@@ -133,17 +133,25 @@ fn controls_column() -> impl Scene {
                 on(|change: On<ValueChange<f32>>| info!("slider -> {}", change.value))
             ),
             (
+                // 8 options / 4 visible: popup scrolls, scrollbar shown.
                 @PlumeSelect {
-                    @options: {list_rows_from_strings(["Alpha", "Beta", "Gamma", "Delta"], Some(0))},
+                    @options: {list_rows_from_strings(
+                        ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
+                        Some(0),
+                    )},
                     @max_visible: 4,
                 }
                 on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
-                    info!("select clicked");
                     if let Ok(option) = q_options.get(change.value) {
                         info!("select -> option {}", option.0);
                     }
                 })
             ),
+            // 3 options / 4 visible: fits, scrollbar hidden.
+            @PlumeSelect {
+                @options: {list_rows_from_strings(["Red", "Green", "Blue"], Some(0))},
+                @max_visible: 4,
+            },
             (
                 @PlumeTextInputContainer
                 Children [

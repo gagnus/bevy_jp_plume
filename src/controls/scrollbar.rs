@@ -1,5 +1,6 @@
 //! Themed scrollbar control.
-use bevy_app::{Plugin, PreUpdate};
+use bevy_app::{Plugin, PostUpdate, PreUpdate};
+use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -10,10 +11,11 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::EntityTemplate,
 };
+use bevy_math::Vec2;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{BorderRadius, Node, px};
+use bevy_ui::{BorderRadius, ComputedNode, Node, UiSystems, px};
 use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
 use crate::{cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
@@ -42,6 +44,7 @@ impl PlumeScrollbar {
     /// Scene function for scrollbar.
     pub fn scene(props: PlumeScrollbarProps) -> impl Scene {
         bsn! {
+            PlumeScrollbar
             Scrollbar {
                 target: {props.target},
                 orientation: {props.orientation},
@@ -89,6 +92,32 @@ fn update_scrollbar_thumb_styles(
     }
 }
 
+/// Hide scrollbars whose target content fits its viewport (same overflow math as
+/// the headless widget, which otherwise renders a full-length thumb).
+fn update_scrollbar_visibility(
+    mut q_scrollbars: Query<(&Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
+    q_scroll_area: Query<&ComputedNode>,
+) {
+    for (scrollbar, mut visibility) in q_scrollbars.iter_mut() {
+        let Ok(area) = q_scroll_area.get(scrollbar.target) else {
+            continue;
+        };
+        let visible = (area.size() - area.scrollbar_size).max(Vec2::ZERO);
+        let overflows = match scrollbar.orientation {
+            ControlOrientation::Horizontal => area.content_size().x > visible.x,
+            ControlOrientation::Vertical => area.content_size().y > visible.y,
+        };
+        let target = if overflows {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+        if *visibility != target {
+            *visibility = target;
+        }
+    }
+}
+
 /// Plugin which registers the systems for updating the scrollbar styles.
 pub struct ScrollbarPlugin;
 
@@ -97,6 +126,10 @@ impl Plugin for ScrollbarPlugin {
         app.add_systems(
             PreUpdate,
             update_scrollbar_thumb_styles.in_set(PickingSystems::Last),
+        );
+        app.add_systems(
+            PostUpdate,
+            update_scrollbar_visibility.after(UiSystems::Layout),
         );
     }
 }
