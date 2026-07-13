@@ -260,13 +260,14 @@ pub enum Slot {
     /// `DIALOG_HEADER_BG`.
     Neutral2,
 
-    /// Weak fills & chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`,
-    /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`,
-    // TODO: redo comment having a look below at all the other stuff we've reassigned
+    /// Weak fills & disabled chrome: `SLIDER_BG*`, `SCROLLBAR_BG`, `TEXT_INPUT_BG`/`_BORDER`,
+    /// `LISTROW_BG_HOVER`, `BUTTON_BG_DISABLED`, `BUTTON_PRIMARY_BG_DISABLED`, plus every
+    /// disabled border/mark/knob on checkbox/radio/switch (`*_BORDER_DISABLED`,
+    /// `*_BORDER_CHECKED_DISABLED`, `*_MARK_DISABLED`, `SWITCH_SLIDE_*_DISABLED`).
     Neutral3,
 
     /// Control rest bg & borders + selected row: `BUTTON_BG`, `CHECKBOX_BORDER`, `RADIO_BORDER`,
-    /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`,
+    /// `SWITCH_BG`/`_BORDER`, `LISTROW_BG_SELECTED`, `SLIDER_BAR_DISABLED`, `SLIDER_THUMB_DISABLED`,
     /// `SUBPANE_HEADER_BORDER`, `SUBPANE_BODY_BORDER`, `DIALOG_BORDER`, `MENU_BORDER`.
     /// Checkbox/radio/switch have no hover/pressed variants (Radix-style: they
     /// change only with checked state).
@@ -278,23 +279,23 @@ pub enum Slot {
     /// Control pressed: `BUTTON_BG_PRESSED`, `BUTTON_PLAIN_BG_PRESSED`.
     Neutral6,
 
-    /// Bright on-surface labels: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`, `LISTROW_TEXT`,
-    /// `SUBPANE_HEADER_TEXT`, `SWITCH_SLIDE_BG` / `SWITCH_SLIDE_BORDER`.
+    /// Bright on-surface labels & unchecked switch knob: `BUTTON_TEXT`, `TEXT_INPUT_TEXT`,
+    /// `LISTROW_TEXT`, `SUBPANE_HEADER_TEXT`, `DIALOG_HEADER_TEXT`,
+    /// `SWITCH_SLIDE_BG`/`_BORDER`.
     Text0,
 
-    /// Body text & switch knob: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`,
+    /// Body text: `TEXT_MAIN`, `DIALOG_TEXT`, `CHECKBOX_TEXT`, `RADIO_TEXT`.
     Text1,
 
     /// Disabled bright text + dimmed text: `BUTTON_TEXT_DISABLED`, `BUTTON_PRIMARY_TEXT_DISABLED`,
     /// `TEXT_INPUT_TEXT_DISABLED`, `LISTROW_TEXT_DISABLED`, `TEXT_DIM`.
     TextDim0,
 
-    /// TODO: redo this is just text now right?
+    /// Disabled body-text labels: `CHECKBOX_TEXT_DISABLED`, `RADIO_TEXT_DISABLED`.
     TextDim1,
 
     /// Base call-to-action: `BUTTON_PRIMARY_BG`, `SLIDER_BAR`, `SLIDER_THUMB`, `SCROLLBAR_THUMB`,
-    /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/switch), `RADIO_BORDER_CHECKED`, `RADIO_BG_CHECKED`,
-    /// `TEXT_INPUT_SELECTION`.
+    /// `*_BG_CHECKED`/`*_BORDER_CHECKED` (checkbox/radio/switch), `TEXT_INPUT_SELECTION`.
     Accent0,
 
     /// Call-to-action hover: `BUTTON_PRIMARY_BG_HOVER`, `SLIDER_BAR_HOVER`,
@@ -309,7 +310,7 @@ pub enum Slot {
     Accent3,
 
     /// Foreground over accent-filled components: `BUTTON_PRIMARY_TEXT`, `CHECKBOX_MARK`, `RADIO_MARK`,
-    /// `SWITCH_SLIDE_BG`/`_BORDER_CHECKED` (+ hover/pressed).
+    /// `SWITCH_SLIDE_BG_CHECKED`/`SWITCH_SLIDE_BORDER_CHECKED`.
     Contrast,
 
     /// Focus/selection ring color (reserved; no token maps here yet).
@@ -325,8 +326,8 @@ pub enum Slot {
     ZAxis,
 
     /// Always [`Color::NONE`]; used by tokens that paint nothing: `BUTTON_PLAIN_BG`/`_DISABLED`,
-    /// unchecked `RADIO_BG*`/`CHECKBOX_BG*`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED` (checkbox/switch),
-    /// `TEXT_INPUT_SELECTION_UNFOCUSED`, `LISTROW_BG`.
+    /// unchecked `RADIO_BG`/`CHECKBOX_BG`, `*_BG_DISABLED`/`*_BG_CHECKED_DISABLED`
+    /// (checkbox/radio/switch), `TEXT_INPUT_SELECTION_UNFOCUSED`, `LISTROW_BG`.
     Transparent,
 }
 
