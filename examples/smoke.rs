@@ -2,20 +2,23 @@
 use bevy::{
     prelude::*,
     ui::Checked,
-    ui_widgets::{Activate, SliderValue, ValueChange},
+    ui_widgets::{Activate, ControlOrientation, ScrollArea, SliderValue, ValueChange},
 };
 use bevy_jp_plume::{
     PlumePlugins,
-    constants::{font_awesome, icons},
+    constants::{font_awesome, icons, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
         ButtonVariant, OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio,
-        PlumeRadioGroup, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
-        list_rows_from_strings,
+        PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput,
+        PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
     },
-    dark_theme::create_dark_theme,
+    dark_theme::default_dark_palette,
     display::{caption, fa_icon_solid, icon, label_bright, label_dim},
-    theme::{ThemeBackgroundColor, ThemeToken, ThemedText, UiTheme},
+    theme::{
+        EditablePalette, ThemeBackgroundColor, ThemeToken, UiTheme, build_theme,
+        default_token_slots,
+    },
     tokens,
 };
 use bevy_ui::InteractionDisabled;
@@ -23,8 +26,9 @@ use bevy_ui::InteractionDisabled;
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
-        .insert_resource(UiTheme(create_dark_theme()))
-        .add_systems(Startup, scene.spawn());
+        .init_resource::<PaletteEditor>()
+        .add_systems(Startup, scene.spawn())
+        .add_systems(Update, rebuild_theme_on_edit);
     // SMOKE_SHOT=<path.png>: save a screenshot and exit (for headless verification).
     if std::env::var_os("SMOKE_SHOT").is_some() {
         app.add_systems(Update, screenshot_and_exit);
@@ -199,7 +203,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
         Children [
             (
                 @PlumeButton {
-                    @caption: bsn_list! { fa_icon_solid(font_awesome::FA_BUILDING_CIRCLE_ARROW_RIGHT), Node { width: px(10), }, caption("Button") }
+                    @caption: bsn_list! { fa_icon_solid(font_awesome::FA_WAND_MAGIC_SPARKLES), Node { width: px(10), }, caption("Button") }
                 }
                 on(|_: On<Activate>| info!("button clicked"))
                 maybe_disabled(disabled)
@@ -280,22 +284,229 @@ fn maybe_disabled(disabled: bool) -> impl Scene {
     disabled.then(|| bsn! { InteractionDisabled })
 }
 
+/// Holds the parametric palette the dialog edits. Mutated by the slider observers;
+/// [`rebuild_theme_on_edit`] bakes it into the live [`UiTheme`] whenever it changes.
+#[derive(Resource)]
+struct PaletteEditor(EditablePalette);
+
+impl Default for PaletteEditor {
+    fn default() -> Self {
+        Self(default_dark_palette())
+    }
+}
+
+/// The three parametric ramps ([`OklchaArray`]s) an [`EditablePalette`] exposes.
+#[derive(Clone, Copy)]
+enum Ramp {
+    Neutral,
+    Accent,
+    Text,
+}
+
+/// One editable scalar of the [`EditablePalette`]. Each slider owns a variant and
+/// reads/writes exactly that field. `L(_, i)` is the i-th lightness stop of a ramp.
+#[derive(Clone, Copy)]
+enum PaletteParam {
+    Hue(Ramp),
+    Chroma(Ramp),
+    L(Ramp, usize),
+    DisabledTextAlpha,
+}
+
+impl Ramp {
+    fn array<'a>(self, p: &'a EditablePalette) -> RampView<'a> {
+        match self {
+            Ramp::Neutral => RampView {
+                hue: &p.neutrals.hue,
+                chroma: &p.neutrals.chroma,
+                l: &p.neutrals.l,
+            },
+            Ramp::Accent => RampView {
+                hue: &p.accent.hue,
+                chroma: &p.accent.chroma,
+                l: &p.accent.l,
+            },
+            Ramp::Text => RampView {
+                hue: &p.text.hue,
+                chroma: &p.text.chroma,
+                l: &p.text.l,
+            },
+        }
+    }
+
+    /// Max chroma for this ramp's chroma slider (neutrals/text stay near-grey).
+    fn chroma_max(self) -> f32 {
+        match self {
+            Ramp::Accent => 0.3,
+            Ramp::Neutral | Ramp::Text => 0.05,
+        }
+    }
+
+    /// Number of lightness stops this ramp carries.
+    fn stops(self) -> usize {
+        match self {
+            Ramp::Neutral => 7,
+            Ramp::Accent => 4,
+            Ramp::Text => 2,
+        }
+    }
+}
+
+/// Borrowed view over a ramp's scalars, so one code path reads any ramp.
+struct RampView<'a> {
+    hue: &'a f32,
+    chroma: &'a f32,
+    l: &'a [f32],
+}
+
+impl PaletteParam {
+    fn label(self) -> String {
+        match self {
+            PaletteParam::Hue(_) => "Hue".into(),
+            PaletteParam::Chroma(_) => "Chroma".into(),
+            PaletteParam::L(_, i) => format!("L {i}"),
+            PaletteParam::DisabledTextAlpha => "Disabled \u{3b1}".into(),
+        }
+    }
+
+    /// Slider `(min, max)` for this param.
+    fn range(self) -> (f32, f32) {
+        match self {
+            PaletteParam::Hue(_) => (0.0, 360.0),
+            PaletteParam::Chroma(ramp) => (0.0, ramp.chroma_max()),
+            PaletteParam::L(..) | PaletteParam::DisabledTextAlpha => (0.0, 1.0),
+        }
+    }
+
+    fn get(self, p: &EditablePalette) -> f32 {
+        match self {
+            PaletteParam::Hue(ramp) => *ramp.array(p).hue,
+            PaletteParam::Chroma(ramp) => *ramp.array(p).chroma,
+            PaletteParam::L(ramp, i) => ramp.array(p).l[i],
+            PaletteParam::DisabledTextAlpha => p.disabled_text_alpha_modifier,
+        }
+    }
+
+    fn set(self, p: &mut EditablePalette, v: f32) {
+        match self {
+            PaletteParam::Hue(Ramp::Neutral) => p.neutrals.hue = v,
+            PaletteParam::Hue(Ramp::Accent) => p.accent.hue = v,
+            PaletteParam::Hue(Ramp::Text) => p.text.hue = v,
+            PaletteParam::Chroma(Ramp::Neutral) => p.neutrals.chroma = v,
+            PaletteParam::Chroma(Ramp::Accent) => p.accent.chroma = v,
+            PaletteParam::Chroma(Ramp::Text) => p.text.chroma = v,
+            PaletteParam::L(Ramp::Neutral, i) => p.neutrals.l[i] = v,
+            PaletteParam::L(Ramp::Accent, i) => p.accent.l[i] = v,
+            PaletteParam::L(Ramp::Text, i) => p.text.l[i] = v,
+            PaletteParam::DisabledTextAlpha => p.disabled_text_alpha_modifier = v,
+        }
+    }
+}
+
+/// Every param controlling one ramp: hue, chroma, then each lightness stop.
+fn ramp_params(ramp: Ramp) -> Vec<PaletteParam> {
+    let mut v = vec![PaletteParam::Hue(ramp), PaletteParam::Chroma(ramp)];
+    v.extend((0..ramp.stops()).map(|i| PaletteParam::L(ramp, i)));
+    v
+}
+
+/// Bake the edited palette into the live theme whenever it changes (fires once at
+/// startup too, harmlessly re-deriving the dark theme already installed).
+fn rebuild_theme_on_edit(editor: Res<PaletteEditor>, mut theme: ResMut<UiTheme>) {
+    if editor.is_changed() {
+        *theme = UiTheme(build_theme(&editor.0.resolve(), default_token_slots()));
+    }
+}
+
 fn dialog() -> impl Scene {
+    let palette = default_dark_palette();
+    let mut text_params = ramp_params(Ramp::Text);
+    text_params.push(PaletteParam::DisabledTextAlpha);
     bsn! {
         @PlumeDialog {
-            @title: bsn! { caption("Dialog") },
-            @width: px(280),
+            @title: bsn! { caption("Theme editor") },
+            @width: px(320),
             @left: px(320),
             @top: px(40),
             @contents: bsn_list! {
-                (Text("Drag the title bar; close despawns.") ThemedText),
+                // Bounded frame holding the scrollbar; the inner node scrolls.
                 (
-                    @PlumeButton {
-                        @caption: bsn! { caption("In-dialog button") }
+                    Node {
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Stretch,
+                        height: px(560),
                     }
-                    on(|_: On<Activate>| info!("dialog button clicked"))
+                    ScrollbarGutter(size::SCROLLBAR_GUTTER)
+                    Children [
+                        (
+                            #inner
+                            Node {
+                                display: Display::Flex,
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Stretch,
+                                overflow: Overflow::scroll_y(),
+                            }
+                            ScrollArea
+                            Children [
+                                param_group("Neutrals", ramp_params(Ramp::Neutral), &palette),
+                                param_group("Accent", ramp_params(Ramp::Accent), &palette),
+                                param_group("Text", text_params, &palette),
+                            ]
+                        ),
+                        (
+                            @PlumeScrollbar {
+                                @target: #inner,
+                                @orientation: {ControlOrientation::Vertical},
+                            }
+                            Node {
+                                position_type: PositionType::Absolute,
+                                right: px(0),
+                                top: px(0),
+                                bottom: px(0),
+                                width: size::SCROLLBAR_WIDTH,
+                            }
+                        ),
+                    ]
                 ),
             }
         }
     }
+}
+
+/// A titled [`PlumeSubPane`] holding a labelled slider per `param`.
+fn param_group(title: &str, params: Vec<PaletteParam>, palette: &EditablePalette) -> impl Scene {
+    let mut rows: Vec<Box<dyn SceneList>> = vec![];
+    rows.extend(params.into_iter().map(|param| param_row(param, palette)));
+    let contents: Box<dyn SceneList> = Box::new(rows);
+    bsn! {
+        @PlumeSubpane {
+            @header: bsn! { caption(title.to_string()) }
+            @contents: {contents},
+        }
+    }
+}
+
+/// A labelled slider bound to one [`PaletteParam`]. Its observer writes the new value
+/// straight into [`PaletteEditor`]; the change-detection system rebuilds the theme.
+fn param_row(param: PaletteParam, palette: &EditablePalette) -> Box<dyn SceneList> {
+    let (min, max) = param.range();
+    let value = param.get(palette);
+    bsn! {
+        row()
+        Children [
+            (label_dim(param.label()) Node { width: px(80) }),
+            (
+                @PlumeSlider {
+                    @min: {min},
+                    @max: {max},
+                }
+                SliderValue({value})
+                on(move |change: On<ValueChange<f32>>, mut editor: ResMut<PaletteEditor>| {
+                    param.set(&mut editor.0, change.value);
+                })
+            ),
+        ]
+    }
+    .into()
 }
