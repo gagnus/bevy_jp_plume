@@ -18,7 +18,8 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, UiRect, UiTransform, px,
+    AlignItems, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
+    PositionType, UiRect, UiTransform, px,
 };
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
@@ -26,7 +27,9 @@ use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
     font_styles::InheritableFont,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
+    },
     tokens,
 };
 
@@ -78,34 +81,46 @@ impl PlumeCheckbox {
                 font_size: size::MEDIUM_FONT,
                 weight: FontWeight::NORMAL,
             }
-            Children [(
-                Node {
-                    width: size::CHECKBOX_SIZE,
-                    height: size::CHECKBOX_SIZE,
-                    border: size::CONTROL_BORDER,
-                    border_radius: px(size::CORNER_RADIUS),
-                }
-                CheckboxOutline
-                ThemeBackgroundColor(tokens::CHECKBOX_BG)
-                ThemeBorderColor(tokens::CHECKBOX_BORDER)
-                Children [(
-                    // Cheesy checkmark: rotated node with L-shaped border.
+            Children [
+                (
                     Node {
-                        position_type: PositionType::Absolute,
-                        left: px(4),
-                        top: px(0),
-                        width: px(6),
-                        height: px(11),
-                        border: UiRect {
-                            bottom: px(2),
-                            right: px(2),
-                        },
+                        width: size::CHECKBOX_SIZE,
+                        height: size::CHECKBOX_SIZE,
+                        border_radius: px(size::CORNER_RADIUS),
                     }
-                    UiTransform::from_rotation(Rot2::FRAC_PI_4)
-                    CheckboxMark
-                    Visibility::Hidden
-                    ThemeBorderColor(tokens::CHECKBOX_MARK)
-                )]),
+                    CheckboxBg
+                    ThemeBackgroundGradient(tokens::CHECKBOX_BG, 0.0)
+                    Children [
+                        (
+                            Node {
+                                width: size::CHECKBOX_SIZE,
+                                height: size::CHECKBOX_SIZE,
+                                border: size::CONTROL_BORDER,
+                                border_radius: px(size::CORNER_RADIUS),
+                            }
+                            CheckboxOutline
+                            ThemeBorderColor(tokens::CHECKBOX_BORDER)
+                        ),
+                        (
+                            // Cheesy checkmark: rotated node with L-shaped border.
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: px(6),
+                                top: px(2),
+                                width: px(6),
+                                height: px(11),
+                                border: UiRect {
+                                    bottom: px(2),
+                                    right: px(2),
+                                },
+                            }
+                            UiTransform::from_rotation(Rot2::FRAC_PI_4)
+                            CheckboxMark
+                            Visibility::Hidden
+                            ThemeBorderColor(tokens::CHECKBOX_MARK)
+                        )
+                    ]
+                ),
                 {props.caption}
             ]
         }
@@ -116,6 +131,11 @@ impl PlumeCheckbox {
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxFrame;
+
+/// Marker for the checkbox bg
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct CheckboxBg;
 
 /// Marker for the checkbox outline
 #[derive(Component, Default, Clone, Reflect)]
@@ -146,11 +166,18 @@ fn update_checkbox_styles(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<(&ThemeBackgroundColor, &ThemeBorderColor), With<CheckboxOutline>>,
+    mut q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    mut q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     mut q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
     for (checkbox_ent, disabled, checked, font_color) in q_checkboxes.iter() {
+        let Some(bg_ent) = q_children
+            .iter_descendants(checkbox_ent)
+            .find(|en| q_bg.contains(*en))
+        else {
+            continue;
+        };
         let Some(outline_ent) = q_children
             .iter_descendants(checkbox_ent)
             .find(|en| q_outline.contains(*en))
@@ -163,16 +190,18 @@ fn update_checkbox_styles(
         else {
             continue;
         };
-        let (outline_bg, outline_border) = q_outline.get_mut(outline_ent).unwrap();
+        let bg_color = q_bg.get_mut(bg_ent).unwrap();
+        let outline_color = q_outline.get_mut(outline_ent).unwrap();
         let mark_color = q_mark.get_mut(mark_ent).unwrap();
         set_checkbox_styles(
             checkbox_ent,
+            bg_ent,
             outline_ent,
             mark_ent,
             disabled,
             checked,
-            outline_bg,
-            outline_border,
+            bg_color,
+            outline_color,
             mark_color,
             font_color,
             &mut commands,
@@ -191,7 +220,8 @@ fn update_checkbox_styles_remove(
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<(&ThemeBackgroundColor, &ThemeBorderColor), With<CheckboxOutline>>,
+    mut q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    mut q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     mut q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -202,6 +232,12 @@ fn update_checkbox_styles_remove(
         .chain(removed_checked.read())
         .for_each(|ent| {
             if let Ok((checkbox_ent, disabled, checked, font_color)) = q_checkboxes.get(ent) {
+                let Some(bg_ent) = q_children
+                    .iter_descendants(checkbox_ent)
+                    .find(|en| q_bg.contains(*en))
+                else {
+                    return;
+                };
                 let Some(outline_ent) = q_children
                     .iter_descendants(checkbox_ent)
                     .find(|en| q_outline.contains(*en))
@@ -214,16 +250,18 @@ fn update_checkbox_styles_remove(
                 else {
                     return;
                 };
-                let (outline_bg, outline_border) = q_outline.get_mut(outline_ent).unwrap();
+                let bg_color = q_bg.get_mut(bg_ent).unwrap();
+                let outline_color = q_outline.get_mut(outline_ent).unwrap();
                 let mark_color = q_mark.get_mut(mark_ent).unwrap();
                 set_checkbox_styles(
                     checkbox_ent,
+                    bg_ent,
                     outline_ent,
                     mark_ent,
                     disabled,
                     checked,
-                    outline_bg,
-                    outline_border,
+                    bg_color,
+                    outline_color,
                     mark_color,
                     font_color,
                     &mut commands,
@@ -234,17 +272,18 @@ fn update_checkbox_styles_remove(
 
 fn set_checkbox_styles(
     checkbox_ent: Entity,
+    bg_ent: Entity,
     outline_ent: Entity,
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
-    outline_bg: &ThemeBackgroundColor,
-    outline_border: &ThemeBorderColor,
+    bg_color: &ThemeBackgroundGradient,
+    outline_color: &ThemeBorderColor,
     mark_color: &ThemeBorderColor,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (outline_border_token, outline_bg_token) = match (checked, disabled) {
+    let (outline_token, bg_token) = match (checked, disabled) {
         (true, true) => (
             tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
             tokens::CHECKBOX_BG_CHECKED_DISABLED,
@@ -272,18 +311,19 @@ fn set_checkbox_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change outline background
-    if outline_bg.0 != outline_bg_token {
+    // Change background: gradient only when ticked, flat fill otherwise.
+    let bg_gradient_amount = if checked { GRADIENT_AMOUNT } else { 0.0 };
+    if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
         commands
-            .entity(outline_ent)
-            .insert(ThemeBackgroundColor(outline_bg_token));
+            .entity(bg_ent)
+            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
     // Change outline border
-    if outline_border.0 != outline_border_token {
+    if outline_color.0 != outline_token {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(outline_border_token));
+            .insert(ThemeBorderColor(outline_token));
     }
 
     // Change mark color

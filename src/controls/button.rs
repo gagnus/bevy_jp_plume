@@ -22,7 +22,7 @@ use crate::{
     cursor::EntityCursor,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
+    theme::{GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient},
     tokens,
 };
 
@@ -88,7 +88,7 @@ impl PlumeButton {
             template_value(props.variant)
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
-            ThemeBackgroundColor(tokens::BUTTON_BG)
+            ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
             InheritableThemeTextColor(tokens::BUTTON_TEXT)
             InheritableFont {
                 font: fonts::REGULAR,
@@ -138,7 +138,7 @@ fn update_button_styles(
             Has<InteractionDisabled>,
             Has<Pressed>,
             &Hovered,
-            &ThemeBackgroundColor,
+            &ThemeBackgroundGradient,
             &InheritableThemeTextColor,
         ),
         Or<(
@@ -172,7 +172,7 @@ fn update_button_styles_remove(
         Has<InteractionDisabled>,
         Has<Pressed>,
         &Hovered,
-        &ThemeBackgroundColor,
+        &ThemeBackgroundGradient,
         &InheritableThemeTextColor,
     )>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
@@ -206,7 +206,7 @@ fn set_button_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
-    bg_color: &ThemeBackgroundColor,
+    bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
@@ -216,6 +216,8 @@ fn set_button_styles(
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
     };
     let bg_token = bg_set.pick(disabled, pressed, hovered);
+    // Disabled buttons read as inert: flat fill, no gradient.
+    let bg_gradient_amount = if disabled { 0.0 } else { GRADIENT_AMOUNT };
 
     let font_color_token = match (variant, disabled) {
         (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
@@ -229,11 +231,11 @@ fn set_button_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change background color
+    // Change background gradient
     if bg_color.0 != bg_token {
         commands
             .entity(button_ent)
-            .insert(ThemeBackgroundColor(bg_token));
+            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
     // Change font color

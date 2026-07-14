@@ -1,6 +1,6 @@
 //! A framework for theming.
 use bevy_app::{App, HierarchyPropagatePlugin, Plugin, PostUpdate, Propagate, PropagateOver};
-use bevy_color::{Alpha, Color, Oklcha, palettes};
+use bevy_color::{Alpha, Color, Luminance, Oklcha, palettes};
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
@@ -16,7 +16,10 @@ use bevy_log::warn_once;
 use bevy_platform::collections::HashMap;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
-use bevy_ui::{BackgroundColor, BorderColor};
+use bevy_ui::{
+    BackgroundColor, BackgroundGradient, BorderColor, ColorStop, Gradient, InterpolationColorSpace,
+    LinearGradient, percent,
+};
 use smol_str::SmolStr;
 
 /// A design token for the theme. This serves as the lookup key for the theme properties.
@@ -120,6 +123,30 @@ impl UiTheme {
 #[reflect(Component, Clone)]
 pub struct ThemeBackgroundColor(pub ThemeToken);
 
+/// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
+pub const GRADIENT_AMOUNT: f32 = 0.05;
+
+/// Component which fills an entity's background with a gentle top-to-bottom gradient derived
+/// from a theme color.
+#[derive(Component, Clone, Default)]
+#[require(BackgroundGradient)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+pub struct ThemeBackgroundGradient(pub ThemeToken, pub f32);
+
+/// Build the vertical gradient a [`ThemeBackgroundGradient`] resolves to.
+fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
+    BackgroundGradient(vec![Gradient::Linear(LinearGradient {
+        angle: LinearGradient::TO_BOTTOM,
+        stops: vec![
+            ColorStop::new(base.lighter(amount), percent(0)),
+            ColorStop::new(base.darker(amount), percent(100)),
+        ],
+        color_space: InterpolationColorSpace::LinearRgba,
+    })])
+}
+
 /// Component which causes the border color of an entity to be set based on a theme color.
 /// Only supports setting all borders to the same color.
 #[derive(Component, Clone, Default)]
@@ -165,6 +192,7 @@ impl Plugin for ThemePlugin {
             .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
             .add_systems(PostUpdate, update_theme)
             .add_observer(on_changed_background)
+            .add_observer(on_changed_gradient)
             .add_observer(on_changed_border)
             .add_observer(on_changed_font_color)
             .add_observer(on_changed_text_color);
@@ -173,6 +201,7 @@ impl Plugin for ThemePlugin {
 
 fn update_theme(
     mut q_background: Query<(&mut BackgroundColor, &ThemeBackgroundColor)>,
+    mut q_gradient: Query<(&mut BackgroundGradient, &ThemeBackgroundGradient)>,
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor)>,
     mut q_text_color: Query<(&mut TextColor, &ThemeTextColor)>,
     q_inherit: Query<(Entity, &InheritableThemeTextColor)>,
@@ -183,6 +212,11 @@ fn update_theme(
         // Update all background colors
         for (mut bg, theme_bg) in q_background.iter_mut() {
             bg.0 = theme.color(&theme_bg.0);
+        }
+
+        // Update all background gradients
+        for (mut gradient, theme_grad) in q_gradient.iter_mut() {
+            *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
         }
 
         // Update all border colors
@@ -215,6 +249,20 @@ fn on_changed_background(
     // Update background colors where the design token has changed.
     if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
         bg.0 = theme.color(&theme_bg.0);
+    }
+}
+
+fn on_changed_gradient(
+    insert: On<Insert, ThemeBackgroundGradient>,
+    mut q_gradient: Query<
+        (&mut BackgroundGradient, &ThemeBackgroundGradient),
+        Changed<ThemeBackgroundGradient>,
+    >,
+    theme: Res<UiTheme>,
+) {
+    // Rebuild the gradient where the design token has changed.
+    if let Ok((mut gradient, theme_grad)) = q_gradient.get_mut(insert.entity) {
+        *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
     }
 }
 
@@ -302,8 +350,6 @@ pub enum ThemeSlot {
     /// - `SWITCH_BORDER_DISABLED`
     /// - `SWITCH_SLIDE_BG_CHECKED_DISABLED`
     /// - `SWITCH_SLIDE_BG_DISABLED`
-    /// - `SWITCH_SLIDE_BORDER_CHECKED_DISABLED`
-    /// - `SWITCH_SLIDE_BORDER_DISABLED`
     /// - `TEXT_INPUT_BORDER_DISABLED`
     Neutral3,
 
@@ -318,7 +364,6 @@ pub enum ThemeSlot {
     /// - `SUBPANE_BODY_BORDER`
     /// - `SUBPANE_HEADER_BORDER`
     /// - `SWITCH_BG`
-    /// - `SWITCH_BORDER`
     /// - `TEXT_INPUT_BORDER`
     Neutral4,
 
@@ -339,7 +384,6 @@ pub enum ThemeSlot {
     /// - `LISTROW_TEXT`
     /// - `SUBPANE_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
-    /// - `SWITCH_SLIDE_BORDER`
     /// - `TEXT_INPUT_TEXT`
     /// - `TEXT_MAIN`
     Text0,
@@ -366,14 +410,11 @@ pub enum ThemeSlot {
     /// Base call-to-action and checked-state color.
     /// - `BUTTON_PRIMARY_BG`
     /// - `CHECKBOX_BG_CHECKED`
-    /// - `CHECKBOX_BORDER_CHECKED`
     /// - `RADIO_BG_CHECKED`
-    /// - `RADIO_BORDER_CHECKED`
     /// - `SCROLLBAR_THUMB`
     /// - `SLIDER_BAR`
     /// - `SLIDER_THUMB`
     /// - `SWITCH_BG_CHECKED`
-    /// - `SWITCH_BORDER_CHECKED`
     /// - `TEXT_INPUT_SELECTION`
     Accent0,
 
@@ -400,7 +441,6 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_MARK`
     /// - `RADIO_MARK`
     /// - `SWITCH_SLIDE_BG_CHECKED`
-    /// - `SWITCH_SLIDE_BORDER_CHECKED`
     Contrast,
 
     /// Focus/selection ring color (reserved; no token maps here yet).
@@ -428,6 +468,10 @@ pub enum ThemeSlot {
     /// - `SWITCH_BG_CHECKED_DISABLED`
     /// - `SWITCH_BG_DISABLED`
     /// - `TEXT_INPUT_SELECTION_UNFOCUSED`
+    /// - `CHECKBOX_BORDER_CHECKED`
+    /// - `RADIO_BORDER_CHECKED`
+    /// - `SWITCH_BORDER_CHECKED`
+    /// - `SWITCH_BORDER`
     Transparent,
 }
 
@@ -664,7 +708,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::CHECKBOX_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BORDER, ThemeSlot::Neutral4),
     (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::CHECKBOX_BORDER_CHECKED, ThemeSlot::Accent0),
+    (tokens::CHECKBOX_BORDER_CHECKED, ThemeSlot::Transparent),
     (
         tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
@@ -679,7 +723,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::RADIO_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::RADIO_BORDER, ThemeSlot::Neutral4),
     (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::RADIO_BORDER_CHECKED, ThemeSlot::Accent0),
+    (tokens::RADIO_BORDER_CHECKED, ThemeSlot::Transparent),
     (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3),
     (tokens::RADIO_MARK, ThemeSlot::Contrast),
     (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3),
@@ -689,22 +733,15 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SWITCH_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::SWITCH_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::SWITCH_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
-    (tokens::SWITCH_BORDER, ThemeSlot::Neutral4),
+    (tokens::SWITCH_BORDER, ThemeSlot::Transparent),
     (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Accent0),
+    (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Transparent),
     (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BG, ThemeSlot::Text0),
     (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BG_CHECKED, ThemeSlot::Contrast),
     (
         tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
-        ThemeSlot::Neutral3,
-    ),
-    (tokens::SWITCH_SLIDE_BORDER, ThemeSlot::Text0),
-    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SWITCH_SLIDE_BORDER_CHECKED, ThemeSlot::Contrast),
-    (
-        tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
     ),
     (tokens::MENU_BG, ThemeSlot::Neutral1),

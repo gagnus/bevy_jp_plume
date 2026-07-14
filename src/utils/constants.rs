@@ -40,10 +40,10 @@ pub mod size {
     pub const RADIO_SIZE: Val = Val::Px(18.0);
 
     /// Width of a toggle switch
-    pub const TOGGLE_WIDTH: Val = Val::Px(40.0);
+    pub const TOGGLE_WIDTH: Val = Val::Px(32.0);
 
     /// Height of a toggle switch
-    pub const TOGGLE_HEIGHT: Val = Val::Px(20.0);
+    pub const TOGGLE_HEIGHT: Val = Val::Px(18.0);
 
     /// Standard corner radius for controls and containers
     pub const CORNER_RADIUS: f32 = 4.0;

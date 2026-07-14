@@ -28,7 +28,7 @@ use bevy_ui_widgets::{
 use crate::{
     constants::size,
     cursor::EntityCursor,
-    theme::{ThemeBackgroundColor, UiTheme},
+    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme},
     tokens,
 };
 
@@ -122,7 +122,7 @@ impl PlumeSlider {
                         border_radius: {BorderRadius::all(px(8))},
                     }
                     PlumeSliderThumb
-                    ThemeBackgroundColor(tokens::SLIDER_THUMB)
+                    ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
                 )
             ]
         }
@@ -144,7 +144,7 @@ struct PlumeSliderThumb;
 struct SliderStyleCtx<'w, 's> {
     q_children: Query<'w, 's, &'static Children>,
     q_tracks: Query<'w, 's, &'static mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumbs: Query<'w, 's, &'static ThemeBackgroundColor, With<PlumeSliderThumb>>,
+    q_thumbs: Query<'w, 's, &'static ThemeBackgroundGradient, With<PlumeSliderThumb>>,
     theme: Res<'w, UiTheme>,
     commands: Commands<'w, 's>,
 }
@@ -210,6 +210,8 @@ fn set_slider_styles(
     let bar_color = theme.color(&tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered));
     let bg_color = theme.color(&tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered));
     let thumb_token = tokens::sets::SLIDER_THUMB.pick(disabled, pressed, hovered);
+    // Disabled thumb reads inert: flat fill, no gradient.
+    let thumb_gradient_amount = if disabled { 0.0 } else { GRADIENT_AMOUNT };
 
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
@@ -226,11 +228,11 @@ fn set_slider_styles(
             linear_gradient.stops[3].color = bg_color;
         }
         if let Ok(thumb_bg) = q_thumbs.get(child)
-            && thumb_bg.0 != thumb_token
+            && (thumb_bg.0 != thumb_token || thumb_bg.1 != thumb_gradient_amount)
         {
             commands
                 .entity(child)
-                .insert(ThemeBackgroundColor(thumb_token.clone()));
+                .insert(ThemeBackgroundGradient(thumb_token.clone(), thumb_gradient_amount));
         }
     });
 

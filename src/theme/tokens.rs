@@ -195,18 +195,6 @@ pub const SWITCH_SLIDE_BG_CHECKED: ThemeToken =
 pub const SWITCH_SLIDE_BG_CHECKED_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.switch.slide.bg.checked.disabled");
 
-/// Switch slide border
-pub const SWITCH_SLIDE_BORDER: ThemeToken = ThemeToken::new_static("plume.switch.slide.border");
-/// Switch slide border (disabled)
-pub const SWITCH_SLIDE_BORDER_DISABLED: ThemeToken =
-    ThemeToken::new_static("plume.switch.slide.border.disabled");
-/// Switch slide border (checked)
-pub const SWITCH_SLIDE_BORDER_CHECKED: ThemeToken =
-    ThemeToken::new_static("plume.switch.slide.border.checked");
-/// Switch slide border (checked+disabled)
-pub const SWITCH_SLIDE_BORDER_CHECKED_DISABLED: ThemeToken =
-    ThemeToken::new_static("plume.switch.slide.border.checked.disabled");
-
 // Menus
 
 /// Menu background

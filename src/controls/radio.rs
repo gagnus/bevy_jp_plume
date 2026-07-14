@@ -18,7 +18,7 @@ use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    LayoutConfig, Node, px,
+    LayoutConfig, Node, PositionType, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
@@ -26,7 +26,10 @@ use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
     font_styles::InheritableFont,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient,
+        ThemeBorderColor,
+    },
     tokens,
 };
 
@@ -78,32 +81,50 @@ impl PlumeRadio {
                 weight: FontWeight::NORMAL,
             }
             Children [(
+                // Filled disc; the flex centering positions the mark dot.
+                // Gradient only when checked (the unchecked fill is transparent),
+                // matching the checkbox.
                 Node {
                     display: Display::Flex,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
                     width: size::RADIO_SIZE,
                     height: size::RADIO_SIZE,
-                    border: size::CONTROL_BORDER,
                     border_radius: BorderRadius::MAX,
                 }
-                RadioOutline
-                ThemeBorderColor(tokens::RADIO_BORDER)
-                ThemeBackgroundColor(tokens::RADIO_BG)
-                Children [(
-                    Node {
-                        width: px(12),
-                        height: px(12),
-                        border: px(2),
-                        border_radius: BorderRadius::MAX,
-                    }
-                    LayoutConfig {
-                        use_rounding: false,
-                    }
-                    RadioMark
-                    Visibility::Hidden
-                    ThemeBackgroundColor(tokens::RADIO_MARK)
-                )]),
+                RadioBg
+                ThemeBackgroundGradient(tokens::RADIO_BG, 0.0)
+                Children [
+                    (
+                        // Border ring overlaying the disc; only its color is themed.
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: px(0),
+                            top: px(0),
+                            width: percent(100),
+                            height: percent(100),
+                            border: size::CONTROL_BORDER,
+                            border_radius: BorderRadius::MAX,
+                        }
+                        RadioOutline
+                        ThemeBorderColor(tokens::RADIO_BORDER)
+                    ),
+                    (
+                        // Center mark dot; too small to benefit from a gradient.
+                        Node {
+                            width: px(12),
+                            height: px(12),
+                            border: px(2),
+                            border_radius: BorderRadius::MAX,
+                        }
+                        LayoutConfig {
+                            use_rounding: false,
+                        }
+                        RadioMark
+                        Visibility::Hidden
+                        ThemeBackgroundColor(tokens::RADIO_MARK)
+                    )
+                ]),
                 {props.caption}
             ]
         }
@@ -156,6 +177,11 @@ fn radio_check_self(ev: On<ValueChange<bool>>, mut commands: Commands) {
     }
 }
 
+/// Marker for the radio filled disc
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct RadioBg;
+
 /// Marker for the radio outline
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -185,35 +211,21 @@ fn update_radio_styles(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<(&ThemeBorderColor, &ThemeBackgroundColor), With<RadioOutline>>,
-    mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
+    q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut commands: Commands,
 ) {
     for (radio_ent, disabled, checked, font_color) in q_radios.iter() {
-        let Some(outline_ent) = q_children
-            .iter_descendants(radio_ent)
-            .find(|en| q_outline.contains(*en))
-        else {
-            continue;
-        };
-        let Some(mark_ent) = q_children
-            .iter_descendants(radio_ent)
-            .find(|en| q_mark.contains(*en))
-        else {
-            continue;
-        };
-        let (outline_border, outline_bg) = q_outline.get_mut(outline_ent).unwrap();
-        let mark_color = q_mark.get_mut(mark_ent).unwrap();
-        set_radio_styles(
+        apply_radio_styles(
             radio_ent,
-            outline_ent,
-            mark_ent,
             disabled,
             checked,
-            outline_border,
-            outline_bg,
-            mark_color,
             font_color,
+            &q_children,
+            &q_bg,
+            &q_outline,
+            &q_mark,
             &mut commands,
         );
     }
@@ -230,8 +242,9 @@ fn update_radio_styles_remove(
         With<RadioButton>,
     >,
     q_children: Query<&Children>,
-    mut q_outline: Query<(&ThemeBorderColor, &ThemeBackgroundColor), With<RadioOutline>>,
-    mut q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
+    q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut commands: Commands,
@@ -241,49 +254,84 @@ fn update_radio_styles_remove(
         .chain(removed_checked.read())
         .for_each(|ent| {
             if let Ok((radio_ent, disabled, checked, font_color)) = q_radios.get(ent) {
-                let Some(outline_ent) = q_children
-                    .iter_descendants(radio_ent)
-                    .find(|en| q_outline.contains(*en))
-                else {
-                    return;
-                };
-                let Some(mark_ent) = q_children
-                    .iter_descendants(radio_ent)
-                    .find(|en| q_mark.contains(*en))
-                else {
-                    return;
-                };
-                let (outline_border, outline_bg) = q_outline.get_mut(outline_ent).unwrap();
-                let mark_color = q_mark.get_mut(mark_ent).unwrap();
-                set_radio_styles(
+                apply_radio_styles(
                     radio_ent,
-                    outline_ent,
-                    mark_ent,
                     disabled,
                     checked,
-                    outline_border,
-                    outline_bg,
-                    mark_color,
                     font_color,
+                    &q_children,
+                    &q_bg,
+                    &q_outline,
+                    &q_mark,
                     &mut commands,
                 );
             }
         });
 }
 
+/// Resolve the radio's child entities and push the current styles onto them.
+fn apply_radio_styles(
+    radio_ent: Entity,
+    disabled: bool,
+    checked: bool,
+    font_color: &InheritableThemeTextColor,
+    q_children: &Query<&Children>,
+    q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_outline: &Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_mark: &Query<&ThemeBackgroundColor, With<RadioMark>>,
+    commands: &mut Commands,
+) {
+    let Some(bg_ent) = q_children
+        .iter_descendants(radio_ent)
+        .find(|en| q_bg.contains(*en))
+    else {
+        return;
+    };
+    let Some(outline_ent) = q_children
+        .iter_descendants(radio_ent)
+        .find(|en| q_outline.contains(*en))
+    else {
+        return;
+    };
+    let Some(mark_ent) = q_children
+        .iter_descendants(radio_ent)
+        .find(|en| q_mark.contains(*en))
+    else {
+        return;
+    };
+    // Safety: all three entities were just confirmed present in their queries.
+    let bg = q_bg.get(bg_ent).unwrap();
+    let outline_border = q_outline.get(outline_ent).unwrap();
+    let mark_color = q_mark.get(mark_ent).unwrap();
+    set_radio_styles(
+        radio_ent,
+        bg_ent,
+        outline_ent,
+        mark_ent,
+        disabled,
+        checked,
+        bg,
+        outline_border,
+        mark_color,
+        font_color,
+        commands,
+    );
+}
+
 fn set_radio_styles(
     radio_ent: Entity,
+    bg_ent: Entity,
     outline_ent: Entity,
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
+    bg: &ThemeBackgroundGradient,
     outline_border: &ThemeBorderColor,
-    outline_bg: &ThemeBackgroundColor,
     mark_color: &ThemeBackgroundColor,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (outline_border_token, outline_bg_token) = match (checked, disabled) {
+    let (outline_border_token, bg_token) = match (checked, disabled) {
         (true, true) => (
             tokens::RADIO_BORDER_CHECKED_DISABLED,
             tokens::RADIO_BG_CHECKED_DISABLED,
@@ -308,16 +356,19 @@ fn set_radio_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change outline border or bg
+    // Change outline border
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
             .insert(ThemeBorderColor(outline_border_token));
     }
-    if outline_bg.0 != outline_bg_token {
+
+    // Change disc background: gradient only when checked, flat fill otherwise.
+    let bg_gradient_amount = if checked { GRADIENT_AMOUNT } else { 0.0 };
+    if bg.0 != bg_token || bg.1 != bg_gradient_amount {
         commands
-            .entity(outline_ent)
-            .insert(ThemeBackgroundColor(outline_bg_token));
+            .entity(bg_ent)
+            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
     // Change mark color
