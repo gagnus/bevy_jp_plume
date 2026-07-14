@@ -186,32 +186,7 @@ impl PlumeDialogBody {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
-                padding: UiRect::all(size::PAD),
-            }
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
-        }
-    }
-}
-
-/// Footer section for a dialog
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct PlumeDialogFooter;
-
-impl PlumeDialogFooter {
-    /// Scene function for dialog footer.
-    pub fn scene() -> impl Scene {
-        bsn! {
-            Node {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::FlexEnd,
-                column_gap: size::GAP,
+                row_gap: size::GAP,
                 padding: UiRect::all(size::PAD),
             }
             InheritableFont {

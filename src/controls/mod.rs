@@ -16,7 +16,7 @@ mod toggle_switch;
 pub use button::*;
 pub use checkbox::*;
 pub use color_swatch::*;
-pub use listview::PlumeListRow;
+pub use listview::{ListRowIndex, PlumeListRow, list_rows_from_strings};
 pub use number_input::*;
 pub use radio::*;
 pub use scrollbar::*;

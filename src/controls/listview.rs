@@ -16,7 +16,7 @@ use bevy_ecs::{
 use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
+use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, template_value};
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow,
@@ -28,7 +28,7 @@ use crate::{
     constants::{font_awesome, fonts, size},
     controls::{PlumeScrollbar, ScrollbarGutter},
     cursor::EntityCursor,
-    display::fa_icon_solid,
+    display::{caption, fa_icon_solid},
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
@@ -140,6 +140,35 @@ impl PlumeListRow {
             )]
         }
     }
+}
+
+/// Entirely optional component to store a usize on a `PlumeListRow`
+/// Added by [`list_rows_from_strings`] so there's a value
+/// on a string based select you can use to work out which of the array
+/// of strings was selected
+#[derive(Component, Default, Clone, Copy, Reflect)]
+#[reflect(Component, Default)]
+pub struct ListRowIndex(pub usize);
+
+/// Convert an iterator of strings into `PlumeListRow` scenes with `OptionIndex`
+/// on each one containing its index, optionally mark one selected
+pub fn list_rows_from_strings(
+    options: impl IntoIterator<Item: AsRef<str>>,
+    selected: Option<usize>,
+) -> Box<dyn SceneList> {
+    Box::new(options
+        .into_iter()
+        .enumerate()
+        .map(|(i, label)| {
+            let label: String = label.as_ref().into();
+            bsn! {
+                @PlumeListRow
+                ListRowIndex(i)
+                {selected.is_some_and(|selected| selected == i).then_some(template_value(Selected))}
+                Children [ caption(label) ]
+            }
+        })
+        .collect::<Vec<_>>())
 }
 
 /// Marker for the selected-row tick.

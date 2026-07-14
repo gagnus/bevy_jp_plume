@@ -98,7 +98,6 @@ impl PlumeSubpane {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                margin: {UiRect::bottom(size::GAP)},
                 align_items: AlignItems::Stretch,
             }
             PlumeSubpane { collapsible: {props.collapsible} }

@@ -3,7 +3,7 @@ use bevy_ecs::{hierarchy::Children, reflect::ReflectComponent};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
 use bevy_text::FontWeight;
-use bevy_ui::{Display, FlexDirection, Node, UiRect};
+use bevy_ui::{Display, FlexDirection, Node};
 
 use crate::{
     constants::{fonts, size},
@@ -42,7 +42,6 @@ impl PlumeGroup {
                 flex_direction: FlexDirection::Column,
                 row_gap: size::GAP_TIGHT,
                 padding: size::PAD,
-                margin: {UiRect::bottom(size::GAP)},
                 border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)}
             }
             PlumeGroup

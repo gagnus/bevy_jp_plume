@@ -10,9 +10,9 @@ use bevy_jp_plume::{
     constants::{font_awesome, icons, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
-        ButtonVariant, OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput,
-        PlumeRadio, PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput,
-        PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
+        ButtonVariant, ListRowIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
+        PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider,
+        PlumeTextInput, PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
     display::{caption, fa_icon_solid, icon, label_bright, label_dim},
@@ -261,7 +261,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
                     )},
                     @max_visible: 4,
                 }
-                on(|change: On<ValueChange<Entity>>, q_options: Query<&OptionIndex>| {
+                on(|change: On<ValueChange<Entity>>, q_options: Query<&ListRowIndex>| {
                     if let Ok(option) = q_options.get(change.value) {
                         info!("select -> option {}", option.0);
                     }
@@ -456,6 +456,7 @@ fn dialog() -> impl Scene {
                                 display: Display::Flex,
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Stretch,
+                                row_gap: size::GAP,
                                 overflow: Overflow::scroll_y(),
                             }
                             ScrollArea

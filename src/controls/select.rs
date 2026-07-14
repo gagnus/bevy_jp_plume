@@ -33,37 +33,6 @@ const SELECT_ROW_PX: f32 = 28.0;
 #[reflect(Component, Default, Clone)]
 pub struct PlumeSelect;
 
-/// Entirely optional component to store a usize on a `PlumeListRow`
-/// Added by [`list_rows_from_strings`] so there's a value
-/// on a string based select you can use to work out which of the array
-/// of strings was selected
-#[derive(Component, Default, Clone, Copy, Reflect)]
-#[reflect(Component, Default)]
-pub struct OptionIndex(pub usize);
-
-/// Convert an iterator of strings into `PlumeListRow` scenes with `OptionIndex`
-/// on each one containing its index, optionally mark one selected
-pub fn list_rows_from_strings(
-    options: impl IntoIterator<Item: AsRef<str>>,
-    selected: Option<usize>,
-) -> Box<dyn SceneList> {
-    Box::new(
-        options
-            .into_iter()
-            .enumerate()
-            .map(|(i, label)| -> Box<dyn SceneList> {
-                let label: String = label.as_ref().into();
-                if Some(i) == selected {
-                    bsn! { @PlumeListRow Selected OptionIndex(i) Children [ caption(label) ] }
-                        .into()
-                } else {
-                    bsn! { @PlumeListRow OptionIndex(i) Children [ caption(label) ] }.into()
-                }
-            })
-            .collect::<Vec<_>>(),
-    )
-}
-
 /// Marker for the caption which changes with selected item
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
