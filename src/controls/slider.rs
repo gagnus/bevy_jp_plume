@@ -230,9 +230,10 @@ fn set_slider_styles(
         if let Ok(thumb_bg) = q_thumbs.get(child)
             && (thumb_bg.0 != thumb_token || thumb_bg.1 != thumb_gradient_amount)
         {
-            commands
-                .entity(child)
-                .insert(ThemeBackgroundGradient(thumb_token.clone(), thumb_gradient_amount));
+            commands.entity(child).insert(ThemeBackgroundGradient(
+                thumb_token.clone(),
+                thumb_gradient_amount,
+            ));
         }
     });
 
