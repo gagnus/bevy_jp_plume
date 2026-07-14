@@ -335,7 +335,7 @@ pub enum ThemeSlot {
     /// - `SUBPANE_HEADER_BG`
     Neutral2,
 
-    /// Weak fills and all disabled chrome.
+    /// Disabled control chrome.
     /// - `BUTTON_BG_DISABLED`
     /// - `BUTTON_PRIMARY_BG_DISABLED`
     /// - `CHECKBOX_BORDER_CHECKED_DISABLED`

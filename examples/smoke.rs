@@ -198,7 +198,9 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
     bsn! {
         row()
         {bg}
-        Node { height: px(80.), width: px(1200.) }
+        // align_self: Start opts out of the column's align_items: Stretch, so the
+        // row's width: auto actually hugs its content instead of being forced to 260px.
+        Node { padding: UiRect::all(px(20)), width: Val::Auto, align_self: AlignSelf::Start, border_radius: px(10) }
         Children [
             (
                 @PlumeButton {
