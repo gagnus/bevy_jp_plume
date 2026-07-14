@@ -18,7 +18,8 @@ use crate::{
     alpha_pattern::{AlphaPatternMaterial, AlphaPatternResource},
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
-    theme::{ThemePlugin, ThemedText},
+    dark_theme::create_dark_theme,
+    theme::{ThemePlugin, ThemedText, UiTheme},
 };
 
 mod alpha_pattern;
@@ -69,6 +70,8 @@ impl Plugin for PlumeCorePlugin {
         app.insert_resource(DefaultCursor(EntityCursor::System(
             bevy_window::SystemCursorIcon::Default,
         )));
+
+        app.insert_resource(UiTheme(create_dark_theme()));
 
         app.add_systems(
             PostUpdate,
