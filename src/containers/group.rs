@@ -3,13 +3,13 @@ use bevy_ecs::{hierarchy::Children, reflect::ReflectComponent};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
 use bevy_text::FontWeight;
-use bevy_ui::{Display, FlexDirection, Node, UiRect};
+use bevy_ui::{Display, FlexDirection, Node};
 
 use crate::{
     constants::{fonts, size},
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{ThemeBackgroundColor, ThemeBorderColor},
+    theme::ThemeBackgroundColor,
     tokens,
 };
 
@@ -40,14 +40,12 @@ impl PlumeGroup {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                border: UiRect::all(size::CONTAINER_BORDER),
                 row_gap: size::GAP_TIGHT,
                 padding: size::PAD,
                 border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)}
             }
             PlumeGroup
             ThemeBackgroundColor(tokens::GROUP_BG)
-            ThemeBorderColor(tokens::GROUP_BORDER)
             InheritableFont {
                 font: fonts::REGULAR,
                 font_size: size::MEDIUM_FONT,

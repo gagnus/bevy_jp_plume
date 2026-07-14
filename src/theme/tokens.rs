@@ -256,8 +256,6 @@ pub const SUBPANE_BODY_BORDER: ThemeToken = ThemeToken::new_static("plume.subpan
 
 /// Group background
 pub const GROUP_BG: ThemeToken = ThemeToken::new_static("plume.group.bg");
-/// Group border
-pub const GROUP_BORDER: ThemeToken = ThemeToken::new_static("plume.group.border");
 
 // Listview
 
@@ -265,8 +263,6 @@ pub const GROUP_BORDER: ThemeToken = ThemeToken::new_static("plume.group.border"
 pub const LISTROW_BG: ThemeToken = ThemeToken::new_static("plume.listrow.bg");
 /// Listview row background (hovered)
 pub const LISTROW_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.listrow.bg.hover");
-/// Listview row background (selected)
-pub const LISTROW_BG_SELECTED: ThemeToken = ThemeToken::new_static("plume.listrow.bg.selected");
 /// Listview row text
 pub const LISTROW_TEXT: ThemeToken = ThemeToken::new_static("plume.listrow.text");
 /// Listview row text (disabled)

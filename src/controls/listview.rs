@@ -2,7 +2,9 @@
 use accesskit::Role;
 use bevy_a11y::AccessibilityNode;
 use bevy_app::{Plugin, PreUpdate};
+use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
+    component::Component,
     entity::Entity,
     hierarchy::Children,
     lifecycle::RemovedComponents,
@@ -23,9 +25,10 @@ use bevy_ui::{
 use bevy_ui_widgets::{ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
-    constants::{fonts, size},
+    constants::{font_awesome, fonts, size},
     controls::{PlumeScrollbar, ScrollbarGutter},
     cursor::EntityCursor,
+    display::fa_icon_solid,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
@@ -116,6 +119,7 @@ impl PlumeListRow {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
+                column_gap: size::GAP_TIGHT,
                 padding: UiRect::axes(size::GAP, px(2)),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
@@ -128,9 +132,20 @@ impl PlumeListRow {
             }
             Hovered
             ListItem
+            Children [(
+                // Hidden ticks still occupy layout, so every label shares the gutter.
+                fa_icon_solid(font_awesome::FA_CHECK)
+                ListRowCheck
+                Visibility::Hidden
+            )]
         }
     }
 }
+
+/// Marker for the selected-row tick.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct ListRowCheck;
 
 fn update_listrow_styles(
     q_listrows: Query<
@@ -151,11 +166,17 @@ fn update_listrow_styles(
             )>,
         ),
     >,
+    q_children: Query<&Children>,
+    q_check: Query<(), With<ListRowCheck>>,
     mut commands: Commands,
 ) {
     for (listrow_ent, disabled, selected, hovered, bg_color, font_color) in q_listrows.iter() {
+        let check_ent = q_children
+            .iter_descendants(listrow_ent)
+            .find(|en| q_check.contains(*en));
         set_listrow_styles(
             listrow_ent,
+            check_ent,
             disabled,
             selected,
             hovered.0,
@@ -178,6 +199,8 @@ fn update_listrow_styles_remove(
         ),
         With<PlumeListRow>,
     >,
+    q_children: Query<&Children>,
+    q_check: Query<(), With<ListRowCheck>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_selected: RemovedComponents<Selected>,
     mut commands: Commands,
@@ -189,8 +212,12 @@ fn update_listrow_styles_remove(
             if let Ok((listrow_ent, disabled, selected, hovered, bg_color, font_color)) =
                 q_listrows.get(ent)
             {
+                let check_ent = q_children
+                    .iter_descendants(listrow_ent)
+                    .find(|en| q_check.contains(*en));
                 set_listrow_styles(
                     listrow_ent,
+                    check_ent,
                     disabled,
                     selected,
                     hovered.0,
@@ -204,6 +231,7 @@ fn update_listrow_styles_remove(
 
 fn set_listrow_styles(
     listrow_ent: Entity,
+    check_ent: Option<Entity>,
     disabled: bool,
     selected: bool,
     hovered: bool,
@@ -211,9 +239,9 @@ fn set_listrow_styles(
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let outline_bg_token = match (disabled, selected, hovered) {
-        (false, true, _) => tokens::LISTROW_BG_SELECTED,
-        (false, false, true) => tokens::LISTROW_BG_HOVER,
+    // Background shows hover only; selection is the tick.
+    let outline_bg_token = match (disabled, hovered) {
+        (false, true) => tokens::LISTROW_BG_HOVER,
         _ => tokens::LISTROW_BG,
     };
 
@@ -239,6 +267,14 @@ fn set_listrow_styles(
         commands
             .entity(listrow_ent)
             .insert(InheritableThemeTextColor(font_color_token));
+    }
+
+    // Change tick visibility
+    if let Some(check_ent) = check_ent {
+        commands.entity(check_ent).insert(match selected {
+            true => Visibility::Inherited,
+            false => Visibility::Hidden,
+        });
     }
 
     // Change cursor shape

@@ -18,7 +18,7 @@ use bevy_scene::prelude::*;
 use bevy_ui::{ComputedNode, InteractionDisabled, Node, Selected, px, widget::Text};
 use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
 
-use super::listview::{PlumeListRow, PlumeListView};
+use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
 use crate::{display::caption, rounded_corners::RoundedCorners};
 
@@ -185,7 +185,7 @@ fn sync_caption(
     q_newly_selected: Query<Entity, (Added<Selected>, With<PlumeListRow>)>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
-    q_text: Query<&Text, Without<SelectCaption>>,
+    q_text: Query<&Text, (Without<SelectCaption>, Without<ListRowCheck>)>,
     q_select: Query<(), With<PlumeSelect>>,
     mut q_caption: Query<&mut Text, With<SelectCaption>>,
 ) {

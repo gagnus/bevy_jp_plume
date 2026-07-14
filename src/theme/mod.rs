@@ -281,7 +281,6 @@ pub enum ThemeSlot {
     /// Raised container chrome: headers and the group box.
     /// - `DIALOG_HEADER_BG`
     /// - `GROUP_BG`
-    /// - `GROUP_BORDER`
     /// - `SUBPANE_HEADER_BG`
     Neutral2,
 
@@ -291,7 +290,6 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_BORDER_CHECKED_DISABLED`
     /// - `CHECKBOX_BORDER_DISABLED`
     /// - `CHECKBOX_MARK_DISABLED`
-    /// - `LISTROW_BG_HOVER`
     /// - `RADIO_BORDER_CHECKED_DISABLED`
     /// - `RADIO_BORDER_DISABLED`
     /// - `RADIO_MARK_DISABLED`
@@ -309,11 +307,10 @@ pub enum ThemeSlot {
     /// - `TEXT_INPUT_BORDER_DISABLED`
     Neutral3,
 
-    /// Control rest backgrounds and borders, plus the selected row.
+    /// Control rest backgrounds and borders.
     /// - `BUTTON_BG`
     /// - `CHECKBOX_BORDER`
     /// - `DIALOG_BORDER`
-    /// - `LISTROW_BG_SELECTED`
     /// - `MENU_BORDER`
     /// - `RADIO_BORDER`
     /// - `SLIDER_BAR_DISABLED`
@@ -328,6 +325,7 @@ pub enum ThemeSlot {
     /// Neutral control hover.
     /// - `BUTTON_BG_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
+    /// - `LISTROW_BG_HOVER`
     Neutral5,
 
     /// Neutral control pressed.
@@ -729,10 +727,8 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SUBPANE_BODY_BG, ThemeSlot::Neutral1),
     (tokens::SUBPANE_BODY_BORDER, ThemeSlot::Neutral4),
     (tokens::GROUP_BG, ThemeSlot::Neutral2),
-    (tokens::GROUP_BORDER, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),
-    (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral3),
-    (tokens::LISTROW_BG_SELECTED, ThemeSlot::Neutral4),
+    (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::LISTROW_TEXT, ThemeSlot::Text0),
     (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::DIALOG_BG, ThemeSlot::Neutral1),
