@@ -211,6 +211,9 @@ pub const TEXT_INPUT_BG_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.textinput.bg.disabled");
 /// Text color for text input
 pub const TEXT_INPUT_TEXT: ThemeToken = ThemeToken::new_static("plume.textinput.text");
+/// Text color for text input when editing
+pub const TEXT_INPUT_TEXT_ACTIVE: ThemeToken =
+    ThemeToken::new_static("plume.textinput.text.active");
 /// Text color for text input (disabled)
 pub const TEXT_INPUT_TEXT_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.textinput.text.disabled");
@@ -223,6 +226,9 @@ pub const TEXT_INPUT_SELECTION_UNFOCUSED: ThemeToken =
     ThemeToken::new_static("plume.textinput.selection.unfocused");
 /// Border for text input
 pub const TEXT_INPUT_BORDER: ThemeToken = ThemeToken::new_static("plume.textinput.border");
+/// Border for text input while focused (being edited)
+pub const TEXT_INPUT_BORDER_ACTIVE: ThemeToken =
+    ThemeToken::new_static("plume.textinput.border.active");
 /// Border for text input when disabled
 pub const TEXT_INPUT_BORDER_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.textinput.border.disabled");

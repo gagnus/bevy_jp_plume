@@ -1,5 +1,6 @@
 //! Throwaway smoke test: one of each control, spawned bare to audit defaults. Deleted in step 7.
 use bevy::{
+    ecs::template::template,
     prelude::*,
     ui::Checked,
     ui_widgets::{Activate, ControlOrientation, ScrollArea, SliderValue, ValueChange},
@@ -9,8 +10,8 @@ use bevy_jp_plume::{
     constants::{font_awesome, icons, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
-        ButtonVariant, OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio,
-        PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput,
+        ButtonVariant, OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput,
+        PlumeRadio, PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput,
         PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
@@ -28,7 +29,8 @@ fn main() {
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .init_resource::<PaletteEditor>()
         .add_systems(Startup, scene.spawn())
-        .add_systems(Update, rebuild_theme_on_edit);
+        .add_systems(Update, (rebuild_theme_on_edit, sync_controls_from_editor))
+        .add_observer(apply_param_edits);
     // SMOKE_SHOT=<path.png>: save a screenshot and exit (for headless verification).
     if std::env::var_os("SMOKE_SHOT").is_some() {
         app.add_systems(Update, screenshot_and_exit);
@@ -275,6 +277,8 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
             maybe_disabled(disabled),
             @PlumeTextInput
             maybe_disabled(disabled),
+            @PlumeNumberInput
+            maybe_disabled(disabled),
         ]
     }
 }
@@ -303,9 +307,9 @@ enum Ramp {
     Text,
 }
 
-/// One editable scalar of the [`EditablePalette`]. Each slider owns a variant and
-/// reads/writes exactly that field. `L(_, i)` is the i-th lightness stop of a ramp.
-#[derive(Clone, Copy)]
+/// One editable scalar of the [`EditablePalette`], carried as a component on every
+/// control bound to it. `L(_, i)` is the i-th lightness stop of a ramp.
+#[derive(Clone, Copy, Component)]
 enum PaletteParam {
     Hue(Ramp),
     Chroma(Ramp),
@@ -375,6 +379,14 @@ impl PaletteParam {
             PaletteParam::Hue(_) => (0.0, 360.0),
             PaletteParam::Chroma(ramp) => (0.0, ramp.chroma_max()),
             PaletteParam::L(..) | PaletteParam::DisabledTextAlpha => (0.0, 1.0),
+        }
+    }
+
+    /// Decimal places for this param's number input.
+    fn precision(self) -> usize {
+        match self {
+            PaletteParam::Hue(_) => 1,
+            _ => 3,
         }
     }
 
@@ -487,8 +499,8 @@ fn param_group(title: &str, params: Vec<PaletteParam>, palette: &EditablePalette
     }
 }
 
-/// A labelled slider bound to one [`PaletteParam`]. Its observer writes the new value
-/// straight into [`PaletteEditor`]; the change-detection system rebuilds the theme.
+/// A labelled slider + number input, both bound to one [`PaletteParam`]. Edits land in
+/// [`PaletteEditor`] via [`apply_param_edits`]; changes flow back in [`sync_controls_from_editor`].
 fn param_row(param: PaletteParam, palette: &EditablePalette) -> Box<dyn SceneList> {
     let (min, max) = param.range();
     let value = param.get(palette);
@@ -501,12 +513,49 @@ fn param_row(param: PaletteParam, palette: &EditablePalette) -> Box<dyn SceneLis
                     @min: {min},
                     @max: {max},
                 }
+                Node { width: px(0), flex_grow: 1.0 }
                 SliderValue({value})
-                on(move |change: On<ValueChange<f32>>, mut editor: ResMut<PaletteEditor>| {
-                    param.set(&mut editor.0, change.value);
-                })
+                template(move |_| Ok(param))
+            ),
+            (
+                @PlumeNumberInput {
+                    @value: {value},
+                    @precision: {param.precision()},
+                    @min: {min},
+                    @max: {max},
+                }
+                template(move |_| Ok(param))
             ),
         ]
     }
     .into()
+}
+
+/// Routes any bound control's [`ValueChange`] into the palette editor.
+fn apply_param_edits(
+    change: On<ValueChange<f32>>,
+    query_params: Query<&PaletteParam>,
+    mut editor: ResMut<PaletteEditor>,
+) {
+    if let Ok(param) = query_params.get(change.source) {
+        param.set(&mut editor.0, change.value);
+    }
+}
+
+/// Push editor values back to every bound control, so a slider drag updates the
+/// number input beside it (and vice versa).
+fn sync_controls_from_editor(
+    editor: Res<PaletteEditor>,
+    query_bound: Query<(Entity, &PaletteParam, &SliderValue)>,
+    mut commands: Commands,
+) {
+    if !editor.is_changed() {
+        return;
+    }
+    for (control_entity, param, value) in query_bound.iter() {
+        let target = param.get(&editor.0);
+        if value.0 != target {
+            commands.entity(control_entity).insert(SliderValue(target));
+        }
+    }
 }

@@ -5,6 +5,7 @@ mod checkbox;
 mod color_swatch;
 mod listview;
 mod menu;
+mod number_input;
 mod radio;
 mod scrollbar;
 mod select;
@@ -16,6 +17,7 @@ pub use button::*;
 pub use checkbox::*;
 pub use color_swatch::*;
 pub use listview::PlumeListRow;
+pub use number_input::*;
 pub use radio::*;
 pub use scrollbar::*;
 pub use select::*;
@@ -39,6 +41,7 @@ impl Plugin for ControlsPlugin {
             CheckboxPlugin,
             ColorSwatchPlugin,
             ListViewPlugin,
+            NumberInputPlugin,
             RadioPlugin,
             ScrollbarPlugin,
             SelectPlugin,

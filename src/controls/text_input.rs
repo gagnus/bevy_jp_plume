@@ -129,6 +129,7 @@ fn update_text_input_styles(
         set_text_input_styles(
             input_ent,
             disabled,
+            false,
             bg_color,
             border_color,
             font_color,
@@ -149,6 +150,7 @@ fn update_text_input_styles_remove(
         With<PlumeTextInput>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
     removed_disabled.read().for_each(|ent| {
@@ -156,6 +158,7 @@ fn update_text_input_styles_remove(
             set_text_input_styles(
                 input_ent,
                 disabled,
+                focus.get() == Some(input_ent),
                 bg_color,
                 border_color,
                 font_color,
@@ -165,21 +168,58 @@ fn update_text_input_styles_remove(
     });
 }
 
+/// Restyle every text input when focus moves, so the edited one gets the active border.
+fn update_text_input_styles_focus(
+    q_inputs: Query<
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            &ThemeBackgroundColor,
+            &ThemeBorderColor,
+            &ThemeTextColor,
+        ),
+        With<PlumeTextInput>,
+    >,
+    focus: Res<InputFocus>,
+    mut commands: Commands,
+) {
+    if !focus.is_changed() {
+        return;
+    }
+    for (input_ent, disabled, bg_color, border_color, font_color) in q_inputs.iter() {
+        set_text_input_styles(
+            input_ent,
+            disabled,
+            focus.get() == Some(input_ent),
+            bg_color,
+            border_color,
+            font_color,
+            &mut commands,
+        );
+    }
+}
+
 fn set_text_input_styles(
     input_ent: Entity,
     disabled: bool,
+    focused: bool,
     bg_color: &ThemeBackgroundColor,
     border_color: &ThemeBorderColor,
     font_color: &ThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (bg_token, font_token, border_token) = match disabled {
-        true => (
+    let (bg_token, font_token, border_token) = match (disabled, focused) {
+        (true, _) => (
             tokens::TEXT_INPUT_BG_DISABLED,
             tokens::TEXT_INPUT_TEXT_DISABLED,
             tokens::TEXT_INPUT_BORDER_DISABLED,
         ),
-        false => (
+        (false, true) => (
+            tokens::TEXT_INPUT_BG,
+            tokens::TEXT_INPUT_TEXT_ACTIVE,
+            tokens::TEXT_INPUT_BORDER_ACTIVE,
+        ),
+        (false, false) => (
             tokens::TEXT_INPUT_BG,
             tokens::TEXT_INPUT_TEXT,
             tokens::TEXT_INPUT_BORDER,
@@ -237,6 +277,7 @@ impl Plugin for TextInputPlugin {
                 update_text_cursor_color,
                 update_text_input_styles,
                 update_text_input_styles_remove,
+                update_text_input_styles_focus,
             )
                 .in_set(PickingSystems::Last),
         );

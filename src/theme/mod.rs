@@ -384,7 +384,7 @@ pub enum ThemeSlot {
     /// - `LISTROW_TEXT`
     /// - `SUBPANE_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
-    /// - `TEXT_INPUT_TEXT`
+    /// - `TEXT_INPUT_TEXT_ACTIVE`
     /// - `TEXT_MAIN`
     Text0,
 
@@ -393,18 +393,19 @@ pub enum ThemeSlot {
     /// - `DIALOG_TEXT`
     /// - `RADIO_TEXT`
     /// - `TEXT_DIM`
+    /// - `TEXT_INPUT_TEXT`
     Text1,
 
     /// Disabled bright text.
     /// - `BUTTON_PRIMARY_TEXT_DISABLED`
     /// - `BUTTON_TEXT_DISABLED`
     /// - `LISTROW_TEXT_DISABLED`
-    /// - `TEXT_INPUT_TEXT_DISABLED`
     TextDisabled0,
 
     /// Disabled body text.
     /// - `CHECKBOX_TEXT_DISABLED`
     /// - `RADIO_TEXT_DISABLED`
+    /// - `TEXT_INPUT_TEXT_DISABLED`
     TextDisabled1,
 
     /// Base call-to-action and checked-state color.
@@ -415,6 +416,7 @@ pub enum ThemeSlot {
     /// - `SLIDER_BAR`
     /// - `SLIDER_THUMB`
     /// - `SWITCH_BG_CHECKED`
+    /// - `TEXT_INPUT_BORDER_ACTIVE`
     /// - `TEXT_INPUT_SELECTION`
     Accent0,
 
@@ -748,8 +750,9 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral1),
     (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral3),
-    (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
-    (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDisabled0),
+    (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text1),
+    (tokens::TEXT_INPUT_TEXT_ACTIVE, ThemeSlot::Text0),
+    (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),
     (tokens::TEXT_INPUT_SELECTION, ThemeSlot::Accent0),
     (
@@ -757,6 +760,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         ThemeSlot::Transparent,
     ),
     (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral4),
+    (tokens::TEXT_INPUT_BORDER_ACTIVE, ThemeSlot::Accent0),
     (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SUBPANE_HEADER_BG, ThemeSlot::Neutral2),
     (tokens::SUBPANE_HEADER_BORDER, ThemeSlot::Neutral4),
