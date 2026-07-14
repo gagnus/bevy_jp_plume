@@ -344,11 +344,9 @@ pub enum ThemeSlot {
     /// - `RADIO_BORDER_CHECKED_DISABLED`
     /// - `RADIO_BORDER_DISABLED`
     /// - `RADIO_MARK_DISABLED`
-    /// - `SCROLLBAR_BG`
-    /// - `SLIDER_BG`
     /// - `SLIDER_BG_DISABLED`
-    /// - `SLIDER_BG_HOVER`
-    /// - `SLIDER_BG_PRESSED`
+    /// - `SLIDER_BAR_DISABLED`
+    /// - `SLIDER_THUMB_DISABLED`
     /// - `SWITCH_BORDER_CHECKED_DISABLED`
     /// - `SWITCH_BORDER_DISABLED`
     /// - `SWITCH_SLIDE_BG_CHECKED_DISABLED`
@@ -363,12 +361,14 @@ pub enum ThemeSlot {
     /// - `DIALOG_BORDER`
     /// - `MENU_BORDER`
     /// - `RADIO_BORDER`
-    /// - `SLIDER_BAR_DISABLED`
-    /// - `SLIDER_THUMB_DISABLED`
     /// - `SUBPANE_BODY_BORDER`
     /// - `SUBPANE_HEADER_BORDER`
     /// - `SWITCH_BG`
     /// - `TEXT_INPUT_BORDER`
+    /// - `SCROLLBAR_BG`
+    /// - `SLIDER_BG`
+    /// - `SLIDER_BG_HOVER`
+    /// - `SLIDER_BG_PRESSED`
     Neutral4,
 
     /// Neutral control hover.
@@ -680,19 +680,19 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         tokens::BUTTON_PRIMARY_TEXT_DISABLED,
         ThemeSlot::TextDisabled0,
     ),
-    (tokens::SLIDER_BG, ThemeSlot::Neutral3),
-    (tokens::SLIDER_BG_HOVER, ThemeSlot::Neutral3),
-    (tokens::SLIDER_BG_PRESSED, ThemeSlot::Neutral3),
+    (tokens::SLIDER_BG, ThemeSlot::Neutral4),
+    (tokens::SLIDER_BG_HOVER, ThemeSlot::Neutral4),
+    (tokens::SLIDER_BG_PRESSED, ThemeSlot::Neutral4),
     (tokens::SLIDER_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::SLIDER_BAR, ThemeSlot::Accent0),
     (tokens::SLIDER_BAR_HOVER, ThemeSlot::Accent1),
     (tokens::SLIDER_BAR_PRESSED, ThemeSlot::Accent2),
-    (tokens::SLIDER_BAR_DISABLED, ThemeSlot::Neutral4),
+    (tokens::SLIDER_BAR_DISABLED, ThemeSlot::Neutral3),
     (tokens::SLIDER_THUMB, ThemeSlot::Accent0),
     (tokens::SLIDER_THUMB_HOVER, ThemeSlot::Accent1),
     (tokens::SLIDER_THUMB_PRESSED, ThemeSlot::Accent2),
-    (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral4),
-    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral3),
+    (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral3),
+    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral4),
     (tokens::SCROLLBAR_THUMB, ThemeSlot::Accent0),
     (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Accent1),
     (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Accent2),
