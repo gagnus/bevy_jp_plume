@@ -73,7 +73,7 @@ impl PlumeDialog {
             Dialog
             ThemeBackgroundColor(tokens::DIALOG_BG)
             ThemeBorderColor(tokens::DIALOG_BORDER)
-            InheritableThemeTextColor(tokens::DIALOG_TEXT)
+            InheritableThemeTextColor(tokens::TEXT_MAIN)
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
                 px(0),

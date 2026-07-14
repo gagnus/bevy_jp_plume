@@ -663,14 +663,14 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::CHECKBOX_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::CHECKBOX_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BORDER, ThemeSlot::Neutral4),
-    (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::CHECKBOX_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::CHECKBOX_BORDER_CHECKED, ThemeSlot::Accent0),
     (
         tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDisabled1
+    ),
     (tokens::CHECKBOX_MARK, ThemeSlot::Contrast),
-    (tokens::CHECKBOX_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::CHECKBOX_MARK_DISABLED, ThemeSlot::Neutral3),
     (tokens::CHECKBOX_TEXT, ThemeSlot::Text1),
     (tokens::CHECKBOX_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::RADIO_BG, ThemeSlot::Transparent),
@@ -678,11 +678,11 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::RADIO_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::RADIO_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::RADIO_BORDER, ThemeSlot::Neutral4),
-    (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::RADIO_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::RADIO_BORDER_CHECKED, ThemeSlot::Accent0),
-    (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::RADIO_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3),
     (tokens::RADIO_MARK, ThemeSlot::Contrast),
-    (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::RADIO_MARK_DISABLED, ThemeSlot::Neutral3),
     (tokens::RADIO_TEXT, ThemeSlot::Text1),
     (tokens::RADIO_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::SWITCH_BG, ThemeSlot::Neutral4),
@@ -690,27 +690,27 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SWITCH_BG_CHECKED, ThemeSlot::Accent0),
     (tokens::SWITCH_BG_CHECKED_DISABLED, ThemeSlot::Transparent),
     (tokens::SWITCH_BORDER, ThemeSlot::Neutral4),
-    (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Accent0),
-    (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BG, ThemeSlot::Text0),
-    (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BG_CHECKED, ThemeSlot::Contrast),
     (
         tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDisabled1
+    ),
     (tokens::SWITCH_SLIDE_BORDER, ThemeSlot::Text0),
-    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3), // was TextDisabled1
+    (tokens::SWITCH_SLIDE_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BORDER_CHECKED, ThemeSlot::Contrast),
     (
         tokens::SWITCH_SLIDE_BORDER_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
-    ), // was TextDisabled1
+    ),
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
-    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
-    (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral0),
+    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral1),
+    (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text0),
     (tokens::TEXT_INPUT_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::TEXT_INPUT_CURSOR, ThemeSlot::Accent3),

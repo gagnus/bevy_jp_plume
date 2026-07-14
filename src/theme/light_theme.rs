@@ -29,6 +29,6 @@ pub fn default_light_palette() -> EditablePalette {
         },
         contrast: Oklcha::new(1.0, 0.0, 0.0, 1.0),
         axes: default_axis_colors(),
-        dim_text_alpha_modifier: 0.4,
+        disabled_text_alpha_modifier: 0.4,
     }
 }

@@ -9,11 +9,12 @@ use bevy_jp_plume::{
     constants::{font_awesome, icons},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
-        OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio, PlumeRadioGroup,
-        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
+        ButtonVariant, OptionIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeRadio,
+        PlumeRadioGroup, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
+        list_rows_from_strings,
     },
     dark_theme::create_dark_theme,
-    display::{caption, fa_icon_solid, icon, label, label_dim},
+    display::{caption, fa_icon_solid, icon, label_bright, label_dim},
     theme::{ThemeBackgroundColor, ThemeToken, ThemedText, UiTheme},
     tokens,
 };
@@ -124,7 +125,7 @@ fn controls_column() -> impl Scene {
             width: px(260),
         }
         Children [
-            label("Plume smoke test"),
+            label_bright("Plume smoke test"),
             label_dim("Bare controls, minimal wiring"),
             controls_row(None, false),
             controls_row(None, true),
@@ -167,7 +168,7 @@ fn controls_column() -> impl Scene {
                 ]
             ),
             row() Children [
-                label("Swatch"),
+                label_bright("Swatch"),
                 flex_spacer(),
                 @PlumeColorSwatch,
                 icon(icons::CHEVRON_DOWN),
@@ -201,6 +202,20 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
                     @caption: bsn_list! { fa_icon_solid(font_awesome::FA_BUILDING_CIRCLE_ARROW_RIGHT), Node { width: px(10), }, caption("Button") }
                 }
                 on(|_: On<Activate>| info!("button clicked"))
+                maybe_disabled(disabled)
+            ),
+            (
+                @PlumeButton {
+                    @caption: bsn! { caption("Primary") },
+                    @variant: ButtonVariant::Primary,
+                }
+                maybe_disabled(disabled)
+            ),
+            (
+                @PlumeButton {
+                    @caption: bsn! { caption("Primary") },
+                    @variant: ButtonVariant::Plain,
+                }
                 maybe_disabled(disabled)
             ),
             @PlumeCheckbox {

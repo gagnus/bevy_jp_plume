@@ -45,7 +45,7 @@ pub fn fa_icon_regular(icon_text: &'static str) -> impl Scene {
 }
 
 /// A text label.
-pub fn label(text: impl Into<String>) -> impl Scene {
+pub fn label_bright(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         TextFont {

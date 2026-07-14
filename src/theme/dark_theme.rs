@@ -30,6 +30,6 @@ pub fn default_dark_palette() -> EditablePalette {
         },
         contrast: Oklcha::new(1.0, 0.0, 0.0, 1.0),
         axes: default_axis_colors(),
-        dim_text_alpha_modifier: 0.2,
+        disabled_text_alpha_modifier: 0.2,
     }
 }
