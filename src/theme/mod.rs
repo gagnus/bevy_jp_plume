@@ -78,27 +78,32 @@ impl InteractionTokens {
     }
 }
 
-/// A collection of properties that make up a theme.
-#[derive(Default, Clone, Reflect, Debug)]
-#[reflect(Default, Debug)]
-pub struct ThemeProps {
-    /// Map of design tokens to colors.
-    pub color: HashMap<ThemeToken, Color>,
-    // Other style property types to be added later.
+/// The currently selected user interface theme. Overwriting this resource changes the theme.
+#[derive(Resource, Reflect, Debug)]
+#[reflect(Resource, Default, Debug)]
+pub struct UiTheme {
+    /// Which palette slot each design token draws from.
+    pub tokens: HashMap<ThemeToken, ThemeSlot>,
+    /// The resolved color of every slot.
+    pub palette: ThemeResolvedPalette,
 }
 
-/// The currently selected user interface theme. Overwriting this resource changes the theme.
-#[derive(Resource, Default, Reflect, Debug)]
-#[reflect(Resource, Default, Debug)]
-pub struct UiTheme(pub ThemeProps);
+impl Default for UiTheme {
+    fn default() -> Self {
+        Self {
+            tokens: DEFAULT_TOKEN_SLOTS.iter().cloned().collect(),
+            palette: dark_theme::default_dark_palette().resolve(),
+        }
+    }
+}
 
 impl UiTheme {
     /// Lookup a color by design token. If the theme does not have an entry for that token,
     /// logs a warning and returns an error color.
     pub fn color(&self, token: &ThemeToken) -> Color {
-        let color = self.0.color.get(token);
+        let color = self.tokens.get(token).map(|slot| self.palette[*slot]);
         match color {
-            Some(c) => *c,
+            Some(c) => c,
             None => {
                 warn_once!("Theme color {} not found.", token);
                 // Return a bright obnoxious color to make the error obvious.
@@ -107,11 +112,15 @@ impl UiTheme {
         }
     }
 
-    /// Associate a design token with a given color.
-    pub fn set_color(&mut self, token: &str, color: Color) {
-        self.0
-            .color
-            .insert(ThemeToken::new(SmolStr::new(token)), color);
+    /// Associate a design token with a given palette slot.
+    pub fn set_token(&mut self, token: &str, slot: ThemeSlot) {
+        self.tokens
+            .insert(ThemeToken::new(SmolStr::new(token)), slot);
+    }
+
+    /// Re-resolve every slot color from an editable palette.
+    pub fn set_palette(&mut self, palette: &ThemeEditablePalette) {
+        self.palette = palette.resolve();
     }
 }
 
@@ -271,7 +280,7 @@ fn on_changed_border(
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor), Changed<ThemeBorderColor>>,
     theme: Res<UiTheme>,
 ) {
-    // Update background colors where the design token has changed.
+    // Update border colors where the design token has changed.
     if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
         border.set_all(theme.color(&theme_border.0));
     }
@@ -282,7 +291,7 @@ fn on_changed_text_color(
     mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
     theme: Res<UiTheme>,
 ) {
-    // Update background colors where the design token has changed.
+    // Update text colors where the design token has changed.
     if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
         text_color.0 = theme.color(&theme_text_color.0);
     }
@@ -304,18 +313,11 @@ fn on_changed_font_color(
     }
 }
 
-// [`EditablePalette`] is the *parametric* form an editor manipulates
-// [`EditablePalette::resolve`] bakes it into a [`ResolvedPalette`] — one [`Color`]
-// per [`ThemeSlot`]. [`build_theme`] then maps each theme token to a slot using
-// a mapping which can be got from [`default_token_slots`] and looks up its color
-
 /// A single semantic color role, these are all the colors that make up
 /// a theme.
-#[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Reflect)]
 pub enum ThemeSlot {
-    /// Deepest background: the window and surfaces flush with it.
-    /// - `TEXT_INPUT_BG`
-    /// - `TEXT_INPUT_BG_DISABLED`
+    /// Deepest background: the window.
     /// - `WINDOW_BG`
     #[default]
     Neutral0,
@@ -324,6 +326,7 @@ pub enum ThemeSlot {
     /// - `DIALOG_BG`
     /// - `MENU_BG`
     /// - `SUBPANE_BODY_BG`
+    /// - `TEXT_INPUT_BG`
     Neutral1,
 
     /// Raised container chrome: headers and the group box.
@@ -350,6 +353,7 @@ pub enum ThemeSlot {
     /// - `SWITCH_BORDER_DISABLED`
     /// - `SWITCH_SLIDE_BG_CHECKED_DISABLED`
     /// - `SWITCH_SLIDE_BG_DISABLED`
+    /// - `TEXT_INPUT_BG_DISABLED`
     /// - `TEXT_INPUT_BORDER_DISABLED`
     Neutral3,
 
@@ -478,7 +482,7 @@ pub enum ThemeSlot {
 }
 
 impl ThemeSlot {
-    /// Every slot, in discriminant order (matches [`ResolvedPalette`] storage).
+    /// Every slot, in discriminant order (matches [`ThemeResolvedPalette`] storage).
     pub const ALL: [ThemeSlot; 21] = [
         ThemeSlot::Neutral0,
         ThemeSlot::Neutral1,
@@ -503,7 +507,7 @@ impl ThemeSlot {
         ThemeSlot::Transparent,
     ];
 
-    /// Number of slots — the backing size of [`ResolvedPalette`].
+    /// Number of slots — the backing size of [`ThemeResolvedPalette`].
     pub const COUNT: usize = Self::ALL.len();
 
     /// Human-readable name, for editor UI / pickers.
@@ -534,12 +538,11 @@ impl ThemeSlot {
     }
 }
 
-/// Fully-resolved colors: one [`Color`] per [`ThemeSlot`], built by
-/// [`EditablePalette::resolve`] and read by [`build_theme`]. Indexed by slot.
-#[derive(Clone, Debug)]
-pub struct ResolvedPalette([Color; ThemeSlot::COUNT]);
+/// Fully-resolved colors: one [`Color`] per [`ThemeSlot`], built by [`ThemeEditablePalette::resolve`].
+#[derive(Clone, Debug, Default, Reflect)]
+pub struct ThemeResolvedPalette([Color; ThemeSlot::COUNT]);
 
-impl core::ops::Index<ThemeSlot> for ResolvedPalette {
+impl core::ops::Index<ThemeSlot> for ThemeResolvedPalette {
     type Output = Color;
     fn index(&self, slot: ThemeSlot) -> &Color {
         &self.0[slot as usize]
@@ -566,21 +569,21 @@ impl<const N: usize> OklchaArray<N> {
     }
 }
 
-/// The theme's parametric palette
-/// Call [`Self::resolve`] to bake it into a [`ResolvedPalette`].
+/// The theme's parametric palette.
+/// Call [`Self::resolve`] to bake it into a [`ThemeResolvedPalette`].
 #[derive(Clone, Debug)]
-pub struct EditablePalette {
-    /// Lightness of each neutral ramp stop; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
+pub struct ThemeEditablePalette {
+    /// Neutral ramp; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
     pub neutrals: OklchaArray<7>,
 
-    /// Lightness of each accent stop; forms [`ThemeSlot::Accent0`]..=[`ThemeSlot::Accent3`]
+    /// Accent ramp; forms [`ThemeSlot::Accent0`]..=[`ThemeSlot::Accent3`]
     /// (and [`ThemeSlot::FocusRing`], derived from `accent[0]`).
     pub accent: OklchaArray<4>,
 
     /// Foreground on accent-filled components (white in most themes); forms [`ThemeSlot::Contrast`].
     pub contrast: Oklcha,
 
-    /// Lightness of each text stop; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`]
+    /// Text ramp; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`]
     /// (and [`ThemeSlot::TextDisabled0`]..=[`ThemeSlot::TextDisabled1`], derived).
     pub text: OklchaArray<2>,
 
@@ -591,12 +594,12 @@ pub struct EditablePalette {
     pub axes: [Oklcha; 3],
 }
 
-impl EditablePalette {
+impl ThemeEditablePalette {
     /// Bake the parametric palette into one resolved color per [`ThemeSlot`].
     ///
     /// The `copy_from_slice` blocks below rely on each ramp's variants being
     /// contiguous and in order within [`ThemeSlot`] (Neutral0..=Neutral6, etc.).
-    pub fn resolve(&self) -> ResolvedPalette {
+    pub fn resolve(&self) -> ThemeResolvedPalette {
         let neutral = self.neutrals.to_array();
         let accent = self.accent.to_array();
         let text = self.text.to_array();
@@ -613,7 +616,7 @@ impl EditablePalette {
         c[ThemeSlot::FocusRing as usize] = accent[0].with_alpha(0.5);
         c[ThemeSlot::XAxis as usize..=ThemeSlot::ZAxis as usize].copy_from_slice(&axes);
         // ThemeSlot::Transparent stays Color::NONE.
-        ResolvedPalette(c)
+        ThemeResolvedPalette(c)
     }
 
     pub fn neutral(&self, index: usize) -> Color {
@@ -625,6 +628,7 @@ impl EditablePalette {
     pub fn text(&self, index: usize) -> Color {
         self.text.to_color(index)
     }
+    /// Text stop `index` with the disabled-alpha modifier applied.
     pub fn text_dim(&self, index: usize) -> Color {
         self.text(index)
             .with_alpha(self.disabled_text_alpha_modifier)
@@ -633,6 +637,7 @@ impl EditablePalette {
         self.axes[index].into()
     }
 
+    /// Color for `token` via the *default* token→slot mapping (ignores any [`UiTheme`] remaps).
     pub fn token(&self, token: &ThemeToken) -> Color {
         let resolved = self.resolve();
         let lookup: HashMap<ThemeToken, ThemeSlot> = DEFAULT_TOKEN_SLOTS.iter().cloned().collect();
@@ -640,19 +645,6 @@ impl EditablePalette {
             .get(token)
             .map(|slot| resolved[*slot])
             .unwrap_or(Color::NONE)
-    }
-}
-
-/// Build Plume theme properties by resolving every token's [`ThemeSlot`] against `p`.
-pub fn build_theme(
-    palette: &ResolvedPalette,
-    token_slots: &[(ThemeToken, ThemeSlot)],
-) -> ThemeProps {
-    ThemeProps {
-        color: token_slots
-            .iter()
-            .map(|(token, slot)| (token.clone(), palette[*slot]))
-            .collect(),
     }
 }
 
@@ -778,11 +770,6 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::DIALOG_TEXT, ThemeSlot::Text1),
     (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
 ];
-
-/// Default mapping from each token to a [`ThemeSlot`]
-pub fn default_token_slots() -> &'static [(ThemeToken, ThemeSlot)] {
-    DEFAULT_TOKEN_SLOTS
-}
 
 pub mod dark_theme;
 pub mod light_theme;

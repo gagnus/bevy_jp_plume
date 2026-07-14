@@ -1,17 +1,10 @@
 //! The standard Plume dark theme.
-use crate::theme::{
-    EditablePalette, OklchaArray, ThemeProps, build_theme, default_axis_colors, default_token_slots,
-};
+use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 use bevy_color::Oklcha;
 
-/// Default plume dark palette
-pub fn create_dark_theme() -> ThemeProps {
-    build_theme(&default_dark_palette().resolve(), default_token_slots())
-}
-
 /// Default plume dark palette editable inputs
-pub fn default_dark_palette() -> EditablePalette {
-    EditablePalette {
+pub fn default_dark_palette() -> ThemeEditablePalette {
+    ThemeEditablePalette {
         neutrals: OklchaArray {
             hue: 251.0,
             chroma: 0.025,

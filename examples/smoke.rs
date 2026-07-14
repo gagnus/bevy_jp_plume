@@ -16,10 +16,7 @@ use bevy_jp_plume::{
     },
     dark_theme::default_dark_palette,
     display::{caption, fa_icon_solid, icon, label_bright, label_dim},
-    theme::{
-        EditablePalette, ThemeBackgroundColor, ThemeToken, UiTheme, build_theme,
-        default_token_slots,
-    },
+    theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme},
     tokens,
 };
 use bevy_ui::InteractionDisabled;
@@ -291,7 +288,7 @@ fn maybe_disabled(disabled: bool) -> impl Scene {
 /// Holds the parametric palette the dialog edits. Mutated by the slider observers;
 /// [`rebuild_theme_on_edit`] bakes it into the live [`UiTheme`] whenever it changes.
 #[derive(Resource)]
-struct PaletteEditor(EditablePalette);
+struct PaletteEditor(ThemeEditablePalette);
 
 impl Default for PaletteEditor {
     fn default() -> Self {
@@ -318,7 +315,7 @@ enum PaletteParam {
 }
 
 impl Ramp {
-    fn array<'a>(self, p: &'a EditablePalette) -> RampView<'a> {
+    fn array<'a>(self, p: &'a ThemeEditablePalette) -> RampView<'a> {
         match self {
             Ramp::Neutral => RampView {
                 hue: &p.neutrals.hue,
@@ -390,7 +387,7 @@ impl PaletteParam {
         }
     }
 
-    fn get(self, p: &EditablePalette) -> f32 {
+    fn get(self, p: &ThemeEditablePalette) -> f32 {
         match self {
             PaletteParam::Hue(ramp) => *ramp.array(p).hue,
             PaletteParam::Chroma(ramp) => *ramp.array(p).chroma,
@@ -399,7 +396,7 @@ impl PaletteParam {
         }
     }
 
-    fn set(self, p: &mut EditablePalette, v: f32) {
+    fn set(self, p: &mut ThemeEditablePalette, v: f32) {
         match self {
             PaletteParam::Hue(Ramp::Neutral) => p.neutrals.hue = v,
             PaletteParam::Hue(Ramp::Accent) => p.accent.hue = v,
@@ -426,7 +423,7 @@ fn ramp_params(ramp: Ramp) -> Vec<PaletteParam> {
 /// startup too, harmlessly re-deriving the dark theme already installed).
 fn rebuild_theme_on_edit(editor: Res<PaletteEditor>, mut theme: ResMut<UiTheme>) {
     if editor.is_changed() {
-        *theme = UiTheme(build_theme(&editor.0.resolve(), default_token_slots()));
+        theme.set_palette(&editor.0);
     }
 }
 
@@ -487,7 +484,11 @@ fn dialog() -> impl Scene {
 }
 
 /// A titled [`PlumeSubPane`] holding a labelled slider per `param`.
-fn param_group(title: &str, params: Vec<PaletteParam>, palette: &EditablePalette) -> impl Scene {
+fn param_group(
+    title: &str,
+    params: Vec<PaletteParam>,
+    palette: &ThemeEditablePalette,
+) -> impl Scene {
     let mut rows: Vec<Box<dyn SceneList>> = vec![];
     rows.extend(params.into_iter().map(|param| param_row(param, palette)));
     let contents: Box<dyn SceneList> = Box::new(rows);
@@ -501,7 +502,7 @@ fn param_group(title: &str, params: Vec<PaletteParam>, palette: &EditablePalette
 
 /// A labelled slider + number input, both bound to one [`PaletteParam`]. Edits land in
 /// [`PaletteEditor`] via [`apply_param_edits`]; changes flow back in [`sync_controls_from_editor`].
-fn param_row(param: PaletteParam, palette: &EditablePalette) -> Box<dyn SceneList> {
+fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn SceneList> {
     let (min, max) = param.range();
     let value = param.get(palette);
     bsn! {

@@ -1,8 +1,8 @@
 //! Design tokens used by Plume themes.
 //!
 //! The term "design token" is commonly used in UX design to mean the smallest unit of a theme,
-//! similar in concept to a CSS variable. Each token represents an assignment of a color or
-//! value to a specific visual aspect of a widget, such as background or border.
+//! similar in concept to a CSS variable. Each token names one visual aspect of a widget
+//! (background, border, ...) and maps to a [`ThemeSlot`](crate::theme::ThemeSlot) for its color.
 
 use crate::theme::ThemeToken;
 
@@ -275,7 +275,8 @@ pub const DIALOG_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.text");
 /// Dialog header text
 pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.header.text");
 
-/// Interaction-state groups over the constants above, for [`InteractionTokens::pick`].
+/// Interaction-state groups over the constants above, for
+/// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick).
 pub mod sets {
     use crate::theme::InteractionTokens;
 

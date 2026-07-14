@@ -1,17 +1,10 @@
-//! The standard Plume light theme. NOT APPROVED YET
-use crate::theme::{
-    EditablePalette, OklchaArray, ThemeProps, build_theme, default_axis_colors, default_token_slots,
-};
+//! The standard Plume light theme.
+use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 use bevy_color::Oklcha;
 
-/// Default plume light palette
-pub fn create_light_theme() -> ThemeProps {
-    build_theme(&default_light_palette().resolve(), default_token_slots())
-}
-
 /// Default plume light palette editable inputs
-pub fn default_light_palette() -> EditablePalette {
-    EditablePalette {
+pub fn default_light_palette() -> ThemeEditablePalette {
+    ThemeEditablePalette {
         neutrals: OklchaArray {
             hue: 266.0,
             chroma: 0.02,
