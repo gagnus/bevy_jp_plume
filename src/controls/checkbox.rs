@@ -283,18 +283,8 @@ fn set_checkbox_styles(
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (outline_token, bg_token) = match (checked, disabled) {
-        (true, true) => (
-            tokens::CHECKBOX_BORDER_CHECKED_DISABLED,
-            tokens::CHECKBOX_BG_CHECKED_DISABLED,
-        ),
-        (true, false) => (tokens::CHECKBOX_BORDER_CHECKED, tokens::CHECKBOX_BG_CHECKED),
-        (false, true) => (
-            tokens::CHECKBOX_BORDER_DISABLED,
-            tokens::CHECKBOX_BG_DISABLED,
-        ),
-        (false, false) => (tokens::CHECKBOX_BORDER, tokens::CHECKBOX_BG),
-    };
+    let outline_token = tokens::sets::CHECKBOX_BORDER.pick(checked, disabled);
+    let bg_token = tokens::sets::CHECKBOX_BG.pick(checked, disabled);
 
     let mark_token = match disabled {
         true => tokens::CHECKBOX_MARK_DISABLED,

@@ -226,28 +226,9 @@ fn set_switch_styles(
     slide_bg: &ThemeBackgroundGradient,
     commands: &mut Commands,
 ) {
-    let (outline_border_token, pill_bg_token, slide_bg_token) = match (checked, disabled) {
-        (true, true) => (
-            tokens::SWITCH_BORDER_CHECKED_DISABLED,
-            tokens::SWITCH_BG_CHECKED_DISABLED,
-            tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
-        ),
-        (true, false) => (
-            tokens::SWITCH_BORDER_CHECKED,
-            tokens::SWITCH_BG_CHECKED,
-            tokens::SWITCH_SLIDE_BG_CHECKED,
-        ),
-        (false, true) => (
-            tokens::SWITCH_BORDER_DISABLED,
-            tokens::SWITCH_BG_DISABLED,
-            tokens::SWITCH_SLIDE_BG_DISABLED,
-        ),
-        (false, false) => (
-            tokens::SWITCH_BORDER,
-            tokens::SWITCH_BG,
-            tokens::SWITCH_SLIDE_BG,
-        ),
-    };
+    let outline_border_token = tokens::sets::SWITCH_BORDER.pick(checked, disabled);
+    let pill_bg_token = tokens::sets::SWITCH_BG.pick(checked, disabled);
+    let slide_bg_token = tokens::sets::SWITCH_SLIDE_BG.pick(checked, disabled);
 
     let (slide_left, slide_right) = match checked {
         true => (Val::Auto, px(2)),

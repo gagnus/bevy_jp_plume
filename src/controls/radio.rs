@@ -331,15 +331,8 @@ fn set_radio_styles(
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
-    let (outline_border_token, bg_token) = match (checked, disabled) {
-        (true, true) => (
-            tokens::RADIO_BORDER_CHECKED_DISABLED,
-            tokens::RADIO_BG_CHECKED_DISABLED,
-        ),
-        (true, false) => (tokens::RADIO_BORDER_CHECKED, tokens::RADIO_BG_CHECKED),
-        (false, true) => (tokens::RADIO_BORDER_DISABLED, tokens::RADIO_BG_DISABLED),
-        (false, false) => (tokens::RADIO_BORDER, tokens::RADIO_BG),
-    };
+    let outline_border_token = tokens::sets::RADIO_BORDER.pick(checked, disabled);
+    let bg_token = tokens::sets::RADIO_BG.pick(checked, disabled);
 
     let mark_token = match disabled {
         true => tokens::RADIO_MARK_DISABLED,

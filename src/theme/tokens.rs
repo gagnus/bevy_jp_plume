@@ -275,10 +275,11 @@ pub const DIALOG_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.text");
 /// Dialog header text
 pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.header.text");
 
-/// Interaction-state groups over the constants above, for
-/// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick).
+/// State groups over the constants above, for
+/// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick) and
+/// [`CheckedTokens::pick`](crate::theme::CheckedTokens::pick).
 pub mod sets {
-    use crate::theme::InteractionTokens;
+    use crate::theme::{CheckedTokens, InteractionTokens};
 
     /// Regular button background
     pub const BUTTON_BG: InteractionTokens = InteractionTokens {
@@ -321,5 +322,62 @@ pub mod sets {
         hover: super::SLIDER_THUMB_HOVER,
         pressed: super::SLIDER_THUMB_PRESSED,
         disabled: super::SLIDER_THUMB_DISABLED,
+    };
+    /// Scrollbar thumb (never disabled; `disabled` falls back to `base`).
+    pub const SCROLLBAR_THUMB: InteractionTokens = InteractionTokens {
+        base: super::SCROLLBAR_THUMB,
+        hover: super::SCROLLBAR_THUMB_HOVER,
+        pressed: super::SCROLLBAR_THUMB_PRESSED,
+        disabled: super::SCROLLBAR_THUMB,
+    };
+
+    /// Checkbox background fill
+    pub const CHECKBOX_BG: CheckedTokens = CheckedTokens {
+        base: super::CHECKBOX_BG,
+        checked: super::CHECKBOX_BG_CHECKED,
+        disabled: super::CHECKBOX_BG_DISABLED,
+        checked_disabled: super::CHECKBOX_BG_CHECKED_DISABLED,
+    };
+    /// Checkbox border
+    pub const CHECKBOX_BORDER: CheckedTokens = CheckedTokens {
+        base: super::CHECKBOX_BORDER,
+        checked: super::CHECKBOX_BORDER_CHECKED,
+        disabled: super::CHECKBOX_BORDER_DISABLED,
+        checked_disabled: super::CHECKBOX_BORDER_CHECKED_DISABLED,
+    };
+    /// Radio disc background
+    pub const RADIO_BG: CheckedTokens = CheckedTokens {
+        base: super::RADIO_BG,
+        checked: super::RADIO_BG_CHECKED,
+        disabled: super::RADIO_BG_DISABLED,
+        checked_disabled: super::RADIO_BG_CHECKED_DISABLED,
+    };
+    /// Radio border ring
+    pub const RADIO_BORDER: CheckedTokens = CheckedTokens {
+        base: super::RADIO_BORDER,
+        checked: super::RADIO_BORDER_CHECKED,
+        disabled: super::RADIO_BORDER_DISABLED,
+        checked_disabled: super::RADIO_BORDER_CHECKED_DISABLED,
+    };
+    /// Toggle switch pill background
+    pub const SWITCH_BG: CheckedTokens = CheckedTokens {
+        base: super::SWITCH_BG,
+        checked: super::SWITCH_BG_CHECKED,
+        disabled: super::SWITCH_BG_DISABLED,
+        checked_disabled: super::SWITCH_BG_CHECKED_DISABLED,
+    };
+    /// Toggle switch border ring
+    pub const SWITCH_BORDER: CheckedTokens = CheckedTokens {
+        base: super::SWITCH_BORDER,
+        checked: super::SWITCH_BORDER_CHECKED,
+        disabled: super::SWITCH_BORDER_DISABLED,
+        checked_disabled: super::SWITCH_BORDER_CHECKED_DISABLED,
+    };
+    /// Toggle switch knob background
+    pub const SWITCH_SLIDE_BG: CheckedTokens = CheckedTokens {
+        base: super::SWITCH_SLIDE_BG,
+        checked: super::SWITCH_SLIDE_BG_CHECKED,
+        disabled: super::SWITCH_SLIDE_BG_DISABLED,
+        checked_disabled: super::SWITCH_SLIDE_BG_CHECKED_DISABLED,
     };
 }

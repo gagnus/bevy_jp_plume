@@ -78,6 +78,31 @@ impl InteractionTokens {
     }
 }
 
+/// Four tokens keyed by `(checked, disabled)`; see [`CheckedTokens::pick`].
+#[derive(Clone, Reflect)]
+pub struct CheckedTokens {
+    /// Unchecked, enabled.
+    pub base: ThemeToken,
+    /// Checked, enabled.
+    pub checked: ThemeToken,
+    /// Unchecked, disabled.
+    pub disabled: ThemeToken,
+    /// Checked and disabled.
+    pub checked_disabled: ThemeToken,
+}
+
+impl CheckedTokens {
+    /// Token for the given `(checked, disabled)` state.
+    pub fn pick(&self, checked: bool, disabled: bool) -> ThemeToken {
+        match (checked, disabled) {
+            (true, true) => self.checked_disabled.clone(),
+            (true, false) => self.checked.clone(),
+            (false, true) => self.disabled.clone(),
+            (false, false) => self.base.clone(),
+        }
+    }
+}
+
 /// The currently selected user interface theme. Overwriting this resource changes the theme.
 #[derive(Resource, Reflect, Debug)]
 #[reflect(Resource, Default, Debug)]
