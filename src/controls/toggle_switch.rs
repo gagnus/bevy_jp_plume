@@ -281,9 +281,10 @@ fn set_switch_styles(
 
     // Change slide background gradient
     if slide_bg.0 != slide_bg_token || slide_bg.1 != slide_gradient_amount {
-        commands
-            .entity(slide_ent)
-            .insert(ThemeBackgroundGradient(slide_bg_token, slide_gradient_amount));
+        commands.entity(slide_ent).insert(ThemeBackgroundGradient(
+            slide_bg_token,
+            slide_gradient_amount,
+        ));
     }
 
     // Change slide position
