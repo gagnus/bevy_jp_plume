@@ -89,11 +89,6 @@ impl Default for PlumeSubpaneProps {
 impl PlumeSubpane {
     /// Scene function for a sub-pane.
     pub fn scene(props: PlumeSubpaneProps) -> impl Scene {
-        let chevron: Box<dyn SceneList> = if props.collapsible {
-            Box::new(bsn_list![(icon(icons::CHEVRON_DOWN) SubpaneChevron)])
-        } else {
-            Box::new(bsn_list!())
-        };
         bsn! {
             Node {
                 display: Display::Flex,
@@ -129,7 +124,7 @@ impl PlumeSubpane {
                     }
                     on(toggle_subpane_collapse)
                     Children [
-                        {chevron},
+                        {props.collapsible.then(|| bsn! { (icon(icons::CHEVRON_DOWN) SubpaneChevron) })},
                         {props.header}
                     ]
                 ),
