@@ -66,8 +66,6 @@ impl Plugin for PlumeCorePlugin {
             bevy_window::SystemCursorIcon::Default,
         )));
 
-        app.init_resource::<UiTheme>();
-
         app.add_observer(font_styles::on_changed_font)
             // Click-to-focus resolver for `TabIndex` targets. Deliberately not
             // `TabNavigationPlugin`, which would also install Tab-key navigation.

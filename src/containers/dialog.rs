@@ -79,7 +79,7 @@ impl PlumeDialog {
                 px(0),
                 px(8),
                 px(4),
-                px(32),
+                px(16),
             )
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {
