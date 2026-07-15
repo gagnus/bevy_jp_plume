@@ -386,8 +386,6 @@ pub enum ThemeSlot {
     /// - `DIALOG_BORDER`
     /// - `MENU_BORDER`
     /// - `RADIO_BORDER`
-    /// - `SUBPANE_BODY_BORDER`
-    /// - `SUBPANE_HEADER_BORDER`
     /// - `SWITCH_BG`
     /// - `TEXT_INPUT_BORDER`
     /// - `SCROLLBAR_BG`
@@ -713,14 +711,18 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SLIDER_BAR_HOVER, ThemeSlot::Accent1),
     (tokens::SLIDER_BAR_PRESSED, ThemeSlot::Accent2),
     (tokens::SLIDER_BAR_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SLIDER_THUMB, ThemeSlot::Accent0),
-    (tokens::SLIDER_THUMB_HOVER, ThemeSlot::Accent1),
-    (tokens::SLIDER_THUMB_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_THUMB, ThemeSlot::Contrast),
+    (tokens::SLIDER_THUMB_HOVER, ThemeSlot::Contrast),
+    (tokens::SLIDER_THUMB_PRESSED, ThemeSlot::Contrast),
     (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral4),
-    (tokens::SCROLLBAR_THUMB, ThemeSlot::Accent0),
-    (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Accent1),
-    (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_THUMB_BORDER, ThemeSlot::Accent0),
+    (tokens::SLIDER_THUMB_BORDER_HOVER, ThemeSlot::Accent1),
+    (tokens::SLIDER_THUMB_BORDER_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_THUMB_BORDER_DISABLED, ThemeSlot::Transparent),
+    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral3),
+    (tokens::SCROLLBAR_THUMB, ThemeSlot::Neutral4),
+    (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Neutral5),
+    (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Neutral6),
     (tokens::CHECKBOX_BG, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BG_CHECKED, ThemeSlot::Accent0),
@@ -776,14 +778,12 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         tokens::TEXT_INPUT_SELECTION_UNFOCUSED,
         ThemeSlot::Transparent,
     ),
-    (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral4),
+    (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_BORDER_ACTIVE, ThemeSlot::Accent0),
     (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SUBPANE_HEADER_BG, ThemeSlot::Neutral2),
-    (tokens::SUBPANE_HEADER_BORDER, ThemeSlot::Neutral4),
     (tokens::SUBPANE_HEADER_TEXT, ThemeSlot::Text0),
     (tokens::SUBPANE_BODY_BG, ThemeSlot::Neutral1),
-    (tokens::SUBPANE_BODY_BORDER, ThemeSlot::Neutral4),
     (tokens::GROUP_BG, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),
     (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),
@@ -791,7 +791,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::DIALOG_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_BORDER, ThemeSlot::Neutral4),
-    (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral2),
+    (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_TEXT, ThemeSlot::Text1),
     (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
 ];

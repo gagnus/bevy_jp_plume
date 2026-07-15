@@ -10,7 +10,7 @@ use bevy_app::{
 };
 use bevy_asset::embedded_asset;
 use bevy_ecs::{query::With, schedule::IntoScheduleConfigs};
-use bevy_text::{TextColor, TextFont};
+use bevy_text::TextFont;
 use bevy_ui::UiSystems;
 use bevy_ui_render::UiMaterialPlugin;
 
@@ -37,15 +37,11 @@ pub struct PlumeCorePlugin;
 impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy_app::App) {
         // Embedded font
-        embedded_asset!(app, "assets/fonts/Inter-Bold.ttf");
-        embedded_asset!(app, "assets/fonts/Inter-Regular.ttf");
+        embedded_asset!(app, "assets/fonts/NotoSans-Bold.ttf");
+        embedded_asset!(app, "assets/fonts/NotoSans-Regular.ttf");
+        embedded_asset!(app, "assets/fonts/NotoSansMono-Regular.ttf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Solid.otf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Regular.otf");
-
-        // Embedded icons
-        embedded_asset!(app, "assets/icons/chevron-down.png");
-        embedded_asset!(app, "assets/icons/chevron-right.png");
-        embedded_asset!(app, "assets/icons/x.png");
 
         // Embedded shader
         embedded_asset!(app, "assets/shaders/alpha_pattern.wgsl");
@@ -72,14 +68,10 @@ impl Plugin for PlumeCorePlugin {
 
         app.init_resource::<UiTheme>();
 
-        app.add_systems(
-            PostUpdate,
-            display::update_themed_icons.after(PropagateSet::<TextColor>::default()),
-        )
-        .add_observer(font_styles::on_changed_font)
-        // Click-to-focus resolver for `TabIndex` targets. Deliberately not
-        // `TabNavigationPlugin`, which would also install Tab-key navigation.
-        .add_observer(bevy_input_focus::tab_navigation::acquire_focus_tab_index);
+        app.add_observer(font_styles::on_changed_font)
+            // Click-to-focus resolver for `TabIndex` targets. Deliberately not
+            // `TabNavigationPlugin`, which would also install Tab-key navigation.
+            .add_observer(bevy_input_focus::tab_navigation::acquire_focus_tab_index);
 
         app.init_resource::<AlphaPatternResource>();
     }

@@ -1,6 +1,5 @@
 //! Collapsible sub-pane container with a header bar.
 use bevy_app::{Plugin, PreUpdate};
-use bevy_asset::AssetServer;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -11,7 +10,7 @@ use bevy_ecs::{
     query::{Added, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
 use bevy_picking::{
     PickingSystems,
@@ -21,15 +20,15 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::ImageNode,
+    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text,
 };
 
 use crate::{
-    constants::{fonts, icons, size},
-    display::icon,
+    constants::{font_awesome, fonts, size},
+    display::fa_icon_solid,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
 };
 
@@ -103,19 +102,13 @@ impl PlumeSubpane {
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Start,
-                        border: UiRect {
-                            left: size::CONTAINER_BORDER,
-                            top: size::CONTAINER_BORDER,
-                            right: size::CONTAINER_BORDER,
-                        },
                         padding: UiRect::horizontal(size::HEADER_PAD_X),
                         min_height: size::HEADER_HEIGHT,
                         column_gap: size::GAP_TIGHT,
-                        border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
+                        border_radius: px(size::CORNER_RADIUS),
                     }
                     SubpaneHeader
                     ThemeBackgroundColor(tokens::SUBPANE_HEADER_BG)
-                    ThemeBorderColor(tokens::SUBPANE_HEADER_BORDER)
                     InheritableThemeTextColor(tokens::SUBPANE_HEADER_TEXT)
                     InheritableFont {
                         font: fonts::REGULAR,
@@ -124,7 +117,7 @@ impl PlumeSubpane {
                     }
                     on(toggle_subpane_collapse)
                     Children [
-                        {props.collapsible.then(|| bsn! { (icon(icons::CHEVRON_DOWN) SubpaneChevron) })},
+                        {props.collapsible.then(|| bsn! { (fa_icon_solid(font_awesome::FA_ANGLE_DOWN) Node { width: px(16) } SubpaneChevron) })},
                         {props.header}
                     ]
                 ),
@@ -132,18 +125,11 @@ impl PlumeSubpane {
                     Node {
                         display: Display::Flex,
                         flex_direction: FlexDirection::Column,
-                        border: UiRect {
-                            left: size::CONTAINER_BORDER,
-                            right: size::CONTAINER_BORDER,
-                            bottom: size::CONTAINER_BORDER,
-                        },
                         row_gap: size::GAP_TIGHT,
                         padding: size::PAD,
-                        border_radius: {RoundedCorners::Bottom.to_border_radius(size::CORNER_RADIUS)}
                     }
                     SubpaneBody
                     ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
-                    ThemeBorderColor(tokens::SUBPANE_BODY_BORDER)
                     InheritableFont {
                         font: fonts::REGULAR,
                         font_size: size::MEDIUM_FONT,
@@ -194,8 +180,7 @@ fn update_subpane_collapse(
     q_subpanes: Query<(), With<PlumeSubpane>>,
     q_children: Query<&Children>,
     mut q_parts: SubpaneParts,
-    mut q_chevrons: Query<&mut ImageNode, With<SubpaneChevron>>,
-    assets: Res<AssetServer>,
+    mut q_chevrons: Query<&mut Text, With<SubpaneChevron>>,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
         for descendant in q_children.iter_descendants(root) {
@@ -221,11 +206,11 @@ fn update_subpane_collapse(
                 }
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
-                chevron.image = assets.load(if collapsed {
-                    icons::CHEVRON_RIGHT
+                chevron.0 = if collapsed {
+                    font_awesome::FA_ANGLE_RIGHT.into()
                 } else {
-                    icons::CHEVRON_DOWN
-                });
+                    font_awesome::FA_ANGLE_DOWN.into()
+                };
             }
         }
     };

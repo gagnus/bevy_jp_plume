@@ -14,13 +14,7 @@ use bevy_ui::{
 use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
-    constants::{fonts, icons, size},
-    controls::{ButtonVariant, PlumeToolButton},
-    display::icon,
-    font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
-    tokens,
+    constants::{font_awesome, fonts, size}, controls::{ButtonVariant, PlumeToolButton}, display::fa_icon_solid, font_styles::InheritableFont, rounded_corners::RoundedCorners, theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor}, tokens,
 };
 
 /// Props used to construct a [`PlumeDialog`] scene.
@@ -66,7 +60,7 @@ impl PlumeDialog {
                 position_type: PositionType::Absolute,
                 left: {props.left},
                 top: {props.top},
-                border_radius: BorderRadius::all(px(size::CORNER_RADIUS)),
+                border_radius: BorderRadius::all(px(size::DIALOG_RADIUS)),
                 border: UiRect::all(size::CONTAINER_BORDER),
                 width: {props.width},
             }
@@ -77,9 +71,9 @@ impl PlumeDialog {
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
                 px(0),
+                px(8),
                 px(4),
-                px(2),
-                px(16),
+                px(32),
             )
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {
@@ -96,13 +90,15 @@ impl PlumeDialog {
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::SpaceBetween,
                         padding: UiRect::horizontal(size::HEADER_PAD_X),
-                        min_height: size::HEADER_HEIGHT,
+                        min_height: size::DIALOG_HEADER_HEIGHT,
                         column_gap: size::GAP_TIGHT,
-                        border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
+                        border: UiRect::bottom(size::CONTAINER_BORDER),
+                        border_radius: {RoundedCorners::Top.to_border_radius(size::DIALOG_RADIUS)}
                     }
                     DialogDragHandle
                     InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
                     ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
+                    ThemeBorderColor(tokens::DIALOG_BORDER)
                     InheritableFont {
                         font: fonts::REGULAR,
                         font_size: size::MEDIUM_FONT,
@@ -124,35 +120,6 @@ impl PlumeDialog {
     }
 }
 
-/// Header section for a dialog
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct PlumeDialogHeader;
-
-impl PlumeDialogHeader {
-    /// Scene function for dialog header.
-    pub fn scene() -> impl Scene {
-        bsn! {
-            Node {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::horizontal(size::HEADER_PAD_X),
-                min_height: size::HEADER_HEIGHT,
-                column_gap: size::GAP_TIGHT,
-                border_radius: {RoundedCorners::Top.to_border_radius(size::CORNER_RADIUS)}
-            }
-            ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
-        }
-    }
-}
-
 /// Close button for dialog header
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -164,7 +131,7 @@ impl PlumeDialogClose {
         bsn! {
         @PlumeToolButton {
             @variant: ButtonVariant::Plain,
-            @caption: bsn! { icon(icons::X) }
+            @caption: bsn! { fa_icon_solid(font_awesome::FA_XMARK) }
         }
         on(|activate: On<Activate>, mut commands: Commands| {
             commands.trigger(RequestClose { source: activate.event_target() });

@@ -22,12 +22,7 @@ use bevy_ui_widgets::{
 };
 
 use crate::{
-    constants::{icons, size},
-    controls::{ButtonVariant, PlumeButton},
-    display::icon,
-    rounded_corners::RoundedCorners,
-    theme::{ThemeBackgroundColor, ThemeBorderColor},
-    tokens,
+    constants::{font_awesome, size}, controls::{ButtonVariant, PlumeButton}, display::fa_icon_solid, rounded_corners::RoundedCorners, theme::{ThemeBackgroundColor, ThemeBorderColor}, tokens,
 };
 use bevy_input_focus::{FocusCause, InputFocus, tab_navigation::NavAction};
 
@@ -168,7 +163,7 @@ impl PlumeMenuButton {
                         Node {
                             flex_grow: 1.0,
                         },
-                        icon(icons::CHEVRON_DOWN),
+                        fa_icon_solid(font_awesome::FA_ANGLE_DOWN),
                     ))
                 }
             ]

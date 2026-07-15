@@ -2,6 +2,7 @@
 use core::f32::consts::PI;
 
 use bevy_app::{Plugin, PreUpdate};
+use bevy_color::Color;
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
@@ -18,18 +19,14 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Gradient, InteractionDisabled,
-    InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
+    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Gradient, InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderRange, SliderValue, TrackClick, slider_self_update,
 };
 
 use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme},
-    tokens,
+    constants::size, cursor::EntityCursor, theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, UiTheme}, tokens,
 };
 
 /// A slider widget.
@@ -123,6 +120,18 @@ impl PlumeSlider {
                     }
                     PlumeSliderThumb
                     ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
+                    Children [
+                        (
+                            Node {
+                                width: percent(100),
+                                height: percent(100),
+                                border: size::CONTROL_BORDER,
+                                border_radius: BorderRadius::all(px(8)),
+                            }
+                            PlumeSliderThumbBorder
+                            ThemeBorderColor(tokens::SLIDER_THUMB_BORDER)
+                        )
+                    ]
                 )
             ]
         }
@@ -139,15 +148,10 @@ struct PlumeSliderTrack;
 #[reflect(Component, Clone, Default)]
 struct PlumeSliderThumb;
 
-/// Shared lookups for applying slider styles.
-#[derive(SystemParam)]
-struct SliderStyleCtx<'w, 's> {
-    q_children: Query<'w, 's, &'static Children>,
-    q_tracks: Query<'w, 's, &'static mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumbs: Query<'w, 's, &'static ThemeBackgroundGradient, With<PlumeSliderThumb>>,
-    theme: Res<'w, UiTheme>,
-    commands: Commands<'w, 's>,
-}
+/// Marker for the thumb border
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct PlumeSliderThumbBorder;
 
 fn update_slider_styles(
     q_sliders: Query<
@@ -157,13 +161,38 @@ fn update_slider_styles(
             Or<(Added<InteractionDisabled>, Changed<Hovered>, Added<Pressed>)>,
         ),
     >,
-    mut ctx: SliderStyleCtx,
+    q_children: Query<&Children>,
+    q_tracks: Query<&BackgroundGradient, With<PlumeSliderTrack>>,
+    q_thumbs: Query<&ThemeBackgroundGradient, With<PlumeSliderThumb>>,
+    q_thumb_borders: Query<&ThemeBorderColor, With<PlumeSliderThumbBorder>>,
+    theme: Res<UiTheme>,
+    mut commands: Commands,
 ) {
     for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
-        set_slider_styles(slider_ent, disabled, pressed, hovered.0, &mut ctx);
+        let Some(track_ent) = q_children
+            .iter_descendants(slider_ent)
+            .find(|en| q_tracks.contains(*en))
+        else {
+            continue;
+        };
+        let Some(thumb_ent) = q_children
+            .iter_descendants(slider_ent)
+            .find(|en| q_thumbs.contains(*en))
+        else {
+            continue;
+        };
+        let Some(thumb_border_ent) = q_children
+            .iter_descendants(slider_ent)
+            .find(|en| q_thumb_borders.contains(*en))
+        else {
+            continue;
+        };
+        
+        // set_slider_styles(slider_ent, disabled, pressed, hovered.0, &mut ctx);
     }
 }
 
+/*
 fn update_slider_styles_remove(
     q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
@@ -274,6 +303,7 @@ fn update_slider_pos(
         });
     }
 }
+*/
 
 /// Plugin which registers the systems for updating the slider styles.
 pub struct SliderPlugin;
@@ -284,9 +314,9 @@ impl Plugin for SliderPlugin {
             PreUpdate,
             (
                 update_slider_styles,
-                update_slider_styles_remove,
-                update_slider_styles_theme,
-                update_slider_pos,
+                //update_slider_styles_remove,
+                //update_slider_styles_theme,
+                //update_slider_pos,
             )
                 .in_set(PickingSystems::Last),
         );

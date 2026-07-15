@@ -7,7 +7,7 @@ use bevy::{
 };
 use bevy_jp_plume::{
     PlumePlugins,
-    constants::{font_awesome, icons, size},
+    constants::{font_awesome, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
         ButtonVariant, ListRowIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
@@ -15,7 +15,7 @@ use bevy_jp_plume::{
         PlumeTextInput, PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
-    display::{caption, fa_icon_solid, icon, label_bright, label_dim},
+    display::{caption, fa_icon_solid, label_bright, label_dim},
     theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme},
     tokens,
 };
@@ -109,6 +109,9 @@ fn root() -> impl Scene {
             // full-height column vertically.
             align_items: AlignItems::Start,
         }
+        LayoutConfig {
+            use_rounding: false,
+        }
         ThemeBackgroundColor(tokens::WINDOW_BG)
         Children [
             controls_column(),
@@ -174,7 +177,6 @@ fn controls_column() -> impl Scene {
                 label_bright("Swatch"),
                 flex_spacer(),
                 @PlumeColorSwatch,
-                icon(icons::CHEVRON_DOWN),
             ],
             @PlumeSubpane {
                 @header: bsn! { caption("Subpane") },
@@ -367,7 +369,7 @@ impl PaletteParam {
         match self {
             PaletteParam::Hue(_) => "Hue".into(),
             PaletteParam::Chroma(_) => "Chroma".into(),
-            PaletteParam::L(_, i) => format!("L {i}"),
+            PaletteParam::L(_, i) => format!("L{i}"),
             PaletteParam::DisabledTextAlpha => "Disabled \u{3b1}".into(),
         }
     }
@@ -384,8 +386,16 @@ impl PaletteParam {
     /// Decimal places for this param's number input.
     fn precision(self) -> usize {
         match self {
-            PaletteParam::Hue(_) => 1,
+            PaletteParam::Hue(_) => 0,
             _ => 3,
+        }
+    }
+
+    /// Non-editable unit shown after the number input, if any.
+    fn suffix(self) -> Option<String> {
+        match self {
+            PaletteParam::Hue(_) => Some("\u{b0}".into()),
+            _ => None,
         }
     }
 
@@ -527,6 +537,7 @@ fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn Sce
                     @precision: {param.precision()},
                     @min: {min},
                     @max: {max},
+                    @suffix: {param.suffix()},
                 }
                 template(move |_| Ok(param))
             ),

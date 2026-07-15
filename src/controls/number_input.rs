@@ -3,8 +3,9 @@ use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
     entity::Entity,
     event::EntityEvent,
+    hierarchy::{ChildOf, Children},
     observer::On,
-    query::Changed,
+    query::{Changed, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, ResMut},
@@ -14,18 +15,26 @@ use bevy_input_focus::{FocusLost, FocusedInput, InputFocus};
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_text::{EditableText, EditableTextFilter, TextEdit};
+use bevy_text::{
+    EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextEdit, TextFont,
+    TextLayout,
+};
 use bevy_ui::{Node, px};
 use bevy_ui_widgets::{SliderRange, SliderValue, ValueChange};
 
-use crate::controls::PlumeTextInput;
+use crate::{
+    constants::fonts,
+    controls::{TextInputField, text_input_field, text_input_frame, text_input_suffix},
+};
 
-/// A numeric input built on [`PlumeTextInput`]. Holds its value in [`SliderValue`] /
-/// [`SliderRange`] (interchangeable with a slider) and emits [`ValueChange<f32>`] on commit.
+/// A numeric input built on the [`PlumeTextInput`](crate::controls::PlumeTextInput) frame. Holds
+/// its value in [`SliderValue`] / [`SliderRange`] (interchangeable with a slider) and emits
+/// [`ValueChange<f32>`] on commit.
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional
 /// [`PlumeNumberInputProps`]. Typing commits on Enter or focus loss (clamped to the
-/// range, rounded to `precision`); Escape or an unparsable entry reverts the text.
+/// range, rounded to `precision`); Escape or an unparsable entry reverts the text. The value and
+/// range live on this frame entity; the editable `TextInputField` child does the typing.
 #[derive(SceneComponent, Clone, Reflect)]
 #[scene(PlumeNumberInputProps)]
 #[reflect(Component, Default, Clone)]
@@ -51,6 +60,8 @@ pub struct PlumeNumberInputProps {
     pub min: f32,
     /// Maximum committable value
     pub max: f32,
+    /// Optional non-editable suffix shown after the number (a unit such as `px`, `%`, or `°`).
+    pub suffix: Option<String>,
 }
 
 impl Default for PlumeNumberInputProps {
@@ -60,6 +71,7 @@ impl Default for PlumeNumberInputProps {
             precision: 2,
             min: f32::NEG_INFINITY,
             max: f32::INFINITY,
+            suffix: None,
         }
     }
 }
@@ -67,18 +79,33 @@ impl Default for PlumeNumberInputProps {
 impl PlumeNumberInput {
     fn scene(props: PlumeNumberInputProps) -> impl Scene {
         bsn! {
-            @PlumeTextInput
+            text_input_frame()
             Node {
                 width: px(64.0),
             }
             PlumeNumberInput { precision: {props.precision} }
             SliderValue({props.value})
             SliderRange::new(props.min, props.max)
-            EditableTextFilter::new(|c| {
-                c.is_ascii_digit() || matches!(c, '.' | '-' | '+' | 'e' | 'E')
-            })
-            on(number_input_on_key)
-            on(number_input_on_focus_lost)
+            Children [
+                (
+                    text_input_field(None, None)
+                    EditableTextFilter::new(|c| {
+                        c.is_ascii_digit() || matches!(c, '.' | '-' | '+' | 'e' | 'E')
+                    })
+                    // Right-align digits against the field's trailing edge (caret sits at the
+                    // right, value grows leftward as you type).
+                    TextLayout {
+                        justify: Justify::Right,
+                        linebreak: LineBreak::NoWrap,
+                    }
+                    TextFont {
+                        font: FontSourceTemplate::Handle(fonts::MONOSPACE),
+                    }
+                    on(number_input_on_key)
+                    on(number_input_on_focus_lost)
+                ),
+                {props.suffix.map(|suffix| bsn_list!(text_input_suffix(suffix)))}
+            ]
         }
     }
 }
@@ -96,7 +123,8 @@ fn set_text(editable_text: &mut EditableText, formatted: String) {
 }
 
 // Parses the typed text; on success clamps + rounds and writes the value (emitting
-// `ValueChange<f32>`), otherwise reverts the text. Idempotent for repeated calls.
+// `ValueChange<f32>`), otherwise reverts the text. Idempotent for repeated calls. `source` is the
+// [`PlumeNumberInput`] frame that owns the value, not the editable field.
 fn commit(
     precision: usize,
     value: f32,
@@ -133,21 +161,20 @@ fn commit(
 
 fn number_input_on_key(
     key_input: On<FocusedInput<KeyboardInput>>,
-    mut query_inputs: Query<(
-        &PlumeNumberInput,
-        &SliderValue,
-        &SliderRange,
-        &mut EditableText,
-    )>,
+    mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
+    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange)>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
     if key_input.input.state != ButtonState::Pressed {
         return;
     }
-    let input_entity = key_input.event_target();
-    let Ok((number_input, value, range, mut editable_text)) = query_inputs.get_mut(input_entity)
-    else {
+    let field = key_input.event_target();
+    let Ok((child_of, mut editable_text)) = query_fields.get_mut(field) else {
+        return;
+    };
+    let frame = child_of.parent();
+    let Ok((number_input, value, range)) = query_frames.get(frame) else {
         return;
     };
     match key_input.input.key_code {
@@ -157,7 +184,7 @@ fn number_input_on_key(
                 value.0,
                 range,
                 &mut editable_text,
-                input_entity,
+                frame,
                 &mut commands,
             );
             focus.clear();
@@ -175,40 +202,42 @@ fn number_input_on_key(
 
 fn number_input_on_focus_lost(
     focus_lost: On<FocusLost>,
-    mut query_inputs: Query<(
-        &PlumeNumberInput,
-        &SliderValue,
-        &SliderRange,
-        &mut EditableText,
-    )>,
+    mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
+    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange)>,
     mut commands: Commands,
 ) {
-    let input_entity = focus_lost.event_target();
-    if let Ok((number_input, value, range, mut editable_text)) = query_inputs.get_mut(input_entity)
-    {
+    let field = focus_lost.event_target();
+    let Ok((child_of, mut editable_text)) = query_fields.get_mut(field) else {
+        return;
+    };
+    let frame = child_of.parent();
+    if let Ok((number_input, value, range)) = query_frames.get(frame) {
         commit(
             number_input.precision,
             value.0,
             range,
             &mut editable_text,
-            input_entity,
+            frame,
             &mut commands,
         );
     }
 }
 
-/// Reflect any value write (self-commit or external, e.g. a paired slider) into the text.
+/// Reflect any value write (self-commit or external, e.g. a paired slider) into the field's text.
 fn update_number_input_text(
-    mut query_inputs: Query<
-        (&PlumeNumberInput, &SliderValue, &mut EditableText),
-        Changed<SliderValue>,
-    >,
+    query_frames: Query<(&PlumeNumberInput, &SliderValue, &Children), Changed<SliderValue>>,
+    mut query_fields: Query<&mut EditableText, With<TextInputField>>,
 ) {
-    for (number_input, value, mut editable_text) in query_inputs.iter_mut() {
-        set_text(
-            &mut editable_text,
-            format_value(value.0, number_input.precision),
-        );
+    for (number_input, value, children) in query_frames.iter() {
+        for &child in children.iter() {
+            if let Ok(mut editable_text) = query_fields.get_mut(child) {
+                set_text(
+                    &mut editable_text,
+                    format_value(value.0, number_input.precision),
+                );
+                break;
+            }
+        }
     }
 }
 

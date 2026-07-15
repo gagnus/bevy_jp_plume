@@ -3,23 +3,15 @@
 /// Font asset paths
 pub mod fonts {
     /// Default regular font path
-    pub const REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/Inter-Regular.ttf";
+    pub const REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSans-Regular.ttf";
     /// Bold font path
-    pub const BOLD: &str = "embedded://bevy_jp_plume/assets/fonts/Inter-Bold.ttf";
+    pub const BOLD: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSans-Bold.ttf";
+    /// Monospace font path
+    pub const MONOSPACE: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSansMono-Regular.ttf";
     /// Solid FA
     pub const FA_SOLID: &str = "embedded://bevy_jp_plume/assets/fonts/FontAwesome-Solid.otf";
     /// Regular FA
     pub const FA_REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/FontAwesome-Regular.otf";
-}
-
-/// Icon paths
-pub mod icons {
-    /// Downward-pointing chevron
-    pub const CHEVRON_DOWN: &str = "embedded://bevy_jp_plume/assets/icons/chevron-down.png";
-    /// Right-pointing chevron
-    pub const CHEVRON_RIGHT: &str = "embedded://bevy_jp_plume/assets/icons/chevron-right.png";
-    /// Diagonal Cross
-    pub const X: &str = "embedded://bevy_jp_plume/assets/icons/x.png";
 }
 
 /// Size constants
@@ -36,6 +28,9 @@ pub mod size {
     /// Height for pane headers
     pub const HEADER_HEIGHT: Val = Val::Px(30.0);
 
+    /// Height for dialog headers
+    pub const DIALOG_HEADER_HEIGHT: Val = Val::Px(40.0);
+
     /// Width and height of a radio button
     pub const RADIO_SIZE: Val = Val::Px(18.0);
 
@@ -47,6 +42,9 @@ pub mod size {
 
     /// Standard corner radius for controls and containers
     pub const CORNER_RADIUS: f32 = 4.0;
+
+    /// Increased corner radius for dialogs
+    pub const DIALOG_RADIUS: f32 = 8.0;
 
     /// Border width of control chrome (checkbox, radio, toggle, text input)
     pub const CONTROL_BORDER: Val = Val::Px(2.0);
@@ -79,7 +77,7 @@ pub mod size {
     pub const SCROLLBAR_GUTTER: Val = Val::Px(10.0);
 
     /// The one font size: every control and container uses this.
-    pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
+    pub const MEDIUM_FONT: FontSize = FontSize::Px(12.0);
 }
 
 /// FontAwesome glyph constants (`"\u{...}"` strings) for use in labels and buttons.
