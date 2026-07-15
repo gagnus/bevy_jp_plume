@@ -28,9 +28,7 @@ use bevy_ui_widgets::{
 use crate::{
     constants::size,
     cursor::EntityCursor,
-    theme::{
-        GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme,
-    },
+    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme},
     tokens,
 };
 
@@ -175,38 +173,15 @@ fn update_slider_styles(
     mut commands: Commands,
 ) {
     for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
-        let Some(track_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_tracks.contains(*en))
-        else {
-            continue;
-        };
-        let Some(thumb_inner_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_thumb_inners.contains(*en))
-        else {
-            continue;
-        };
-        let Some(thumb_border_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_thumb_borders.contains(*en))
-        else {
-            continue;
-        };
-
-        let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
-        let thumb_inner_gradient_color = q_thumb_inners.get(thumb_inner_ent).unwrap();
-        let thumb_border_gradient_color = q_thumb_borders.get(thumb_border_ent).unwrap();
-        set_slider_styles(
+        apply_slider_styles(
             slider_ent,
-            thumb_inner_ent,
-            thumb_border_ent,
             disabled,
             pressed,
             hovered.0,
-            &mut track_background_gradient,
-            thumb_inner_gradient_color,
-            thumb_border_gradient_color,
+            &q_children,
+            &mut q_tracks,
+            &q_thumb_inners,
+            &q_thumb_borders,
             &theme,
             &mut commands,
         );
@@ -229,38 +204,15 @@ fn update_slider_styles_remove(
         .chain(remove_pressed.read())
         .for_each(|ent| {
             if let Ok((slider_ent, disabled, pressed, hovered)) = q_sliders.get(ent) {
-                let Some(track_ent) = q_children
-                    .iter_descendants(slider_ent)
-                    .find(|en| q_tracks.contains(*en))
-                else {
-                    return;
-                };
-                let Some(thumb_inner_ent) = q_children
-                    .iter_descendants(slider_ent)
-                    .find(|en| q_thumb_inners.contains(*en))
-                else {
-                    return;
-                };
-                let Some(thumb_border_ent) = q_children
-                    .iter_descendants(slider_ent)
-                    .find(|en| q_thumb_borders.contains(*en))
-                else {
-                    return;
-                };
-
-                let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
-                let thumb_inner_gradient_color = q_thumb_inners.get(thumb_inner_ent).unwrap();
-                let thumb_border_gradient_color = q_thumb_borders.get(thumb_border_ent).unwrap();
-                set_slider_styles(
+                apply_slider_styles(
                     slider_ent,
-                    thumb_inner_ent,
-                    thumb_border_ent,
                     disabled,
                     pressed,
                     hovered.0,
-                    &mut track_background_gradient,
-                    thumb_inner_gradient_color,
-                    thumb_border_gradient_color,
+                    &q_children,
+                    &mut q_tracks,
+                    &q_thumb_inners,
+                    &q_thumb_borders,
                     &theme,
                     &mut commands,
                 );
@@ -282,42 +234,70 @@ fn update_slider_styles_theme(
         return;
     }
     for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
-        let Some(track_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_tracks.contains(*en))
-        else {
-            continue;
-        };
-        let Some(thumb_inner_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_thumb_inners.contains(*en))
-        else {
-            continue;
-        };
-        let Some(thumb_border_ent) = q_children
-            .iter_descendants(slider_ent)
-            .find(|en| q_thumb_borders.contains(*en))
-        else {
-            continue;
-        };
-
-        let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
-        let thumb_inner_gradient_color = q_thumb_inners.get(thumb_inner_ent).unwrap();
-        let thumb_border_gradient_color = q_thumb_borders.get(thumb_border_ent).unwrap();
-        set_slider_styles(
+        apply_slider_styles(
             slider_ent,
-            thumb_inner_ent,
-            thumb_border_ent,
             disabled,
             pressed,
             hovered.0,
-            &mut track_background_gradient,
-            thumb_inner_gradient_color,
-            thumb_border_gradient_color,
+            &q_children,
+            &mut q_tracks,
+            &q_thumb_inners,
+            &q_thumb_borders,
             &theme,
             &mut commands,
         );
     }
+}
+
+/// Resolve the slider's child entities and push the current styles onto them.
+fn apply_slider_styles(
+    slider_ent: Entity,
+    disabled: bool,
+    pressed: bool,
+    hovered: bool,
+    q_children: &Query<&Children>,
+    q_tracks: &mut Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
+    q_thumb_inners: &Query<&ThemeBackgroundGradient, With<PlumeSliderThumbInner>>,
+    q_thumb_borders: &Query<&ThemeBackgroundGradient, With<PlumeSliderThumbBorder>>,
+    theme: &UiTheme,
+    commands: &mut Commands,
+) {
+    let Some(track_ent) = q_children
+        .iter_descendants(slider_ent)
+        .find(|en| q_tracks.contains(*en))
+    else {
+        return;
+    };
+    let Some(thumb_inner_ent) = q_children
+        .iter_descendants(slider_ent)
+        .find(|en| q_thumb_inners.contains(*en))
+    else {
+        return;
+    };
+    let Some(thumb_border_ent) = q_children
+        .iter_descendants(slider_ent)
+        .find(|en| q_thumb_borders.contains(*en))
+    else {
+        return;
+    };
+
+    // Safety: all three entities were just confirmed present in their queries.
+    let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
+    let thumb_inner_gradient_color = q_thumb_inners.get(thumb_inner_ent).unwrap();
+    let thumb_border_gradient_color = q_thumb_borders.get(thumb_border_ent).unwrap();
+    set_slider_styles(
+        slider_ent,
+        thumb_inner_ent,
+        thumb_border_ent,
+        disabled,
+        pressed,
+        hovered,
+        &mut track_background_gradient,
+        thumb_inner_gradient_color,
+        thumb_border_gradient_color,
+        theme,
+        commands,
+    );
 }
 
 fn set_slider_styles(

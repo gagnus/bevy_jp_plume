@@ -82,19 +82,25 @@ pub const SLIDER_BAR_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider
 /// Slider thumb
 pub const SLIDER_THUMB_INNER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner");
 /// Slider thumb (hover)
-pub const SLIDER_THUMB_INNER_HOVER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.hover");
+pub const SLIDER_THUMB_INNER_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.inner.hover");
 /// Slider thumb (pressed)
-pub const SLIDER_THUMB_INNER_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.pressed");
+pub const SLIDER_THUMB_INNER_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.inner.pressed");
 /// Slider thumb (disabled)
-pub const SLIDER_THUMB_INNER_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.disabled");
+pub const SLIDER_THUMB_INNER_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.inner.disabled");
 /// Slider thumb border
 pub const SLIDER_THUMB_BORDER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.border");
 /// Slider thumb border (hover)
-pub const SLIDER_THUMB_BORDER_HOVER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.border.hover");
+pub const SLIDER_THUMB_BORDER_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.border.hover");
 /// Slider thumb border (pressed)
-pub const SLIDER_THUMB_BORDER_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.border.pressed");
+pub const SLIDER_THUMB_BORDER_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.border.pressed");
 /// Slider thumb border (disabled)
-pub const SLIDER_THUMB_BORDER_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.border.disabled");
+pub const SLIDER_THUMB_BORDER_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.slider.thumb.border.disabled");
 
 // Scrollbar
 

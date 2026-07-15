@@ -19,9 +19,7 @@ use bevy_picking::{
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
-use bevy_ui::{
-    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text,
-};
+use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text};
 
 use crate::{
     constants::{font_awesome, fonts, size},

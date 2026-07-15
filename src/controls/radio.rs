@@ -27,8 +27,7 @@ use crate::{
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
-        ThemeBorderColor,
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
     },
     tokens,
 };

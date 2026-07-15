@@ -14,7 +14,13 @@ use bevy_ui::{
 use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
-    constants::{font_awesome, fonts, size}, controls::{ButtonVariant, PlumeToolButton}, display::fa_icon_solid, font_styles::InheritableFont, rounded_corners::RoundedCorners, theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor}, tokens,
+    constants::{font_awesome, fonts, size},
+    controls::{ButtonVariant, PlumeToolButton},
+    display::fa_icon_solid,
+    font_styles::InheritableFont,
+    rounded_corners::RoundedCorners,
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    tokens,
 };
 
 /// Props used to construct a [`PlumeDialog`] scene.

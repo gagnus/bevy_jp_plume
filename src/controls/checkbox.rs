@@ -166,44 +166,21 @@ fn update_checkbox_styles(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
-    mut q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
-    mut q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
+    q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
     for (checkbox_ent, disabled, checked, font_color) in q_checkboxes.iter() {
-        let Some(bg_ent) = q_children
-            .iter_descendants(checkbox_ent)
-            .find(|en| q_bg.contains(*en))
-        else {
-            continue;
-        };
-        let Some(outline_ent) = q_children
-            .iter_descendants(checkbox_ent)
-            .find(|en| q_outline.contains(*en))
-        else {
-            continue;
-        };
-        let Some(mark_ent) = q_children
-            .iter_descendants(checkbox_ent)
-            .find(|en| q_mark.contains(*en))
-        else {
-            continue;
-        };
-        let bg_color = q_bg.get_mut(bg_ent).unwrap();
-        let outline_color = q_outline.get_mut(outline_ent).unwrap();
-        let mark_color = q_mark.get_mut(mark_ent).unwrap();
-        set_checkbox_styles(
+        apply_checkbox_styles(
             checkbox_ent,
-            bg_ent,
-            outline_ent,
-            mark_ent,
             disabled,
             checked,
-            bg_color,
-            outline_color,
-            mark_color,
             font_color,
+            &q_children,
+            &q_bg,
+            &q_outline,
+            &q_mark,
             &mut commands,
         );
     }
@@ -220,9 +197,9 @@ fn update_checkbox_styles_remove(
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
-    mut q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
-    mut q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
-    mut q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
+    q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut commands: Commands,
@@ -232,42 +209,68 @@ fn update_checkbox_styles_remove(
         .chain(removed_checked.read())
         .for_each(|ent| {
             if let Ok((checkbox_ent, disabled, checked, font_color)) = q_checkboxes.get(ent) {
-                let Some(bg_ent) = q_children
-                    .iter_descendants(checkbox_ent)
-                    .find(|en| q_bg.contains(*en))
-                else {
-                    return;
-                };
-                let Some(outline_ent) = q_children
-                    .iter_descendants(checkbox_ent)
-                    .find(|en| q_outline.contains(*en))
-                else {
-                    return;
-                };
-                let Some(mark_ent) = q_children
-                    .iter_descendants(checkbox_ent)
-                    .find(|en| q_mark.contains(*en))
-                else {
-                    return;
-                };
-                let bg_color = q_bg.get_mut(bg_ent).unwrap();
-                let outline_color = q_outline.get_mut(outline_ent).unwrap();
-                let mark_color = q_mark.get_mut(mark_ent).unwrap();
-                set_checkbox_styles(
+                apply_checkbox_styles(
                     checkbox_ent,
-                    bg_ent,
-                    outline_ent,
-                    mark_ent,
                     disabled,
                     checked,
-                    bg_color,
-                    outline_color,
-                    mark_color,
                     font_color,
+                    &q_children,
+                    &q_bg,
+                    &q_outline,
+                    &q_mark,
                     &mut commands,
                 );
             }
         });
+}
+
+/// Resolve the checkbox's child entities and push the current styles onto them.
+fn apply_checkbox_styles(
+    checkbox_ent: Entity,
+    disabled: bool,
+    checked: bool,
+    font_color: &InheritableThemeTextColor,
+    q_children: &Query<&Children>,
+    q_bg: &Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_outline: &Query<&ThemeBorderColor, With<CheckboxOutline>>,
+    q_mark: &Query<&ThemeBorderColor, With<CheckboxMark>>,
+    commands: &mut Commands,
+) {
+    let Some(bg_ent) = q_children
+        .iter_descendants(checkbox_ent)
+        .find(|en| q_bg.contains(*en))
+    else {
+        return;
+    };
+    let Some(outline_ent) = q_children
+        .iter_descendants(checkbox_ent)
+        .find(|en| q_outline.contains(*en))
+    else {
+        return;
+    };
+    let Some(mark_ent) = q_children
+        .iter_descendants(checkbox_ent)
+        .find(|en| q_mark.contains(*en))
+    else {
+        return;
+    };
+    // Safety: all three entities were just confirmed present in their queries.
+    let bg_color = q_bg.get(bg_ent).unwrap();
+    let outline_color = q_outline.get(outline_ent).unwrap();
+    let mark_color = q_mark.get(mark_ent).unwrap();
+    set_checkbox_styles(
+        checkbox_ent,
+        bg_ent,
+        outline_ent,
+        mark_ent,
+        disabled,
+        checked,
+        bg_color,
+        outline_color,
+        mark_color,
+        font_color,
+        commands,
+    );
 }
 
 fn set_checkbox_styles(

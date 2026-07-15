@@ -179,7 +179,14 @@ fn update_text_input_styles(
             focus.clear();
         }
         set_text_input_styles(
-            frame_ent, field_ent, true, false, &q_bg, &q_border, &q_text, &mut commands,
+            frame_ent,
+            field_ent,
+            true,
+            false,
+            &q_bg,
+            &q_border,
+            &q_text,
+            &mut commands,
         );
     }
 }
@@ -201,7 +208,14 @@ fn update_text_input_styles_remove(
         {
             let focused = focus.get() == Some(field_ent);
             set_text_input_styles(
-                frame_ent, field_ent, false, focused, &q_bg, &q_border, &q_text, &mut commands,
+                frame_ent,
+                field_ent,
+                false,
+                focused,
+                &q_bg,
+                &q_border,
+                &q_text,
+                &mut commands,
             );
         }
     });
@@ -227,7 +241,14 @@ fn update_text_input_styles_focus(
         };
         let focused = focus.get() == Some(field_ent);
         set_text_input_styles(
-            frame_ent, field_ent, disabled, focused, &q_bg, &q_border, &q_text, &mut commands,
+            frame_ent,
+            field_ent,
+            disabled,
+            focused,
+            &q_bg,
+            &q_border,
+            &q_text,
+            &mut commands,
         );
     }
 }
@@ -287,7 +308,10 @@ fn set_text_input_styles(
             .entity(frame_ent)
             .insert(ThemeBackgroundColor(bg_token));
     }
-    if !q_border.get(frame_ent).is_ok_and(|border| border.0 == border_token) {
+    if !q_border
+        .get(frame_ent)
+        .is_ok_and(|border| border.0 == border_token)
+    {
         commands
             .entity(frame_ent)
             .insert(ThemeBorderColor(border_token));
@@ -295,7 +319,9 @@ fn set_text_input_styles(
 
     // Text color lives on the editable field itself.
     if !q_text.get(field_ent).is_ok_and(|text| text.0 == font_token) {
-        commands.entity(field_ent).insert(ThemeTextColor(font_token));
+        commands
+            .entity(field_ent)
+            .insert(ThemeTextColor(font_token));
     }
 
     commands
