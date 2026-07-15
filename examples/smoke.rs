@@ -16,7 +16,7 @@ use bevy_jp_plume::{
         list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
-    display::{caption, fa_icon_solid, label_bright, label_dim},
+    display::{caption, caption_small_caps, fa_icon_solid, label_bright, label_dim},
     theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme},
     tokens,
 };
@@ -187,7 +187,7 @@ fn controls_column() -> impl Scene {
                 @PlumeColorSwatch,
             ],
             @PlumeSubpane {
-                @header: bsn! { caption("Subpane") },
+                @header: bsn! { caption_small_caps("Subpane") },
                 @contents: bsn_list! {
                     label_dim("Subpane body"),
                     @PlumeGroup {
@@ -465,7 +465,7 @@ fn dialog() -> impl Scene {
     text_params.push(PaletteParam::DisabledTextAlpha);
     bsn! {
         @PlumeDialog {
-            @title: bsn! { caption("Theme editor") },
+            @title: bsn! { caption("Theme Editor") },
             @width: px(320),
             @left: px(320),
             @top: px(40),
@@ -527,7 +527,7 @@ fn param_group(
     let contents: Box<dyn SceneList> = Box::new(rows);
     bsn! {
         @PlumeSubpane {
-            @header: bsn! { caption(title.to_string()) }
+            @header: bsn! { caption_small_caps(title.to_string()) }
             @contents: {contents},
         }
     }

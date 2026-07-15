@@ -719,7 +719,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SLIDER_THUMB_BORDER_HOVER, ThemeSlot::Accent1),
     (tokens::SLIDER_THUMB_BORDER_PRESSED, ThemeSlot::Accent2),
     (tokens::SLIDER_THUMB_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral3),
+    (tokens::SCROLLBAR_BG, ThemeSlot::Neutral0),
     (tokens::SCROLLBAR_THUMB, ThemeSlot::Neutral4),
     (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Neutral5),
     (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Neutral6),
