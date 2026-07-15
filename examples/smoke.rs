@@ -10,9 +10,10 @@ use bevy_jp_plume::{
     constants::{font_awesome, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
     controls::{
-        ButtonVariant, ListRowIndex, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
-        PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeScrollbar, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, ScrollbarGutter, list_rows_from_strings,
+        ButtonVariant, ColorSwatchValue, ListRowIndex, PlumeButton, PlumeCheckbox,
+        PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeScrollbar,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, ScrollbarGutter,
+        list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
     display::{caption, fa_icon_solid, label_bright, label_dim},
@@ -26,7 +27,14 @@ fn main() {
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .init_resource::<PaletteEditor>()
         .add_systems(Startup, scene.spawn())
-        .add_systems(Update, (rebuild_theme_on_edit, sync_controls_from_editor))
+        .add_systems(
+            Update,
+            (
+                rebuild_theme_on_edit,
+                sync_controls_from_editor,
+                sync_swatches_from_editor,
+            ),
+        )
         .add_observer(apply_param_edits);
     // SMOKE_SHOT=<path.png>: save a screenshot and exit (for headless verification).
     if std::env::var_os("SMOKE_SHOT").is_some() {
@@ -399,6 +407,18 @@ impl PaletteParam {
         }
     }
 
+    /// The color this param previews, if it's a lightness stop: the ramp's hue and
+    /// chroma combined with this stop's lightness. Hue/chroma/alpha params have none.
+    fn swatch_color(self, p: &ThemeEditablePalette) -> Option<Color> {
+        match self {
+            PaletteParam::L(ramp, i) => {
+                let ramp = ramp.array(p);
+                Some(Color::oklcha(ramp.l[i], *ramp.chroma, *ramp.hue, 1.0))
+            }
+            _ => None,
+        }
+    }
+
     fn get(self, p: &ThemeEditablePalette) -> f32 {
         match self {
             PaletteParam::Hue(ramp) => *ramp.array(p).hue,
@@ -518,10 +538,35 @@ fn param_group(
 fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn SceneList> {
     let (min, max) = param.range();
     let value = param.get(palette);
+    // Lightness stops get a live swatch of the ramp's hue/chroma at this lightness.
+    // The wrapper is always present so every slider lines up whether or not the row
+    // has a swatch (hue/chroma/alpha rows get an empty gap of the same width).
+    let swatch = param.swatch_color(palette).map(|color| {
+        bsn! {
+            @PlumeColorSwatch
+            Node {
+                width: px(16),
+                height: px(16),
+            }
+            ColorSwatchValue({color})
+            template(move |_| Ok(param))
+        }
+    });
     bsn! {
         row()
         Children [
-            (label_dim(param.label()) Node { width: px(80) }),
+            Node {
+                width: px(80),
+            }
+            Children [
+                (
+                    label_dim(param.label())
+                    Node {
+                        flex_grow: 1.0
+                    }
+                ),
+                {swatch}
+            ],
             (
                 @PlumeSlider {
                     @min: {min},
@@ -554,6 +599,27 @@ fn apply_param_edits(
 ) {
     if let Ok(param) = query_params.get(change.source) {
         param.set(&mut editor.0, change.value);
+    }
+}
+
+/// Repaint each lightness stop's swatch when the palette changes, so editing a ramp's
+/// hue or chroma updates every stop's swatch, not just the one whose slider moved.
+fn sync_swatches_from_editor(
+    editor: Res<PaletteEditor>,
+    query_swatches: Query<(Entity, &PaletteParam, &ColorSwatchValue)>,
+    mut commands: Commands,
+) {
+    if !editor.is_changed() {
+        return;
+    }
+    for (swatch_entity, param, value) in query_swatches.iter() {
+        if let Some(color) = param.swatch_color(&editor.0)
+            && value.0 != color
+        {
+            commands
+                .entity(swatch_entity)
+                .insert(ColorSwatchValue(color));
+        }
     }
 }
 

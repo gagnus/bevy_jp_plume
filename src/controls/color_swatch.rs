@@ -33,6 +33,8 @@ pub struct PlumeColorSwatchProps {
     /// Set a percentage of the swatch to display the opaque version of the
     /// current color.
     pub opaque_color_percentage: f32,
+    /// Show the alpha
+    pub show_alpha: bool,
 }
 
 /// Component that contains the value of the color swatch. This is copied to the child element
@@ -66,16 +68,22 @@ impl PlumeColorSwatch {
             }
         });
 
+        let material = props.show_alpha.then(|| {
+            bsn! {
+                AlphaPattern
+                MaterialNode::<AlphaPatternMaterial>
+            }
+        });
+
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
-                min_width: size::ROW_HEIGHT,
+                width: size::ROW_HEIGHT,
                 border_radius: px(size::CORNER_RADIUS),
             }
+            {material}
             PlumeColorSwatch
             ColorSwatchValue
-            AlphaPattern
-            MaterialNode::<AlphaPatternMaterial>
             Children [
                 (
                     Node {
