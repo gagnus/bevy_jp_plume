@@ -80,13 +80,13 @@ pub const SLIDER_BAR_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.
 /// Fill color for slider (disabled)
 pub const SLIDER_BAR_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.bar.disabled");
 /// Slider thumb
-pub const SLIDER_THUMB: ThemeToken = ThemeToken::new_static("plume.slider.thumb");
+pub const SLIDER_THUMB_INNER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner");
 /// Slider thumb (hover)
-pub const SLIDER_THUMB_HOVER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.hover");
+pub const SLIDER_THUMB_INNER_HOVER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.hover");
 /// Slider thumb (pressed)
-pub const SLIDER_THUMB_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.pressed");
+pub const SLIDER_THUMB_INNER_PRESSED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.pressed");
 /// Slider thumb (disabled)
-pub const SLIDER_THUMB_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.disabled");
+pub const SLIDER_THUMB_INNER_DISABLED: ThemeToken = ThemeToken::new_static("plume.slider.thumb.inner.disabled");
 /// Slider thumb border
 pub const SLIDER_THUMB_BORDER: ThemeToken = ThemeToken::new_static("plume.slider.thumb.border");
 /// Slider thumb border (hover)
@@ -320,12 +320,19 @@ pub mod sets {
         pressed: super::SLIDER_BAR_PRESSED,
         disabled: super::SLIDER_BAR_DISABLED,
     };
-    /// Slider thumb
-    pub const SLIDER_THUMB: InteractionTokens = InteractionTokens {
-        base: super::SLIDER_THUMB,
-        hover: super::SLIDER_THUMB_HOVER,
-        pressed: super::SLIDER_THUMB_PRESSED,
-        disabled: super::SLIDER_THUMB_DISABLED,
+    /// Slider thumb inner
+    pub const SLIDER_THUMB_INNER: InteractionTokens = InteractionTokens {
+        base: super::SLIDER_THUMB_INNER,
+        hover: super::SLIDER_THUMB_INNER_HOVER,
+        pressed: super::SLIDER_THUMB_INNER_PRESSED,
+        disabled: super::SLIDER_THUMB_INNER_DISABLED,
+    };
+    /// Slider thumb border
+    pub const SLIDER_THUMB_BORDER: InteractionTokens = InteractionTokens {
+        base: super::SLIDER_THUMB_BORDER,
+        hover: super::SLIDER_THUMB_BORDER_HOVER,
+        pressed: super::SLIDER_THUMB_BORDER_PRESSED,
+        disabled: super::SLIDER_THUMB_BORDER_DISABLED,
     };
     /// Scrollbar thumb (never disabled; `disabled` falls back to `base`).
     pub const SCROLLBAR_THUMB: InteractionTokens = InteractionTokens {

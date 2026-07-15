@@ -18,7 +18,7 @@ use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    LayoutConfig, Node, PositionType, percent, px,
+    Node, PositionType, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
@@ -27,7 +27,7 @@ use crate::{
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient,
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
         ThemeBorderColor,
     },
     tokens,
@@ -110,19 +110,15 @@ impl PlumeRadio {
                         ThemeBorderColor(tokens::RADIO_BORDER)
                     ),
                     (
-                        // Center mark dot; too small to benefit from a gradient.
                         Node {
                             width: px(12),
                             height: px(12),
                             border: px(2),
                             border_radius: BorderRadius::MAX,
                         }
-                        LayoutConfig {
-                            use_rounding: false,
-                        }
                         RadioMark
                         Visibility::Hidden
-                        ThemeBackgroundColor(tokens::RADIO_MARK)
+                        ThemeBackgroundGradient(tokens::RADIO_MARK)
                     )
                 ]),
                 {props.caption}
@@ -213,7 +209,7 @@ fn update_radio_styles(
     q_children: Query<&Children>,
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
-    q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
+    q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut commands: Commands,
 ) {
     for (radio_ent, disabled, checked, font_color) in q_radios.iter() {
@@ -244,7 +240,7 @@ fn update_radio_styles_remove(
     q_children: Query<&Children>,
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
-    q_mark: Query<&ThemeBackgroundColor, With<RadioMark>>,
+    q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut commands: Commands,
@@ -278,7 +274,7 @@ fn apply_radio_styles(
     q_children: &Query<&Children>,
     q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: &Query<&ThemeBorderColor, With<RadioOutline>>,
-    q_mark: &Query<&ThemeBackgroundColor, With<RadioMark>>,
+    q_mark: &Query<&ThemeBackgroundGradient, With<RadioMark>>,
     commands: &mut Commands,
 ) {
     let Some(bg_ent) = q_children
@@ -327,7 +323,7 @@ fn set_radio_styles(
     checked: bool,
     bg: &ThemeBackgroundGradient,
     outline_border: &ThemeBorderColor,
-    mark_color: &ThemeBackgroundColor,
+    mark_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
     commands: &mut Commands,
 ) {
@@ -365,10 +361,10 @@ fn set_radio_styles(
     }
 
     // Change mark color
-    if mark_color.0 != mark_token {
+    if mark_color.0 != mark_token || bg.1 != bg_gradient_amount {
         commands
             .entity(mark_ent)
-            .insert(ThemeBackgroundColor(mark_token));
+            .insert(ThemeBackgroundGradient(mark_token, bg_gradient_amount));
     }
 
     // Change mark visibility

@@ -1,9 +1,4 @@
 //! Editable text field and its decorative container.
-//!
-//! A [`PlumeTextInput`] is a frame (background, border, sizing, focus ring) wrapping an inner
-//! editable [`TextInputField`] child plus an optional, non-interactive suffix label (a unit such
-//! as `px`, `%`, or `°`). The editable child is a taffy leaf — its glyphs come from the text
-//! editor's own buffer, so the suffix cannot live inside it and must be a sibling under the frame.
 use bevy_app::{Plugin, PreUpdate, PropagateOver};
 use bevy_ecs::{
     change_detection::DetectChanges,
@@ -176,15 +171,15 @@ fn update_text_input_styles(
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
-    for frame in q_frames.iter() {
-        let Some(field) = field_of(frame, &q_children, &q_is_field) else {
+    for frame_ent in q_frames.iter() {
+        let Some(field_ent) = get_field_ent(frame_ent, &q_children, &q_is_field) else {
             continue;
         };
-        if focus.get() == Some(field) {
+        if focus.get() == Some(field_ent) {
             focus.clear();
         }
         set_text_input_styles(
-            frame, field, true, false, &q_bg, &q_border, &q_text, &mut commands,
+            frame_ent, field_ent, true, false, &q_bg, &q_border, &q_text, &mut commands,
         );
     }
 }
@@ -200,13 +195,13 @@ fn update_text_input_styles_remove(
     focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
-    removed_disabled.read().for_each(|frame| {
-        if q_frames.contains(frame)
-            && let Some(field) = field_of(frame, &q_children, &q_is_field)
+    removed_disabled.read().for_each(|frame_ent| {
+        if q_frames.contains(frame_ent)
+            && let Some(field_ent) = get_field_ent(frame_ent, &q_children, &q_is_field)
         {
-            let focused = focus.get() == Some(field);
+            let focused = focus.get() == Some(field_ent);
             set_text_input_styles(
-                frame, field, false, focused, &q_bg, &q_border, &q_text, &mut commands,
+                frame_ent, field_ent, false, focused, &q_bg, &q_border, &q_text, &mut commands,
             );
         }
     });
@@ -226,25 +221,25 @@ fn update_text_input_styles_focus(
     if !focus.is_changed() {
         return;
     }
-    for (frame, disabled) in q_frames.iter() {
-        let Some(field) = field_of(frame, &q_children, &q_is_field) else {
+    for (frame_ent, disabled) in q_frames.iter() {
+        let Some(field_ent) = get_field_ent(frame_ent, &q_children, &q_is_field) else {
             continue;
         };
-        let focused = focus.get() == Some(field);
+        let focused = focus.get() == Some(field_ent);
         set_text_input_styles(
-            frame, field, disabled, focused, &q_bg, &q_border, &q_text, &mut commands,
+            frame_ent, field_ent, disabled, focused, &q_bg, &q_border, &q_text, &mut commands,
         );
     }
 }
 
 /// The editable [`TextInputField`] child of a frame, or `None` while the frame's children are still
 /// being spawned.
-fn field_of(
-    frame: Entity,
+fn get_field_ent(
+    frame_ent: Entity,
     q_children: &Query<&Children>,
     q_is_field: &Query<(), With<TextInputField>>,
 ) -> Option<Entity> {
-    let children = q_children.get(frame).ok()?;
+    let children = q_children.get(frame_ent).ok()?;
     children
         .iter()
         .find(|&&child| q_is_field.contains(child))
@@ -253,8 +248,8 @@ fn field_of(
 
 #[allow(clippy::too_many_arguments)]
 fn set_text_input_styles(
-    frame: Entity,
-    field: Entity,
+    frame_ent: Entity,
+    field_ent: Entity,
     disabled: bool,
     focused: bool,
     q_bg: &Query<&ThemeBackgroundColor>,
@@ -287,32 +282,32 @@ fn set_text_input_styles(
 
     // Background and border chrome live on the frame. Skip redundant re-inserts so a focus
     // change doesn't churn change detection on inputs that already have the right tokens.
-    if !q_bg.get(frame).is_ok_and(|bg| bg.0 == bg_token) {
+    if !q_bg.get(frame_ent).is_ok_and(|bg| bg.0 == bg_token) {
         commands
-            .entity(frame)
+            .entity(frame_ent)
             .insert(ThemeBackgroundColor(bg_token));
     }
-    if !q_border.get(frame).is_ok_and(|border| border.0 == border_token) {
+    if !q_border.get(frame_ent).is_ok_and(|border| border.0 == border_token) {
         commands
-            .entity(frame)
+            .entity(frame_ent)
             .insert(ThemeBorderColor(border_token));
     }
 
     // Text color lives on the editable field itself.
-    if !q_text.get(field).is_ok_and(|text| text.0 == font_token) {
-        commands.entity(field).insert(ThemeTextColor(font_token));
+    if !q_text.get(field_ent).is_ok_and(|text| text.0 == font_token) {
+        commands.entity(field_ent).insert(ThemeTextColor(font_token));
     }
 
     commands
-        .entity(frame)
+        .entity(frame_ent)
         .insert(EntityCursor::System(cursor_shape));
 
     // Without this a disabled input still acquires focus through the click-to-focus resolver
     // (`acquire_focus_tab_index`), and focus draws the blinking caret.
     if disabled {
-        commands.entity(field).remove::<TabIndex>();
+        commands.entity(field_ent).remove::<TabIndex>();
     } else {
-        commands.entity(field).insert(TabIndex(0));
+        commands.entity(field_ent).insert(TabIndex(0));
     }
 }
 
