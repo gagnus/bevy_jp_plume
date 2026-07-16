@@ -285,7 +285,7 @@ fn set_text_input_styles(
             tokens::TEXT_INPUT_BORDER_DISABLED,
         ),
         (false, true) => (
-            tokens::TEXT_INPUT_BG,
+            tokens::TEXT_INPUT_BG_ACTIVE,
             tokens::TEXT_INPUT_TEXT_ACTIVE,
             tokens::TEXT_INPUT_BORDER_ACTIVE,
         ),

@@ -16,14 +16,11 @@ use bevy_ecs::{
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{Checked, InteractionDisabled, Node, PositionType, UiRect, Val, percent, px};
+use bevy_ui::{BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val, percent, px};
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor},
-    tokens,
+    constants::size, cursor::EntityCursor, theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow}, tokens,
 };
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
@@ -54,6 +51,7 @@ impl PlumeToggleSwitch {
             PlumeToggleSwitch
             on(checkbox_self_update)
             ThemeBackgroundGradient(tokens::SWITCH_BG, GRADIENT_AMOUNT)
+            template_value(control_box_shadow())
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             Children [
@@ -68,7 +66,7 @@ impl PlumeToggleSwitch {
                         border: size::CONTROL_BORDER,
                         border_radius: px(9),
                     }
-                    SwitchOutline
+                    ToggleSwitchOutline
                     ThemeBorderColor(tokens::SWITCH_BORDER)
                 ),
                 (
@@ -85,6 +83,7 @@ impl PlumeToggleSwitch {
                     }
                     ToggleSwitchSlide
                     ThemeBackgroundGradient(tokens::SWITCH_SLIDE_BG, SLIDE_GRADIENT_AMOUNT)
+                    template_value(control_box_shadow())
                 )
             ]
         }
@@ -94,7 +93,7 @@ impl PlumeToggleSwitch {
 /// Marker for the toggle switch border ring
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SwitchOutline;
+struct ToggleSwitchOutline;
 
 /// Marker for the toggle switch slide
 #[derive(Component, Default, Clone, Reflect)]
@@ -120,8 +119,8 @@ fn update_switch_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<SwitchOutline>>,
-    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient), With<ToggleSwitchSlide>>,
+    q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     mut commands: Commands,
 ) {
     for (switch_ent, disabled, checked, pill_bg) in q_switches.iter() {
@@ -149,8 +148,8 @@ fn update_switch_styles_remove(
         With<PlumeToggleSwitch>,
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<SwitchOutline>>,
-    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient), With<ToggleSwitchSlide>>,
+    q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut commands: Commands,
@@ -181,8 +180,8 @@ fn apply_switch_styles(
     checked: bool,
     pill_bg: &ThemeBackgroundGradient,
     q_children: &Query<&Children>,
-    q_outline: &Query<&ThemeBorderColor, With<SwitchOutline>>,
-    q_slide: &mut Query<(&mut Node, &ThemeBackgroundGradient), With<ToggleSwitchSlide>>,
+    q_outline: &Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    q_slide: &mut Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     commands: &mut Commands,
 ) {
     let Some(outline_ent) = q_children
@@ -199,7 +198,7 @@ fn apply_switch_styles(
     };
     // Safety: both entities were just confirmed present in their queries.
     let outline_border = q_outline.get(outline_ent).unwrap();
-    let (ref mut slide_style, slide_bg) = q_slide.get_mut(slide_ent).unwrap();
+    let (ref mut slide_style, slide_bg, has_box_shadow) = q_slide.get_mut(slide_ent).unwrap();
     set_switch_styles(
         switch_ent,
         outline_ent,
@@ -210,6 +209,7 @@ fn apply_switch_styles(
         outline_border,
         slide_style,
         slide_bg,
+        has_box_shadow,
         commands,
     );
 }
@@ -224,6 +224,7 @@ fn set_switch_styles(
     outline_border: &ThemeBorderColor,
     slide_style: &mut Mut<Node>,
     slide_bg: &ThemeBackgroundGradient,
+    has_box_shadow: bool,
     commands: &mut Commands,
 ) {
     let outline_border_token = tokens::sets::SWITCH_BORDER.pick(checked, disabled);
@@ -274,6 +275,15 @@ fn set_switch_styles(
     }
     if slide_style.right != slide_right {
         slide_style.right = slide_right;
+    }
+
+    let should_have_box_shadow = !disabled;
+    if should_have_box_shadow && !has_box_shadow {
+        commands.entity(slide_ent).insert(control_box_shadow());
+        commands.entity(switch_ent).insert(control_box_shadow());
+    } else if !should_have_box_shadow && has_box_shadow {
+        commands.entity(slide_ent).remove::<BoxShadow>();
+        commands.entity(switch_ent).remove::<BoxShadow>();
     }
 
     // Change cursor shape

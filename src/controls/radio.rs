@@ -17,19 +17,14 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    Node, PositionType, percent, px,
+    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
-    constants::{fonts, size},
-    cursor::EntityCursor,
-    font_styles::InheritableFont,
-    theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
-    },
-    tokens,
+    constants::{fonts, size}, cursor::EntityCursor, font_styles::InheritableFont, theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow,
+    }, tokens,
 };
 
 /// A radio widget.
@@ -194,6 +189,7 @@ fn update_radio_styles(
             Has<InteractionDisabled>,
             Has<Checked>,
             &InheritableThemeTextColor,
+            Has<BoxShadow>,
         ),
         (
             With<RadioButton>,
@@ -211,7 +207,7 @@ fn update_radio_styles(
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut commands: Commands,
 ) {
-    for (radio_ent, disabled, checked, font_color) in q_radios.iter() {
+    for (radio_ent, disabled, checked, font_color, has_box_shadow) in q_radios.iter() {
         apply_radio_styles(
             radio_ent,
             disabled,
@@ -221,6 +217,7 @@ fn update_radio_styles(
             &q_bg,
             &q_outline,
             &q_mark,
+            has_box_shadow,
             &mut commands,
         );
     }
@@ -233,6 +230,7 @@ fn update_radio_styles_remove(
             Has<InteractionDisabled>,
             Has<Checked>,
             &InheritableThemeTextColor,
+            Has<BoxShadow>,
         ),
         With<RadioButton>,
     >,
@@ -248,7 +246,7 @@ fn update_radio_styles_remove(
         .read()
         .chain(removed_checked.read())
         .for_each(|ent| {
-            if let Ok((radio_ent, disabled, checked, font_color)) = q_radios.get(ent) {
+            if let Ok((radio_ent, disabled, checked, font_color, has_box_shadow)) = q_radios.get(ent) {
                 apply_radio_styles(
                     radio_ent,
                     disabled,
@@ -258,6 +256,7 @@ fn update_radio_styles_remove(
                     &q_bg,
                     &q_outline,
                     &q_mark,
+                    has_box_shadow,
                     &mut commands,
                 );
             }
@@ -274,6 +273,7 @@ fn apply_radio_styles(
     q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: &Query<&ThemeBorderColor, With<RadioOutline>>,
     q_mark: &Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    has_box_shadow: bool,
     commands: &mut Commands,
 ) {
     let Some(bg_ent) = q_children
@@ -309,6 +309,7 @@ fn apply_radio_styles(
         outline_border,
         mark_color,
         font_color,
+        has_box_shadow,
         commands,
     );
 }
@@ -324,6 +325,7 @@ fn set_radio_styles(
     outline_border: &ThemeBorderColor,
     mark_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
+    has_box_shadow: bool,
     commands: &mut Commands,
 ) {
     let outline_border_token = tokens::sets::RADIO_BORDER.pick(checked, disabled);
@@ -377,6 +379,14 @@ fn set_radio_styles(
         commands
             .entity(radio_ent)
             .insert(InheritableThemeTextColor(font_color_token));
+    }
+    
+    // Checked & Selected has a box shadow
+    let should_have_box_shadow = checked && !disabled;
+    if should_have_box_shadow && !has_box_shadow {
+        commands.entity(bg_ent).insert(control_box_shadow());
+    } else if !should_have_box_shadow && has_box_shadow {
+        commands.entity(bg_ent).remove::<BoxShadow>();
     }
 
     // Change cursor shape

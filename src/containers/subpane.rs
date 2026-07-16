@@ -17,17 +17,12 @@ use bevy_picking::{
     events::{Click, Pointer},
 };
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy_text::FontWeight;
 use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text};
 
 use crate::{
-    constants::{font_awesome, fonts, size},
-    display::fa_icon_solid,
-    font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
-    tokens,
+    constants::{font_awesome, fonts, size}, display::fa_icon_solid, font_styles::InheritableFont, rounded_corners::RoundedCorners, theme::{GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient, control_box_shadow}, tokens,
 };
 
 /// A sub-pane: a header bar over a body. Collapsible by default — clicking the
@@ -91,8 +86,10 @@ impl PlumeSubpane {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
+                border_radius: px(size::CORNER_RADIUS),
             }
             PlumeSubpane { collapsible: {props.collapsible} }
+            ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
             Children [
                 (
                     Node {
@@ -105,8 +102,9 @@ impl PlumeSubpane {
                         column_gap: size::GAP_TIGHT,
                         border_radius: px(size::CORNER_RADIUS),
                     }
+                    template_value(control_box_shadow())
                     SubpaneHeader
-                    ThemeBackgroundColor(tokens::SUBPANE_HEADER_BG)
+                    ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, GRADIENT_AMOUNT)
                     InheritableThemeTextColor(tokens::SUBPANE_HEADER_TEXT)
                     InheritableFont {
                         font: fonts::REGULAR,
@@ -127,7 +125,6 @@ impl PlumeSubpane {
                         padding: size::PAD,
                     }
                     SubpaneBody
-                    ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
                     InheritableFont {
                         font: fonts::REGULAR,
                         font_size: size::MEDIUM_FONT,

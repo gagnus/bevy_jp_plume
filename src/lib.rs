@@ -18,7 +18,7 @@ use crate::{
     alpha_pattern::{AlphaPatternMaterial, AlphaPatternResource},
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
-    theme::{ThemePlugin, ThemedText, UiTheme},
+    theme::{ThemePlugin, ThemedText},
 };
 
 mod alpha_pattern;

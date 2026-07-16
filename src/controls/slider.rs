@@ -18,18 +18,14 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    AlignItems, BackgroundGradient, BorderRadius, ColorStop, Gradient, InteractionDisabled,
-    InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
+    AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient, InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderRange, SliderValue, TrackClick, slider_self_update,
 };
 
 use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme},
-    tokens,
+    constants::size, cursor::EntityCursor, theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow}, tokens,
 };
 
 /// A slider widget.
@@ -88,7 +84,7 @@ impl PlumeSlider {
                         width: percent(100.),
                         border_radius: {BorderRadius::all(px(2))},
                     }
-                    PlumeSliderTrack
+                    SliderTrack
                     // Bar/track drawn as a gradient, seeded from the theme so the
                     // slider is styled on its first frame regardless of scene-application order.
                     template(|ctx| {
@@ -121,21 +117,9 @@ impl PlumeSlider {
                         },
                         border_radius: BorderRadius::MAX,
                     }
-                    PlumeSliderThumbBorder
-                    ThemeBackgroundGradient(tokens::SLIDER_THUMB_BORDER, GRADIENT_AMOUNT)
-                    Children [
-                        (
-                            Node {
-                                width: percent(60),
-                                height: percent(60),
-                                left: percent(20),
-                                top: percent(20),
-                                border_radius: BorderRadius::MAX,
-                            }
-                            PlumeSliderThumbInner
-                            ThemeBackgroundGradient(tokens::SLIDER_THUMB_INNER)
-                        )
-                    ]
+                    template_value(control_box_shadow())
+                    SliderThumb
+                    ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
                 )
             ]
         }
@@ -145,17 +129,12 @@ impl PlumeSlider {
 /// Marker for the track strip
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct PlumeSliderTrack;
+struct SliderTrack;
 
 /// Marker for the thumb
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct PlumeSliderThumbInner;
-
-/// Marker for the thumb border
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-struct PlumeSliderThumbBorder;
+struct SliderThumb;
 
 fn update_slider_styles(
     q_sliders: Query<
@@ -166,9 +145,8 @@ fn update_slider_styles(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumb_inners: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbInner>>,
-    q_thumb_borders: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbBorder>>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
+    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -180,8 +158,7 @@ fn update_slider_styles(
             hovered.0,
             &q_children,
             &mut q_tracks,
-            &q_thumb_inners,
-            &q_thumb_borders,
+            &q_thumbs,
             &theme,
             &mut commands,
         );
@@ -193,9 +170,8 @@ fn update_slider_styles_remove(
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
     q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumb_inners: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbInner>>,
-    q_thumb_borders: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbBorder>>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
+    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -211,8 +187,7 @@ fn update_slider_styles_remove(
                     hovered.0,
                     &q_children,
                     &mut q_tracks,
-                    &q_thumb_inners,
-                    &q_thumb_borders,
+                    &q_thumbs,
                     &theme,
                     &mut commands,
                 );
@@ -224,9 +199,8 @@ fn update_slider_styles_remove(
 fn update_slider_styles_theme(
     q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumb_inners: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbInner>>,
-    q_thumb_borders: Query<&ThemeBackgroundGradient, With<PlumeSliderThumbBorder>>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
+    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -241,8 +215,7 @@ fn update_slider_styles_theme(
             hovered.0,
             &q_children,
             &mut q_tracks,
-            &q_thumb_inners,
-            &q_thumb_borders,
+            &q_thumbs,
             &theme,
             &mut commands,
         );
@@ -256,9 +229,8 @@ fn apply_slider_styles(
     pressed: bool,
     hovered: bool,
     q_children: &Query<&Children>,
-    q_tracks: &mut Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    q_thumb_inners: &Query<&ThemeBackgroundGradient, With<PlumeSliderThumbInner>>,
-    q_thumb_borders: &Query<&ThemeBackgroundGradient, With<PlumeSliderThumbBorder>>,
+    q_tracks: &mut Query<&mut BackgroundGradient, With<SliderTrack>>,
+    q_thumbs: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
@@ -268,33 +240,25 @@ fn apply_slider_styles(
     else {
         return;
     };
-    let Some(thumb_inner_ent) = q_children
+    let Some(thumb_ent) = q_children
         .iter_descendants(slider_ent)
-        .find(|en| q_thumb_inners.contains(*en))
-    else {
-        return;
-    };
-    let Some(thumb_border_ent) = q_children
-        .iter_descendants(slider_ent)
-        .find(|en| q_thumb_borders.contains(*en))
+        .find(|en| q_thumbs.contains(*en))
     else {
         return;
     };
 
     // Safety: all three entities were just confirmed present in their queries.
     let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
-    let thumb_inner_gradient_color = q_thumb_inners.get(thumb_inner_ent).unwrap();
-    let thumb_border_gradient_color = q_thumb_borders.get(thumb_border_ent).unwrap();
+    let (thumb_gradient_color, has_box_shadow) = q_thumbs.get(thumb_ent).unwrap();
     set_slider_styles(
         slider_ent,
-        thumb_inner_ent,
-        thumb_border_ent,
+        thumb_ent,
         disabled,
         pressed,
         hovered,
         &mut track_background_gradient,
-        thumb_inner_gradient_color,
-        thumb_border_gradient_color,
+        thumb_gradient_color,
+        has_box_shadow,
         theme,
         commands,
     );
@@ -303,20 +267,18 @@ fn apply_slider_styles(
 fn set_slider_styles(
     slider_ent: Entity,
     thumb_ent: Entity,
-    thumb_border_ent: Entity,
     disabled: bool,
     pressed: bool,
     hovered: bool,
     track_background_gradient: &mut BackgroundGradient,
-    thumb_inner_gradient_color: &ThemeBackgroundGradient,
-    thumb_border_gradient_color: &ThemeBackgroundGradient,
+    thumb_gradient_color: &ThemeBackgroundGradient,
+    has_box_shadow: bool,
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
     let bar_color = theme.color(&tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered));
     let bg_color = theme.color(&tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered));
-    let thumb_inner_token = tokens::sets::SLIDER_THUMB_INNER.pick(disabled, pressed, hovered);
-    let thumb_border_token = tokens::sets::SLIDER_THUMB_BORDER.pick(disabled, pressed, hovered);
+    let thumb_token = tokens::sets::SLIDER_THUMB.pick(disabled, pressed, hovered);
 
     // Disabled thumb reads inert: flat fill, no gradient.
     let thumb_gradient_amount = if disabled { 0.0 } else { GRADIENT_AMOUNT };
@@ -333,24 +295,22 @@ fn set_slider_styles(
         linear_gradient.stops[3].color = bg_color;
     }
 
-    if thumb_inner_gradient_color.0 != thumb_inner_token
-        || thumb_inner_gradient_color.1 != thumb_gradient_amount
-    {
-        commands.entity(thumb_ent).insert(ThemeBackgroundGradient(
-            thumb_inner_token,
-            thumb_gradient_amount,
-        ));
-    }
-
-    if thumb_border_gradient_color.0 != thumb_border_token
-        || thumb_border_gradient_color.1 != thumb_gradient_amount
+    if thumb_gradient_color.0 != thumb_token
+        || thumb_gradient_color.1 != thumb_gradient_amount
     {
         commands
-            .entity(thumb_border_ent)
+            .entity(thumb_ent)
             .insert(ThemeBackgroundGradient(
-                thumb_border_token,
+                thumb_token,
                 thumb_gradient_amount,
             ));
+    }
+
+    let should_have_box_shadow = !disabled;
+    if should_have_box_shadow && !has_box_shadow {
+        commands.entity(thumb_ent).insert(control_box_shadow());
+    } else if !should_have_box_shadow && has_box_shadow {
+        commands.entity(thumb_ent).remove::<BoxShadow>();
     }
 
     // Change cursor shape
@@ -372,8 +332,8 @@ fn update_slider_pos(
         ),
     >,
     q_children: Query<&Children>,
-    mut q_tracks: Query<&mut BackgroundGradient, With<PlumeSliderTrack>>,
-    mut q_thumbs: Query<&mut Node, With<PlumeSliderThumbBorder>>,
+    mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
+    mut q_thumbs: Query<&mut Node, With<SliderThumb>>,
 ) {
     for (slider_ent, value, range) in q_sliders.iter() {
         let percent_value = (range.thumb_position(value.0) * 100.0).clamp(0.0, 100.0);

@@ -14,16 +14,11 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, InteractionDisabled, JustifyContent, Node, Pressed, UiRect};
+use bevy_ui::{AlignItems, BoxShadow, InteractionDisabled, JustifyContent, Node, Pressed, UiRect};
 use bevy_ui_widgets::Button;
 
 use crate::{
-    constants::{fonts, size},
-    cursor::EntityCursor,
-    font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
-    theme::{GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient},
-    tokens,
+    constants::{fonts, size}, cursor::EntityCursor, font_styles::InheritableFont, rounded_corners::RoundedCorners, theme::{GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, control_box_shadow}, tokens,
 };
 
 /// Color variants for buttons. This also functions as a component used by the dynamic styling
@@ -76,6 +71,7 @@ impl Default for PlumeButtonProps {
 
 impl PlumeButton {
     fn scene(props: PlumeButtonProps) -> impl Scene {
+        let box_shadow = (props.variant != ButtonVariant::Plain).then(|| bsn! { template_value(control_box_shadow()) });
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -86,6 +82,7 @@ impl PlumeButton {
             }
             Button
             template_value(props.variant)
+            {box_shadow}
             Hovered
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
@@ -140,6 +137,7 @@ fn update_button_styles(
             &Hovered,
             &ThemeBackgroundGradient,
             &InheritableThemeTextColor,
+            Has<BoxShadow>,
         ),
         Or<(
             Changed<Hovered>,
@@ -150,7 +148,7 @@ fn update_button_styles(
     >,
     mut commands: Commands,
 ) {
-    for (button_ent, variant, disabled, pressed, hovered, bg_color, font_color) in q_buttons.iter()
+    for (button_ent, variant, disabled, pressed, hovered, bg_color, font_color, has_box_shadow) in q_buttons.iter()
     {
         set_button_styles(
             button_ent,
@@ -160,6 +158,7 @@ fn update_button_styles(
             hovered.0,
             bg_color,
             font_color,
+            has_box_shadow,
             &mut commands,
         );
     }
@@ -174,6 +173,7 @@ fn update_button_styles_remove(
         &Hovered,
         &ThemeBackgroundGradient,
         &InheritableThemeTextColor,
+        Has<BoxShadow>,
     )>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_pressed: RemovedComponents<Pressed>,
@@ -183,7 +183,7 @@ fn update_button_styles_remove(
         .read()
         .chain(removed_pressed.read())
         .for_each(|ent| {
-            if let Ok((button_ent, variant, disabled, pressed, hovered, bg_color, font_color)) =
+            if let Ok((button_ent, variant, disabled, pressed, hovered, bg_color, font_color, has_box_shadow)) =
                 q_buttons.get(ent)
             {
                 set_button_styles(
@@ -194,6 +194,7 @@ fn update_button_styles_remove(
                     hovered.0,
                     bg_color,
                     font_color,
+                    has_box_shadow,
                     &mut commands,
                 );
             }
@@ -208,6 +209,7 @@ fn set_button_styles(
     hovered: bool,
     bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
+    has_box_shadow: bool,
     commands: &mut Commands,
 ) {
     let bg_set = match variant {
@@ -243,6 +245,14 @@ fn set_button_styles(
         commands
             .entity(button_ent)
             .insert(InheritableThemeTextColor(font_color_token));
+    }
+
+    // Add/Remove box shadow
+    let should_have_box_shadow = (*variant != ButtonVariant::Plain || hovered || pressed) && !disabled;
+    if should_have_box_shadow && !has_box_shadow {
+        commands.entity(button_ent).insert(control_box_shadow());
+    } else if !should_have_box_shadow && has_box_shadow {
+        commands.entity(button_ent).remove::<BoxShadow>();
     }
 
     // Change cursor shape

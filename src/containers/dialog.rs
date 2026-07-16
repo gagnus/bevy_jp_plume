@@ -76,7 +76,7 @@ impl PlumeDialog {
             InheritableThemeTextColor(tokens::TEXT_MAIN)
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
-                px(0),
+                px(4),
                 px(8),
                 px(4),
                 px(16),

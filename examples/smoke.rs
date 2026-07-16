@@ -350,8 +350,8 @@ impl Ramp {
     /// Max chroma for this ramp's chroma slider (neutrals/text stay near-grey).
     fn chroma_max(self) -> f32 {
         match self {
-            Ramp::Accent => 0.3,
-            Ramp::Neutral | Ramp::Text => 0.05,
+            Ramp::Accent => 0.5,
+            Ramp::Neutral | Ramp::Text => 0.2,
         }
     }
 

@@ -1,6 +1,6 @@
 //! A framework for theming.
 use bevy_app::{App, HierarchyPropagatePlugin, Plugin, PostUpdate, Propagate, PropagateOver};
-use bevy_color::{Alpha, Color, Luminance, Oklcha, palettes};
+use bevy_color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
@@ -17,8 +17,7 @@ use bevy_platform::collections::HashMap;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{
-    BackgroundColor, BackgroundGradient, BorderColor, ColorStop, Gradient, InterpolationColorSpace,
-    LinearGradient, percent,
+    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient, InterpolationColorSpace, LinearGradient, percent, px,
 };
 use smol_str::SmolStr;
 
@@ -179,6 +178,16 @@ fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
         ],
         color_space: InterpolationColorSpace::LinearRgba,
     })])
+}
+
+pub fn control_box_shadow() -> BoxShadow {
+    BoxShadow::new(
+        Srgba::BLACK.with_alpha(0.4).into(),
+        px(1),
+        px(2),
+        px(0),
+        px(2),
+    )
 }
 
 /// Component which causes the border color of an entity to be set based on a theme color.
@@ -711,14 +720,10 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SLIDER_BAR_HOVER, ThemeSlot::Accent1),
     (tokens::SLIDER_BAR_PRESSED, ThemeSlot::Accent2),
     (tokens::SLIDER_BAR_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SLIDER_THUMB_INNER, ThemeSlot::Contrast),
-    (tokens::SLIDER_THUMB_INNER_HOVER, ThemeSlot::Contrast),
-    (tokens::SLIDER_THUMB_INNER_PRESSED, ThemeSlot::Contrast),
-    (tokens::SLIDER_THUMB_INNER_DISABLED, ThemeSlot::Transparent),
-    (tokens::SLIDER_THUMB_BORDER, ThemeSlot::Accent0),
-    (tokens::SLIDER_THUMB_BORDER_HOVER, ThemeSlot::Accent1),
-    (tokens::SLIDER_THUMB_BORDER_PRESSED, ThemeSlot::Accent2),
-    (tokens::SLIDER_THUMB_BORDER_DISABLED, ThemeSlot::Neutral3),
+    (tokens::SLIDER_THUMB, ThemeSlot::Accent0),
+    (tokens::SLIDER_THUMB_HOVER, ThemeSlot::Accent1),
+    (tokens::SLIDER_THUMB_PRESSED, ThemeSlot::Accent2),
+    (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral3),
     (tokens::SCROLLBAR_BG, ThemeSlot::Neutral0),
     (tokens::SCROLLBAR_THUMB, ThemeSlot::Neutral4),
     (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Neutral5),
@@ -768,6 +773,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral1),
+    (tokens::TEXT_INPUT_BG_ACTIVE, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text1),
     (tokens::TEXT_INPUT_TEXT_ACTIVE, ThemeSlot::Text0),

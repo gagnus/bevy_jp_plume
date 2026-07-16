@@ -18,19 +18,14 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
-    PositionType, UiRect, UiTransform, px,
+    AlignItems, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, UiRect, UiTransform, px,
 };
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
-    constants::{fonts, size},
-    cursor::EntityCursor,
-    font_styles::InheritableFont,
-    theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
-    },
-    tokens,
+    constants::{fonts, size}, cursor::EntityCursor, font_styles::InheritableFont, theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow,
+    }, tokens,
 };
 
 /// A checkbox widget.
@@ -166,7 +161,7 @@ fn update_checkbox_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut commands: Commands,
@@ -197,7 +192,7 @@ fn update_checkbox_styles_remove(
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
-    q_bg: Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
@@ -231,7 +226,7 @@ fn apply_checkbox_styles(
     checked: bool,
     font_color: &InheritableThemeTextColor,
     q_children: &Query<&Children>,
-    q_bg: &Query<&ThemeBackgroundGradient, With<CheckboxBg>>,
+    q_bg: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: &Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: &Query<&ThemeBorderColor, With<CheckboxMark>>,
     commands: &mut Commands,
@@ -255,7 +250,7 @@ fn apply_checkbox_styles(
         return;
     };
     // Safety: all three entities were just confirmed present in their queries.
-    let bg_color = q_bg.get(bg_ent).unwrap();
+    let (bg_color, has_box_shadow) = q_bg.get(bg_ent).unwrap();
     let outline_color = q_outline.get(outline_ent).unwrap();
     let mark_color = q_mark.get(mark_ent).unwrap();
     set_checkbox_styles(
@@ -269,6 +264,7 @@ fn apply_checkbox_styles(
         outline_color,
         mark_color,
         font_color,
+        has_box_shadow,
         commands,
     );
 }
@@ -284,6 +280,7 @@ fn set_checkbox_styles(
     outline_color: &ThemeBorderColor,
     mark_color: &ThemeBorderColor,
     font_color: &InheritableThemeTextColor,
+    has_box_shadow: bool,
     commands: &mut Commands,
 ) {
     let outline_token = tokens::sets::CHECKBOX_BORDER.pick(checked, disabled);
@@ -337,6 +334,14 @@ fn set_checkbox_styles(
         commands
             .entity(checkbox_ent)
             .insert(InheritableThemeTextColor(font_color_token));
+    }
+
+    // Checked & Selected has a box shadow
+    let should_have_box_shadow = checked && !disabled;
+    if should_have_box_shadow && !has_box_shadow {
+        commands.entity(bg_ent).insert(control_box_shadow());
+    } else if !should_have_box_shadow && has_box_shadow {
+        commands.entity(bg_ent).remove::<BoxShadow>();
     }
 
     // Change cursor shape
