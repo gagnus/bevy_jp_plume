@@ -24,7 +24,7 @@ use bevy_ui_widgets::{
 use crate::{
     constants::{font_awesome, size},
     controls::{ButtonVariant, PlumeButton},
-    display::fa_icon_solid,
+    display::fa_icon,
     rounded_corners::RoundedCorners,
     theme::{ThemeBackgroundColor, ThemeBorderColor},
     tokens,
@@ -168,7 +168,7 @@ impl PlumeMenuButton {
                         Node {
                             flex_grow: 1.0,
                         },
-                        fa_icon_solid(font_awesome::FA_ANGLE_DOWN),
+                        fa_icon(font_awesome::solid::ANGLE_DOWN),
                     ))
                 }
             ]

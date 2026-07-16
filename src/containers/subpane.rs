@@ -22,7 +22,15 @@ use bevy_text::FontWeight;
 use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text};
 
 use crate::{
-    constants::{font_awesome, fonts, size}, display::fa_icon_solid, font_styles::InheritableFont, rounded_corners::RoundedCorners, theme::{GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient, control_box_shadow}, tokens,
+    constants::{font_awesome, fonts, size},
+    display::fa_icon,
+    font_styles::InheritableFont,
+    rounded_corners::RoundedCorners,
+    theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient,
+        control_box_shadow,
+    },
+    tokens,
 };
 
 /// A sub-pane: a header bar over a body. Collapsible by default — clicking the
@@ -113,7 +121,7 @@ impl PlumeSubpane {
                     }
                     on(toggle_subpane_collapse)
                     Children [
-                        {props.collapsible.then(|| bsn! { (fa_icon_solid(font_awesome::FA_ANGLE_DOWN) Node { width: px(16) } SubpaneChevron) })},
+                        {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: px(16) } SubpaneChevron) })},
                         {props.header}
                     ]
                 ),
@@ -202,9 +210,9 @@ fn update_subpane_collapse(
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
                 chevron.0 = if collapsed {
-                    font_awesome::FA_ANGLE_RIGHT.into()
+                    font_awesome::solid::ANGLE_RIGHT.glyph().into()
                 } else {
-                    font_awesome::FA_ANGLE_DOWN.into()
+                    font_awesome::solid::ANGLE_DOWN.glyph().into()
                 };
             }
         }

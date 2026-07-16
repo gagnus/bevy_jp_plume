@@ -5,7 +5,7 @@ use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, FontWeight, Te
 use bevy_ui::widget::Text;
 
 use crate::{
-    constants::{fonts, size},
+    constants::{FaIcon, fonts, size},
     theme::{ThemeTextColor, ThemedText},
     tokens,
 };
@@ -42,27 +42,16 @@ pub fn caption_small_caps(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// A caption within, say, a button.
-pub fn fa_icon_solid(icon_text: &'static str) -> impl Scene {
+/// A FontAwesome icon, drawn in the face its glyph belongs to.
+pub fn fa_icon(icon: FaIcon) -> impl Scene {
+    let glyph = icon.glyph();
+    let font_path = icon.face().font_path();
     bsn! {
-        Text(icon_text)
+        Text(glyph)
         PropagateOver<TextFont>
         ThemedText
         TextFont {
-            font: FontSourceTemplate::Handle(fonts::FA_SOLID),
-            font_size: size::MEDIUM_FONT,
-        }
-    }
-}
-
-/// A caption within, say, a button.
-pub fn fa_icon_regular(icon_text: &'static str) -> impl Scene {
-    bsn! {
-        Text(icon_text)
-        PropagateOver<TextFont>
-        ThemedText
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::FA_REGULAR),
+            font: FontSourceTemplate::Handle(font_path),
             font_size: size::MEDIUM_FONT,
         }
     }

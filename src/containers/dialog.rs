@@ -16,7 +16,7 @@ use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 use crate::{
     constants::{font_awesome, fonts, size},
     controls::{ButtonVariant, PlumeToolButton},
-    display::fa_icon_solid,
+    display::fa_icon,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
@@ -137,7 +137,7 @@ impl PlumeDialogClose {
         bsn! {
         @PlumeToolButton {
             @variant: ButtonVariant::Plain,
-            @caption: bsn! { fa_icon_solid(font_awesome::FA_XMARK) }
+            @caption: bsn! { fa_icon(font_awesome::solid::XMARK) }
         }
         on(|activate: On<Activate>, mut commands: Commands| {
             commands.trigger(RequestClose { source: activate.event_target() });

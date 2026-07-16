@@ -28,7 +28,7 @@ use crate::{
     constants::{font_awesome, fonts, size},
     controls::{PlumeScrollbar, ScrollbarGutter},
     cursor::EntityCursor,
-    display::{caption, fa_icon_solid},
+    display::{caption, fa_icon},
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
@@ -134,7 +134,7 @@ impl PlumeListRow {
             ListItem
             Children [(
                 // Hidden ticks still occupy layout, so every label shares the gutter.
-                fa_icon_solid(font_awesome::FA_CHECK)
+                fa_icon(font_awesome::solid::CHECK)
                 ListRowCheck
                 Visibility::Hidden
             )]

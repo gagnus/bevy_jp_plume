@@ -16,7 +16,7 @@ use bevy_jp_plume::{
         list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
-    display::{caption, caption_small_caps, fa_icon_solid, label_bright, label_dim},
+    display::{caption, caption_small_caps, fa_icon, label_bright, label_dim},
     theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme},
     tokens,
 };
@@ -215,7 +215,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
         Children [
             (
                 @PlumeButton {
-                    @caption: bsn_list! { fa_icon_solid(font_awesome::FA_WAND_MAGIC_SPARKLES), Node { width: px(10), }, caption("Button") }
+                    @caption: bsn_list! { fa_icon(font_awesome::solid::WAND_MAGIC_SPARKLES), Node { width: px(10), }, caption("Button") }
                 }
                 on(|_: On<Activate>| info!("button clicked"))
                 maybe_disabled(disabled)
@@ -610,7 +610,7 @@ fn debug_options_dialog() -> impl Scene {
                         (
                             @PlumeButton {
                                 @caption: bsn_list! {
-                                    fa_icon_solid(font_awesome::FA_ARROW_ROTATE_LEFT),
+                                    fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
                                     Node { width: px(6) },
                                     caption("Reset to defaults")
                                 }
