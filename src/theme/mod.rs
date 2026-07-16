@@ -17,7 +17,8 @@ use bevy_platform::collections::HashMap;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{
-    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient, InterpolationColorSpace, LinearGradient, percent, px,
+    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
+    InterpolationColorSpace, LinearGradient, percent, px,
 };
 use smol_str::SmolStr;
 

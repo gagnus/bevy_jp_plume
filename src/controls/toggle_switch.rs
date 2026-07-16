@@ -16,11 +16,16 @@ use bevy_ecs::{
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val, percent, px};
+use bevy_ui::{
+    BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val, percent, px,
+};
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
-    constants::size, cursor::EntityCursor, theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow}, tokens,
+    constants::size,
+    cursor::EntityCursor,
+    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
+    tokens,
 };
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
@@ -120,7 +125,10 @@ fn update_switch_styles(
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    mut q_slide: Query<
+        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     mut commands: Commands,
 ) {
     for (switch_ent, disabled, checked, pill_bg) in q_switches.iter() {
@@ -149,7 +157,10 @@ fn update_switch_styles_remove(
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    mut q_slide: Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    mut q_slide: Query<
+        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut commands: Commands,
@@ -181,7 +192,10 @@ fn apply_switch_styles(
     pill_bg: &ThemeBackgroundGradient,
     q_children: &Query<&Children>,
     q_outline: &Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    q_slide: &mut Query<(&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    q_slide: &mut Query<
+        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     commands: &mut Commands,
 ) {
     let Some(outline_ent) = q_children

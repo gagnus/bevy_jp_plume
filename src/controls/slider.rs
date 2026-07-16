@@ -18,14 +18,19 @@ use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient, InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed, UiRect, percent, px,
+    AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
+    InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
+    UiRect, percent, px,
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderRange, SliderValue, TrackClick, slider_self_update,
 };
 
 use crate::{
-    constants::size, cursor::EntityCursor, theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow}, tokens,
+    constants::size,
+    cursor::EntityCursor,
+    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
+    tokens,
 };
 
 /// A slider widget.
@@ -295,15 +300,10 @@ fn set_slider_styles(
         linear_gradient.stops[3].color = bg_color;
     }
 
-    if thumb_gradient_color.0 != thumb_token
-        || thumb_gradient_color.1 != thumb_gradient_amount
-    {
+    if thumb_gradient_color.0 != thumb_token || thumb_gradient_color.1 != thumb_gradient_amount {
         commands
             .entity(thumb_ent)
-            .insert(ThemeBackgroundGradient(
-                thumb_token,
-                thumb_gradient_amount,
-            ));
+            .insert(ThemeBackgroundGradient(thumb_token, thumb_gradient_amount));
     }
 
     let should_have_box_shadow = !disabled;

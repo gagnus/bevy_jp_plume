@@ -17,14 +17,20 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, percent, px,
+    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
+    JustifyContent, Node, PositionType, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
-    constants::{fonts, size}, cursor::EntityCursor, font_styles::InheritableFont, theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow,
-    }, tokens,
+    constants::{fonts, size},
+    cursor::EntityCursor,
+    font_styles::InheritableFont,
+    theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
+        control_box_shadow,
+    },
+    tokens,
 };
 
 /// A radio widget.
@@ -246,7 +252,9 @@ fn update_radio_styles_remove(
         .read()
         .chain(removed_checked.read())
         .for_each(|ent| {
-            if let Ok((radio_ent, disabled, checked, font_color, has_box_shadow)) = q_radios.get(ent) {
+            if let Ok((radio_ent, disabled, checked, font_color, has_box_shadow)) =
+                q_radios.get(ent)
+            {
                 apply_radio_styles(
                     radio_ent,
                     disabled,
@@ -380,7 +388,7 @@ fn set_radio_styles(
             .entity(radio_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
-    
+
     // Checked & Selected has a box shadow
     let should_have_box_shadow = checked && !disabled;
     if should_have_box_shadow && !has_box_shadow {

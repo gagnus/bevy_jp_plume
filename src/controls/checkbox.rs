@@ -18,14 +18,20 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, UiRect, UiTransform, px,
+    AlignItems, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
+    Node, PositionType, UiRect, UiTransform, px,
 };
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
-    constants::{fonts, size}, cursor::EntityCursor, font_styles::InheritableFont, theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow,
-    }, tokens,
+    constants::{fonts, size},
+    cursor::EntityCursor,
+    font_styles::InheritableFont,
+    theme::{
+        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
+        control_box_shadow,
+    },
+    tokens,
 };
 
 /// A checkbox widget.
