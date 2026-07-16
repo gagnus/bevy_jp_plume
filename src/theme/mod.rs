@@ -352,20 +352,22 @@ fn on_changed_font_color(
 /// a theme.
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Reflect)]
 pub enum ThemeSlot {
-    /// Deepest background: the window.
+    /// Deepest background: the window, the scrollbar track, and the active text input.
+    /// - `SCROLLBAR_BG`
+    /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
     #[default]
     Neutral0,
 
     /// Surface bodies sitting on the window.
     /// - `DIALOG_BG`
+    /// - `DIALOG_HEADER_BG`
     /// - `MENU_BG`
     /// - `SUBPANE_BODY_BG`
     /// - `TEXT_INPUT_BG`
     Neutral1,
 
-    /// Raised container chrome: headers and the group box.
-    /// - `DIALOG_HEADER_BG`
+    /// Raised container chrome: subpane headers and the group box.
     /// - `GROUP_BG`
     /// - `SUBPANE_HEADER_BG`
     Neutral2,
@@ -387,6 +389,7 @@ pub enum ThemeSlot {
     /// - `SWITCH_SLIDE_BG_CHECKED_DISABLED`
     /// - `SWITCH_SLIDE_BG_DISABLED`
     /// - `TEXT_INPUT_BG_DISABLED`
+    /// - `TEXT_INPUT_BORDER`
     /// - `TEXT_INPUT_BORDER_DISABLED`
     Neutral3,
 
@@ -396,23 +399,24 @@ pub enum ThemeSlot {
     /// - `DIALOG_BORDER`
     /// - `MENU_BORDER`
     /// - `RADIO_BORDER`
-    /// - `SWITCH_BG`
-    /// - `TEXT_INPUT_BORDER`
-    /// - `SCROLLBAR_BG`
+    /// - `SCROLLBAR_THUMB`
     /// - `SLIDER_BG`
     /// - `SLIDER_BG_HOVER`
     /// - `SLIDER_BG_PRESSED`
+    /// - `SWITCH_BG`
     Neutral4,
 
     /// Neutral control hover.
     /// - `BUTTON_BG_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
     /// - `LISTROW_BG_HOVER`
+    /// - `SCROLLBAR_THUMB_HOVER`
     Neutral5,
 
     /// Neutral control pressed.
     /// - `BUTTON_BG_PRESSED`
     /// - `BUTTON_PLAIN_BG_PRESSED`
+    /// - `SCROLLBAR_THUMB_PRESSED`
     Neutral6,
 
     /// Bright on-surface text and the unchecked switch knob.
@@ -449,7 +453,6 @@ pub enum ThemeSlot {
     /// - `BUTTON_PRIMARY_BG`
     /// - `CHECKBOX_BG_CHECKED`
     /// - `RADIO_BG_CHECKED`
-    /// - `SCROLLBAR_THUMB`
     /// - `SLIDER_BAR`
     /// - `SLIDER_THUMB`
     /// - `SWITCH_BG_CHECKED`
@@ -459,14 +462,12 @@ pub enum ThemeSlot {
 
     /// Call-to-action hover.
     /// - `BUTTON_PRIMARY_BG_HOVER`
-    /// - `SCROLLBAR_THUMB_HOVER`
     /// - `SLIDER_BAR_HOVER`
     /// - `SLIDER_THUMB_HOVER`
     Accent1,
 
     /// Call-to-action pressed.
     /// - `BUTTON_PRIMARY_BG_PRESSED`
-    /// - `SCROLLBAR_THUMB_PRESSED`
     /// - `SLIDER_BAR_PRESSED`
     /// - `SLIDER_THUMB_PRESSED`
     Accent2,
