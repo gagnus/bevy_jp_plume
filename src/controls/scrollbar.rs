@@ -15,7 +15,7 @@ use bevy_math::Vec2;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{ComputedNode, Node, UiSystems, Val, px};
+use bevy_ui::{ComputedNode, Node, UiSystems, Val};
 use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
 use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
@@ -123,7 +123,7 @@ fn update_scrollbar_visibility(
         if let Ok(child_of) = q_parents.get(scrollbar_ent)
             && let Ok((gutter, mut node)) = q_gutters.get_mut(child_of.parent())
         {
-            let padding = if overflows { gutter.0 } else { px(0) };
+            let padding = if overflows { gutter.0 } else { Val::ZERO };
             if node.padding.right != padding {
                 node.padding.right = padding;
             }

@@ -19,7 +19,7 @@ use bevy_picking::{
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, px, widget::Text};
+use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, widget::Text};
 
 use crate::{
     constants::{font_awesome, fonts, size},
@@ -120,7 +120,7 @@ impl PlumeSubpane {
                     }
                     on(toggle_subpane_collapse)
                     Children [
-                        {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: px(16) } SubpaneChevron) })},
+                        {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SubpaneChevron) })},
                         {props.header}
                     ]
                 ),

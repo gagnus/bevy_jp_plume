@@ -17,8 +17,7 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
-    JustifyContent, Node, PositionType, percent, px,
+    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, Val, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
@@ -99,8 +98,8 @@ impl PlumeRadio {
                         // Border ring overlaying the disc; only its color is themed.
                         Node {
                             position_type: PositionType::Absolute,
-                            left: px(0),
-                            top: px(0),
+                            left: Val::ZERO,
+                            top: Val::ZERO,
                             width: percent(100),
                             height: percent(100),
                             border: size::CONTROL_BORDER,

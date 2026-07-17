@@ -20,10 +20,9 @@ use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selectio
 
 use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
+use crate::constants::size;
 use crate::display::caption;
 use crate::rounded_corners::RoundedCorners;
-
-const SELECT_ROW_PX: f32 = 24.0;
 
 /// Select control which spawns a menu popup with a list of string options
 /// # Emitted events
@@ -63,7 +62,7 @@ impl Default for PlumeSelectProps {
 impl PlumeSelect {
     fn scene(props: PlumeSelectProps) -> impl Scene {
         let max_visible = props.max_visible.max(1);
-        let max_height = px(max_visible as f32 * SELECT_ROW_PX);
+        let max_height = size::ROW_HEIGHT * max_visible as f32;
 
         bsn! {
             @PlumeMenu

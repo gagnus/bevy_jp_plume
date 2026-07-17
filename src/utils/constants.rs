@@ -82,6 +82,13 @@ pub mod size {
 
     /// The one font size: every control and container uses this.
     pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
+
+    /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
+    /// so this tracks [`MEDIUM_FONT`].
+    pub const ICON_WIDTH: Val = match MEDIUM_FONT {
+        FontSize::Px(font_px) => Val::Px(font_px),
+        _ => panic!("MEDIUM_FONT must be Px"),
+    };
 }
 
 /// The FontAwesome face a glyph is drawn from.

@@ -67,8 +67,8 @@ impl PlumeToggleSwitch {
                     // Border ring overlaying the pill; only its color is themed.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: px(0),
-                        top: px(0),
+                        left: Val::ZERO,
+                        top: Val::ZERO,
                         width: percent(100),
                         height: percent(100),
                         border: size::CONTROL_BORDER,

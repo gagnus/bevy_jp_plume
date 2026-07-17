@@ -10,7 +10,7 @@ use bevy_ecs::{
 };
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{BackgroundColor, BorderRadius, Node, PositionType, ZIndex, percent, px};
+use bevy_ui::{BackgroundColor, BorderRadius, Node, PositionType, Val, ZIndex, percent};
 use bevy_ui_render::ui_material::MaterialNode;
 
 use crate::{
@@ -57,9 +57,9 @@ impl PlumeColorSwatch {
                 Node {
                     position_type: PositionType::Absolute,
                     left: percent(100.0 - props.opaque_color_percentage.clamp(0.0, 100.0)),
-                    top: px(0),
-                    bottom: px(0),
-                    right: px(0),
+                    top: Val::ZERO,
+                    bottom: Val::ZERO,
+                    right: Val::ZERO,
                     border_radius: BorderRadius::right(size::CORNER_RADIUS),
                 }
                 ColorSwatchFg
@@ -88,10 +88,10 @@ impl PlumeColorSwatch {
                 (
                     Node {
                         position_type: PositionType::Absolute,
-                        left: px(0),
-                        top: px(0),
-                        bottom: px(0),
-                        right: px(0),
+                        left: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
+                        right: Val::ZERO,
                         border_radius: size::CORNER_RADIUS,
                     }
                     ColorSwatchFg

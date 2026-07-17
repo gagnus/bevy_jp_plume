@@ -120,7 +120,7 @@ impl PlumeListRow {
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
                 column_gap: size::GAP,
-                padding: UiRect::axes(size::GAP, px(2)),
+                padding: UiRect::horizontal(size::GAP),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextColor(tokens::LISTROW_TEXT)
@@ -136,7 +136,7 @@ impl PlumeListRow {
                 // Hidden ticks still occupy layout, so every label shares the gutter.
                 fa_icon(font_awesome::solid::CHECK)
                 Node {
-                    width: px(14)
+                    width: size::ICON_WIDTH
                 }
                 ListRowCheck
                 Visibility::Hidden

@@ -507,9 +507,9 @@ fn dialog() -> impl Scene {
                             }
                             Node {
                                 position_type: PositionType::Absolute,
-                                right: px(0),
-                                top: px(0),
-                                bottom: px(0),
+                                right: Val::ZERO,
+                                top: Val::ZERO,
+                                bottom: Val::ZERO,
                                 width: size::SCROLLBAR_WIDTH,
                             }
                         ),
@@ -644,7 +644,7 @@ fn debug_column() -> impl Scene {
         // width: 0 + flex_grow so both columns split the dialog evenly regardless
         // of which one holds the wider content.
         Node {
-            width: px(0),
+            width: Val::ZERO,
             flex_grow: 1.0,
         }
     }
@@ -664,7 +664,7 @@ fn select_row(label: &str, options: impl IntoIterator<Item: AsRef<str>>) -> impl
                 @PlumeSelect {
                     @options: {options},
                 }
-                Node { width: px(0), flex_grow: 1.0 }
+                Node { width: Val::ZERO, flex_grow: 1.0 }
             ),
         ]
     }
@@ -713,7 +713,7 @@ fn slider_row(
                     @max: {max},
                     @precision: {Some(precision as i32)},
                 }
-                Node { width: px(0), flex_grow: 1.0 }
+                Node { width: Val::ZERO, flex_grow: 1.0 }
                 SliderValue({value})
             ),
             (
@@ -785,7 +785,7 @@ fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn Sce
                     @min: {min},
                     @max: {max},
                 }
-                Node { width: px(0), flex_grow: 1.0 }
+                Node { width: Val::ZERO, flex_grow: 1.0 }
                 SliderValue({value})
                 template(move |_| Ok(param))
             ),

@@ -13,8 +13,7 @@ use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node,
-    OverrideClip, PositionType, UiRect, px,
+    AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node, OverrideClip, PositionType, UiRect, Val, px,
 };
 use bevy_ui_widgets::{
     ActivateOnPress, MenuAction, MenuButton, MenuEvent, MenuFocusState, MenuPopup,
@@ -191,7 +190,7 @@ impl PlumeMenuPopup {
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
                 border: size::CONTAINER_BORDER,
-                padding: UiRect::axes(px(0), size::GAP_TIGHT),
+                padding: UiRect::axes(Val::ZERO, size::GAP_TIGHT),
                 border_radius: size::CORNER_RADIUS,
             }
             PlumeMenuPopup
@@ -201,8 +200,8 @@ impl PlumeMenuPopup {
             ThemeBorderColor(tokens::MENU_BORDER)
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.9).into(),
-                px(0),
-                px(0),
+                Val::ZERO,
+                Val::ZERO,
                 px(1),
                 px(4),
             )

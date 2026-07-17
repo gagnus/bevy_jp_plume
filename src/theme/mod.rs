@@ -17,8 +17,7 @@ use bevy_platform::collections::HashMap;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{
-    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
-    InterpolationColorSpace, LinearGradient, percent, px,
+    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient, InterpolationColorSpace, LinearGradient, Val, percent, px,
 };
 use smol_str::SmolStr;
 
@@ -193,7 +192,7 @@ pub fn control_box_shadow() -> BoxShadow {
         Srgba::BLACK.with_alpha(0.4).into(),
         px(1),
         px(2),
-        px(0),
+        Val::ZERO,
         px(2),
     )
 }
