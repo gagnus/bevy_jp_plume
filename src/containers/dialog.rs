@@ -35,6 +35,10 @@ pub struct PlumeDialogProps {
     pub left: Val,
     /// Initial top offset.
     pub top: Val,
+    /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
+    pub closable: bool,
+    /// `false` omits the drag handle, pinning the dialog in place.
+    pub movable: bool,
 }
 
 impl Default for PlumeDialogProps {
@@ -45,6 +49,8 @@ impl Default for PlumeDialogProps {
             width: Val::Auto,
             left: px(120),
             top: px(120),
+            closable: true,
+            movable: true,
         }
     }
 }
@@ -101,7 +107,7 @@ impl PlumeDialog {
                         border: UiRect::bottom(size::CONTAINER_BORDER),
                         border_radius: {RoundedCorners::Top.to_border_radius(size::DIALOG_RADIUS)}
                     }
-                    DialogDragHandle
+                    {props.movable.then(|| bsn!(DialogDragHandle))}
                     InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
                     ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
                     ThemeBorderColor(tokens::DIALOG_BORDER)
@@ -112,7 +118,7 @@ impl PlumeDialog {
                     }
                     Children [
                         {props.title},
-                        @PlumeDialogClose
+                        {props.closable.then(|| bsn_list!(@PlumeDialogClose))}
                     ]
                 ),
                 (
