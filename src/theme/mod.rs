@@ -400,6 +400,7 @@ pub enum ThemeSlot {
     /// - `MENU_BORDER`
     /// - `RADIO_BORDER`
     /// - `SCROLLBAR_THUMB`
+    /// - `SEPARATOR`
     /// - `SLIDER_BG`
     /// - `SLIDER_BG_HOVER`
     /// - `SLIDER_BG_PRESSED`
@@ -802,6 +803,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_TEXT, ThemeSlot::Text1),
     (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
+    (tokens::SEPARATOR, ThemeSlot::Neutral4),
 ];
 
 pub mod dark_theme;

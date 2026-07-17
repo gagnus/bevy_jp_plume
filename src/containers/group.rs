@@ -1,4 +1,4 @@
-//! Bordered box for visually grouping related controls.
+//! Filled box for visually grouping related controls.
 use bevy_ecs::{hierarchy::Children, reflect::ReflectComponent};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list};
@@ -13,7 +13,7 @@ use crate::{
     tokens,
 };
 
-/// A bordered box for visually grouping related controls.
+/// A filled box for visually grouping related controls.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeGroupProps)]
 #[reflect(Component, Clone, Default)]

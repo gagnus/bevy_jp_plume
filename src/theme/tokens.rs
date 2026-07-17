@@ -276,6 +276,11 @@ pub const DIALOG_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.text");
 /// Dialog header text
 pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.header.text");
 
+// Separator
+
+/// Separator hairline
+pub const SEPARATOR: ThemeToken = ThemeToken::new_static("plume.separator");
+
 /// State groups over the constants above, for
 /// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick) and
 /// [`CheckedTokens::pick`](crate::theme::CheckedTokens::pick).

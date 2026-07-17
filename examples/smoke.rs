@@ -8,7 +8,7 @@ use bevy::{
 use bevy_jp_plume::{
     PlumePlugins,
     constants::{font_awesome, size},
-    containers::{PlumeDialog, PlumeGroup, PlumeSubpane, flex_spacer, row},
+    containers::{PlumeDialog, PlumeGroup, PlumeSubpane, column, flex_spacer, row, separator},
     controls::{
         ButtonVariant, ColorSwatchValue, ListRowIndex, PlumeButton, PlumeCheckbox,
         PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeScrollbar,
@@ -635,28 +635,13 @@ fn debug_options_dialog() -> impl Scene {
     }
 }
 
-/// A horizontal rule. Local to this example — Plume has no divider component yet, so this
-/// is a sketch of what one would look like: a hairline in the dialog's own border color,
-/// stretched by the container's `align_items: Stretch`.
-fn separator() -> impl Scene {
-    bsn! {
-        Node {
-            height: px(1),
-        }
-        ThemeBackgroundColor(tokens::DIALOG_BORDER)
-    }
-}
-
 /// One half of the debug dialog: an equal-width column of subpanes.
 fn debug_column() -> impl Scene {
     bsn! {
+        column()
+        // width: 0 + flex_grow so both columns split the dialog evenly regardless
+        // of which one holds the wider content.
         Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-            row_gap: size::GAP,
-            // width: 0 + flex_grow so both columns split the dialog evenly regardless
-            // of which one holds the wider content.
             width: px(0),
             flex_grow: 1.0,
         }
