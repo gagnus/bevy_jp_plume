@@ -24,7 +24,7 @@ use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 use crate::{
     constants::size,
     cursor::EntityCursor,
-    theme::{GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
+    theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
     tokens,
 };
 
@@ -111,6 +111,7 @@ fn update_switch_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &ThemeBackgroundGradient,
         ),
         (
@@ -120,6 +121,7 @@ fn update_switch_styles(
                 Added<PlumeToggleSwitch>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
+                Added<Flat>,
             )>,
         ),
     >,
@@ -131,11 +133,12 @@ fn update_switch_styles(
     >,
     mut commands: Commands,
 ) {
-    for (switch_ent, disabled, checked, pill_bg) in q_switches.iter() {
+    for (switch_ent, disabled, checked, flat, pill_bg) in q_switches.iter() {
         apply_switch_styles(
             switch_ent,
             disabled,
             checked,
+            flat,
             pill_bg,
             &q_children,
             &q_outline,
@@ -151,6 +154,7 @@ fn update_switch_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &ThemeBackgroundGradient,
         ),
         With<PlumeToggleSwitch>,
@@ -163,17 +167,20 @@ fn update_switch_styles_remove(
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
+    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
+        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((switch_ent, disabled, checked, pill_bg)) = q_switches.get(ent) {
+            if let Ok((switch_ent, disabled, checked, flat, pill_bg)) = q_switches.get(ent) {
                 apply_switch_styles(
                     switch_ent,
                     disabled,
                     checked,
+                    flat,
                     pill_bg,
                     &q_children,
                     &q_outline,
@@ -189,6 +196,7 @@ fn apply_switch_styles(
     switch_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     pill_bg: &ThemeBackgroundGradient,
     q_children: &Query<&Children>,
     q_outline: &Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
@@ -219,6 +227,7 @@ fn apply_switch_styles(
         slide_ent,
         disabled,
         checked,
+        flat,
         pill_bg,
         outline_border,
         slide_style,
@@ -234,6 +243,7 @@ fn set_switch_styles(
     slide_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     pill_bg: &ThemeBackgroundGradient,
     outline_border: &ThemeBorderColor,
     slide_style: &mut Mut<Node>,
@@ -256,7 +266,11 @@ fn set_switch_styles(
     };
 
     // Disabled reads inert: flat fill, no gradient.
-    let gradient_amount = if disabled { 0.0 } else { GRADIENT_AMOUNT };
+    let gradient_amount = if disabled || flat {
+        0.0
+    } else {
+        GRADIENT_AMOUNT
+    };
 
     // Change pill background gradient
     if pill_bg.0 != pill_bg_token || pill_bg.1 != gradient_amount {
@@ -273,7 +287,11 @@ fn set_switch_styles(
     }
 
     // more gradient for slide
-    let slide_gradient_amount = if disabled { 0.0 } else { SLIDE_GRADIENT_AMOUNT };
+    let slide_gradient_amount = if disabled || flat {
+        0.0
+    } else {
+        SLIDE_GRADIENT_AMOUNT
+    };
 
     // Change slide background gradient
     if slide_bg.0 != slide_bg_token || slide_bg.1 != slide_gradient_amount {

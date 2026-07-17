@@ -28,8 +28,8 @@ use crate::{
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
-        control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
+        ThemeBorderColor, control_box_shadow,
     },
     tokens,
 };
@@ -154,6 +154,7 @@ fn update_checkbox_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &InheritableThemeTextColor,
         ),
         (
@@ -163,6 +164,7 @@ fn update_checkbox_styles(
                 Added<CheckboxFrame>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
+                Added<Flat>,
             )>,
         ),
     >,
@@ -172,11 +174,12 @@ fn update_checkbox_styles(
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
-    for (checkbox_ent, disabled, checked, font_color) in q_checkboxes.iter() {
+    for (checkbox_ent, disabled, checked, flat, font_color) in q_checkboxes.iter() {
         apply_checkbox_styles(
             checkbox_ent,
             disabled,
             checked,
+            flat,
             font_color,
             &q_children,
             &q_bg,
@@ -193,6 +196,7 @@ fn update_checkbox_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &InheritableThemeTextColor,
         ),
         With<CheckboxFrame>,
@@ -203,17 +207,20 @@ fn update_checkbox_styles_remove(
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
+    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
+        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((checkbox_ent, disabled, checked, font_color)) = q_checkboxes.get(ent) {
+            if let Ok((checkbox_ent, disabled, checked, flat, font_color)) = q_checkboxes.get(ent) {
                 apply_checkbox_styles(
                     checkbox_ent,
                     disabled,
                     checked,
+                    flat,
                     font_color,
                     &q_children,
                     &q_bg,
@@ -230,6 +237,7 @@ fn apply_checkbox_styles(
     checkbox_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     font_color: &InheritableThemeTextColor,
     q_children: &Query<&Children>,
     q_bg: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
@@ -266,6 +274,7 @@ fn apply_checkbox_styles(
         mark_ent,
         disabled,
         checked,
+        flat,
         bg_color,
         outline_color,
         mark_color,
@@ -282,6 +291,7 @@ fn set_checkbox_styles(
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     bg_color: &ThemeBackgroundGradient,
     outline_color: &ThemeBorderColor,
     mark_color: &ThemeBorderColor,
@@ -308,7 +318,11 @@ fn set_checkbox_styles(
     };
 
     // Change background: gradient only when ticked, flat fill otherwise.
-    let bg_gradient_amount = if checked { GRADIENT_AMOUNT } else { 0.0 };
+    let bg_gradient_amount = if checked && !flat {
+        GRADIENT_AMOUNT
+    } else {
+        0.0
+    };
     if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
         commands
             .entity(bg_ent)

@@ -160,6 +160,13 @@ pub struct ThemeBackgroundColor(pub ThemeToken);
 /// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
 pub const GRADIENT_AMOUNT: f32 = 0.05;
 
+/// Opt-in marker: the entity's themed fills render flat (gradient amount 0).
+/// Honored by the gradient-drawn elements (button, checkbox, radio, toggle,
+/// slider thumb, subpane header); everything else ignores it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct Flat;
+
 /// Component which fills an entity's background with a gentle top-to-bottom gradient derived
 /// from a theme color.
 #[derive(Component, Clone, Default)]

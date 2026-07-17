@@ -27,8 +27,8 @@ use crate::{
     cursor::EntityCursor,
     font_styles::InheritableFont,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, ThemeBorderColor,
-        control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
+        ThemeBorderColor, control_box_shadow,
     },
     tokens,
 };
@@ -194,6 +194,7 @@ fn update_radio_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &InheritableThemeTextColor,
             Has<BoxShadow>,
         ),
@@ -204,6 +205,7 @@ fn update_radio_styles(
                 Added<PlumeRadio>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
+                Added<Flat>,
             )>,
         ),
     >,
@@ -213,11 +215,12 @@ fn update_radio_styles(
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut commands: Commands,
 ) {
-    for (radio_ent, disabled, checked, font_color, has_box_shadow) in q_radios.iter() {
+    for (radio_ent, disabled, checked, flat, font_color, has_box_shadow) in q_radios.iter() {
         apply_radio_styles(
             radio_ent,
             disabled,
             checked,
+            flat,
             font_color,
             &q_children,
             &q_bg,
@@ -235,6 +238,7 @@ fn update_radio_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
+            Has<Flat>,
             &InheritableThemeTextColor,
             Has<BoxShadow>,
         ),
@@ -246,19 +250,22 @@ fn update_radio_styles_remove(
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
+    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
+        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((radio_ent, disabled, checked, font_color, has_box_shadow)) =
+            if let Ok((radio_ent, disabled, checked, flat, font_color, has_box_shadow)) =
                 q_radios.get(ent)
             {
                 apply_radio_styles(
                     radio_ent,
                     disabled,
                     checked,
+                    flat,
                     font_color,
                     &q_children,
                     &q_bg,
@@ -276,6 +283,7 @@ fn apply_radio_styles(
     radio_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     font_color: &InheritableThemeTextColor,
     q_children: &Query<&Children>,
     q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
@@ -313,6 +321,7 @@ fn apply_radio_styles(
         mark_ent,
         disabled,
         checked,
+        flat,
         bg,
         outline_border,
         mark_color,
@@ -329,6 +338,7 @@ fn set_radio_styles(
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
+    flat: bool,
     bg: &ThemeBackgroundGradient,
     outline_border: &ThemeBorderColor,
     mark_color: &ThemeBackgroundGradient,
@@ -362,7 +372,11 @@ fn set_radio_styles(
     }
 
     // Change disc background: gradient only when checked, flat fill otherwise.
-    let bg_gradient_amount = if checked { GRADIENT_AMOUNT } else { 0.0 };
+    let bg_gradient_amount = if checked && !flat {
+        GRADIENT_AMOUNT
+    } else {
+        0.0
+    };
     if bg.0 != bg_token || bg.1 != bg_gradient_amount {
         commands
             .entity(bg_ent)

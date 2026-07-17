@@ -23,7 +23,8 @@ use crate::{
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient, control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
+        control_box_shadow,
     },
     tokens,
 };
@@ -143,6 +144,7 @@ fn update_button_styles(
             Has<InteractionDisabled>,
             Has<Pressed>,
             &Hovered,
+            Has<Flat>,
             &ThemeBackgroundGradient,
             &InheritableThemeTextColor,
             Has<BoxShadow>,
@@ -152,12 +154,22 @@ fn update_button_styles(
             Changed<ButtonVariant>,
             Added<Pressed>,
             Added<InteractionDisabled>,
+            Added<Flat>,
         )>,
     >,
     mut commands: Commands,
 ) {
-    for (button_ent, variant, disabled, pressed, hovered, bg_color, font_color, has_box_shadow) in
-        q_buttons.iter()
+    for (
+        button_ent,
+        variant,
+        disabled,
+        pressed,
+        hovered,
+        flat,
+        bg_color,
+        font_color,
+        has_box_shadow,
+    ) in q_buttons.iter()
     {
         set_button_styles(
             button_ent,
@@ -165,6 +177,7 @@ fn update_button_styles(
             disabled,
             pressed,
             hovered.0,
+            flat,
             bg_color,
             font_color,
             has_box_shadow,
@@ -180,17 +193,20 @@ fn update_button_styles_remove(
         Has<InteractionDisabled>,
         Has<Pressed>,
         &Hovered,
+        Has<Flat>,
         &ThemeBackgroundGradient,
         &InheritableThemeTextColor,
         Has<BoxShadow>,
     )>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_pressed: RemovedComponents<Pressed>,
+    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_pressed.read())
+        .chain(removed_flat.read())
         .for_each(|ent| {
             if let Ok((
                 button_ent,
@@ -198,6 +214,7 @@ fn update_button_styles_remove(
                 disabled,
                 pressed,
                 hovered,
+                flat,
                 bg_color,
                 font_color,
                 has_box_shadow,
@@ -209,6 +226,7 @@ fn update_button_styles_remove(
                     disabled,
                     pressed,
                     hovered.0,
+                    flat,
                     bg_color,
                     font_color,
                     has_box_shadow,
@@ -224,6 +242,7 @@ fn set_button_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
+    flat: bool,
     bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
     has_box_shadow: bool,
@@ -236,7 +255,11 @@ fn set_button_styles(
     };
     let bg_token = bg_set.pick(disabled, pressed, hovered);
     // Disabled buttons read as inert: flat fill, no gradient.
-    let bg_gradient_amount = if disabled { 0.0 } else { GRADIENT_AMOUNT };
+    let bg_gradient_amount = if disabled || flat {
+        0.0
+    } else {
+        GRADIENT_AMOUNT
+    };
 
     let font_color_token = match (variant, disabled) {
         (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
@@ -251,7 +274,7 @@ fn set_button_styles(
     };
 
     // Change background gradient
-    if bg_color.0 != bg_token {
+    if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
         commands
             .entity(button_ent)
             .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));

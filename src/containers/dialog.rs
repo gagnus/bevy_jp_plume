@@ -19,7 +19,7 @@ use crate::{
     display::fa_icon,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
 
@@ -145,6 +145,8 @@ impl PlumeDialogClose {
             @variant: ButtonVariant::Plain,
             @caption: bsn! { fa_icon(font_awesome::solid::XMARK) }
         }
+        // Keep the ✕'s hover/press fill flat.
+        Flat
         on(|activate: On<Activate>, mut commands: Commands| {
             commands.trigger(RequestClose { source: activate.event_target() });
         })

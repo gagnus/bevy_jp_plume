@@ -27,8 +27,8 @@ use crate::{
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
     theme::{
-        GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBackgroundGradient,
-        control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor,
+        ThemeBackgroundGradient, control_box_shadow,
     },
     tokens,
 };
@@ -227,6 +227,38 @@ fn update_subpane_collapse(
     }
 }
 
+/// The header gradient is set once at scene build, so [`Flat`] on the subpane root
+/// needs its own pass (unlike the controls, whose state resolvers read it).
+fn update_subpane_header_flat(
+    q_flagged: Query<(Entity, Has<Flat>), (With<PlumeSubpane>, Added<Flat>)>,
+    mut removed_flat: RemovedComponents<Flat>,
+    q_subpanes: Query<Has<Flat>, With<PlumeSubpane>>,
+    q_children: Query<&Children>,
+    q_headers: Query<&ThemeBackgroundGradient, With<SubpaneHeader>>,
+    mut commands: Commands,
+) {
+    let apply = |root: Entity, flat: bool, commands: &mut Commands| {
+        let amount = if flat { 0.0 } else { GRADIENT_AMOUNT };
+        for descendant in q_children.iter_descendants(root) {
+            if let Ok(header_bg) = q_headers.get(descendant)
+                && header_bg.1 != amount
+            {
+                commands
+                    .entity(descendant)
+                    .insert(ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, amount));
+            }
+        }
+    };
+    for (root, flat) in q_flagged.iter() {
+        apply(root, flat, &mut commands);
+    }
+    for root in removed_flat.read() {
+        if let Ok(flat) = q_subpanes.get(root) {
+            apply(root, flat, &mut commands);
+        }
+    }
+}
+
 /// Plugin which registers the sub-pane collapse systems.
 pub struct SubpanePlugin;
 
@@ -234,7 +266,7 @@ impl Plugin for SubpanePlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_systems(
             PreUpdate,
-            update_subpane_collapse.in_set(PickingSystems::Last),
+            (update_subpane_collapse, update_subpane_header_flat).in_set(PickingSystems::Last),
         );
     }
 }
