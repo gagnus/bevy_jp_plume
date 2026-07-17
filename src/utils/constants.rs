@@ -70,6 +70,9 @@ pub mod size {
     /// Default width of sliders and text inputs
     pub const CONTROL_WIDTH: Val = Val::Px(180.0);
 
+    /// Default width of number inputs (deliberately narrower than [`CONTROL_WIDTH`])
+    pub const NUMBER_WIDTH: Val = Val::Px(64.0);
+
     /// Scrollbar thumb width
     pub const SCROLLBAR_WIDTH: Val = Val::Px(6.0);
 

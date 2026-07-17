@@ -709,6 +709,7 @@ fn slider_row(
                 @PlumeSlider {
                     @min: {min},
                     @max: {max},
+                    @precision: {Some(precision as i32)},
                 }
                 Node { width: px(0), flex_grow: 1.0 }
                 SliderValue({value})

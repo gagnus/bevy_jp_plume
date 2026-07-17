@@ -19,11 +19,11 @@ use bevy_text::{
     EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextEdit, TextFont,
     TextLayout,
 };
-use bevy_ui::{Node, px};
-use bevy_ui_widgets::{SliderRange, SliderValue, ValueChange};
+use bevy_ui::Node;
+use bevy_ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
 use crate::{
-    constants::fonts,
+    constants::{fonts, size},
     controls::{TextInputField, text_input_field, text_input_frame, text_input_suffix},
 };
 
@@ -33,8 +33,9 @@ use crate::{
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional
 /// [`PlumeNumberInputProps`]. Typing commits on Enter or focus loss (clamped to the
-/// range, rounded to `precision`); Escape or an unparsable entry reverts the text. The value and
-/// range live on this frame entity; the editable `TextInputField` child does the typing.
+/// range, rounded to `precision`); Escape or an unparsable entry reverts the text; Up/Down
+/// arrows step the value by [`SliderStep`]. The value and range live on this frame entity;
+/// the editable `TextInputField` child does the typing.
 #[derive(SceneComponent, Clone, Reflect)]
 #[scene(PlumeNumberInputProps)]
 #[reflect(Component, Default, Clone)]
@@ -60,6 +61,8 @@ pub struct PlumeNumberInputProps {
     pub min: f32,
     /// Maximum committable value
     pub max: f32,
+    /// Up/Down arrow increment
+    pub step: f32,
     /// Optional non-editable suffix shown after the number (a unit such as `px`, `%`, or `°`).
     pub suffix: Option<String>,
 }
@@ -71,6 +74,7 @@ impl Default for PlumeNumberInputProps {
             precision: 2,
             min: f32::NEG_INFINITY,
             max: f32::INFINITY,
+            step: 1.0,
             suffix: None,
         }
     }
@@ -81,11 +85,12 @@ impl PlumeNumberInput {
         bsn! {
             text_input_frame()
             Node {
-                width: px(64.0),
+                width: size::NUMBER_WIDTH,
             }
             PlumeNumberInput { precision: {props.precision} }
             SliderValue({props.value})
             SliderRange::new(props.min, props.max)
+            SliderStep({props.step})
             Children [
                 (
                     text_input_field(None, None)
@@ -122,9 +127,36 @@ fn set_text(editable_text: &mut EditableText, formatted: String) {
     }
 }
 
-// Parses the typed text; on success clamps + rounds and writes the value (emitting
-// `ValueChange<f32>`), otherwise reverts the text. Idempotent for repeated calls. `source` is the
+// Clamps + rounds `candidate` and writes it as the committed value (emitting
+// `ValueChange<f32>`). Idempotent for repeated calls. `source` is the
 // [`PlumeNumberInput`] frame that owns the value, not the editable field.
+fn apply_value(
+    candidate: f32,
+    precision: usize,
+    value: f32,
+    range: &SliderRange,
+    editable_text: &mut EditableText,
+    source: Entity,
+    commands: &mut Commands,
+) {
+    let factor = 10f32.powi(precision as i32);
+    let committed = (range.clamp(candidate) * factor).round() / factor;
+    if committed != value {
+        // SliderValue is immutable: written by re-insertion, which is what the
+        // Changed-filtered text-sync system picks up.
+        commands.entity(source).insert(SliderValue(committed));
+        commands.trigger(ValueChange {
+            source,
+            value: committed,
+            is_final: true,
+        });
+    } else {
+        // Unchanged value won't retrigger the text-sync system; normalize here.
+        set_text(editable_text, format_value(committed, precision));
+    }
+}
+
+// Parses the typed text; on success commits it via [`apply_value`], otherwise reverts the text.
 fn commit(
     precision: usize,
     value: f32,
@@ -133,36 +165,34 @@ fn commit(
     source: Entity,
     commands: &mut Commands,
 ) {
-    let typed = editable_text.value().to_string();
-    match typed.trim().parse::<f32>() {
-        Ok(parsed) if parsed.is_finite() => {
-            fn round_to_precision(value: f32, precision: usize) -> f32 {
-                let factor = 10f32.powi(precision as i32);
-                (value * factor).round() / factor
-            }
-            let committed = round_to_precision(range.clamp(parsed), precision);
-            if committed != value {
-                // SliderValue is immutable: written by re-insertion, which is what the
-                // Changed-filtered text-sync system picks up.
-                commands.entity(source).insert(SliderValue(committed));
-                commands.trigger(ValueChange {
-                    source,
-                    value: committed,
-                    is_final: true,
-                });
-            } else {
-                // Unchanged value won't retrigger the text-sync system; normalize here.
-                set_text(editable_text, format_value(committed, precision));
-            }
-        }
-        _ => set_text(editable_text, format_value(value, precision)),
+    match parse_typed(editable_text) {
+        Some(parsed) => apply_value(
+            parsed,
+            precision,
+            value,
+            range,
+            editable_text,
+            source,
+            commands,
+        ),
+        None => set_text(editable_text, format_value(value, precision)),
     }
+}
+
+fn parse_typed(editable_text: &EditableText) -> Option<f32> {
+    editable_text
+        .value()
+        .to_string()
+        .trim()
+        .parse::<f32>()
+        .ok()
+        .filter(|parsed| parsed.is_finite())
 }
 
 fn number_input_on_key(
     key_input: On<FocusedInput<KeyboardInput>>,
     mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
-    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange)>,
+    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange, &SliderStep)>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -174,7 +204,7 @@ fn number_input_on_key(
         return;
     };
     let frame = child_of.parent();
-    let Ok((number_input, value, range)) = query_frames.get(frame) else {
+    let Ok((number_input, value, range, step)) = query_frames.get(frame) else {
         return;
     };
     match key_input.input.key_code {
@@ -195,6 +225,23 @@ fn number_input_on_key(
                 format_value(value.0, number_input.precision),
             );
             focus.clear();
+        }
+        KeyCode::ArrowUp | KeyCode::ArrowDown => {
+            let delta = match key_input.input.key_code {
+                KeyCode::ArrowUp => step.0,
+                _ => -step.0,
+            };
+            // Step from the typed value when it parses, so an uncommitted entry isn't lost.
+            let base = parse_typed(&editable_text).unwrap_or(value.0);
+            apply_value(
+                base + delta,
+                number_input.precision,
+                value.0,
+                range,
+                &mut editable_text,
+                frame,
+                &mut commands,
+            );
         }
         _ => {}
     }

@@ -23,7 +23,8 @@ use bevy_ui::{
     UiRect, percent, px,
 };
 use bevy_ui_widgets::{
-    Slider, SliderOrientation, SliderRange, SliderValue, TrackClick, slider_self_update,
+    Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderValue, TrackClick,
+    slider_self_update,
 };
 
 use crate::{
@@ -52,11 +53,20 @@ pub struct PlumeSliderProps {
     pub min: f32,
     /// Slider maximum value
     pub max: f32,
+    /// Increment used by relative value changes ([`SliderStep`]); `None` keeps the default of 1.0
+    pub step: Option<f32>,
+    /// Decimal places drag values are rounded to ([`SliderPrecision`]); `None` = unrounded
+    pub precision: Option<i32>,
 }
 
 impl Default for PlumeSliderProps {
     fn default() -> Self {
-        Self { min: 0.0, max: 1.0 }
+        Self {
+            min: 0.0,
+            max: 1.0,
+            step: None,
+            precision: None,
+        }
     }
 }
 
@@ -82,6 +92,8 @@ impl PlumeSlider {
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
+            {props.step.map(|step| bsn!(SliderStep({step})))}
+            {props.precision.map(|precision| bsn!(SliderPrecision({precision})))}
             Children [
                 (
                     Node {
