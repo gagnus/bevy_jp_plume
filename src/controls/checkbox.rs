@@ -69,7 +69,7 @@ impl PlumeCheckbox {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                column_gap: size::GAP_TIGHT,
+                column_gap: size::GAP,
                 min_height: size::ROW_HEIGHT,
             }
             Checkbox
@@ -87,7 +87,7 @@ impl PlumeCheckbox {
                     Node {
                         width: size::CHECKBOX_SIZE,
                         height: size::CHECKBOX_SIZE,
-                        border_radius: px(size::CORNER_RADIUS),
+                        border_radius: size::CORNER_RADIUS,
                     }
                     CheckboxBg
                     ThemeBackgroundGradient(tokens::CHECKBOX_BG, 0.0)
@@ -97,7 +97,7 @@ impl PlumeCheckbox {
                                 width: size::CHECKBOX_SIZE,
                                 height: size::CHECKBOX_SIZE,
                                 border: size::CONTROL_BORDER,
-                                border_radius: px(size::CORNER_RADIUS),
+                                border_radius: size::CORNER_RADIUS,
                             }
                             CheckboxOutline
                             ThemeBorderColor(tokens::CHECKBOX_BORDER)

@@ -22,7 +22,7 @@ use bevy_text::{
     EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
     TextCursorStyle, TextFont, TextLayout,
 };
-use bevy_ui::{AlignItems, BorderRadius, InteractionDisabled, Node, PositionType, UiRect, Val, px};
+use bevy_ui::{AlignItems, InteractionDisabled, Node, PositionType, UiRect, Val};
 
 use crate::{
     constants::{fonts, size},
@@ -30,6 +30,13 @@ use crate::{
     display::label_dim,
     theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
     tokens,
+};
+
+/// Horizontal inset of the field content (border + padding = GAP, aligning the text
+/// with button captions); the placeholder overlay must match it.
+const TEXT_INPUT_PAD_X: Val = match size::GAP.try_sub(size::CONTAINER_BORDER) {
+    Ok(inset) => inset,
+    Err(_) => unreachable!(),
 };
 
 /// A single-line text input: a themed frame (background, border, focus ring, sizing) wrapping an
@@ -91,9 +98,9 @@ pub(crate) fn text_input_frame() -> impl Scene {
         Node {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
-            padding: UiRect::horizontal(px(6.0)),
+            padding: UiRect::horizontal(TEXT_INPUT_PAD_X),
             border: size::CONTAINER_BORDER,
-            border_radius: {BorderRadius::all(px(size::CORNER_RADIUS))},
+            border_radius: size::CORNER_RADIUS,
             width: size::CONTROL_WIDTH,
         }
         PlumeTextInput
@@ -150,13 +157,13 @@ pub(crate) fn text_input_field(
 struct TextInputPlaceholder;
 
 // Dim hint overlaying the field; absolute with auto vertical insets, so the frame's
-// align_items centers it without displacing the field. `left` matches the frame's padding.
+// align_items centers it without displacing the field.
 fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     bsn! {
         label_dim(text)
         Node {
             position_type: PositionType::Absolute,
-            left: px(6.0),
+            left: TEXT_INPUT_PAD_X,
         }
         TextInputPlaceholder
         Pickable::IGNORE

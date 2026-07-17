@@ -7,7 +7,7 @@ use bevy_ecs::{
     hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
     observer::On,
-    query::{Added, Has, Or, With},
+    query::{Added, Has, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
@@ -25,7 +25,6 @@ use crate::{
     constants::{font_awesome, fonts, size},
     display::fa_icon,
     font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
     theme::{
         Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor,
         ThemeBackgroundGradient, control_box_shadow,
@@ -94,7 +93,7 @@ impl PlumeSubpane {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
-                border_radius: px(size::CORNER_RADIUS),
+                border_radius: size::CORNER_RADIUS,
             }
             PlumeSubpane { collapsible: {props.collapsible} }
             ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
@@ -107,8 +106,8 @@ impl PlumeSubpane {
                         justify_content: JustifyContent::Start,
                         padding: UiRect::horizontal(size::HEADER_PAD_X),
                         min_height: size::HEADER_HEIGHT,
-                        column_gap: size::GAP_TIGHT,
-                        border_radius: px(size::CORNER_RADIUS),
+                        column_gap: size::GAP,
+                        border_radius: size::CORNER_RADIUS,
                     }
                     template_value(control_box_shadow())
                     SubpaneHeader
@@ -170,43 +169,22 @@ fn toggle_subpane_collapse(
     }
 }
 
-type SubpaneParts<'w, 's> = Query<
-    'w,
-    's,
-    (&'static mut Node, Has<SubpaneBody>, Has<SubpaneHeader>),
-    Or<(With<SubpaneBody>, With<SubpaneHeader>)>,
->;
-
 fn update_subpane_collapse(
     q_collapsed: Query<Entity, (With<PlumeSubpane>, Added<SubpaneCollapsed>)>,
     mut removed: RemovedComponents<SubpaneCollapsed>,
     q_subpanes: Query<(), With<PlumeSubpane>>,
     q_children: Query<&Children>,
-    mut q_parts: SubpaneParts,
+    mut q_body: Query<&mut Node, With<SubpaneBody>>,
     mut q_chevrons: Query<&mut Text, With<SubpaneChevron>>,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
         for descendant in q_children.iter_descendants(root) {
-            if let Ok((mut node, is_body, is_header)) = q_parts.get_mut(descendant) {
-                if is_body {
-                    node.display = if collapsed {
-                        Display::None
-                    } else {
-                        Display::Flex
-                    };
-                } else if is_header {
-                    let corners = if collapsed {
-                        RoundedCorners::All
-                    } else {
-                        RoundedCorners::Top
-                    };
-                    node.border_radius = corners.to_border_radius(size::CORNER_RADIUS);
-                    node.border.bottom = if collapsed {
-                        size::CONTAINER_BORDER
-                    } else {
-                        px(0)
-                    };
-                }
+            if let Ok(mut node) = q_body.get_mut(descendant) {
+                node.display = if collapsed {
+                    Display::None
+                } else {
+                    Display::Flex
+                };
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
                 chevron.0 = if collapsed {

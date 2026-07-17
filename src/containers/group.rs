@@ -8,7 +8,6 @@ use bevy_ui::{Display, FlexDirection, Node};
 use crate::{
     constants::{fonts, size},
     font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
     theme::ThemeBackgroundColor,
     tokens,
 };
@@ -42,7 +41,7 @@ impl PlumeGroup {
                 flex_direction: FlexDirection::Column,
                 row_gap: size::GAP_TIGHT,
                 padding: size::PAD,
-                border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)}
+                border_radius: size::CORNER_RADIUS
             }
             PlumeGroup
             ThemeBackgroundColor(tokens::GROUP_BG)

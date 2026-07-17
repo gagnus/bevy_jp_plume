@@ -15,10 +15,10 @@ use bevy_math::Vec2;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{BorderRadius, ComputedNode, Node, UiSystems, Val, px};
+use bevy_ui::{ComputedNode, Node, UiSystems, Val, px};
 use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
-use crate::{cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
+use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
 
 /// A scrollbar. The `target` property should point to an entity whose
 /// [`ScrollPosition`](bevy_ui::ScrollPosition) will be synchronized with the scrollbar.
@@ -57,14 +57,14 @@ impl PlumeScrollbar {
                 min_thumb_length: 8.0
             }
             Node {
-                border_radius: BorderRadius::all(px(3))
+                border_radius: {size::SCROLLBAR_WIDTH / 2.0}
             }
             ThemeBackgroundColor(tokens::SCROLLBAR_BG)
             Children [(
                 Hovered
                 ThemeBackgroundColor(tokens::SCROLLBAR_THUMB)
                 ScrollbarThumb {
-                    border_radius: BorderRadius::all(px(3))
+                    border_radius: {size::SCROLLBAR_WIDTH / 2.0}
                 }
                 PlumeScrollbarThumb
                 EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)

@@ -192,7 +192,7 @@ impl PlumeMenuPopup {
                 align_items: AlignItems::Stretch,
                 border: size::CONTAINER_BORDER,
                 padding: UiRect::axes(px(0), size::GAP_TIGHT),
-                border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS)},
+                border_radius: size::CORNER_RADIUS,
             }
             PlumeMenuPopup
             MenuPopup

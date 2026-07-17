@@ -65,10 +65,7 @@ impl PlumeListView {
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
             }
-            // SCROLLBAR_GUTTER + the 2px edge inset on the scrollbar strip below, so the
-            // bar keeps its content clearance while not touching the frame edge (the same
-            // breathing room a dialog's body padding provides).
-            ScrollbarGutter(px(12.0))
+            template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::PAD).unwrap()))
             ListBox
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)
@@ -96,7 +93,7 @@ impl PlumeListView {
                 }
                 Node {
                     position_type: PositionType::Absolute,
-                    right: px(2),
+                    right: size::PAD,
                     top: px(2),
                     bottom: px(2),
                     width: size::SCROLLBAR_WIDTH,
@@ -122,7 +119,7 @@ impl PlumeListRow {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                column_gap: size::GAP_TIGHT,
+                column_gap: size::GAP,
                 padding: UiRect::axes(size::GAP, px(2)),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))

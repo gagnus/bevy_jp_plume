@@ -17,7 +17,8 @@ use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val, percent, px,
+    BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val,
+    percent, px,
 };
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
@@ -49,8 +50,10 @@ impl PlumeToggleSwitch {
             Node {
                 width: size::TOGGLE_WIDTH,
                 height: size::TOGGLE_HEIGHT,
-                margin: UiRect::vertical(px(4)),
-                border_radius: px(9),
+                margin: {UiRect::vertical(
+                    size::ROW_HEIGHT.try_sub(size::TOGGLE_HEIGHT).unwrap() / 2.0,
+                )},
+                border_radius: {size::TOGGLE_HEIGHT / 2.0},
             }
             Checkbox
             PlumeToggleSwitch
@@ -69,7 +72,7 @@ impl PlumeToggleSwitch {
                         width: percent(100),
                         height: percent(100),
                         border: size::CONTROL_BORDER,
-                        border_radius: px(9),
+                        border_radius: {size::TOGGLE_HEIGHT / 2.0},
                     }
                     ToggleSwitchOutline
                     ThemeBorderColor(tokens::SWITCH_BORDER)
@@ -84,7 +87,7 @@ impl PlumeToggleSwitch {
                         top: px(1),
                         width: size::KNOB_SIZE,
                         height: size::KNOB_SIZE,
-                        border_radius: px(8),
+                        border_radius: BorderRadius::MAX,
                     }
                     ToggleSwitchSlide
                     ThemeBackgroundGradient(tokens::SWITCH_SLIDE_BG, SLIDE_GRADIENT_AMOUNT)
@@ -256,8 +259,8 @@ fn set_switch_styles(
     let slide_bg_token = tokens::sets::SWITCH_SLIDE_BG.pick(checked, disabled);
 
     let (slide_left, slide_right) = match checked {
-        true => (Val::Auto, px(2)),
-        false => (px(2), Val::Auto),
+        true => (Val::Auto, Val::ZERO),
+        false => (Val::ZERO, Val::Auto),
     };
 
     let cursor_shape = match disabled {

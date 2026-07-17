@@ -215,7 +215,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
         Children [
             (
                 @PlumeButton {
-                    @caption: bsn_list! { fa_icon(font_awesome::solid::WAND_MAGIC_SPARKLES), Node { width: px(10), }, caption("Button") }
+                    @caption: bsn_list! { fa_icon(font_awesome::solid::WAND_MAGIC_SPARKLES), caption("Button") }
                 }
                 on(|_: On<Activate>| info!("button clicked"))
                 maybe_disabled(disabled)
@@ -614,7 +614,6 @@ fn debug_options_dialog() -> impl Scene {
                             @PlumeButton {
                                 @caption: bsn_list! {
                                     fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
-                                    Node { width: px(6) },
                                     caption("Reset to defaults")
                                 }
                             }

@@ -15,10 +15,10 @@ use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
     constants::{font_awesome, fonts, size},
+    containers::flex_spacer,
     controls::{ButtonVariant, PlumeToolButton},
     display::fa_icon,
     font_styles::InheritableFont,
-    rounded_corners::RoundedCorners,
     theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
@@ -72,7 +72,7 @@ impl PlumeDialog {
                 position_type: PositionType::Absolute,
                 left: {props.left},
                 top: {props.top},
-                border_radius: BorderRadius::all(px(size::DIALOG_RADIUS)),
+                border_radius: size::DIALOG_RADIUS,
                 border: UiRect::all(size::CONTAINER_BORDER),
                 width: {props.width},
             }
@@ -100,12 +100,12 @@ impl PlumeDialog {
                         display: Display::Flex,
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::Center,
-                        justify_content: JustifyContent::SpaceBetween,
+                        justify_content: JustifyContent::Start,
                         padding: UiRect::horizontal(size::HEADER_PAD_X),
                         min_height: size::DIALOG_HEADER_HEIGHT,
-                        column_gap: size::GAP_TIGHT,
+                        column_gap: size::GAP,
                         border: UiRect::bottom(size::CONTAINER_BORDER),
-                        border_radius: {RoundedCorners::Top.to_border_radius(size::DIALOG_RADIUS)}
+                        border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                     }
                     {props.movable.then(|| bsn!(DialogDragHandle))}
                     InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
@@ -118,6 +118,8 @@ impl PlumeDialog {
                     }
                     Children [
                         {props.title},
+                        // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
+                        flex_spacer(),
                         {props.closable.then(|| bsn_list!(@PlumeDialogClose))}
                     ]
                 ),
@@ -168,7 +170,7 @@ impl PlumeDialogBody {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
                 row_gap: size::GAP,
-                padding: UiRect::all(size::PAD),
+                padding: size::PAD,
             }
             InheritableFont {
                 font: fonts::REGULAR,

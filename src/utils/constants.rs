@@ -41,21 +41,22 @@ pub mod size {
     pub const TOGGLE_HEIGHT: Val = Val::Px(18.0);
 
     /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS: f32 = 4.0;
+    pub const CORNER_RADIUS: Val = Val::Px(4.0);
 
     /// Increased corner radius for dialogs
-    pub const DIALOG_RADIUS: f32 = 8.0;
+    pub const DIALOG_RADIUS: Val = Val::Px(8.0);
 
-    /// Border width of control chrome (checkbox, radio, toggle, text input)
+    /// Border width of control chrome (checkbox, radio, toggle)
     pub const CONTROL_BORDER: Val = Val::Px(2.0);
 
-    /// Border width of containers (dialog, group, subpane, menu popup)
+    /// Border width of containers (dialog, subpane header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(1.0);
 
-    /// Tight gap: control-to-label and stacked container content
+    /// Tight vertical gap for dense section interiors (subpane, group, radio group)
     pub const GAP_TIGHT: Val = Val::Px(4.0);
 
-    /// Gap between elements in a row; also buttons' and list rows' horizontal padding
+    /// Standard gap: every horizontal gap (rows, caption slots) and page-level
+    /// column gap; also buttons' and list rows' horizontal padding
     pub const GAP: Val = Val::Px(8.0);
 
     /// Container body padding (dialog, group, subpane)
@@ -77,7 +78,7 @@ pub mod size {
     pub const SCROLLBAR_WIDTH: Val = Val::Px(6.0);
 
     /// Gutter reserved beside scrollable content for the scrollbar plus clearance
-    pub const SCROLLBAR_GUTTER: Val = Val::Px(10.0);
+    pub const SCROLLBAR_GUTTER: Val = Val::Px(12.0);
 
     /// The one font size: every control and container uses this.
     pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);

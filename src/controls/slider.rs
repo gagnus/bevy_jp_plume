@@ -20,7 +20,7 @@ use bevy_scene::prelude::*;
 use bevy_ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
     InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
-    UiRect, percent, px,
+    UiRect, Val, percent,
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderValue, TrackClick,
@@ -33,6 +33,9 @@ use crate::{
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
     tokens,
 };
+
+/// Visible track strip thickness (the full-height node around it is the hit area).
+const TRACK_HEIGHT: Val = Val::Px(4.0);
 
 /// A slider widget.
 ///
@@ -80,7 +83,7 @@ impl PlumeSlider {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
                 // Horizontal margin reserves the half-knob overhang at the track ends.
-                margin: UiRect::horizontal(px(8.0)),
+                margin: {UiRect::horizontal(size::KNOB_SIZE / 2.0)},
                 width: size::CONTROL_WIDTH
             }
             Hovered
@@ -97,9 +100,9 @@ impl PlumeSlider {
             Children [
                 (
                     Node {
-                        height: px(4),
+                        height: {TRACK_HEIGHT},
                         width: percent(100.),
-                        border_radius: {BorderRadius::all(px(2))},
+                        border_radius: {TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
                     // Bar/track drawn as a gradient, seeded from the theme so the
@@ -128,9 +131,10 @@ impl PlumeSlider {
                         top: percent(50),
                         width: size::KNOB_SIZE,
                         height: size::KNOB_SIZE,
+                        // Half-knob offsets center the thumb on the value position.
                         margin: UiRect {
-                            left: px(-8),
-                            top: px(-8),
+                            left: {-(size::KNOB_SIZE / 2.0)},
+                            top: {-(size::KNOB_SIZE / 2.0)},
                         },
                         border_radius: BorderRadius::MAX,
                     }

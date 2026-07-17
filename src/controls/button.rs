@@ -86,6 +86,7 @@ impl PlumeButton {
                 height: size::ROW_HEIGHT,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                column_gap: size::GAP,
                 padding: UiRect::horizontal(size::GAP),
                 border_radius: {props.corners.to_border_radius(size::CORNER_RADIUS)},
             }

@@ -60,7 +60,7 @@ impl PlumeColorSwatch {
                     top: px(0),
                     bottom: px(0),
                     right: px(0),
-                    border_radius: BorderRadius::right(px(size::CORNER_RADIUS)),
+                    border_radius: BorderRadius::right(size::CORNER_RADIUS),
                 }
                 ColorSwatchFg
                 BackgroundColor(Color::srgb(1.0, 0.0, 1.0))
@@ -79,7 +79,7 @@ impl PlumeColorSwatch {
             Node {
                 height: size::ROW_HEIGHT,
                 width: size::ROW_HEIGHT,
-                border_radius: px(size::CORNER_RADIUS),
+                border_radius: size::CORNER_RADIUS,
             }
             {material}
             PlumeColorSwatch
@@ -92,7 +92,7 @@ impl PlumeColorSwatch {
                         top: px(0),
                         bottom: px(0),
                         right: px(0),
-                        border_radius: px(size::CORNER_RADIUS),
+                        border_radius: size::CORNER_RADIUS,
                     }
                     ColorSwatchFg
                     BackgroundColor({Color::srgb(1.0, 0.0, 1.0).with_alpha(0.5)})

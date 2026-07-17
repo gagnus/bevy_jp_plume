@@ -20,7 +20,8 @@ use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selectio
 
 use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
-use crate::{display::caption, rounded_corners::RoundedCorners};
+use crate::display::caption;
+use crate::rounded_corners::RoundedCorners;
 
 const SELECT_ROW_PX: f32 = 24.0;
 
