@@ -65,7 +65,10 @@ impl PlumeListView {
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
             }
-            ScrollbarGutter(size::SCROLLBAR_GUTTER)
+            // SCROLLBAR_GUTTER + the 2px edge inset on the scrollbar strip below, so the
+            // bar keeps its content clearance while not touching the frame edge (the same
+            // breathing room a dialog's body padding provides).
+            ScrollbarGutter(px(12.0))
             ListBox
             // Click-to-focus marker only; plume registers no Tab-key navigation.
             TabIndex(0)
@@ -93,9 +96,9 @@ impl PlumeListView {
                 }
                 Node {
                     position_type: PositionType::Absolute,
-                    right: px(0),
-                    top: px(0),
-                    bottom: px(0),
+                    right: px(2),
+                    top: px(2),
+                    bottom: px(2),
                     width: size::SCROLLBAR_WIDTH,
                 }
             ]
@@ -135,6 +138,9 @@ impl PlumeListRow {
             Children [(
                 // Hidden ticks still occupy layout, so every label shares the gutter.
                 fa_icon(font_awesome::solid::CHECK)
+                Node {
+                    width: px(14)
+                }
                 ListRowCheck
                 Visibility::Hidden
             )]

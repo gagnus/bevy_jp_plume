@@ -22,7 +22,7 @@ use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
 use crate::{display::caption, rounded_corners::RoundedCorners};
 
-const SELECT_ROW_PX: f32 = 28.0;
+const SELECT_ROW_PX: f32 = 24.0;
 
 /// Select control which spawns a menu popup with a list of string options
 /// # Emitted events
@@ -287,16 +287,20 @@ fn sync_select_width(
     }
 }
 
-/// Size the menu button to the widest option so picking a longer/shorter caption never
-/// changes the control's width. Rows are stretched to the popup, so their natural width is
-/// re-derived from their children plus the row's own padding and gaps.
+// Match the menu button's width to the popup (widest row + popup chrome) and pin the caption
+// to the widest option, so picking a different option never resizes the control. Rows are
+// stretched to the popup, so their natural width is re-summed from their children.
 fn sync_select_button_width(
     q_selects: Query<Entity, With<PlumeSelect>>,
     q_children: Query<&Children>,
     q_rows: Query<(&Node, &Children), With<PlumeListRow>>,
+    q_buttons: Query<&Node, With<PlumeMenuButton>>,
+    q_captions: Query<&Node, With<SelectCaption>>,
+    q_listboxes: Query<&Node, With<ListBox>>,
+    q_popups: Query<&Node, With<PlumeMenuPopup>>,
+    q_check: Query<(), With<ListRowCheck>>,
     q_computed: Query<&ComputedNode>,
-    q_button: Query<(), With<PlumeMenuButton>>,
-    mut q_node: Query<&mut Node, Without<PlumeListRow>>,
+    mut commands: Commands,
 ) {
     fn val_px(val: Val) -> f32 {
         match val {
@@ -304,36 +308,66 @@ fn sync_select_button_width(
             _ => 0.0,
         }
     }
+    let width_of = |entity: Entity| {
+        q_computed
+            .get(entity)
+            .map(|computed| computed.size().x * computed.inverse_scale_factor())
+            .ok()
+    };
     for select_ent in q_selects.iter() {
-        let mut widest = 0.0f32;
+        let mut widest_row = 0.0f32;
+        let mut widest_option = 0.0f32;
+        let mut popup_chrome = 0.0f32;
         for descendant in q_children.iter_descendants(select_ent) {
+            if let Ok(popup_node) = q_popups.get(descendant) {
+                popup_chrome += val_px(popup_node.border.left)
+                    + val_px(popup_node.border.right)
+                    + val_px(popup_node.padding.left)
+                    + val_px(popup_node.padding.right);
+            }
+            if let Ok(listbox_node) = q_listboxes.get(descendant) {
+                popup_chrome += val_px(listbox_node.padding.right);
+            }
             let Ok((row_node, row_children)) = q_rows.get(descendant) else {
                 continue;
             };
-            let child_widths: Vec<f32> = row_children
-                .iter()
-                .filter_map(|&child| q_computed.get(child).ok())
-                .map(|computed| computed.size().x * computed.inverse_scale_factor())
-                .collect();
-            if child_widths.is_empty() {
-                continue;
+            let gap = val_px(row_node.column_gap);
+            // The check tick stays in the popup, so it counts toward the row but not the caption.
+            let (mut row_width, mut option_width) = (0.0f32, 0.0f32);
+            for &child in row_children.iter() {
+                let Some(width) = width_of(child) else {
+                    continue;
+                };
+                row_width += width + if row_width > 0.0 { gap } else { 0.0 };
+                if !q_check.contains(child) {
+                    option_width += width + if option_width > 0.0 { gap } else { 0.0 };
+                }
             }
-            let gaps = val_px(row_node.column_gap) * (child_widths.len() - 1) as f32;
-            let padding = val_px(row_node.padding.left) + val_px(row_node.padding.right);
-            widest = widest.max(child_widths.iter().sum::<f32>() + gaps + padding);
+            if row_width > 0.0 {
+                let padding = val_px(row_node.padding.left) + val_px(row_node.padding.right);
+                widest_row = widest_row.max(row_width + padding);
+                widest_option = widest_option.max(option_width);
+            }
         }
-        if widest <= 0.0 {
+        if widest_row <= 0.0 {
             continue;
         }
-        let target = px(widest.ceil());
+        let button_target = px((widest_row + popup_chrome).ceil());
+        let caption_target = px(widest_option.ceil());
         for descendant in q_children.iter_descendants(select_ent) {
-            if q_button.contains(descendant) {
-                if let Ok(mut node) = q_node.get_mut(descendant)
-                    && node.min_width != target
-                {
-                    node.min_width = target;
-                }
-                break;
+            if let Ok(button_node) = q_buttons.get(descendant)
+                && button_node.width != button_target
+            {
+                let mut node = button_node.clone();
+                node.width = button_target;
+                commands.entity(descendant).insert(node);
+            }
+            if let Ok(caption_node) = q_captions.get(descendant)
+                && caption_node.width != caption_target
+            {
+                let mut node = caption_node.clone();
+                node.width = caption_target;
+                commands.entity(descendant).insert(node);
             }
         }
     }

@@ -80,7 +80,7 @@ pub mod size {
     pub const SCROLLBAR_GUTTER: Val = Val::Px(10.0);
 
     /// The one font size: every control and container uses this.
-    pub const MEDIUM_FONT: FontSize = FontSize::Px(12.0);
+    pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
 }
 
 /// The FontAwesome face a glyph is drawn from.

@@ -267,10 +267,10 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
                 // 8 options / 4 visible: popup scrolls, scrollbar shown.
                 @PlumeSelect {
                     @options: {list_rows_from_strings(
-                        ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
+                        ["Alpha", "Beta", "Gamma", "Delta", "Echo", "Foxtrot Is Really Long", "Golf", "Hotel"],
                         Some(0),
                     )},
-                    @max_visible: 4,
+                    @max_visible: 7,
                 }
                 on(|change: On<ValueChange<Entity>>, q_options: Query<&ListRowIndex>| {
                     if let Ok(option) = q_options.get(change.value) {
@@ -287,7 +287,7 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
             maybe_disabled(disabled),
             @PlumeTextInput {
                 @placeholder: {Some("Type here".into())},
-                @filter: {Some(EditableTextFilter::new(|c| c.is_ascii()))},
+                @filter: {Some(EditableTextFilter::new(|c| c.is_ascii() && c != '!'))},
             }
             maybe_disabled(disabled),
             @PlumeNumberInput
@@ -580,7 +580,7 @@ fn debug_options_dialog() -> impl Scene {
                                         toggle_row("FPS overlay", true),
                                         toggle_row("Entity inspector", false),
                                         select_row(
-                                            "Overlay corner",
+                                            "Overlay",
                                             ["Top left", "Top right", "Bottom left", "Bottom right"],
                                         ),
                                         select_row(
