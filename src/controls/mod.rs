@@ -25,6 +25,9 @@ pub use slider::*;
 pub use text_input::*;
 pub use toggle_switch::*;
 
+// Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
+pub use bevy_text::EditableTextFilter;
+
 use listview::ListViewPlugin;
 
 use crate::alpha_pattern::AlphaPatternPlugin;

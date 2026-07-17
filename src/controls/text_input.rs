@@ -1,12 +1,13 @@
 //! Editable text field and its decorative container.
 use bevy_app::{Plugin, PreUpdate, PropagateOver};
+use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
-    hierarchy::Children,
+    hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
-    query::{Added, Has, With},
+    query::{Added, Changed, Has, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res, ResMut},
@@ -18,10 +19,10 @@ use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_text::{
-    EditableText, FontSourceTemplate, FontWeight, LineBreak, LineHeight, TextCursorStyle, TextFont,
-    TextLayout,
+    EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
+    TextCursorStyle, TextFont, TextLayout,
 };
-use bevy_ui::{AlignItems, BorderRadius, InteractionDisabled, Node, UiRect, Val, px};
+use bevy_ui::{AlignItems, BorderRadius, InteractionDisabled, Node, PositionType, UiRect, Val, px};
 
 use crate::{
     constants::{fonts, size},
@@ -55,6 +56,10 @@ pub struct PlumeTextInputProps {
     pub visible_width: Option<f32>,
     /// Max characters
     pub max_characters: Option<usize>,
+    /// Optional per-character filter rejecting disallowed input.
+    pub filter: Option<EditableTextFilter>,
+    /// Optional dim hint shown while the field is empty and unfocused.
+    pub placeholder: Option<String>,
     /// Optional non-editable suffix shown after the text (a unit such as `px`, `%`, or `°`).
     pub suffix: Option<String>,
 }
@@ -64,7 +69,11 @@ impl PlumeTextInput {
         bsn! {
             text_input_frame()
             Children [
-                (text_input_field(props.visible_width, props.max_characters)),
+                (
+                    text_input_field(props.visible_width, props.max_characters)
+                    {props.filter.map(|filter| bsn!(template_value(filter)))}
+                ),
+                {props.placeholder.map(|placeholder| bsn_list!(text_input_placeholder(placeholder)))},
                 {props.suffix.map(|suffix| bsn_list!(text_input_suffix(suffix)))}
             ]
         }
@@ -132,6 +141,25 @@ pub(crate) fn text_input_field(
         }
         PropagateOver<TextFont>
         TextCursorStyle::default()
+    }
+}
+
+// Marker for a placeholder hint inside a text-input frame.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct TextInputPlaceholder;
+
+// Dim hint overlaying the field; absolute with auto vertical insets, so the frame's
+// align_items centers it without displacing the field. `left` matches the frame's padding.
+fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
+    bsn! {
+        label_dim(text)
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(6.0),
+        }
+        TextInputPlaceholder
+        Pickable::IGNORE
     }
 }
 
@@ -337,6 +365,38 @@ fn set_text_input_styles(
     }
 }
 
+/// Show each placeholder only while its sibling field is empty and unfocused.
+fn update_text_input_placeholders(
+    mut q_placeholders: Query<(&ChildOf, &mut Visibility), With<TextInputPlaceholder>>,
+    q_fields: Query<&EditableText, With<TextInputField>>,
+    q_changed_fields: Query<(), (Changed<EditableText>, With<TextInputField>)>,
+    q_children: Query<&Children>,
+    focus: Res<InputFocus>,
+) {
+    if !focus.is_changed() && q_changed_fields.is_empty() {
+        return;
+    }
+    for (child_of, mut visibility) in q_placeholders.iter_mut() {
+        let Ok(children) = q_children.get(child_of.parent()) else {
+            continue;
+        };
+        let Some(field_ent) = children.iter().copied().find(|&c| q_fields.contains(c)) else {
+            continue;
+        };
+        let Ok(editable_text) = q_fields.get(field_ent) else {
+            continue;
+        };
+        let show = editable_text.value() == "" && focus.get() != Some(field_ent);
+        let wanted = match show {
+            true => Visibility::Inherited,
+            false => Visibility::Hidden,
+        };
+        if *visibility != wanted {
+            *visibility = wanted;
+        }
+    }
+}
+
 /// Plugin which registers the systems for updating the text input styles.
 pub struct TextInputPlugin;
 
@@ -349,6 +409,7 @@ impl Plugin for TextInputPlugin {
                 update_text_input_styles,
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
+                update_text_input_placeholders,
             )
                 .in_set(PickingSystems::Last),
         );

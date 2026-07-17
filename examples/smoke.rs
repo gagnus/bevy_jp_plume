@@ -10,10 +10,10 @@ use bevy_jp_plume::{
     constants::{font_awesome, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, column, flex_spacer, row, separator},
     controls::{
-        ButtonVariant, ColorSwatchValue, ListRowIndex, PlumeButton, PlumeCheckbox,
-        PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeScrollbar,
-        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, ScrollbarGutter,
-        list_rows_from_strings,
+        ButtonVariant, ColorSwatchValue, EditableTextFilter, ListRowIndex, PlumeButton,
+        PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup,
+        PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
+        ScrollbarGutter, list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
     display::{caption, caption_small_caps, fa_icon, label_bright, label_dim},
@@ -285,7 +285,10 @@ fn controls_row(bg: Option<ThemeToken>, disabled: bool) -> impl Scene {
                 @max_visible: 4,
             }
             maybe_disabled(disabled),
-            @PlumeTextInput
+            @PlumeTextInput {
+                @placeholder: {Some("Type here".into())},
+                @filter: {Some(EditableTextFilter::new(|c| c.is_ascii()))},
+            }
             maybe_disabled(disabled),
             @PlumeNumberInput
             maybe_disabled(disabled),
