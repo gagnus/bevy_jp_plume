@@ -15,7 +15,7 @@ use bevy_ecs::{
 use bevy_input_focus::{FocusCause, InputFocus, InputFocusVisible};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{ComputedNode, InteractionDisabled, Node, Selected, px, widget::Text};
+use bevy_ui::{ComputedNode, InteractionDisabled, Node, Selected, Val, px, widget::Text};
 use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
 
 use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
@@ -287,6 +287,58 @@ fn sync_select_width(
     }
 }
 
+/// Size the menu button to the widest option so picking a longer/shorter caption never
+/// changes the control's width. Rows are stretched to the popup, so their natural width is
+/// re-derived from their children plus the row's own padding and gaps.
+fn sync_select_button_width(
+    q_selects: Query<Entity, With<PlumeSelect>>,
+    q_children: Query<&Children>,
+    q_rows: Query<(&Node, &Children), With<PlumeListRow>>,
+    q_computed: Query<&ComputedNode>,
+    q_button: Query<(), With<PlumeMenuButton>>,
+    mut q_node: Query<&mut Node, Without<PlumeListRow>>,
+) {
+    fn val_px(val: Val) -> f32 {
+        match val {
+            Val::Px(v) => v,
+            _ => 0.0,
+        }
+    }
+    for select_ent in q_selects.iter() {
+        let mut widest = 0.0f32;
+        for descendant in q_children.iter_descendants(select_ent) {
+            let Ok((row_node, row_children)) = q_rows.get(descendant) else {
+                continue;
+            };
+            let child_widths: Vec<f32> = row_children
+                .iter()
+                .filter_map(|&child| q_computed.get(child).ok())
+                .map(|computed| computed.size().x * computed.inverse_scale_factor())
+                .collect();
+            if child_widths.is_empty() {
+                continue;
+            }
+            let gaps = val_px(row_node.column_gap) * (child_widths.len() - 1) as f32;
+            let padding = val_px(row_node.padding.left) + val_px(row_node.padding.right);
+            widest = widest.max(child_widths.iter().sum::<f32>() + gaps + padding);
+        }
+        if widest <= 0.0 {
+            continue;
+        }
+        let target = px(widest.ceil());
+        for descendant in q_children.iter_descendants(select_ent) {
+            if q_button.contains(descendant) {
+                if let Ok(mut node) = q_node.get_mut(descendant)
+                    && node.min_width != target
+                {
+                    node.min_width = target;
+                }
+                break;
+            }
+        }
+    }
+}
+
 /// Plugin which runs the [`PlumeSelect`] control
 pub struct SelectPlugin;
 
@@ -298,6 +350,7 @@ impl Plugin for SelectPlugin {
                 sync_caption,
                 focus_select_popup,
                 sync_select_width,
+                sync_select_button_width,
                 sync_select_disabled,
             ),
         )
