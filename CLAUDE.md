@@ -27,17 +27,26 @@ constructor — no obscure companion components required. Controls
 self-update their own value (still emitting `ValueChange`); app-vs-widget
 conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 
-### Dialog-first
-`PlumeDialog` is the movable/floating dialog and the primary container.
-There is no modal dialog. No panes; `group`/`subpane` for structure.
+### Debug-overlay-first
+The target is debug overlays over a running game (imgui/egui's emphasis),
+not a full Unity-style editor. `PlumeDialog` is the movable/floating
+dialog and the primary container; there is no modal dialog. Full-screen
+roots (menu bar, root panels) are in scope; `group`/`subpane` for
+structure within a surface.
 
-### Mouse-only interaction
-No Tab-key navigation, focus ring, or keyboard activation of controls.
-Text entry keeps click-to-focus and keyboard input. `TabIndex` survives
-purely as the click-to-focus marker (`acquire_focus_tab_index` is
-registered; `TabNavigationPlugin` and its Tab-key handler are not) —
-without it, `PointerFocusPlugin` blurs on every press and focus-dependent
-widgets (text input, select popups) break.
+### Full keyboard reach
+Every interactive control is tabbable (`TabIndex(0)`) and keyboard-
+operable via the headless `bevy_ui_widgets` handlers (Enter/Space
+activates, arrows move sliders/radios/lists). Keyboard focus shows a
+focus ring: `FocusIndicator` on the entity the ring should hug (the
+box/disc for checkbox/radio, the root for button/toggle/slider),
+`FocusWithinIndicator` on frames whose inner child holds focus (text
+input); ring only when `InputFocusVisible` (keyboard-driven focus).
+Tabbable entities need a `TabGroup` ancestor: `PlumeDialog` carries one,
+app-built root panels add their own (re-exported at the crate root).
+Disabled controls leave the Tab order (`FocusPlugin` swaps `TabIndex` to
+-1 and back). Without a `TabIndex`, `PointerFocusPlugin` blurs on every
+press and focus-dependent widgets break — every control keeps one.
 
 ## Layout
 

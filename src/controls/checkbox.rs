@@ -12,6 +12,7 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::FromTemplate,
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_math::Rot2;
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
@@ -26,6 +27,7 @@ use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
+    focus::FocusIndicator,
     font_styles::InheritableFont,
     theme::{
         Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
@@ -74,6 +76,7 @@ impl PlumeCheckbox {
             }
             Checkbox
             CheckboxFrame
+            TabIndex(0)
             on(checkbox_self_update)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::CHECKBOX_TEXT)
@@ -90,6 +93,8 @@ impl PlumeCheckbox {
                         border_radius: size::CORNER_RADIUS,
                     }
                     CheckboxBg
+                    // Ring hugs the box, not the label row.
+                    FocusIndicator
                     ThemeBackgroundGradient(tokens::CHECKBOX_BG, 0.0)
                     Children [
                         (

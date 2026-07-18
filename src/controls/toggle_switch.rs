@@ -13,6 +13,7 @@ use bevy_ecs::{
     system::{Commands, Query},
     world::Mut,
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
@@ -25,6 +26,7 @@ use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 use crate::{
     constants::size,
     cursor::EntityCursor,
+    focus::FocusIndicator,
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
     tokens,
 };
@@ -57,6 +59,8 @@ impl PlumeToggleSwitch {
             }
             Checkbox
             PlumeToggleSwitch
+            TabIndex(0)
+            FocusIndicator
             on(checkbox_self_update)
             ThemeBackgroundGradient(tokens::SWITCH_BG, GRADIENT_AMOUNT)
             template_value(control_box_shadow())

@@ -10,6 +10,7 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
@@ -20,6 +21,7 @@ use bevy_ui_widgets::Button;
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
+    focus::FocusIndicator,
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
     theme::{
@@ -94,6 +96,8 @@ impl PlumeButton {
             template_value(props.variant)
             {box_shadow}
             Hovered
+            TabIndex(0)
+            FocusIndicator
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
             InheritableThemeTextColor(tokens::BUTTON_TEXT)

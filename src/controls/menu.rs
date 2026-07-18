@@ -13,7 +13,8 @@ use bevy_reflect::Reflect;
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node, OverrideClip, PositionType, UiRect, Val, px,
+    AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node,
+    OverrideClip, PositionType, UiRect, Val, px,
 };
 use bevy_ui_widgets::{
     ActivateOnPress, MenuAction, MenuButton, MenuEvent, MenuFocusState, MenuPopup,

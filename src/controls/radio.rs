@@ -12,18 +12,21 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, PositionType, Val, percent, px,
+    AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
+    JustifyContent, Node, PositionType, Val, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
+    focus::FocusIndicator,
     font_styles::InheritableFont,
     theme::{
         Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
@@ -71,6 +74,7 @@ impl PlumeRadio {
                 min_height: size::ROW_HEIGHT,
             }
             RadioButton
+            TabIndex(0)
             on(radio_check_self)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
@@ -92,6 +96,8 @@ impl PlumeRadio {
                     border_radius: BorderRadius::MAX,
                 }
                 RadioBg
+                // Ring hugs the disc, not the label row.
+                FocusIndicator
                 ThemeBackgroundGradient(tokens::RADIO_BG, 0.0)
                 Children [
                     (

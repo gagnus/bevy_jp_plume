@@ -11,7 +11,6 @@ use bevy_ecs::{
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res, ResMut},
-    template::template,
 };
 use bevy_input_focus::{InputFocus, tab_navigation::TabIndex};
 use bevy_picking::{Pickable, PickingSystems};
@@ -28,6 +27,7 @@ use crate::{
     constants::{fonts, size},
     cursor::EntityCursor,
     display::label_dim,
+    focus::FocusWithinIndicator,
     theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
     tokens,
 };
@@ -104,6 +104,8 @@ pub(crate) fn text_input_frame() -> impl Scene {
             width: size::CONTROL_WIDTH,
         }
         PlumeTextInput
+        // Ring around the frame while the inner field holds focus.
+        FocusWithinIndicator
         ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
         ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
         // On the frame so the whole box (padding included) shows the text cursor; the cursor
@@ -127,7 +129,6 @@ pub(crate) fn text_input_field(
         // The field is the text entity, so the inheritable color (which only propagates to
         // descendants) would never reach it; set it directly.
         ThemeTextColor(tokens::TEXT_INPUT_TEXT)
-        // Click-to-focus marker only; plume registers no Tab-key navigation.
         TabIndex(0)
         EditableText {
             cursor_width: 0.3,
@@ -140,7 +141,7 @@ pub(crate) fn text_input_field(
         }
         // Line height fills the content box exactly: a taller line overflows and makes the edit
         // viewport re-clamp (1px jitter) while typing.
-        template(|_| Ok(LineHeight::Px(20.0)))
+        template_value(LineHeight::Px(20.0))
         TextFont {
             font: FontSourceTemplate::Handle(fonts::REGULAR),
             font_size: size::MEDIUM_FONT,

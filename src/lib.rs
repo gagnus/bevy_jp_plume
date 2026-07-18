@@ -29,7 +29,11 @@ pub mod theme;
 pub mod utils;
 
 pub use theme::{dark_theme, light_theme, tokens};
-pub use utils::{constants, cursor, font_styles, rounded_corners};
+pub use utils::{constants, cursor, focus, font_styles, rounded_corners};
+
+// Marks a tree as a Tab-traversal scope; `PlumeDialog` carries one, app-built
+// root panels add their own. Re-exported so apps stay on the plume surface.
+pub use bevy_input_focus::tab_navigation::TabGroup;
 
 /// Plugin which installs observers and systems for plume themes, cursors, and all controls.
 pub struct PlumeCorePlugin;
@@ -51,6 +55,10 @@ impl Plugin for PlumeCorePlugin {
             containers::SubpanePlugin,
             CursorIconPlugin,
             ThemePlugin,
+            // Click-to-focus plus Tab/Shift-Tab traversal of every control; tabbable
+            // entities need a `TabGroup` ancestor, which `PlumeDialog` provides.
+            bevy_input_focus::tab_navigation::TabNavigationPlugin,
+            focus::FocusPlugin,
             HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
             UiMaterialPlugin::<AlphaPatternMaterial>::default(),
         ));
@@ -66,10 +74,7 @@ impl Plugin for PlumeCorePlugin {
             bevy_window::SystemCursorIcon::Default,
         )));
 
-        app.add_observer(font_styles::on_changed_font)
-            // Click-to-focus resolver for `TabIndex` targets. Deliberately not
-            // `TabNavigationPlugin`, which would also install Tab-key navigation.
-            .add_observer(bevy_input_focus::tab_navigation::acquire_focus_tab_index);
+        app.add_observer(font_styles::on_changed_font);
 
         app.init_resource::<AlphaPatternResource>();
     }

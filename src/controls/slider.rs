@@ -14,6 +14,7 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::template,
 };
+use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
@@ -30,6 +31,7 @@ use bevy_ui_widgets::{
 use crate::{
     constants::size,
     cursor::EntityCursor,
+    focus::FocusIndicator,
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
     tokens,
 };
@@ -56,7 +58,8 @@ pub struct PlumeSliderProps {
     pub min: f32,
     /// Slider maximum value
     pub max: f32,
-    /// Increment used by relative value changes ([`SliderStep`]); `None` keeps the default of 1.0
+    /// Increment used by arrow keys and relative value changes ([`SliderStep`]);
+    /// `None` = 1% of the range
     pub step: Option<f32>,
     /// Decimal places drag values are rounded to ([`SliderPrecision`]); `None` = unrounded
     pub precision: Option<i32>,
@@ -87,6 +90,8 @@ impl PlumeSlider {
                 width: size::CONTROL_WIDTH
             }
             Hovered
+            TabIndex(0)
+            FocusIndicator
             Slider {
                 track_click: TrackClick::Snap,
                 orientation: SliderOrientation::Horizontal,
@@ -95,7 +100,9 @@ impl PlumeSlider {
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
-            {props.step.map(|step| bsn!(SliderStep({step})))}
+            // Default step = 1% of range: arrow keys (and a11y increments) move a
+            // continuous slider usefully instead of by the headless default of 1.0.
+            SliderStep({props.step.unwrap_or((props.max - props.min) / 100.0)})
             {props.precision.map(|precision| bsn!(SliderPrecision({precision})))}
             Children [
                 (

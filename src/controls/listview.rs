@@ -1,28 +1,29 @@
 //! Internal scrolling list view and its selectable rows.
 use accesskit::Role;
 use bevy_a11y::AccessibilityNode;
-use bevy_app::{Plugin, PreUpdate};
+use bevy_app::{Plugin, PostUpdate, PreUpdate};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
+    change_detection::DetectChanges,
     component::Component,
     entity::Entity,
-    hierarchy::Children,
+    hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
     query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs as _,
-    system::{Commands, Query},
+    system::{Commands, Query, Res},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
+use bevy_input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
 use bevy_picking::{PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, template_value};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow,
-    PositionType, Selected, UiRect, px,
+    AlignItems, BorderRadius, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
+    Overflow, PositionType, Selected, UiRect, px,
 };
-use bevy_ui_widgets::{ControlOrientation, ListBox, ListItem, ScrollArea};
+use bevy_ui_widgets::{ActiveDescendant, ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
     constants::{font_awesome, fonts, size},
@@ -30,7 +31,7 @@ use crate::{
     cursor::EntityCursor,
     display::{caption, fa_icon},
     font_styles::InheritableFont,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
 
@@ -67,7 +68,8 @@ impl PlumeListView {
             }
             template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::PAD).unwrap()))
             ListBox
-            // Click-to-focus marker only; plume registers no Tab-key navigation.
+            // Focusable for arrow-key selection; a hidden popup is skipped by Tab anyway
+            // (tab gathering ignores invisible entities).
             TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
             Children [
@@ -167,7 +169,7 @@ pub fn list_rows_from_strings(
             bsn! {
                 @PlumeListRow
                 ListRowIndex(i)
-                {selected.is_some_and(|selected| selected == i).then_some(template_value(Selected))}
+                {selected.is_some_and(|selected| selected == i).then(|| bsn! { Selected })}
                 Children [ caption(label) ]
             }
         })
@@ -315,6 +317,60 @@ fn set_listrow_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
+/// Marker for the keyboard-navigation highlight on a listbox's active row.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ActiveRowOutline;
+
+/// Outline the focused listbox's [`ActiveDescendant`] row (the arrow-key cursor,
+/// distinct from the `Selected` row's tick) while keyboard focus is visible.
+fn update_active_row_outline(
+    focus: Res<InputFocus>,
+    focus_visible: Res<InputFocusVisible>,
+    q_active_changed: Query<(), (With<ListBox>, Changed<ActiveDescendant>)>,
+    q_listbox: Query<&ActiveDescendant, With<ListBox>>,
+    q_row_outline: Query<(Entity, &ChildOf), With<ActiveRowOutline>>,
+    mut commands: Commands,
+) {
+    if !focus.is_changed() && !focus_visible.is_changed() && q_active_changed.is_empty() {
+        return;
+    }
+
+    let active_row = focus
+        .get()
+        .filter(|_| focus_visible.0)
+        .and_then(|focused| q_listbox.get(focused).ok())
+        .and_then(|active_descendant| active_descendant.0);
+
+    let mut needs_spawn = active_row.is_some();
+    for (outline_ent, child_of) in q_row_outline.iter() {
+        if Some(child_of.parent()) == active_row {
+            needs_spawn = false;
+        } else {
+            commands.entity(outline_ent).despawn();
+        }
+    }
+
+    if let Some(row_ent) = active_row
+        && needs_spawn
+    {
+        commands.entity(row_ent).with_child((
+            Node {
+                position_type: PositionType::Absolute,
+                left: px(0),
+                right: px(0),
+                top: px(0),
+                bottom: px(0),
+                border: UiRect::all(px(2)),
+                border_radius: BorderRadius::all(size::CORNER_RADIUS),
+                ..Default::default()
+            },
+            ThemeBorderColor(tokens::FOCUS_RING),
+            ActiveRowOutline,
+        ));
+    }
+}
+
 /// Plugin which registers the systems for updating the listrow styles.
 pub struct ListViewPlugin;
 
@@ -324,5 +380,6 @@ impl Plugin for ListViewPlugin {
             PreUpdate,
             (update_listrow_styles, update_listrow_styles_remove).in_set(PickingSystems::Last),
         );
+        app.add_systems(PostUpdate, update_active_row_outline);
     }
 }

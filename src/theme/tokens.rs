@@ -281,6 +281,9 @@ pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.
 /// Separator hairline
 pub const SEPARATOR: ThemeToken = ThemeToken::new_static("plume.separator");
 
+/// Focus ring outline
+pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("plume.focus-ring");
+
 /// State groups over the constants above, for
 /// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick) and
 /// [`CheckedTokens::pick`](crate::theme::CheckedTokens::pick).

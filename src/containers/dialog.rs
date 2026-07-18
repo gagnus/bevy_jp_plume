@@ -4,6 +4,7 @@ use bevy_ecs::{
     event::EntityEvent, hierarchy::Children, observer::On, reflect::ReflectComponent,
     system::Commands,
 };
+use bevy_input_focus::tab_navigation::TabGroup;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
@@ -77,6 +78,8 @@ impl PlumeDialog {
                 width: {props.width},
             }
             Dialog
+            // Tab-traversal scope for the dialog's fields.
+            TabGroup::new(0)
             ThemeBackgroundColor(tokens::DIALOG_BG)
             ThemeBorderColor(tokens::DIALOG_BORDER)
             InheritableThemeTextColor(tokens::TEXT_MAIN)

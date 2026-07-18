@@ -6,7 +6,7 @@ use bevy::{
     ui_widgets::{Activate, ControlOrientation, ScrollArea, SliderValue, ValueChange},
 };
 use bevy_jp_plume::{
-    PlumePlugins,
+    PlumePlugins, TabGroup,
     constants::{font_awesome, size},
     containers::{PlumeDialog, PlumeGroup, PlumeSubpane, column, flex_spacer, row, separator},
     controls::{
@@ -45,6 +45,15 @@ fn main() {
     if std::env::var_os("SMOKE_FONT_AUDIT").is_some() {
         app.add_systems(Update, font_audit_and_exit);
     }
+    // SMOKE_TAB_AUDIT=1: walk the Tab-traversal cycle, log each stop, and exit.
+    if std::env::var_os("SMOKE_TAB_AUDIT").is_some() {
+        app.add_systems(Update, tab_audit_and_exit);
+    }
+    // SMOKE_ACTIVE_ROW_PROBE=1: focus a listbox so the active-row outline spawns, then
+    // watch select widths for runaway growth (the outline must not feed the width sync).
+    if std::env::var_os("SMOKE_ACTIVE_ROW_PROBE").is_some() {
+        app.add_systems(Update, active_row_probe_and_exit);
+    }
     app.run();
 }
 
@@ -77,6 +86,103 @@ fn font_audit_and_exit(
         info!("font_audit {entity} [{font}] {snippet:?}");
     }
     exit.write(AppExit::Success);
+}
+
+fn tab_audit_and_exit(
+    mut frames: Local<u32>,
+    nav: bevy::input_focus::tab_navigation::TabNavigation,
+    q_listbox: Query<(), With<bevy::ui_widgets::ListBox>>,
+    q_disabled: Query<(), With<InteractionDisabled>>,
+    q_parent: Query<&ChildOf>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    use bevy::input_focus::{InputFocus, tab_navigation::NavAction};
+    *frames += 1;
+    if *frames != 60 {
+        return;
+    }
+    let Ok(first) = nav.navigate(&InputFocus::default(), NavAction::First) else {
+        error!("tab_audit: no tabbable entities");
+        exit.write(AppExit::error());
+        return;
+    };
+    let mut stop = first;
+    for step in 0..256 {
+        let listbox = q_listbox.contains(stop);
+        let disabled = q_disabled.contains(stop)
+            || q_parent
+                .get(stop)
+                .is_ok_and(|child_of| q_disabled.contains(child_of.parent()));
+        info!("tab_audit stop {step}: {stop} listbox={listbox} disabled={disabled}");
+        if listbox || disabled {
+            error!("tab_audit: {stop} should not be in the Tab order");
+            exit.write(AppExit::error());
+            return;
+        }
+        match nav.navigate(&InputFocus::from_entity(stop), NavAction::Next) {
+            Ok(next) if next == first => {
+                info!("tab_audit: cycle closed after {} stops", step + 1);
+                exit.write(AppExit::Success);
+                return;
+            }
+            Ok(next) => stop = next,
+            Err(e) => {
+                error!("tab_audit: navigation failed: {e}");
+                exit.write(AppExit::error());
+                return;
+            }
+        }
+    }
+    error!("tab_audit: cycle did not close within 256 stops");
+    exit.write(AppExit::error());
+}
+
+fn active_row_probe_and_exit(
+    mut frames: Local<u32>,
+    mut baseline: Local<Vec<f32>>,
+    q_listbox: Query<Entity, With<bevy::ui_widgets::ListBox>>,
+    q_selects: Query<&ComputedNode, With<PlumeSelect>>,
+    mut focus: ResMut<bevy::input_focus::InputFocus>,
+    mut focus_visible: ResMut<bevy::input_focus::InputFocusVisible>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let widths = || -> Vec<f32> {
+        q_selects
+            .iter()
+            .map(|computed| computed.size().x * computed.inverse_scale_factor())
+            .collect()
+    };
+    *frames += 1;
+    match *frames {
+        40 => {
+            let Some(listbox) = q_listbox.iter().next() else {
+                error!("active_row_probe: no listbox found");
+                exit.write(AppExit::error());
+                return;
+            };
+            focus.set(listbox, bevy::input_focus::FocusCause::Navigated);
+            focus_visible.0 = true;
+        }
+        // A few frames after focus: the outline exists and widths have settled.
+        50 => *baseline = widths(),
+        120 => {
+            let now = widths();
+            info!("active_row_probe baseline={:?} now={:?}", *baseline, now);
+            let grew = baseline.len() != now.len()
+                || baseline
+                    .iter()
+                    .zip(now.iter())
+                    .any(|(before, after)| (after - before).abs() > 2.0);
+            if grew {
+                error!("active_row_probe: select width changed while outline present");
+                exit.write(AppExit::error());
+            } else {
+                info!("active_row_probe: widths stable");
+                exit.write(AppExit::Success);
+            }
+        }
+        _ => {}
+    }
 }
 
 fn screenshot_and_exit(
@@ -139,6 +245,7 @@ fn controls_column() -> impl Scene {
             row_gap: px(8),
             width: px(260),
         }
+        TabGroup::new(0)
         Children [
             label_bright("Plume smoke test"),
             label_dim("Bare controls, minimal wiring"),
@@ -762,7 +869,7 @@ fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn Sce
                 height: px(16),
             }
             ColorSwatchValue({color})
-            template(move |_| Ok(param))
+            template_value(param)
         }
     });
     bsn! {
@@ -787,7 +894,7 @@ fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn Sce
                 }
                 Node { width: Val::ZERO, flex_grow: 1.0 }
                 SliderValue({value})
-                template(move |_| Ok(param))
+                template_value(param)
             ),
             (
                 @PlumeNumberInput {
@@ -797,7 +904,7 @@ fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn Sce
                     @max: {max},
                     @suffix: {param.suffix()},
                 }
-                template(move |_| Ok(param))
+                template_value(param)
             ),
         ]
     }

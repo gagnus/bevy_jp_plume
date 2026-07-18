@@ -12,11 +12,15 @@ use bevy_ecs::{
     reflect::ReflectComponent,
     system::{Commands, Query, ResMut},
 };
-use bevy_input_focus::{FocusCause, InputFocus, InputFocusVisible};
+use bevy_input_focus::{FocusCause, InputFocus};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
-use bevy_ui::{ComputedNode, InteractionDisabled, Node, Selected, Val, px, widget::Text};
-use bevy_ui_widgets::{ListBox, SetSelected, ValueChange, listbox_update_selection};
+use bevy_ui::{
+    ComputedNode, InteractionDisabled, Node, PositionType, Selected, Val, px, widget::Text,
+};
+use bevy_ui_widgets::{
+    ListBox, ReselectListRow, SetSelected, ValueChange, listbox_update_selection,
+};
 
 use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
@@ -86,6 +90,7 @@ impl PlumeSelect {
                             }
                             on(listbox_update_selection)
                             on(re_emit_listbox_value)
+                            on(close_popup_on_reselect)
                             Node {
                                 max_height: {max_height},
                             }
@@ -94,6 +99,26 @@ impl PlumeSelect {
                 )
             ]
         }
+    }
+}
+
+// Event is sent on the PlumeListView
+fn close_popup_on_reselect(
+    ev: On<ReselectListRow>,
+    q_popup: Query<(), With<PlumeMenuPopup>>,
+    q_parents: Query<&ChildOf>,
+    mut commands: Commands,
+) {
+    let mut popup_ent = None;
+    for ancestor in q_parents.iter_ancestors(ev.event_target()) {
+        if q_popup.contains(ancestor) {
+            popup_ent = Some(ancestor);
+            break;
+        }
+    }
+
+    if let Some(popup_ent) = popup_ent {
+        commands.entity(popup_ent).insert(Visibility::Hidden);
     }
 }
 
@@ -188,12 +213,10 @@ fn sync_caption(
 fn focus_select_popup(
     q_popups: Query<(Entity, &Visibility), (With<PlumeMenuPopup>, Changed<Visibility>)>,
     q_select: Query<(), With<PlumeSelect>>,
-    q_listbox: Query<(), With<ListBox>>,
     q_button: Query<(), With<PlumeMenuButton>>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
     mut focus: ResMut<InputFocus>,
-    mut focus_visible: ResMut<InputFocusVisible>,
 ) {
     for (popup, visibility) in q_popups.iter() {
         let mut select_ent = None;
@@ -207,15 +230,7 @@ fn focus_select_popup(
             continue;
         };
 
-        if *visibility == Visibility::Visible {
-            for descendant in q_children.iter_descendants(popup) {
-                if q_listbox.contains(descendant) {
-                    focus.set(descendant, FocusCause::Navigated);
-                    focus_visible.0 = true;
-                    break;
-                }
-            }
-        } else {
+        if *visibility != Visibility::Visible {
             let focus_in_select = focus.get().is_some_and(|focused| {
                 focused == select_ent || q_parents.iter_ancestors(focused).any(|a| a == select_ent)
             });
@@ -299,6 +314,7 @@ fn sync_select_button_width(
     q_listboxes: Query<&Node, With<ListBox>>,
     q_popups: Query<&Node, With<PlumeMenuPopup>>,
     q_check: Query<(), With<ListRowCheck>>,
+    q_nodes: Query<&Node>,
     q_computed: Query<&ComputedNode>,
     mut commands: Commands,
 ) {
@@ -335,6 +351,15 @@ fn sync_select_button_width(
             // The check tick stays in the popup, so it counts toward the row but not the caption.
             let (mut row_width, mut option_width) = (0.0f32, 0.0f32);
             for &child in row_children.iter() {
+                // Absolute children (the active-row outline) sit outside flex layout and
+                // must not count toward the row's natural width — their width follows the
+                // row's, so summing them feeds back into unbounded growth.
+                if q_nodes
+                    .get(child)
+                    .is_ok_and(|node| node.position_type == PositionType::Absolute)
+                {
+                    continue;
+                }
                 let Some(width) = width_of(child) else {
                     continue;
                 };

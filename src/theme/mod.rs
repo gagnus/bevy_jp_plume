@@ -17,7 +17,8 @@ use bevy_platform::collections::HashMap;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{
-    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient, InterpolationColorSpace, LinearGradient, Val, percent, px,
+    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
+    InterpolationColorSpace, LinearGradient, Val, percent, px,
 };
 use smol_str::SmolStr;
 
@@ -490,7 +491,8 @@ pub enum ThemeSlot {
     /// - `SWITCH_SLIDE_BG_CHECKED`
     Contrast,
 
-    /// Focus/selection ring color (reserved; no token maps here yet).
+    /// Focus/selection ring color (derived: accent 0 at half alpha).
+    /// - `FOCUS_RING`
     FocusRing,
 
     /// Red axis (reserved for axis-colored widgets).
@@ -810,6 +812,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::DIALOG_TEXT, ThemeSlot::Text1),
     (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
     (tokens::SEPARATOR, ThemeSlot::Neutral4),
+    (tokens::FOCUS_RING, ThemeSlot::FocusRing),
 ];
 
 pub mod dark_theme;
