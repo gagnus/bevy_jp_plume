@@ -1,6 +1,5 @@
 //! Throwaway smoke test: one of each control, spawned bare to audit defaults. Deleted in step 7.
 use bevy::{
-    ecs::template::template,
     prelude::*,
     ui::Checked,
     ui_widgets::{Activate, ControlOrientation, ScrollArea, SliderValue, ValueChange},

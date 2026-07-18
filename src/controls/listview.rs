@@ -161,19 +161,21 @@ pub fn list_rows_from_strings(
     options: impl IntoIterator<Item: AsRef<str>>,
     selected: Option<usize>,
 ) -> Box<dyn SceneList> {
-    Box::new(options
-        .into_iter()
-        .enumerate()
-        .map(|(i, label)| {
-            let label: String = label.as_ref().into();
-            bsn! {
-                @PlumeListRow
-                ListRowIndex(i)
-                {selected.is_some_and(|selected| selected == i).then(|| bsn! { Selected })}
-                Children [ caption(label) ]
-            }
-        })
-        .collect::<Vec<_>>())
+    Box::new(
+        options
+            .into_iter()
+            .enumerate()
+            .map(|(i, label)| {
+                let label: String = label.as_ref().into();
+                bsn! {
+                    @PlumeListRow
+                    ListRowIndex(i)
+                    {selected.is_some_and(|selected| selected == i).then(|| bsn! { Selected })}
+                    Children [ caption(label) ]
+                }
+            })
+            .collect::<Vec<_>>(),
+    )
 }
 
 /// Marker for the selected-row tick.
