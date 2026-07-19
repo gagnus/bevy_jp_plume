@@ -78,15 +78,19 @@ fn profile_ui(mut ui: PlumeUi, mut settings: ResMut<ProfileSettings>) {
         .width(px(340))
         .at(px(160), px(100))
         .show(|ui| {
-            ui.horizontal(|ui| {
-                ui.caption("Name").width(px(56));
-                ui.text_edit(&mut s.name).grow();
-            });
-            ui.horizontal(|ui| {
-                ui.caption("Motto").width(px(56));
-                ui.text_edit(&mut s.motto)
-                    .grow()
-                    .placeholder("A few words…");
+            // The identity fields sit in a group: a filled box, lighter than a
+            // titled section.
+            ui.group(|ui| {
+                ui.horizontal(|ui| {
+                    ui.caption("Name").width(px(56));
+                    ui.text_edit(&mut s.name).grow();
+                });
+                ui.horizontal(|ui| {
+                    ui.caption("Motto").width(px(56));
+                    ui.text_edit(&mut s.motto)
+                        .grow()
+                        .placeholder("A few words…");
+                });
             });
 
             // A radio group is just radios sharing one binding.

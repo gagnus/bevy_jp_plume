@@ -152,7 +152,16 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
         toggle_row(ui, "FPS overlay", &mut s.fps_overlay);
         toggle_row(ui, "Entity inspector", &mut s.entity_inspector);
         select_row(ui, "Overlay", &mut s.overlay, &OVERLAY_CORNERS);
-        select_row(ui, "Log level", &mut s.log_level, &LOG_LEVELS);
+        // Inline (not select_row) to chain .max_visible(): the popup caps at
+        // three rows and scrolls the remaining two.
+        ui.push_id("Log level", |ui| {
+            ui.horizontal(|ui| {
+                ui.caption("Log level").width(px(84));
+                ui.select(&mut s.log_level, &LOG_LEVELS)
+                    .grow()
+                    .max_visible(3);
+            });
+        });
     });
 }
 

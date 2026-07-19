@@ -1,4 +1,5 @@
 //! Widget methods on the immediate-mode context; each wraps a retained plume scene.
+use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
@@ -14,8 +15,8 @@ use bevy_ui_widgets::RequestClose;
 use crate::{
     constants::FaIcon,
     containers::{
-        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeSectionProps, column,
-        dialog_frame, flex_spacer, row, section_body, section_frame, separator,
+        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeGroup, PlumeSectionProps,
+        column, dialog_frame, flex_spacer, row, section_body, section_frame, separator,
     },
     controls::{
         PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
@@ -27,6 +28,7 @@ use crate::{
 use super::{
     ImmResponse, PlumeCaps, Ui,
     caps::{ImmPlumeChecked, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue},
+    kind,
 };
 
 /// Widget calls for immediate-mode systems. Implemented by [`Ui`] (and therefore
@@ -41,13 +43,13 @@ pub trait PlumeImm<'w, 's> {
     fn separator(&mut self);
 
     /// Push button; `.clicked` on the response fires once per activation.
-    fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's>;
+    fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Push button with a leading FontAwesome icon before the label.
-    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's>;
+    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
-    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's>;
+    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Labeled checkbox bound to `value`.
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's>;
@@ -66,18 +68,26 @@ pub trait PlumeImm<'w, 's> {
     fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's>;
 
     /// Slider bound to `value` over `range`.
-    fn slider(&mut self, value: &mut f32, range: RangeInclusive<f32>) -> ImmResponse<'_, 'w, 's>;
+    fn slider(
+        &mut self,
+        value: &mut f32,
+        range: RangeInclusive<f32>,
+    ) -> ImmResponse<'_, 'w, 's, kind::Slider>;
 
     /// Numeric input field bound to `value`.
-    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's>;
+    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's, kind::Number>;
 
     /// Single-line text input bound to `text` (synced per edit, not on commit).
     /// While the field is focused the widget's buffer wins; app writes land on
-    /// blur. Chain [`ImmResponse::placeholder`]/[`ImmResponse::suffix`].
-    fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's>;
+    /// blur. Chain `.placeholder()`/`.suffix()`.
+    fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's, kind::Text>;
 
     /// Dropdown bound to `index` into `options`.
-    fn select(&mut self, index: &mut usize, options: &[&str]) -> ImmResponse<'_, 'w, 's>;
+    fn select(
+        &mut self,
+        index: &mut usize,
+        options: &[&str],
+    ) -> ImmResponse<'_, 'w, 's, kind::Select>;
 
     /// Movable floating dialog: configure via the returned [`ImmDialog`] and build
     /// the body with [`ImmDialog::show`]. While `*open`, the dialog exists; the ✕
@@ -85,18 +95,34 @@ pub trait PlumeImm<'w, 's> {
     fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's>;
 
     /// Horizontal, center-aligned container (label-beside-control). Children pack
-    /// left; use [`Self::flex_spacer`] or [`ImmResponse::grow`] to distribute width.
+    /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
     /// The response chains `.grow()`/`.width()` to size the row itself.
-    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's>;
+    fn horizontal(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
 
     /// Vertical container; children stretch to its width. The response chains
     /// `.grow()`/`.width()` to size the column itself (e.g. equal-width columns).
-    fn vertical(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's>;
+    fn vertical(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
+
+    /// Filled box visually grouping related controls; children stretch to its
+    /// width (a themed [`Self::vertical`]).
+    fn group(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
 
     /// Collapsible section with a small-caps `header`; `f` builds its body.
     /// Collapse state persists across frames. Chain `.start_collapsed()`.
-    fn section(&mut self, header: &str, f: impl FnOnce(&mut Ui<'w, 's>))
-    -> ImmResponse<'_, 'w, 's>;
+    fn section(
+        &mut self,
+        header: &str,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Section>;
 
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
     /// the trailing edge).
@@ -124,6 +150,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             entity: entity.entity(),
             spawned,
             e: entity,
+            kind: PhantomData,
         }
     }
 
@@ -134,7 +161,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's> {
+    fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
         let entity = self.ch_with_manual_id(loc_id(label)).on_spawn_apply_scene(
             move || bsn! { @PlumeButton { @caption: bsn! { caption(label_owned) } } },
@@ -143,7 +170,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's> {
+    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
         let entity = self
             .ch_with_manual_id(loc_id((icon, label)))
@@ -154,7 +181,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's> {
+    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let entity = self
             .ch_with_manual_id(loc_id(icon))
             .on_spawn_apply_scene(move || {
@@ -213,7 +240,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn slider(&mut self, value: &mut f32, range: RangeInclusive<f32>) -> ImmResponse<'_, 'w, 's> {
+    fn slider(
+        &mut self,
+        value: &mut f32,
+        range: RangeInclusive<f32>,
+    ) -> ImmResponse<'_, 'w, 's, kind::Slider> {
         let (min, max) = (*range.start(), *range.end());
         let mut changed = false;
         let entity = self
@@ -224,7 +255,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's> {
+    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's, kind::Number> {
         let initial = *value;
         let mut changed = false;
         let entity = self
@@ -235,7 +266,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's> {
+    fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's, kind::Text> {
         let initial = text.clone();
         let mut changed = false;
         let entity = self
@@ -246,7 +277,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn select(&mut self, index: &mut usize, options: &[&str]) -> ImmResponse<'_, 'w, 's> {
+    fn select(
+        &mut self,
+        index: &mut usize,
+        options: &[&str],
+    ) -> ImmResponse<'_, 'w, 's, kind::Select> {
         let options_owned: Vec<String> = options.iter().map(|option| option.to_string()).collect();
         *index = (*index).min(options.len().saturating_sub(1));
         let initial = *index;
@@ -276,7 +311,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's> {
+    fn horizontal(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(row)
@@ -285,10 +323,25 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn vertical(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's> {
+    fn vertical(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(column)
+            .add(f);
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn group(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(|| bsn! { @PlumeGroup })
             .add(f);
         respond(entity, false)
     }
@@ -298,7 +351,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         &mut self,
         header: &str,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's> {
+    ) -> ImmResponse<'_, 'w, 's, kind::Section> {
         let header_owned = header.to_owned();
         let entity = self
             .ch_with_manual_id(loc_id(header))
@@ -418,10 +471,10 @@ fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
     ImmIdBuilder::Hierarchy(ImmId::new((Location::caller(), key)))
 }
 
-fn respond<'r, 'w, 's>(
+fn respond<'r, 'w, 's, K>(
     mut entity: ImmEntity<'r, 'w, 's, PlumeCaps>,
     changed: bool,
-) -> ImmResponse<'r, 'w, 's> {
+) -> ImmResponse<'r, 'w, 's, K> {
     let clicked = entity.activated();
     let hovered = entity.hovered();
     let spawned = entity.will_be_spawned();
@@ -432,6 +485,7 @@ fn respond<'r, 'w, 's>(
         entity: entity.entity(),
         spawned,
         e: entity,
+        kind: PhantomData,
     }
 }
 

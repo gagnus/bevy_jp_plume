@@ -5,7 +5,7 @@ mod caps;
 mod response;
 mod widgets;
 
-pub use response::ImmResponse;
+pub use response::{ImmResponse, kind};
 pub use widgets::{ImmDialog, PlumeImm};
 
 use core::{

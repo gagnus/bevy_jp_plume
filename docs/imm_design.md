@@ -252,17 +252,17 @@ a widget id). `section_body` is `align_items: Stretch` (a `Start` slip regressed
 | toggle | `toggle(&mut bool)`, `.enabled()` | — (no props by design) |
 | slider | `slider(&mut f32, range)`, `.step()`, `.precision()` (drag rounding), `.enabled()`, `.grow()`/`.width()` | — |
 | number | `number(&mut f32)`, `.range()`, `.step()`, `.precision()`, `.suffix()`, `.enabled()`, `.width()` | — |
-| select | `select(&mut usize, &[opts])`, `.enabled()`, `.grow()`/`.width()` | `max_visible`, `corners` |
+| select | `select(&mut usize, &[opts])`, `.max_visible()`, `.enabled()`, `.grow()`/`.width()` | `corners` |
 | text_edit | `text_edit(&mut String)`, `.placeholder()`, `.suffix()`, `.enabled()`, `.grow()`/`.width()` | `filter`, `max_characters`, `visible_width` |
 | radio | `radio(&mut value, variant, label)`, `.enabled()` | group arrow-key nav (each radio is its own tab stop) |
 | color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
 | dialog | `dialog(title, &mut open)` builder: `.width()` (live), `.at(left, top)` (spawn-only), `.closable()`, `.movable()`, `.show(f)` | — |
 | section | `section(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
-| containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | **`group`** (trivial wrapper over `PlumeGroup`, not built — just no consumer yet); `row`/`column` gap/align knobs (deferred, see below) |
+| containers | `horizontal`/`vertical`/`group` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | `row`/`column` gap/align knobs (deferred, see below) |
 
 ### Priority order for closing the gaps (agreed 2026-07-19)
 
-1. **select `.max_visible()`** — the one remaining per-control gap.
+**None** — every per-control gap above is closed; next is the theme_editor dogfood (step 7).
 
 Done 2026-07-19: **slider/number `.step()` + slider `.precision()`** — one `.step()` builder
 (change-gated `SliderStep` insert; the retained widgets already read it for arrow keys and
@@ -292,6 +292,22 @@ Done 2026-07-19 (later the same day):
   the write event. `CapabilityPlumeText` syncs select-style (hash-memory of the last synced
   text). Who-wins: typing lands in the app string per edit (not on commit); app pushes wait
   for blur. `player_profile.rs` is the acceptance example.
+
+**Kind-typed responses** (2026-07-19): `ImmResponse<'r, 'w, 's, K = kind::Any>` — every widget
+returns a response typed with a zero-sized `imm::kind` marker (`Button`, `Slider`, `Number`,
+`Text`, `Select`, `Section`, `Container`; `Any` for caption/checkbox/toggle/radio), and builders
+are gated per kind, so a mismatched chain (`ui.button(…).step(…)`) is a compile error instead of
+silent component litter (`.step()` used to insert `SliderStep` on anything; `.suffix()` spawned a
+visible child). Universal on all kinds: `.enabled()`, `.grow()`, `.width()`. Shared-kind traits:
+`kind::Numeric` (slider+number → `.step()`), `kind::Field` (number+text → `.suffix()`).
+`.precision()` split into per-kind impls (slider inserts `SliderPrecision`; number sets
+`PlumeNumberInput.precision` + re-touches `SliderValue`) — no more runtime component sniffing.
+
+**select `.max_visible()`** (2026-07-19): change-gated; post-spawn it re-derives the popup list
+view's `max_height` via `set_select_max_visible` (a world walk owned by `select.rs`, since the
+list view is a scene child outside capability reach). Exercised inline on `debug_settings`'s
+Log-level select (`.max_visible(3)` — five options, popup scrolls; popup behavior needs the
+manual pass, screenshots only show it closed).
 
 Example idiom (all three imm examples — `audio_settings`, `debug_settings`, `player_profile`):
 resource-backed with `Default` + `Clone` + `PartialEq`; build the UI against a clone and write

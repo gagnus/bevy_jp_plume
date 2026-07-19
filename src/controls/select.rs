@@ -11,6 +11,7 @@ use bevy_ecs::{
     query::{Added, Changed, With, Without},
     reflect::ReflectComponent,
     system::{Commands, Query, ResMut},
+    world::World,
 };
 use bevy_input_focus::{FocusCause, InputFocus};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
@@ -114,6 +115,28 @@ impl PlumeSelect {
                     ]
                 )
             ]
+        }
+    }
+}
+
+/// Rewrite the popup's row cap post-spawn ([`PlumeSelectProps`]'s `max_visible`
+/// covers spawn time): finds the list view under `select_ent` and re-derives its
+/// `max_height`.
+pub(crate) fn set_select_max_visible(world: &mut World, select_ent: Entity, max_visible: usize) {
+    let max_height = size::ROW_HEIGHT * max_visible.max(1) as f32;
+    let mut stack = vec![select_ent];
+    while let Some(ent) = stack.pop() {
+        let Ok(entity_ref) = world.get_entity(ent) else {
+            continue;
+        };
+        if ent != select_ent && entity_ref.contains::<PlumeListView>() {
+            if let Some(mut node) = world.get_mut::<Node>(ent) {
+                node.max_height = max_height;
+            }
+            return;
+        }
+        if let Some(children) = entity_ref.get::<Children>() {
+            stack.extend(children.iter().copied());
         }
     }
 }
