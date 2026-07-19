@@ -2,7 +2,15 @@
 use bevy_app::{Plugin, PreUpdate, PropagateOver};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
-    change_detection::{DetectChanges, DetectChangesMut}, component::Component, entity::Entity, hierarchy::{ChildOf, Children}, lifecycle::RemovedComponents, query::{Added, Changed, Has, With}, reflect::ReflectComponent, schedule::IntoScheduleConfigs, system::{Commands, Query, Res, ResMut},
+    change_detection::{DetectChanges, DetectChangesMut},
+    component::Component,
+    entity::Entity,
+    hierarchy::{ChildOf, Children},
+    lifecycle::RemovedComponents,
+    query::{Added, Changed, Has, With},
+    reflect::ReflectComponent,
+    schedule::IntoScheduleConfigs,
+    system::{Commands, Query, Res, ResMut},
 };
 use bevy_input_focus::{InputFocus, tab_navigation::TabIndex};
 use bevy_picking::{Pickable, PickingSystems};
@@ -425,10 +433,7 @@ impl Plugin for TextInputPlugin {
 // (same scene-spawn/change-filter gap as port-back item 2). Re-touch `TextLayout`
 // once the field is realized so the alignment is applied.
 fn reapply_field_justify(
-    mut q_fields: Query<
-        &mut TextLayout,
-        (With<TextInputField>, Added<ComputedUiRenderTargetInfo>),
-    >,
+    mut q_fields: Query<&mut TextLayout, (With<TextInputField>, Added<ComputedUiRenderTargetInfo>)>,
 ) {
     for mut layout in q_fields.iter_mut() {
         layout.set_changed();
