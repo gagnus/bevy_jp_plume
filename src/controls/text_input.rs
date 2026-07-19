@@ -2,15 +2,7 @@
 use bevy_app::{Plugin, PreUpdate, PropagateOver};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
-    change_detection::DetectChanges,
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    query::{Added, Changed, Has, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res, ResMut},
+    change_detection::{DetectChanges, DetectChangesMut}, component::Component, entity::Entity, hierarchy::{ChildOf, Children}, lifecycle::RemovedComponents, query::{Added, Changed, Has, With}, reflect::ReflectComponent, schedule::IntoScheduleConfigs, system::{Commands, Query, Res, ResMut},
 };
 use bevy_input_focus::{InputFocus, tab_navigation::TabIndex};
 use bevy_picking::{Pickable, PickingSystems};
@@ -21,7 +13,9 @@ use bevy_text::{
     EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
     TextCursorStyle, TextFont, TextLayout,
 };
-use bevy_ui::{AlignItems, InteractionDisabled, Node, PositionType, UiRect, Val};
+use bevy_ui::{
+    AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
+};
 
 use crate::{
     constants::{fonts, size},
@@ -414,6 +408,7 @@ impl Plugin for TextInputPlugin {
             PreUpdate,
             (
                 update_text_cursor_color,
+                reapply_field_justify,
                 update_text_input_styles,
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
@@ -421,5 +416,21 @@ impl Plugin for TextInputPlugin {
             )
                 .in_set(PickingSystems::Last),
         );
+    }
+}
+
+// Upstream applies a field's parley alignment only on `TextLayout` change, but a
+// BSN-spawned field's `TextLayout` change fires before it is layout-eligible (no
+// `ComputedUiRenderTargetInfo` yet), so a non-default justify is silently dropped
+// (same scene-spawn/change-filter gap as port-back item 2). Re-touch `TextLayout`
+// once the field is realized so the alignment is applied.
+fn reapply_field_justify(
+    mut q_fields: Query<
+        &mut TextLayout,
+        (With<TextInputField>, Added<ComputedUiRenderTargetInfo>),
+    >,
+) {
+    for mut layout in q_fields.iter_mut() {
+        layout.set_changed();
     }
 }
