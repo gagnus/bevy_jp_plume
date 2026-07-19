@@ -35,6 +35,13 @@ bevy_window = { path = "../3rdParty/bevy/crates/bevy_window" }
 bevy_derive = { path = "../3rdParty/bevy/crates/bevy_derive" }
 smol_str = { version = "0.2", default-features = false }
 
+# immediate-mode reconciler under `src/imm` (vendored fork wired to the bevy fork above)
+bevy_immediate = { path = "../3rdParty/bevy_immediate", default-features = false, features = [
+  "ui",
+  "bevy_ui_widgets",
+  "bevy_scene",
+] }
+
 # other
 accesskit = "0.24"
 

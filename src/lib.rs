@@ -25,6 +25,7 @@ mod alpha_pattern;
 pub mod containers;
 pub mod controls;
 pub mod display;
+pub mod imm;
 pub mod theme;
 pub mod utils;
 
@@ -52,6 +53,7 @@ impl Plugin for PlumeCorePlugin {
 
         app.add_plugins((
             ControlsPlugin,
+            imm::ImmPlugin,
             containers::SubpanePlugin,
             CursorIconPlugin,
             ThemePlugin,
