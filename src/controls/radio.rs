@@ -13,7 +13,7 @@ use bevy_ecs::{
     system::{Commands, Query},
 };
 use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::PickingSystems;
+use bevy_picking::{Pickable, PickingSystems};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
@@ -75,6 +75,10 @@ impl PlumeRadio {
             }
             RadioButton
             TabIndex(0)
+            // The row stretches to its container, but only the disc and label react
+            // to clicks (children stay pickable and bubble up); the trailing dead
+            // space is inert.
+            Pickable::IGNORE
             on(radio_check_self)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)

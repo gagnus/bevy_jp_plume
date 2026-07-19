@@ -14,7 +14,7 @@ use bevy_ecs::{
 };
 use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_math::Rot2;
-use bevy_picking::PickingSystems;
+use bevy_picking::{Pickable, PickingSystems};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
@@ -77,6 +77,10 @@ impl PlumeCheckbox {
             Checkbox
             CheckboxFrame
             TabIndex(0)
+            // The row stretches to its container, but only the box and label react
+            // to clicks (children stay pickable and bubble up); the trailing dead
+            // space is inert.
+            Pickable::IGNORE
             on(checkbox_self_update)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::CHECKBOX_TEXT)
