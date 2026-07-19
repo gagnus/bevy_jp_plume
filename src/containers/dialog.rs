@@ -1,8 +1,8 @@
 //! Movable floating dialog with a draggable title bar and close button.
 use bevy_color::{Alpha, Srgba};
 use bevy_ecs::{
-    event::EntityEvent, hierarchy::Children, observer::On, reflect::ReflectComponent,
-    system::Commands,
+    component::Component, event::EntityEvent, hierarchy::Children, observer::On,
+    reflect::ReflectComponent, system::Commands,
 };
 use bevy_input_focus::tab_navigation::TabGroup;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
@@ -65,7 +65,52 @@ pub struct PlumeDialog;
 impl PlumeDialog {
     /// Scene function for a floating dialog window.
     pub fn scene(props: PlumeDialogProps) -> impl Scene {
+        let PlumeDialogProps {
+            title,
+            contents,
+            width,
+            left,
+            top,
+            closable,
+            movable,
+        } = props;
         bsn! {
+            dialog_frame(PlumeDialogProps {
+                title,
+                width,
+                left,
+                top,
+                closable,
+                movable,
+                // The public dialog owns its body; the imm layer passes empty
+                // contents and reconciles the body itself.
+                contents: Box::new(bsn_list!((
+                    @PlumeDialogBody
+                    Children [
+                        {contents}
+                    ]
+                ))),
+            })
+            // Closing despawns the window.
+            on(|close: On<RequestClose>, mut commands: Commands| {
+                commands.entity(close.event_target()).despawn();
+            })
+        }
+    }
+}
+
+/// Set on the dialog root when a close is requested; the imm layer's dialogs
+/// carry an observer that inserts this instead of despawning.
+#[derive(Component)]
+pub(crate) struct DialogCloseRequested;
+
+/// Dialog chrome (frame, title bar, ✕) shared by the public [`PlumeDialog`] and
+/// the imm layer, with no close behavior — callers attach their own `RequestClose`
+/// observer. `props.contents` is inserted as the body slot verbatim (the public
+/// dialog wraps it in a [`PlumeDialogBody`]; the imm layer leaves it empty and
+/// reconciles the body itself).
+pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
+    bsn! {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
@@ -90,10 +135,6 @@ impl PlumeDialog {
                 px(4),
                 px(16),
             )
-            // Closing despawns the window.
-            on(|close: On<RequestClose>, mut commands: Commands| {
-                commands.entity(close.event_target()).despawn();
-            })
             Children [
                 // Title bar; dragging it moves the window.
                 (
@@ -126,14 +167,8 @@ impl PlumeDialog {
                         {props.closable.then(|| bsn_list!(@PlumeDialogClose))}
                     ]
                 ),
-                (
-                    @PlumeDialogBody
-                    Children [
-                        {props.contents}
-                    ]
-                )
+                {props.contents}
             ]
-        }
     }
 }
 
