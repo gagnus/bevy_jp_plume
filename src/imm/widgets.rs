@@ -13,8 +13,8 @@ use bevy_ui_widgets::RequestClose;
 use crate::{
     constants::FaIcon,
     containers::{
-        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeSubpaneProps, column,
-        dialog_frame, flex_spacer, row, separator, subpane_body, subpane_frame,
+        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeSectionProps, column,
+        dialog_frame, flex_spacer, row, section_body, section_frame, separator,
     },
     controls::{
         PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
@@ -76,9 +76,9 @@ pub trait PlumeImm<'w, 's> {
     /// `.grow()`/`.width()` to size the column itself (e.g. equal-width columns).
     fn vertical(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's>;
 
-    /// Collapsible sub-pane with a small-caps `header`; `f` builds its body.
+    /// Collapsible section with a small-caps `header`; `f` builds its body.
     /// Collapse state persists across frames. Chain `.start_collapsed()`.
-    fn subpane(&mut self, header: &str, f: impl FnOnce(&mut Ui<'w, 's>))
+    fn section(&mut self, header: &str, f: impl FnOnce(&mut Ui<'w, 's>))
     -> ImmResponse<'_, 'w, 's>;
 
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
@@ -246,7 +246,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn subpane(
+    fn section(
         &mut self,
         header: &str,
         f: impl FnOnce(&mut Ui<'w, 's>),
@@ -256,15 +256,15 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_with_manual_id(loc_id(header))
             .on_spawn_apply_scene(move || {
                 bsn! {
-                    subpane_frame(PlumeSubpaneProps {
+                    section_frame(PlumeSectionProps {
                         header: Box::new(bsn_list!(caption_small_caps(header_owned))),
                         ..Default::default()
                     })
                 }
             })
             .add(|ui| {
-                ui.ch_id("subpane_body")
-                    .on_spawn_apply_scene(subpane_body)
+                ui.ch_id("section_body")
+                    .on_spawn_apply_scene(section_body)
                     .add(f);
             });
         respond(entity, false)

@@ -162,7 +162,7 @@ pub const GRADIENT_AMOUNT: f32 = 0.05;
 
 /// Opt-in marker: the entity's themed fills render flat (gradient amount 0).
 /// Honored by the gradient-drawn elements (button, checkbox, radio, toggle,
-/// slider thumb, subpane header); everything else ignores it.
+/// slider thumb, section header); everything else ignores it.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct Flat;
@@ -370,13 +370,13 @@ pub enum ThemeSlot {
     /// - `DIALOG_BG`
     /// - `DIALOG_HEADER_BG`
     /// - `MENU_BG`
-    /// - `SUBPANE_BODY_BG`
+    /// - `SECTION_BODY_BG`
     /// - `TEXT_INPUT_BG`
     Neutral1,
 
-    /// Raised container chrome: subpane headers and the group box.
+    /// Raised container chrome: section headers and the group box.
     /// - `GROUP_BG`
-    /// - `SUBPANE_HEADER_BG`
+    /// - `SECTION_HEADER_BG`
     Neutral2,
 
     /// Disabled control chrome.
@@ -431,7 +431,7 @@ pub enum ThemeSlot {
     /// - `BUTTON_TEXT`
     /// - `DIALOG_HEADER_TEXT`
     /// - `LISTROW_TEXT`
-    /// - `SUBPANE_HEADER_TEXT`
+    /// - `SECTION_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
     /// - `TEXT_INPUT_TEXT_ACTIVE`
     /// - `TEXT_MAIN`
@@ -798,9 +798,9 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_BORDER_ACTIVE, ThemeSlot::Accent0),
     (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SUBPANE_HEADER_BG, ThemeSlot::Neutral2),
-    (tokens::SUBPANE_HEADER_TEXT, ThemeSlot::Text0),
-    (tokens::SUBPANE_BODY_BG, ThemeSlot::Neutral1),
+    (tokens::SECTION_HEADER_BG, ThemeSlot::Neutral2),
+    (tokens::SECTION_HEADER_TEXT, ThemeSlot::Text0),
+    (tokens::SECTION_BODY_BG, ThemeSlot::Neutral1),
     (tokens::GROUP_BG, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),
     (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),

@@ -1,4 +1,4 @@
-//! Collapsible sub-pane container with a header bar.
+//! Collapsible section container with a header bar.
 use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
     component::Component,
@@ -32,47 +32,47 @@ use crate::{
     tokens,
 };
 
-/// A sub-pane: a header bar over a body. Collapsible by default — clicking the
+/// A section: a header bar over a body. Collapsible by default — clicking the
 /// header folds the body away.
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(PlumeSubpaneProps)]
+#[scene(PlumeSectionProps)]
 #[reflect(Component, Clone, Default)]
-pub struct PlumeSubpane;
+pub struct PlumeSection;
 
-/// Plain root marker carrying the collapse behavior, inserted by [`subpane_frame`]
-/// in both the retained and imm paths (unlike the [`PlumeSubpane`] scene-component,
+/// Plain root marker carrying the collapse behavior, inserted by [`section_frame`]
+/// in both the retained and imm paths (unlike the [`PlumeSection`] scene-component,
 /// which must not be inserted as a bare component).
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub(crate) struct SubpaneRoot {
+pub(crate) struct SectionRoot {
     pub collapsible: bool,
 }
 
-impl Default for SubpaneRoot {
+impl Default for SectionRoot {
     fn default() -> Self {
         Self { collapsible: true }
     }
 }
 
-/// Marker for a collapsed [`PlumeSubpane`]; insert it to start collapsed.
+/// Marker for a collapsed [`PlumeSection`]; insert it to start collapsed.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct SubpaneCollapsed;
+pub struct SectionCollapsed;
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SubpaneHeader;
+struct SectionHeader;
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub(crate) struct SubpaneBody;
+pub(crate) struct SectionBody;
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SubpaneChevron;
+struct SectionChevron;
 
-/// Props used to construct a [`PlumeSubpane`] scene.
-pub struct PlumeSubpaneProps {
+/// Props used to construct a [`PlumeSection`] scene.
+pub struct PlumeSectionProps {
     /// Header bar content (e.g. `bsn! { caption("…") }`).
     pub header: Box<dyn SceneList>,
     /// Body content, folded away when collapsed.
@@ -81,7 +81,7 @@ pub struct PlumeSubpaneProps {
     pub collapsible: bool,
 }
 
-impl Default for PlumeSubpaneProps {
+impl Default for PlumeSectionProps {
     fn default() -> Self {
         Self {
             header: Box::new(bsn_list!()),
@@ -91,22 +91,22 @@ impl Default for PlumeSubpaneProps {
     }
 }
 
-impl PlumeSubpane {
-    /// Scene function for a sub-pane.
-    pub fn scene(props: PlumeSubpaneProps) -> impl Scene {
-        let PlumeSubpaneProps {
+impl PlumeSection {
+    /// Scene function for a section.
+    pub fn scene(props: PlumeSectionProps) -> impl Scene {
+        let PlumeSectionProps {
             header,
             contents,
             collapsible,
         } = props;
         bsn! {
-            subpane_frame(PlumeSubpaneProps {
+            section_frame(PlumeSectionProps {
                 header,
                 collapsible,
-                // The public sub-pane owns its body; the imm layer passes empty
+                // The public section owns its body; the imm layer passes empty
                 // contents and reconciles the body itself.
                 contents: Box::new(bsn_list!((
-                    subpane_body()
+                    section_body()
                     Children [
                         {contents}
                     ]
@@ -116,11 +116,11 @@ impl PlumeSubpane {
     }
 }
 
-/// Sub-pane chrome (root, header bar, chevron, collapse behavior) shared by the
-/// public [`PlumeSubpane`] and the imm layer. `props.contents` is inserted as the
-/// body slot verbatim (the public sub-pane wraps it in a [`subpane_body`]; the imm
+/// Section chrome (root, header bar, chevron, collapse behavior) shared by the
+/// public [`PlumeSection`] and the imm layer. `props.contents` is inserted as the
+/// body slot verbatim (the public section wraps it in a [`section_body`]; the imm
 /// layer leaves it empty and reconciles the body itself).
-pub(crate) fn subpane_frame(props: PlumeSubpaneProps) -> impl Scene {
+pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
@@ -128,8 +128,8 @@ pub(crate) fn subpane_frame(props: PlumeSubpaneProps) -> impl Scene {
             align_items: AlignItems::Stretch,
             border_radius: size::CORNER_RADIUS,
         }
-        SubpaneRoot { collapsible: {props.collapsible} }
-        ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
+        SectionRoot { collapsible: {props.collapsible} }
+        ThemeBackgroundColor(tokens::SECTION_BODY_BG)
         Children [
             (
                 Node {
@@ -143,17 +143,17 @@ pub(crate) fn subpane_frame(props: PlumeSubpaneProps) -> impl Scene {
                     border_radius: size::CORNER_RADIUS,
                 }
                 template_value(control_box_shadow())
-                SubpaneHeader
-                ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, GRADIENT_AMOUNT)
-                InheritableThemeTextColor(tokens::SUBPANE_HEADER_TEXT)
+                SectionHeader
+                ThemeBackgroundGradient(tokens::SECTION_HEADER_BG, GRADIENT_AMOUNT)
+                InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
                 InheritableFont {
                     font: fonts::REGULAR,
                     font_size: size::MEDIUM_FONT,
                     weight: FontWeight::NORMAL,
                 }
-                on(toggle_subpane_collapse)
+                on(toggle_section_collapse)
                 Children [
-                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SubpaneChevron) })},
+                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron) })},
                     {props.header}
                 ]
             ),
@@ -162,9 +162,9 @@ pub(crate) fn subpane_frame(props: PlumeSubpaneProps) -> impl Scene {
     }
 }
 
-/// The sub-pane body node: a padded, tight-gapped column folded away on collapse.
+/// The section body node: a padded, tight-gapped column folded away on collapse.
 /// Callers append the body content as children; children stretch to the body width.
-pub(crate) fn subpane_body() -> impl Scene {
+pub(crate) fn section_body() -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
@@ -173,7 +173,7 @@ pub(crate) fn subpane_body() -> impl Scene {
             row_gap: size::GAP_TIGHT,
             padding: size::PAD,
         }
-        SubpaneBody
+        SectionBody
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,
@@ -182,36 +182,36 @@ pub(crate) fn subpane_body() -> impl Scene {
     }
 }
 
-fn toggle_subpane_collapse(
+fn toggle_section_collapse(
     click: On<Pointer<Click>>,
-    q_headers: Query<&ChildOf, With<SubpaneHeader>>,
-    q_subpanes: Query<(&SubpaneRoot, Has<SubpaneCollapsed>)>,
+    q_headers: Query<&ChildOf, With<SectionHeader>>,
+    q_sections: Query<(&SectionRoot, Has<SectionCollapsed>)>,
     mut commands: Commands,
 ) {
     let Ok(child_of) = q_headers.get(click.event_target()) else {
         return;
     };
     let root = child_of.parent();
-    let Ok((subpane, collapsed)) = q_subpanes.get(root) else {
+    let Ok((section, collapsed)) = q_sections.get(root) else {
         return;
     };
-    if !subpane.collapsible {
+    if !section.collapsible {
         return;
     }
     if collapsed {
-        commands.entity(root).remove::<SubpaneCollapsed>();
+        commands.entity(root).remove::<SectionCollapsed>();
     } else {
-        commands.entity(root).insert(SubpaneCollapsed);
+        commands.entity(root).insert(SectionCollapsed);
     }
 }
 
-fn update_subpane_collapse(
-    q_collapsed: Query<Entity, (With<SubpaneRoot>, Added<SubpaneCollapsed>)>,
-    mut removed: RemovedComponents<SubpaneCollapsed>,
-    q_subpanes: Query<(), With<SubpaneRoot>>,
+fn update_section_collapse(
+    q_collapsed: Query<Entity, (With<SectionRoot>, Added<SectionCollapsed>)>,
+    mut removed: RemovedComponents<SectionCollapsed>,
+    q_sections: Query<(), With<SectionRoot>>,
     q_children: Query<&Children>,
-    mut q_body: Query<&mut Node, With<SubpaneBody>>,
-    mut q_chevrons: Query<&mut Text, With<SubpaneChevron>>,
+    mut q_body: Query<&mut Node, With<SectionBody>>,
+    mut q_chevrons: Query<&mut Text, With<SectionChevron>>,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
         for descendant in q_children.iter_descendants(root) {
@@ -235,20 +235,20 @@ fn update_subpane_collapse(
         apply(root, true);
     }
     for root in removed.read() {
-        if q_subpanes.contains(root) {
+        if q_sections.contains(root) {
             apply(root, false);
         }
     }
 }
 
-/// The header gradient is set once at scene build, so [`Flat`] on the subpane root
+/// The header gradient is set once at scene build, so [`Flat`] on the section root
 /// needs its own pass (unlike the controls, whose state resolvers read it).
-fn update_subpane_header_flat(
-    q_flagged: Query<(Entity, Has<Flat>), (With<SubpaneRoot>, Added<Flat>)>,
+fn update_section_header_flat(
+    q_flagged: Query<(Entity, Has<Flat>), (With<SectionRoot>, Added<Flat>)>,
     mut removed_flat: RemovedComponents<Flat>,
-    q_subpanes: Query<Has<Flat>, With<SubpaneRoot>>,
+    q_sections: Query<Has<Flat>, With<SectionRoot>>,
     q_children: Query<&Children>,
-    q_headers: Query<&ThemeBackgroundGradient, With<SubpaneHeader>>,
+    q_headers: Query<&ThemeBackgroundGradient, With<SectionHeader>>,
     mut commands: Commands,
 ) {
     let apply = |root: Entity, flat: bool, commands: &mut Commands| {
@@ -259,7 +259,7 @@ fn update_subpane_header_flat(
             {
                 commands
                     .entity(descendant)
-                    .insert(ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, amount));
+                    .insert(ThemeBackgroundGradient(tokens::SECTION_HEADER_BG, amount));
             }
         }
     };
@@ -267,20 +267,20 @@ fn update_subpane_header_flat(
         apply(root, flat, &mut commands);
     }
     for root in removed_flat.read() {
-        if let Ok(flat) = q_subpanes.get(root) {
+        if let Ok(flat) = q_sections.get(root) {
             apply(root, flat, &mut commands);
         }
     }
 }
 
-/// Plugin which registers the sub-pane collapse systems.
-pub struct SubpanePlugin;
+/// Plugin which registers the section collapse systems.
+pub struct SectionPlugin;
 
-impl Plugin for SubpanePlugin {
+impl Plugin for SectionPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_systems(
             PreUpdate,
-            (update_subpane_collapse, update_subpane_header_flat).in_set(PickingSystems::Last),
+            (update_section_collapse, update_section_header_flat).in_set(PickingSystems::Last),
         );
     }
 }

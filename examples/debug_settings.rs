@@ -119,24 +119,32 @@ fn debug_settings_ui(mut ui: PlumeUi, mut settings: ResMut<DebugSettings>) {
 }
 
 fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
-    ui.subpane("Rendering", |ui| {
+    ui.section("Rendering", |ui| {
         ui.checkbox(&mut s.wireframe, "Wireframe");
         ui.checkbox(&mut s.show_colliders, "Show colliders");
         ui.checkbox(&mut s.freeze_culling, "Freeze frustum culling");
         select_row(ui, "View mode", &mut s.view_mode, &VIEW_MODES);
-        slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 2, None);
+        slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 0.1, 2, None);
     });
 }
 
 fn physics_pane(ui: &mut Ui, s: &mut DebugSettings) {
-    ui.subpane("Physics", |ui| {
+    ui.section("Physics", |ui| {
         ui.checkbox(&mut s.pause_sim, "Pause simulation");
-        slider_row(ui, "Time scale", &mut s.time_scale, 0.0..=2.0, 2, None);
+        slider_row(
+            ui,
+            "Time scale",
+            &mut s.time_scale,
+            0.0..=2.0,
+            0.05,
+            2,
+            None,
+        );
     });
 }
 
 fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
-    ui.subpane("Diagnostics", |ui| {
+    ui.section("Diagnostics", |ui| {
         toggle_row(ui, "FPS overlay", &mut s.fps_overlay);
         toggle_row(ui, "Entity inspector", &mut s.entity_inspector);
         select_row(ui, "Overlay", &mut s.overlay, &OVERLAY_CORNERS);
@@ -145,7 +153,7 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
 }
 
 fn cheats_pane(ui: &mut Ui, s: &mut DebugSettings) {
-    ui.subpane("Cheats", |ui| {
+    ui.section("Cheats", |ui| {
         ui.checkbox(&mut s.noclip, "Noclip");
         ui.checkbox(&mut s.infinite_health, "Infinite health");
         slider_row(
@@ -153,6 +161,7 @@ fn cheats_pane(ui: &mut Ui, s: &mut DebugSettings) {
             "Move speed",
             &mut s.move_speed,
             1.0..=40.0,
+            1.0,
             0,
             Some("m/s"),
         );
@@ -165,14 +174,22 @@ fn slider_row(
     label: &str,
     value: &mut f32,
     range: std::ops::RangeInclusive<f32>,
+    step: f32,
     precision: usize,
     suffix: Option<&str>,
 ) {
     ui.push_id(label, |ui| {
         ui.horizontal(|ui| {
             ui.caption(label).width(px(84));
-            ui.slider(value, range.clone()).grow();
-            let number = ui.number(value).range(range).precision(precision);
+            ui.slider(value, range.clone())
+                .grow()
+                .step(step)
+                .precision(precision);
+            let number = ui
+                .number(value)
+                .range(range)
+                .step(step)
+                .precision(precision);
             if let Some(suffix) = suffix {
                 number.suffix(suffix);
             }

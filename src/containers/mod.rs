@@ -4,13 +4,13 @@ mod dialog;
 mod flex_spacer;
 mod group;
 mod row;
+mod section;
 mod separator;
-mod subpane;
 
 pub use column::*;
 pub use dialog::*;
 pub use flex_spacer::*;
 pub use group::*;
 pub use row::*;
+pub use section::*;
 pub use separator::*;
-pub use subpane::*;

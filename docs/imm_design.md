@@ -205,13 +205,13 @@ Pass 1 delivers exactly the first target example above. In scope:
 - Plume-owned slider/number who-wins capability (widget wins mid-drag — deviation 2).
 - Layout decision (settled during pass 1, after trying the alternative): contents slots keep
   the feathers **Stretch** default — a Start/hug default broke grow-based row layouts and
-  ragged subpanes. Instead: checkbox/radio roots are `Pickable::IGNORE` so their stretched
+  ragged sections. Instead: checkbox/radio roots are `Pickable::IGNORE` so their stretched
   dead space isn't clickable, and per-widget sizing is opt-in via the `ImmResponse` builders
   `.width(Val)` and `.grow()` (both change-gated so a quiet frame never dirties layout).
   Rows pack Start on their main axis by flexbox nature; `ui.flex_spacer()` + `.grow()` are
   the distribution knobs.
 
-Explicitly deferred to pass 2+: radio, toggle, text_edit, subpane/group,
+Explicitly deferred to pass 2+: radio, toggle, text_edit, section/group,
 `.flat()`/`.push_id()` polish, and the theme_editor dogfood (step 7 unchanged). Plus, found
 while dogfooding pass 1:
 
@@ -236,11 +236,11 @@ built that it doesn't need.
 Pass 2 is driven by `examples/debug_settings.rs` (the smoke debug menu, resource-backed, live
 `Debug`-printed, Reset→`Default`). Building it added, on top of pass 1: `toggle`, `vertical`
 (and `horizontal`/`vertical` now return `ImmResponse` so containers take `.grow()`/`.width()`),
-`subpane` (+ retained `subpane_frame`/`subpane_body` split mirroring the dialog, + `SubpaneRoot`
+`section` (+ retained `section_frame`/`section_body` split mirroring the dialog, + `SectionRoot`
 plain marker so the frame isn't inserted as a bare scene-component), `icon_button`/`tool_button`,
 and `ImmResponse` builders `.variant()`/`.primary()`, `.range()`/`.precision()`/`.suffix()`,
 `.align_top()`, `.start_collapsed()`, `push_id`. `FaIcon`/`FaFace` gained `Hash` (icon is part of
-a widget id). `subpane_body` is `align_items: Stretch` (a `Start` slip regressed row fills).
+a widget id). `section_body` is `align_items: Stretch` (a `Start` slip regressed row fills).
 
 ### Exposed vs. gaps (per control)
 
@@ -249,14 +249,14 @@ a widget id). `subpane_body` is `align_items: Stretch` (a `Start` slip regressed
 | button | `button`, `icon_button`, `tool_button`, `.variant()`/`.primary()`, `.enabled()` | `corners` — deferred, see below |
 | checkbox | `checkbox(&mut bool, label)`, `.enabled()` | — |
 | toggle | `toggle(&mut bool)`, `.enabled()` | — (no props by design) |
-| slider | `slider(&mut f32, range)`, `.enabled()`, `.grow()`/`.width()` | **`.step()`**, **`.precision()`** |
-| number | `number(&mut f32)`, `.range()`, `.precision()`, `.suffix()`, `.enabled()`, `.width()` | **`.step()`** (Up/Down increment) |
+| slider | `slider(&mut f32, range)`, `.step()`, `.precision()` (drag rounding), `.enabled()`, `.grow()`/`.width()` | — |
+| number | `number(&mut f32)`, `.range()`, `.step()`, `.precision()`, `.suffix()`, `.enabled()`, `.width()` | — |
 | select | `select(&mut usize, &[opts])`, `.enabled()`, `.grow()`/`.width()` | `max_visible`, `corners` |
 | text_edit | **none** | whole widget: `placeholder`, `filter`, `max_characters`, `visible_width`, `suffix` |
 | radio | **none** | whole widget: egui-style `radio(&mut value, variant, label)` |
 | color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
 | dialog | `dialog(title, &mut open, f)` | **`width`/`left`/`top`**, `closable`, `movable` |
-| subpane | `subpane(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
+| section | `section(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
 | containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | **`group`** (trivial wrapper over `PlumeGroup`, not built — just no consumer yet); `row`/`column` gap/align knobs (deferred, see below) |
 
 ### Priority order for closing the gaps (agreed 2026-07-19)
@@ -264,24 +264,28 @@ a widget id). `subpane_body` is `align_items: Stretch` (a `Start` slip regressed
 1. **Dialog `width`/position** (`.grow()` layouts inside imm dialogs depend on it; the one
    structural hole). Same body-owning constraint as pass 1's dialog — likely `ui.dialog`
    builder args or an `ImmResponse`-style config.
-2. **slider/number `.step()`** (+ slider `.precision()`) — small; needed for honest numeric
-   controls (arrow stepping, drag rounding).
-3. **`radio` and `text_edit`** — the two whole widgets still missing (both need the
+2. **`radio` and `text_edit`** — the two whole widgets still missing (both need the
    composite-widget / state-on-root pattern; text_edit's focused-text who-wins is designed but
    unbuilt, and its field child is a scene child like the number suffix).
-4. **select `.max_visible()`**
+3. **select `.max_visible()`**
 
-### Rename queued: `subpane` → `section` (decided 2026-07-19, not yet done)
+Done 2026-07-19: **slider/number `.step()` + slider `.precision()`** — one `.step()` builder
+(change-gated `SliderStep` insert; the retained widgets already read it for arrow keys and
+Up/Down), and `.precision()` now covers sliders too (inserts `SliderPrecision` for drag
+rounding when the entity isn't a number input). `debug_settings`'s `slider_row` takes a `step`
+arg and applies both to slider and number. Screenshot-verified; arrow-step/drag-rounding feel
+needs the manual pass.
 
-`subpane` is a feathers leftover — it implies a subdivision of a "pane" that no longer exists.
-Rename to **`section`** (chosen over `collapsing`/`collapsable_pane`: it doesn't lie about the
-non-collapsible `collapsible: false` case, drops the "pane" baggage, fits the single-word
-container set, and dodges the collapsible/collapsable spelling bikeshed). Collapse stays a
-behavior of a section (`.start_collapsed()`, `collapsible: false`), not its identity. Mechanical
-but broad — touches `PlumeSubpane`/`Props`, `subpane_frame`/`subpane_body`, the `Subpane*`
-markers + `SubpaneRoot`, `SubpanePlugin`, the public `SubpaneCollapsed`, the file `subpane.rs`,
-imm `ui.subpane`, and call sites in `smoke`/`debug_settings`. Cheap to do while uncommitted with
-no consumers; a good standalone next-session task.
+### Naming: the container is `section` (renamed from `subpane` 2026-07-19)
+
+The header-over-body container is **`section`** throughout (`PlumeSection`/`Props`,
+`section_frame`/`section_body`, the `Section*` markers, `SectionPlugin`, the public
+`SectionCollapsed`, `section.rs`, imm `ui.section`, tokens `plume.section.*`). `subpane` was a
+feathers leftover implying a subdivision of a "pane" that doesn't exist; `section` was chosen
+over `collapsing`/`collapsable_pane` because it doesn't lie about the non-collapsible
+`collapsible: false` case, drops the "pane" baggage, fits the single-word container set, and
+dodges the collapsible/collapsable spelling bikeshed. Collapse is a behavior of a section
+(`.start_collapsed()`, `collapsible: false`), not its identity.
 
 ### Deferred until a real use case (not just missing — deliberately waiting)
 
@@ -298,8 +302,8 @@ colliding ids unless the caller wraps each call in `push_id`. Forgetting it is a
 failure — **verified 2026-07-19**: continuous per-frame `entity id collision` warnings, the
 colliding widgets despawn+respawn every frame (thrash, entity ids climb). No panic; the UI still 
 roughly renders, which hides it. Currently `toggle_row`/`select_row` in `debug_settings` genuinely 
-need `push_id` (two of each share a subpane parent); `slider_row` doesn't collide today only because
-each subpane has one — a latent trap.
+need `push_id` (two of each share a section parent); `slider_row` doesn't collide today only because
+each section has one — a latent trap.
 
 Fix candidate (egui's approach): make the id `hash(parent, Location::caller(), per-location
 counter)` — a counter kept **per source location**, incremented on each visit. Repeated calls at

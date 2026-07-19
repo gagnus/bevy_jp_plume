@@ -49,20 +49,20 @@ pub mod size {
     /// Border width of control chrome (checkbox, radio, toggle)
     pub const CONTROL_BORDER: Val = Val::Px(2.0);
 
-    /// Border width of containers (dialog, subpane header, menu popup, text input)
+    /// Border width of containers (dialog, section header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(1.0);
 
-    /// Tight vertical gap for dense section interiors (subpane, group, radio group)
+    /// Tight vertical gap for dense section interiors (section, group, radio group)
     pub const GAP_TIGHT: Val = Val::Px(4.0);
 
     /// Standard gap: every horizontal gap (rows, caption slots) and page-level
     /// column gap; also buttons' and list rows' horizontal padding
     pub const GAP: Val = Val::Px(8.0);
 
-    /// Container body padding (dialog, group, subpane)
+    /// Container body padding (dialog, group, section)
     pub const PAD: Val = Val::Px(6.0);
 
-    /// Header horizontal padding (dialog, subpane)
+    /// Header horizontal padding (dialog, section)
     pub const HEADER_PAD_X: Val = Val::Px(10.0);
 
     /// Knob diameter (slider thumb, toggle knob)

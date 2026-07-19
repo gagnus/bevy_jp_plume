@@ -238,14 +238,14 @@ pub const TEXT_INPUT_BORDER_ACTIVE: ThemeToken =
 pub const TEXT_INPUT_BORDER_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.textinput.border.disabled");
 
-// Subpane
+// Section
 
-/// Subpane background
-pub const SUBPANE_HEADER_BG: ThemeToken = ThemeToken::new_static("plume.subpane.header.bg");
-/// Subpane header text color
-pub const SUBPANE_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.subpane.header.text");
-/// Subpane body background
-pub const SUBPANE_BODY_BG: ThemeToken = ThemeToken::new_static("plume.subpane.body.bg");
+/// Section background
+pub const SECTION_HEADER_BG: ThemeToken = ThemeToken::new_static("plume.section.header.bg");
+/// Section header text color
+pub const SECTION_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.section.header.text");
+/// Section body background
+pub const SECTION_BODY_BG: ThemeToken = ThemeToken::new_static("plume.section.body.bg");
 
 // Group
 

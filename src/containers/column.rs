@@ -10,10 +10,10 @@ use crate::{
 };
 
 /// Vertical container that stretches children to its own width,
-/// e.g. a stack of rows or subpanes; content goes in `Children`.
+/// e.g. a stack of rows or sections; content goes in `Children`.
 ///
 /// Carries the standard font and text color, so bare text works anywhere;
-/// contents slots (dialog/subpane/group bodies) are already column contexts.
+/// contents slots (dialog/section/group bodies) are already column contexts.
 pub fn column() -> impl Scene {
     bsn! {
         Node {

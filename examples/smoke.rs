@@ -7,7 +7,7 @@ use bevy::{
 use bevy_jp_plume::{
     PlumePlugins, TabGroup,
     constants::{font_awesome, size},
-    containers::{PlumeDialog, PlumeGroup, PlumeSubpane, column, flex_spacer, row, separator},
+    containers::{PlumeDialog, PlumeGroup, PlumeSection, column, flex_spacer, row, separator},
     controls::{
         ButtonVariant, ColorSwatchValue, EditableTextFilter, ListRowIndex, PlumeButton,
         PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup,
@@ -250,8 +250,8 @@ fn controls_column() -> impl Scene {
             label_dim("Bare controls, minimal wiring"),
             controls_row(None, false),
             controls_row(None, true),
-            controls_row(Some(tokens::SUBPANE_BODY_BG), false),
-            controls_row(Some(tokens::SUBPANE_BODY_BG), true),
+            controls_row(Some(tokens::SECTION_BODY_BG), false),
+            controls_row(Some(tokens::SECTION_BODY_BG), true),
             controls_row(Some(tokens::GROUP_BG), false),
             controls_row(Some(tokens::GROUP_BG), true),
             (
@@ -293,10 +293,10 @@ fn controls_column() -> impl Scene {
                 flex_spacer(),
                 @PlumeColorSwatch,
             ],
-            @PlumeSubpane {
-                @header: bsn! { caption_small_caps("Subpane") },
+            @PlumeSection {
+                @header: bsn! { caption_small_caps("Section") },
                 @contents: bsn_list! {
-                    label_dim("Subpane body"),
+                    label_dim("Section body"),
                     @PlumeGroup {
                         @contents: bsn_list! {
                             label_dim("Group content"),
@@ -646,7 +646,7 @@ fn debug_options_dialog() -> impl Scene {
                         (
                             debug_column()
                             Children [
-                                @PlumeSubpane {
+                                @PlumeSection {
                                     @header: bsn! { caption_small_caps("Rendering") },
                                     @contents: bsn_list! {
                                         @PlumeCheckbox {
@@ -666,7 +666,7 @@ fn debug_options_dialog() -> impl Scene {
                                         slider_row("Gamma", 0.5, 3.0, 2.2, 2, None),
                                     },
                                 },
-                                @PlumeSubpane {
+                                @PlumeSection {
                                     @header: bsn! { caption_small_caps("Physics") },
                                     @contents: bsn_list! {
                                         @PlumeCheckbox {
@@ -680,7 +680,7 @@ fn debug_options_dialog() -> impl Scene {
                         (
                             debug_column()
                             Children [
-                                @PlumeSubpane {
+                                @PlumeSection {
                                     @header: bsn! { caption_small_caps("Diagnostics") },
                                     @contents: bsn_list! {
                                         toggle_row("FPS overlay", true),
@@ -695,7 +695,7 @@ fn debug_options_dialog() -> impl Scene {
                                         ),
                                     },
                                 },
-                                @PlumeSubpane {
+                                @PlumeSection {
                                     @header: bsn! { caption_small_caps("Cheats") },
                                     @contents: bsn_list! {
                                         @PlumeCheckbox {
@@ -743,7 +743,7 @@ fn debug_options_dialog() -> impl Scene {
     }
 }
 
-/// One half of the debug dialog: an equal-width column of subpanes.
+/// One half of the debug dialog: an equal-width column of sections.
 fn debug_column() -> impl Scene {
     bsn! {
         column()
@@ -836,7 +836,7 @@ fn slider_row(
     }
 }
 
-/// A titled [`PlumeSubPane`] holding a labelled slider per `param`.
+/// A titled [`PlumeSection`] holding a labelled slider per `param`.
 fn param_group(
     title: &str,
     params: Vec<PaletteParam>,
@@ -846,7 +846,7 @@ fn param_group(
     rows.extend(params.into_iter().map(|param| param_row(param, palette)));
     let contents: Box<dyn SceneList> = Box::new(rows);
     bsn! {
-        @PlumeSubpane {
+        @PlumeSection {
             @header: bsn! { caption_small_caps(title.to_string()) }
             @contents: {contents},
         }

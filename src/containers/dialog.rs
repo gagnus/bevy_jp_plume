@@ -138,7 +138,7 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
             Children [
                 // Title bar; dragging it moves the window.
                 (
-                    // Same chrome as the subpane header; the dialog is distinguished
+                    // Same chrome as the section header; the dialog is distinguished
                     // by its drop shadow, not a different header.
                     Node {
                         display: Display::Flex,

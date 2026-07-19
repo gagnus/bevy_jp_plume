@@ -9,11 +9,11 @@ use bevy_ecs::{
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 use bevy_scene::WorldSceneExt;
 use bevy_ui::{AlignItems, Node, Val};
-use bevy_ui_widgets::{SliderRange, SliderValue};
+use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
-use crate::containers::SubpaneCollapsed;
-use crate::controls::{ButtonVariant, PlumeNumberInput, text_input_suffix};
+use crate::containers::SectionCollapsed;
+use crate::controls::{ButtonVariant, PlumeNumberInput, PlumeSlider, text_input_suffix};
 
 /// What a widget reported this frame, plus chainable builders for
 /// composition-rule props (`enabled`, …).
@@ -84,7 +84,21 @@ impl ImmResponse<'_, '_, '_> {
         self
     }
 
-    /// Set a number input's decimal precision (`0` = integer). Reprints the value.
+    /// Set the increment applied by arrow keys (slider) or Up/Down in the field
+    /// (number input). A slider defaults to 1% of its range, a number input to 1.
+    pub fn step(mut self, step: f32) -> Self {
+        struct StepKey;
+        if self
+            .e
+            .hash_update_typ::<StepKey>(Some(imm_id(step.to_bits())))
+        {
+            self.e.entity_commands().insert(SliderStep(step));
+        }
+        self
+    }
+
+    /// Set decimal precision (`0` = integer). A number input reprints its value;
+    /// a slider rounds the values it commits while dragging.
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
         if self
@@ -96,10 +110,12 @@ impl ImmResponse<'_, '_, '_> {
                 .queue(move |mut entity: EntityWorldMut| {
                     if let Some(mut number) = entity.get_mut::<PlumeNumberInput>() {
                         number.precision = precision;
-                    }
-                    // Re-touch the value so the text reformats at the new precision.
-                    if let Some(value) = entity.get::<SliderValue>().map(|value| value.0) {
-                        entity.insert(SliderValue(value));
+                        // Re-touch the value so the text reformats at the new precision.
+                        if let Some(value) = entity.get::<SliderValue>().map(|value| value.0) {
+                            entity.insert(SliderValue(value));
+                        }
+                    } else if entity.contains::<PlumeSlider>() {
+                        entity.insert(SliderPrecision(precision as i32));
                     }
                 });
         }
@@ -138,12 +154,12 @@ impl ImmResponse<'_, '_, '_> {
         self
     }
 
-    /// Seed a sub-pane collapsed on first spawn only; afterwards the retained
+    /// Seed a section collapsed on first spawn only; afterwards the retained
     /// entity owns its collapse state (a no-op on already-spawned widgets, so it
     /// never fights the user's expand/collapse).
     pub fn start_collapsed(mut self) -> Self {
         if self.spawned {
-            self.e.entity_commands().insert(SubpaneCollapsed);
+            self.e.entity_commands().insert(SectionCollapsed);
         }
         self
     }
