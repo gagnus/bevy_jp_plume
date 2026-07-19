@@ -13,7 +13,9 @@ use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
 use crate::containers::SectionCollapsed;
-use crate::controls::{ButtonVariant, PlumeNumberInput, PlumeSlider, text_input_suffix};
+use crate::controls::{
+    ButtonVariant, PlumeNumberInput, PlumeSlider, text_input_placeholder, text_input_suffix,
+};
 
 /// What a widget reported this frame, plus chainable builders for
 /// composition-rule props (`enabled`, …).
@@ -118,6 +120,21 @@ impl ImmResponse<'_, '_, '_> {
                         entity.insert(SliderPrecision(precision as i32));
                     }
                 });
+        }
+        self
+    }
+
+    /// Dim hint shown in a text input while it is empty and unfocused.
+    /// Seeded on first spawn only — hints don't change, and the id doesn't track it.
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        if self.spawned {
+            let parent = self.entity;
+            let placeholder = placeholder.into();
+            self.e.commands().queue(move |world: &mut World| {
+                if let Ok(mut child) = world.spawn_scene(text_input_placeholder(placeholder)) {
+                    child.insert(ChildOf(parent));
+                }
+            });
         }
         self
     }

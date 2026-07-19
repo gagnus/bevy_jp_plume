@@ -6,7 +6,7 @@ mod response;
 mod widgets;
 
 pub use response::ImmResponse;
-pub use widgets::PlumeImm;
+pub use widgets::{ImmDialog, PlumeImm};
 
 use core::{
     ops::{Deref, DerefMut},
@@ -29,7 +29,8 @@ use bevy_immediate::{
 };
 
 use caps::{
-    CapabilityPlumeChecked, CapabilityPlumeDialog, CapabilityPlumeSelect, CapabilityPlumeValue,
+    CapabilityPlumeChecked, CapabilityPlumeDialog, CapabilityPlumeSelect, CapabilityPlumeText,
+    CapabilityPlumeValue,
 };
 
 /// Capability set powering plume's immediate-mode layer.
@@ -47,6 +48,7 @@ impl_capability_set!(
         CapabilityPlumeValue,
         CapabilityPlumeChecked,
         CapabilityPlumeSelect,
+        CapabilityPlumeText,
         CapabilityPlumeDialog,
     )
 );

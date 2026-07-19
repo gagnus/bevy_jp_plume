@@ -11,7 +11,7 @@ use bevy_ui_widgets::SliderValue;
 
 use crate::{
     containers::DialogCloseRequested,
-    controls::{SelectedIndex, SetSelectedIndex},
+    controls::{SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue},
 };
 
 /// Synchronises an app `f32` with a control's [`SliderValue`] (slider, number input).
@@ -218,6 +218,68 @@ where
             self.commands().trigger(SetSelectedIndex {
                 entity: select_entity,
                 index: *index,
+            });
+        }
+        self
+    }
+}
+
+/// Synchronises an app `String` with a text input's buffer.
+///
+/// The buffer lives on the field child, which capabilities can't reach, so all
+/// state flows through the [`TextInputValue`] mirror on the frame root (reads)
+/// and [`SetTextInputValue`] (writes). Who-wins: the user's typing always lands
+/// in the app string; app pushes are held back while the field is focused.
+pub struct CapabilityPlumeText;
+
+impl ImmCapability for CapabilityPlumeText {
+    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        cap_req.request_component_read::<TextInputValue>(app.world_mut());
+        cap_req.request_component_read::<Children>(app.world_mut());
+        cap_req.request_resource_read::<InputFocus>(app.world_mut());
+    }
+}
+
+/// Widget-side entry point for [`CapabilityPlumeText`].
+pub trait ImmPlumeText {
+    /// Two-way sync between `text` and the input's buffer;
+    /// sets `changed` when a user edit landed in `text`.
+    fn plume_text(self, text: &mut String, changed: &mut bool) -> Self;
+}
+
+// Hash-memory key for the last widget text the imm layer synced against.
+struct TextSyncKey;
+
+impl<Cap> ImmPlumeText for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeText>,
+{
+    fn plume_text(mut self, text: &mut String, changed: &mut bool) -> Self {
+        let widget_text = match self.cap_get_component::<TextInputValue>() {
+            Ok(Some(value)) => value.0.clone(),
+            _ => {
+                // Not spawned/settled yet; the scene seeds the initial text.
+                self.hash_set_typ::<TextSyncKey>(imm_id(&*text));
+                return self;
+            }
+        };
+
+        if self.hash_get_typ::<TextSyncKey>() != Some(imm_id(&widget_text)) {
+            // Buffer moved since last sync: the user's typing wins.
+            if widget_text != *text {
+                *text = widget_text;
+                *changed = true;
+            }
+            self.hash_set_typ::<TextSyncKey>(imm_id(&*text));
+        } else if *text != widget_text && !focused_within(&self) {
+            // The hash is deliberately left at the widget's value: until the push
+            // lands, re-push rather than reading the stale widget back. While the
+            // field is focused the widget wins, so the push waits for blur.
+            let input_entity = self.entity();
+            let new_text = text.clone();
+            self.commands().trigger(SetTextInputValue {
+                entity: input_entity,
+                text: new_text,
             });
         }
         self

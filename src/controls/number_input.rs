@@ -16,15 +16,16 @@ use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::{
-    EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextEdit, TextFont,
-    TextLayout,
+    EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextFont, TextLayout,
 };
 use bevy_ui::Node;
 use bevy_ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
 use crate::{
     constants::{fonts, size},
-    controls::{TextInputField, text_input_field, text_input_frame, text_input_suffix},
+    controls::{
+        TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_suffix,
+    },
 };
 
 /// A numeric input built on the [`PlumeTextInput`](crate::controls::PlumeTextInput) frame. Holds
@@ -119,14 +120,6 @@ fn format_value(value: f32, precision: usize) -> String {
     format!("{value:.precision$}")
 }
 
-// Rewrites the visible text from the committed value (also the parse-failure revert path).
-fn set_text(editable_text: &mut EditableText, formatted: String) {
-    if editable_text.value() != &formatted {
-        editable_text.queue_edit(TextEdit::SelectAll);
-        editable_text.queue_edit(TextEdit::Insert(formatted.into()));
-    }
-}
-
 // Clamps + rounds `candidate` and writes it as the committed value (emitting
 // `ValueChange<f32>`). Idempotent for repeated calls. `source` is the
 // [`PlumeNumberInput`] frame that owns the value, not the editable field.
@@ -152,7 +145,7 @@ fn apply_value(
         });
     } else {
         // Unchanged value won't retrigger the text-sync system; normalize here.
-        set_text(editable_text, format_value(committed, precision));
+        set_editable_text(editable_text, format_value(committed, precision));
     }
 }
 
@@ -175,7 +168,7 @@ fn commit(
             source,
             commands,
         ),
-        None => set_text(editable_text, format_value(value, precision)),
+        None => set_editable_text(editable_text, format_value(value, precision)),
     }
 }
 
@@ -220,7 +213,7 @@ fn number_input_on_key(
             focus.clear();
         }
         KeyCode::Escape => {
-            set_text(
+            set_editable_text(
                 &mut editable_text,
                 format_value(value.0, number_input.precision),
             );
@@ -278,7 +271,7 @@ fn update_number_input_text(
     for (number_input, value, children) in query_frames.iter() {
         for &child in children.iter() {
             if let Ok(mut editable_text) = query_fields.get_mut(child) {
-                set_text(
+                set_editable_text(
                     &mut editable_text,
                     format_value(value.0, number_input.precision),
                 );

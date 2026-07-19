@@ -1,12 +1,16 @@
 //! Pass-1 acceptance example: one immediate-mode system drives an audio-settings
-//! dialog with zero app-side wiring.
+//! dialog with zero app-side wiring, backed by one resource, printed live, with
+//! Reset wired to `Default`.
 use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
     imm::{PlumeImm, PlumeUi},
 };
 
-#[derive(Resource, Debug)]
+#[path = "common/mod.rs"]
+mod common;
+
+#[derive(Resource, Debug, Clone, PartialEq)]
 struct AudioSettings {
     open: bool,
     volume: f32,
@@ -14,80 +18,62 @@ struct AudioSettings {
     output: usize,
 }
 
-fn main() {
-    let mut app = App::new();
-    app.add_plugins((DefaultPlugins, PlumePlugins))
-        .insert_resource(AudioSettings {
+impl Default for AudioSettings {
+    fn default() -> Self {
+        Self {
             open: true,
             volume: 0.5,
             muted: false,
             output: 0,
-        })
+        }
+    }
+}
+
+fn main() {
+    let mut app = App::new();
+    app.add_plugins((DefaultPlugins, PlumePlugins))
+        .init_resource::<AudioSettings>()
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2d);
         })
-        .add_systems(Update, audio_settings_ui);
-    // AUDIO_SHOT=<path.png>: save a screenshot and exit (for headless verification).
-    if std::env::var_os("AUDIO_SHOT").is_some() {
-        app.add_systems(Update, screenshot_and_exit);
-    }
+        .add_systems(
+            Update,
+            (audio_settings_ui, common::log_on_change::<AudioSettings>),
+        );
+    common::screenshot_on_arg(&mut app);
     app.run();
 }
 
-fn screenshot_and_exit(
-    mut frames: Local<u32>,
-    mut commands: Commands,
-    mut exit: MessageWriter<AppExit>,
-) {
-    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
-    *frames += 1;
-    if *frames == 200
-        && let Some(path) = std::env::var_os("AUDIO_SHOT")
-    {
-        commands
-            .spawn(Screenshot::primary_window())
-            .observe(save_to_disk(std::path::PathBuf::from(path)));
-    }
-    if *frames == 260 {
-        exit.write(AppExit::Success);
-    }
-}
-
 fn audio_settings_ui(mut ui: PlumeUi, mut settings: ResMut<AudioSettings>) {
-    let settings_str = format!("{:?}", settings);
+    // Build the UI against a local clone and write back with `set_if_neq`, so the
+    // resource only registers as changed when a control actually changed it.
+    let mut s = settings.clone();
 
-    let AudioSettings {
-        open,
-        volume,
-        muted,
-        output,
-    } = &mut *settings;
-
-    if ui.button("Audio Settings").enabled(!*open).clicked {
-        *open = true;
+    if ui.button("Audio Settings").enabled(!s.open).clicked {
+        s.open = true;
     }
 
-    // TODO: doesn't currently use font as global scope isn't complete
-    ui.caption(&settings_str);
-
-    ui.dialog("Audio", open, |ui| {
+    // Local copy dodges the borrow conflict between `&mut open` and the fields.
+    let mut open = s.open;
+    ui.dialog("Audio", &mut open).show(|ui| {
         ui.horizontal(|ui| {
             ui.caption("Volume");
-            ui.slider(volume, 0.0..=1.0).enabled(!*muted);
-            ui.number(volume).enabled(!*muted);
+            ui.slider(&mut s.volume, 0.0..=1.0).enabled(!s.muted);
+            ui.number(&mut s.volume).enabled(!s.muted);
         });
 
-        ui.checkbox(muted, "Mute");
-        ui.select(output, &["Speakers", "Headphones"]);
+        ui.checkbox(&mut s.muted, "Mute");
+        ui.select(&mut s.output, &["Speakers", "Headphones"]);
         ui.separator();
 
         ui.horizontal(|ui| {
-            ui.caption("Hello world").grow();
+            ui.flex_spacer();
             if ui.button("Reset").clicked {
-                *volume = 0.5;
-                *muted = false;
-                *output = 0;
+                let open = s.open;
+                s = AudioSettings { open, ..default() };
             }
         });
     });
+    s.open = open;
+    settings.set_if_neq(s);
 }

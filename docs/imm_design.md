@@ -221,7 +221,8 @@ while dogfooding pass 1:
   establishes the same text context as the dialog root") needs an actual home, e.g. the imm
   layer wrapping top-level widgets in a styled root panel, or text scenes carrying their own
   font fallback.
-- **Dialog width prop** on `ui.dialog`, so `.grow()`-based rows work in imm dialogs.
+- **Dialog width prop** on `ui.dialog`, so `.grow()`-based rows work in imm dialogs
+  (since built — see "Pass 2" below).
 - **Dynamic-label text updates** (labels are currently hashed into the id, so a changing
   caption respawns its entity every change — fine for settings labels, wrong for readouts
   like the debug caption that exposed the font gap).
@@ -252,22 +253,16 @@ a widget id). `section_body` is `align_items: Stretch` (a `Start` slip regressed
 | slider | `slider(&mut f32, range)`, `.step()`, `.precision()` (drag rounding), `.enabled()`, `.grow()`/`.width()` | — |
 | number | `number(&mut f32)`, `.range()`, `.step()`, `.precision()`, `.suffix()`, `.enabled()`, `.width()` | — |
 | select | `select(&mut usize, &[opts])`, `.enabled()`, `.grow()`/`.width()` | `max_visible`, `corners` |
-| text_edit | **none** | whole widget: `placeholder`, `filter`, `max_characters`, `visible_width`, `suffix` |
-| radio | **none** | whole widget: egui-style `radio(&mut value, variant, label)` |
+| text_edit | `text_edit(&mut String)`, `.placeholder()`, `.suffix()`, `.enabled()`, `.grow()`/`.width()` | `filter`, `max_characters`, `visible_width` |
+| radio | `radio(&mut value, variant, label)`, `.enabled()` | group arrow-key nav (each radio is its own tab stop) |
 | color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
-| dialog | `dialog(title, &mut open, f)` | **`width`/`left`/`top`**, `closable`, `movable` |
+| dialog | `dialog(title, &mut open)` builder: `.width()` (live), `.at(left, top)` (spawn-only), `.closable()`, `.movable()`, `.show(f)` | — |
 | section | `section(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
 | containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | **`group`** (trivial wrapper over `PlumeGroup`, not built — just no consumer yet); `row`/`column` gap/align knobs (deferred, see below) |
 
 ### Priority order for closing the gaps (agreed 2026-07-19)
 
-1. **Dialog `width`/position** (`.grow()` layouts inside imm dialogs depend on it; the one
-   structural hole). Same body-owning constraint as pass 1's dialog — likely `ui.dialog`
-   builder args or an `ImmResponse`-style config.
-2. **`radio` and `text_edit`** — the two whole widgets still missing (both need the
-   composite-widget / state-on-root pattern; text_edit's focused-text who-wins is designed but
-   unbuilt, and its field child is a scene child like the number suffix).
-3. **select `.max_visible()`**
+1. **select `.max_visible()`** — the one remaining per-control gap.
 
 Done 2026-07-19: **slider/number `.step()` + slider `.precision()`** — one `.step()` builder
 (change-gated `SliderStep` insert; the retained widgets already read it for arrow keys and
@@ -275,6 +270,36 @@ Up/Down), and `.precision()` now covers sliders too (inserts `SliderPrecision` f
 rounding when the entity isn't a number input). `debug_settings`'s `slider_row` takes a `step`
 arg and applies both to slider and number. Screenshot-verified; arrow-step/drag-rounding feel
 needs the manual pass.
+
+Done 2026-07-19 (later the same day):
+
+- **Dialog config** — `ui.dialog(title, &mut open)` returns an `ImmDialog` builder
+  (`.width()`, `.at(left, top)`, `.closable(false)`, `.movable(false)`), and `.show(|ui| …)`
+  builds the body (`#[must_use]` guards a forgotten `show`). Width is app-owned and live
+  (change-gated `Node` write); position is spawn-only — once open, the user's dragging owns
+  it. `debug_settings` drives `.width(px(600))` with two equal-`.grow()` columns.
+- **`radio`** — egui-style `ui.radio(&mut value, variant, label)` (`T: PartialEq`): checked
+  derives from `*value == variant` through the existing checked sync, so a "group" is just
+  radios sharing a binding — no container entity, and sibling uncheck falls out of app-wins a
+  frame after another radio is picked. `RadioGroup` arrow-nav is not wired: each radio is its
+  own tab stop and Space operates it.
+- **`text_edit`** — `ui.text_edit(&mut String)` plus `.placeholder()` (spawn-only, like
+  `.suffix()`). The field child is capability-unreachable (deviation 5), so the retained layer
+  maintains a **`TextInputValue` mirror on the frame root**: the scene seeds it as the initial
+  text (`PlumeTextInputProps.value`), a `seed_text_input_value` system pushes the seed into
+  the buffer, every buffer change mirrors back (skipping buffers with `pending_edits`, so a
+  queued seed/write is never clobbered by its own pre-edit state), and `SetTextInputValue` is
+  the write event. `CapabilityPlumeText` syncs select-style (hash-memory of the last synced
+  text). Who-wins: typing lands in the app string per edit (not on commit); app pushes wait
+  for blur. `player_profile.rs` is the acceptance example.
+
+Example idiom (all three imm examples — `audio_settings`, `debug_settings`, `player_profile`):
+resource-backed with `Default` + `Clone` + `PartialEq`; build the UI against a clone and write
+back with `set_if_neq` (passing `&mut settings.field` straight from a `ResMut` marks the
+resource changed every frame regardless of edits); shared scaffolding in `examples/common/mod.rs`
+(`#[path]`-included): `log_on_change::<R>` prints the resource on real changes, and
+`screenshot_on_arg` saves a PNG + exits when a path is passed as the first program argument
+(`cargo run --example … -- shot.png`) for headless verification.
 
 ### Naming: the container is `section` (renamed from `subpane` 2026-07-19)
 

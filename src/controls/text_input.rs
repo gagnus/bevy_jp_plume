@@ -5,8 +5,10 @@ use bevy_ecs::{
     change_detection::{DetectChanges, DetectChangesMut},
     component::Component,
     entity::Entity,
+    event::EntityEvent,
     hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
+    observer::On,
     query::{Added, Changed, Has, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
@@ -19,7 +21,7 @@ use bevy_reflect::std_traits::ReflectDefault;
 use bevy_scene::prelude::*;
 use bevy_text::{
     EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
-    TextCursorStyle, TextFont, TextLayout,
+    TextCursorStyle, TextEdit, TextFont, TextLayout,
 };
 use bevy_ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
@@ -58,9 +60,29 @@ pub struct PlumeTextInput;
 #[reflect(Component, Default)]
 pub(crate) struct TextInputField;
 
+/// The field's text, mirrored onto the [`PlumeTextInput`] frame root: the scene
+/// seeds it as the initial value, and every buffer edit is reflected back into it
+/// (the imm layer reads widget state from roots only). Write through
+/// [`SetTextInputValue`], not by re-inserting this.
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq, Reflect)]
+#[reflect(Component, Default)]
+pub struct TextInputValue(pub String);
+
+/// Programmatically replace a [`PlumeTextInput`]'s text; the field's buffer and
+/// [`TextInputValue`] both follow.
+#[derive(EntityEvent, Reflect)]
+pub struct SetTextInputValue {
+    /// The [`PlumeTextInput`] frame root.
+    pub entity: Entity,
+    /// Replacement text.
+    pub text: String,
+}
+
 /// Props used to construct the [`PlumeTextInput`] scene.
 #[derive(Default, Clone)]
 pub struct PlumeTextInputProps {
+    /// Initial text.
+    pub value: String,
     /// Visible width
     pub visible_width: Option<f32>,
     /// Max characters
@@ -77,6 +99,7 @@ impl PlumeTextInput {
     fn scene(props: PlumeTextInputProps) -> impl Scene {
         bsn! {
             text_input_frame()
+            TextInputValue({props.value})
             Children [
                 (
                     text_input_field(props.visible_width, props.max_characters)
@@ -154,6 +177,78 @@ pub(crate) fn text_input_field(
     }
 }
 
+/// Replace the buffer contents (select-all + insert) when they differ.
+pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: String) {
+    if editable_text.value() != replacement.as_str() {
+        editable_text.queue_edit(TextEdit::SelectAll);
+        editable_text.queue_edit(TextEdit::Insert(replacement.into()));
+    }
+}
+
+// Push a scene-seeded [`TextInputValue`] into the field's buffer. `Added` only
+// fires for the scene insert: the mirror below writes the component solely when
+// the buffer already differs, and [`SetTextInputValue`] edits the buffer directly.
+fn seed_text_input_value(
+    q_seeded: Query<(Entity, &TextInputValue), (With<PlumeTextInput>, Added<TextInputValue>)>,
+    q_children: Query<&Children>,
+    mut q_fields: Query<&mut EditableText, With<TextInputField>>,
+) {
+    for (frame_ent, value) in q_seeded.iter() {
+        let Ok(children) = q_children.get(frame_ent) else {
+            continue;
+        };
+        let Some(field_ent) = children.iter().copied().find(|&c| q_fields.contains(c)) else {
+            continue;
+        };
+        if let Ok(mut editable_text) = q_fields.get_mut(field_ent) {
+            set_editable_text(&mut editable_text, value.0.clone());
+        }
+    }
+}
+
+// Reflect every buffer change into the frame's [`TextInputValue`] mirror.
+fn mirror_text_input_value(
+    q_changed: Query<(&ChildOf, &EditableText), (With<TextInputField>, Changed<EditableText>)>,
+    q_frames: Query<Option<&TextInputValue>, With<PlumeTextInput>>,
+    mut commands: Commands,
+) {
+    for (child_of, editable_text) in q_changed.iter() {
+        // A queued (unapplied) edit means the buffer is stale — mirroring it now
+        // would clobber the mirror with the pre-edit text for a frame.
+        if !editable_text.pending_edits.is_empty() {
+            continue;
+        }
+        let frame_ent = child_of.parent();
+        let Ok(mirror) = q_frames.get(frame_ent) else {
+            continue;
+        };
+        let text = editable_text.value().to_string();
+        if mirror.is_none_or(|mirror| mirror.0 != text) {
+            commands.entity(frame_ent).insert(TextInputValue(text));
+        }
+    }
+}
+
+fn text_input_on_set_value(
+    ev: On<SetTextInputValue>,
+    q_frames: Query<(), With<PlumeTextInput>>,
+    q_children: Query<&Children>,
+    mut q_fields: Query<&mut EditableText, With<TextInputField>>,
+) {
+    if !q_frames.contains(ev.entity) {
+        return;
+    }
+    let Ok(children) = q_children.get(ev.entity) else {
+        return;
+    };
+    let Some(field_ent) = children.iter().copied().find(|&c| q_fields.contains(c)) else {
+        return;
+    };
+    if let Ok(mut editable_text) = q_fields.get_mut(field_ent) {
+        set_editable_text(&mut editable_text, ev.text.clone());
+    }
+}
+
 // Marker for a placeholder hint inside a text-input frame.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
@@ -161,7 +256,7 @@ struct TextInputPlaceholder;
 
 // Dim hint overlaying the field; absolute with auto vertical insets, so the frame's
 // align_items centers it without displacing the field.
-fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
+pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     bsn! {
         label_dim(text)
         Node {
@@ -421,9 +516,12 @@ impl Plugin for TextInputPlugin {
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
                 update_text_input_placeholders,
+                seed_text_input_value,
+                mirror_text_input_value,
             )
                 .in_set(PickingSystems::Last),
-        );
+        )
+        .add_observer(text_input_on_set_value);
     }
 }
 

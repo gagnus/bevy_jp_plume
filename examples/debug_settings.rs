@@ -7,6 +7,9 @@ use bevy_jp_plume::{
     imm::{PlumeImm, PlumeUi, Ui},
 };
 
+#[path = "common/mod.rs"]
+mod common;
+
 #[derive(Resource, Debug, Clone, PartialEq)]
 struct DebugSettings {
     open: bool,
@@ -63,59 +66,60 @@ fn main() {
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2d);
         })
-        .add_systems(Update, (debug_settings_ui, log_on_change));
-    if std::env::var_os("DEBUG_SHOT").is_some() {
-        app.add_systems(Update, screenshot_and_exit);
-    }
+        .add_systems(
+            Update,
+            (debug_settings_ui, common::log_on_change::<DebugSettings>),
+        );
+    common::screenshot_on_arg(&mut app);
     app.run();
 }
 
-// Prints the backing whenever it changes, to confirm every control round-trips.
-fn log_on_change(settings: Res<DebugSettings>) {
-    if settings.is_changed() {
-        info!("{:?}", *settings);
-    }
-}
-
 fn debug_settings_ui(mut ui: PlumeUi, mut settings: ResMut<DebugSettings>) {
-    if ui.button("Debug Options").enabled(!settings.open).clicked {
-        settings.open = true;
+    // Build the UI against a local clone and write back with `set_if_neq`, so the
+    // resource only registers as changed when a control actually changed it.
+    let mut s = settings.clone();
+
+    if ui.button("Debug Options").enabled(!s.open).clicked {
+        s.open = true;
     }
 
-    // Local clone dodges the borrow conflict between `&mut open` and the fields,
-    // and lets Reset diff against Default cheaply.
-    let mut open = settings.open;
-    ui.dialog("Debug Options", &mut open, |ui| {
-        ui.horizontal(|ui| {
-            ui.vertical(|ui| {
-                ui.push_id("rendering", |ui| rendering_pane(ui, &mut settings));
-                ui.push_id("physics", |ui| physics_pane(ui, &mut settings));
+    // Local copy dodges the borrow conflict between `&mut open` and the fields.
+    let mut open = s.open;
+    // Fixed width so the equal-.grow() columns have something to resolve against.
+    ui.dialog("Debug Options", &mut open)
+        .width(px(600))
+        .show(|ui| {
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.push_id("rendering", |ui| rendering_pane(ui, &mut s));
+                    ui.push_id("physics", |ui| physics_pane(ui, &mut s));
+                })
+                .grow();
+                ui.vertical(|ui| {
+                    ui.push_id("diagnostics", |ui| diagnostics_pane(ui, &mut s));
+                    ui.push_id("cheats", |ui| cheats_pane(ui, &mut s));
+                })
+                .grow();
             })
-            .width(Val::Px(280.0));
-            ui.vertical(|ui| {
-                ui.push_id("diagnostics", |ui| diagnostics_pane(ui, &mut settings));
-                ui.push_id("cheats", |ui| cheats_pane(ui, &mut settings));
-            })
-            .width(Val::Px(280.0));
-        })
-        .align_top();
+            .align_top();
 
-        ui.separator();
+            ui.separator();
 
-        ui.horizontal(|ui| {
-            if ui
-                .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
-                .clicked
-            {
-                let open = settings.open;
-                *settings = DebugSettings { open, ..default() };
-            }
-            ui.flex_spacer();
-            ui.button("Cancel");
-            ui.button("Apply").primary();
+            ui.horizontal(|ui| {
+                if ui
+                    .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
+                    .clicked
+                {
+                    let open = s.open;
+                    s = DebugSettings { open, ..default() };
+                }
+                ui.flex_spacer();
+                ui.button("Cancel");
+                ui.button("Apply").primary();
+            });
         });
-    });
-    settings.open = open;
+    s.open = open;
+    settings.set_if_neq(s);
 }
 
 fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
@@ -214,23 +218,4 @@ fn toggle_row(ui: &mut Ui, label: &str, value: &mut bool) {
             ui.toggle(value);
         });
     });
-}
-
-fn screenshot_and_exit(
-    mut frames: Local<u32>,
-    mut commands: Commands,
-    mut exit: MessageWriter<AppExit>,
-) {
-    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
-    *frames += 1;
-    if *frames == 200
-        && let Some(path) = std::env::var_os("DEBUG_SHOT")
-    {
-        commands
-            .spawn(Screenshot::primary_window())
-            .observe(save_to_disk(std::path::PathBuf::from(path)));
-    }
-    if *frames == 260 {
-        exit.write(AppExit::Success);
-    }
 }
