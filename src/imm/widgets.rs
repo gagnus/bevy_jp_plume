@@ -11,15 +11,16 @@ use bevy_scene::{Scene, bsn, bsn_list, on};
 use bevy_ui_widgets::RequestClose;
 
 use crate::{
+    constants::FaIcon,
     containers::{
-        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, dialog_frame, flex_spacer, row,
-        separator,
+        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeSubpaneProps, column,
+        dialog_frame, flex_spacer, row, separator, subpane_body, subpane_frame,
     },
     controls::{
-        PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider,
-        list_rows_from_strings,
+        PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
+        PlumeToolButton, list_rows_from_strings,
     },
-    display::caption,
+    display::{caption, caption_small_caps, fa_icon},
 };
 
 use super::{
@@ -41,8 +42,17 @@ pub trait PlumeImm<'w, 's> {
     /// Push button; `.clicked` on the response fires once per activation.
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's>;
 
+    /// Push button with a leading FontAwesome icon before the label.
+    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's>;
+
+    /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
+    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's>;
+
     /// Labeled checkbox bound to `value`.
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's>;
+
+    /// Bare toggle switch bound to `value` (no label — the surrounding row owns it).
+    fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's>;
 
     /// Slider bound to `value` over `range`.
     fn slider(&mut self, value: &mut f32, range: RangeInclusive<f32>) -> ImmResponse<'_, 'w, 's>;
@@ -59,11 +69,26 @@ pub trait PlumeImm<'w, 's> {
 
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or [`ImmResponse::grow`] to distribute width.
-    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>));
+    /// The response chains `.grow()`/`.width()` to size the row itself.
+    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's>;
+
+    /// Vertical container; children stretch to its width. The response chains
+    /// `.grow()`/`.width()` to size the column itself (e.g. equal-width columns).
+    fn vertical(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's>;
+
+    /// Collapsible sub-pane with a small-caps `header`; `f` builds its body.
+    /// Collapse state persists across frames. Chain `.start_collapsed()`.
+    fn subpane(&mut self, header: &str, f: impl FnOnce(&mut Ui<'w, 's>))
+    -> ImmResponse<'_, 'w, 's>;
 
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
     /// the trailing edge).
     fn flex_spacer(&mut self);
+
+    /// Scope child ids by `id`. A widget-building helper called more than once
+    /// needs this: every `#[track_caller]` call site inside the helper shares one
+    /// source location, so without a distinct `id` per call the ids collide.
+    fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
 }
 
 impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
@@ -74,11 +99,13 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_with_manual_id(loc_id(text))
             .on_spawn_apply_scene(move || caption(text_owned));
         let hovered = entity.hovered();
+        let spawned = entity.will_be_spawned();
         ImmResponse {
             clicked: false,
             changed: false,
             hovered,
             entity: entity.entity(),
+            spawned,
             e: entity,
         }
     }
@@ -99,6 +126,27 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's> {
+        let label_owned = label.to_owned();
+        let entity = self
+            .ch_with_manual_id(loc_id((icon, label)))
+            .on_spawn_apply_scene(move || {
+                bsn! { @PlumeButton { @caption: bsn_list! { fa_icon(icon), caption(label_owned) } } }
+            });
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's> {
+        let entity = self
+            .ch_with_manual_id(loc_id(icon))
+            .on_spawn_apply_scene(move || {
+                bsn! { @PlumeToolButton { @caption: bsn! { fa_icon(icon) } } }
+            });
+        respond(entity, false)
+    }
+
+    #[track_caller]
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's> {
         let label_owned = label.to_owned();
         let mut changed = false;
@@ -107,6 +155,16 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(
                 move || bsn! { @PlumeCheckbox { @caption: bsn! { caption(label_owned) } } },
             )
+            .plume_checked(value, &mut changed);
+        respond(entity, changed)
+    }
+
+    #[track_caller]
+    fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's> {
+        let mut changed = false;
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(|| bsn! { @PlumeToggleSwitch })
             .plume_checked(value, &mut changed);
         respond(entity, changed)
     }
@@ -170,16 +228,57 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) {
-        self.ch_with_manual_id(loc_id(()))
+    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's> {
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(row)
             .add(f);
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn vertical(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's> {
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(column)
+            .add(f);
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn subpane(
+        &mut self,
+        header: &str,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's> {
+        let header_owned = header.to_owned();
+        let entity = self
+            .ch_with_manual_id(loc_id(header))
+            .on_spawn_apply_scene(move || {
+                bsn! {
+                    subpane_frame(PlumeSubpaneProps {
+                        header: Box::new(bsn_list!(caption_small_caps(header_owned))),
+                        ..Default::default()
+                    })
+                }
+            })
+            .add(|ui| {
+                ui.ch_id("subpane_body")
+                    .on_spawn_apply_scene(subpane_body)
+                    .add(f);
+            });
+        respond(entity, false)
     }
 
     #[track_caller]
     fn flex_spacer(&mut self) {
         self.ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(flex_spacer);
+    }
+
+    fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R {
+        let mut scope = self.with_add_id_pref(id);
+        f(&mut scope)
     }
 }
 
@@ -196,11 +295,13 @@ fn respond<'r, 'w, 's>(
 ) -> ImmResponse<'r, 'w, 's> {
     let clicked = entity.activated();
     let hovered = entity.hovered();
+    let spawned = entity.will_be_spawned();
     ImmResponse {
         clicked,
         changed,
         hovered,
         entity: entity.entity(),
+        spawned,
         e: entity,
     }
 }

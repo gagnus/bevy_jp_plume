@@ -92,7 +92,7 @@ pub mod size {
 }
 
 /// The FontAwesome face a glyph is drawn from.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum FaFace {
     /// FontAwesome Solid.
     Solid,
@@ -111,7 +111,7 @@ impl FaFace {
 }
 
 /// A FontAwesome glyph paired with the face that can render it.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct FaIcon {
     glyph: &'static str,
     face: FaFace,

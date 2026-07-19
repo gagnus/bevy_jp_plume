@@ -34,15 +34,21 @@ use crate::{
 
 /// A sub-pane: a header bar over a body. Collapsible by default — clicking the
 /// header folds the body away.
-#[derive(SceneComponent, Clone, Reflect)]
+#[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSubpaneProps)]
 #[reflect(Component, Clone, Default)]
-pub struct PlumeSubpane {
-    /// Whether clicking the header collapses/expands the body.
+pub struct PlumeSubpane;
+
+/// Plain root marker carrying the collapse behavior, inserted by [`subpane_frame`]
+/// in both the retained and imm paths (unlike the [`PlumeSubpane`] scene-component,
+/// which must not be inserted as a bare component).
+#[derive(Component, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct SubpaneRoot {
     pub collapsible: bool,
 }
 
-impl Default for PlumeSubpane {
+impl Default for SubpaneRoot {
     fn default() -> Self {
         Self { collapsible: true }
     }
@@ -59,7 +65,7 @@ struct SubpaneHeader;
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SubpaneBody;
+pub(crate) struct SubpaneBody;
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -88,60 +94,90 @@ impl Default for PlumeSubpaneProps {
 impl PlumeSubpane {
     /// Scene function for a sub-pane.
     pub fn scene(props: PlumeSubpaneProps) -> impl Scene {
+        let PlumeSubpaneProps {
+            header,
+            contents,
+            collapsible,
+        } = props;
         bsn! {
-            Node {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Stretch,
-                border_radius: size::CORNER_RADIUS,
-            }
-            PlumeSubpane { collapsible: {props.collapsible} }
-            ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
-            Children [
-                (
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Start,
-                        padding: UiRect::horizontal(size::HEADER_PAD_X),
-                        min_height: size::HEADER_HEIGHT,
-                        column_gap: size::GAP,
-                        border_radius: size::CORNER_RADIUS,
-                    }
-                    template_value(control_box_shadow())
-                    SubpaneHeader
-                    ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, GRADIENT_AMOUNT)
-                    InheritableThemeTextColor(tokens::SUBPANE_HEADER_TEXT)
-                    InheritableFont {
-                        font: fonts::REGULAR,
-                        font_size: size::MEDIUM_FONT,
-                        weight: FontWeight::NORMAL,
-                    }
-                    on(toggle_subpane_collapse)
+            subpane_frame(PlumeSubpaneProps {
+                header,
+                collapsible,
+                // The public sub-pane owns its body; the imm layer passes empty
+                // contents and reconciles the body itself.
+                contents: Box::new(bsn_list!((
+                    subpane_body()
                     Children [
-                        {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SubpaneChevron) })},
-                        {props.header}
+                        {contents}
                     ]
-                ),
-                (
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Column,
-                        row_gap: size::GAP_TIGHT,
-                        padding: size::PAD,
-                    }
-                    SubpaneBody
-                    InheritableFont {
-                        font: fonts::REGULAR,
-                        font_size: size::MEDIUM_FONT,
-                        weight: FontWeight::NORMAL,
-                    }
-                    Children [
-                        {props.contents}
-                    ]
-                )
-            ]
+                ))),
+            })
+        }
+    }
+}
+
+/// Sub-pane chrome (root, header bar, chevron, collapse behavior) shared by the
+/// public [`PlumeSubpane`] and the imm layer. `props.contents` is inserted as the
+/// body slot verbatim (the public sub-pane wraps it in a [`subpane_body`]; the imm
+/// layer leaves it empty and reconciles the body itself).
+pub(crate) fn subpane_frame(props: PlumeSubpaneProps) -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            border_radius: size::CORNER_RADIUS,
+        }
+        SubpaneRoot { collapsible: {props.collapsible} }
+        ThemeBackgroundColor(tokens::SUBPANE_BODY_BG)
+        Children [
+            (
+                Node {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Start,
+                    padding: UiRect::horizontal(size::HEADER_PAD_X),
+                    min_height: size::HEADER_HEIGHT,
+                    column_gap: size::GAP,
+                    border_radius: size::CORNER_RADIUS,
+                }
+                template_value(control_box_shadow())
+                SubpaneHeader
+                ThemeBackgroundGradient(tokens::SUBPANE_HEADER_BG, GRADIENT_AMOUNT)
+                InheritableThemeTextColor(tokens::SUBPANE_HEADER_TEXT)
+                InheritableFont {
+                    font: fonts::REGULAR,
+                    font_size: size::MEDIUM_FONT,
+                    weight: FontWeight::NORMAL,
+                }
+                on(toggle_subpane_collapse)
+                Children [
+                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SubpaneChevron) })},
+                    {props.header}
+                ]
+            ),
+            {props.contents}
+        ]
+    }
+}
+
+/// The sub-pane body node: a padded, tight-gapped column folded away on collapse.
+/// Callers append the body content as children; children stretch to the body width.
+pub(crate) fn subpane_body() -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: size::GAP_TIGHT,
+            padding: size::PAD,
+        }
+        SubpaneBody
+        InheritableFont {
+            font: fonts::REGULAR,
+            font_size: size::MEDIUM_FONT,
+            weight: FontWeight::NORMAL,
         }
     }
 }
@@ -149,7 +185,7 @@ impl PlumeSubpane {
 fn toggle_subpane_collapse(
     click: On<Pointer<Click>>,
     q_headers: Query<&ChildOf, With<SubpaneHeader>>,
-    q_subpanes: Query<(&PlumeSubpane, Has<SubpaneCollapsed>)>,
+    q_subpanes: Query<(&SubpaneRoot, Has<SubpaneCollapsed>)>,
     mut commands: Commands,
 ) {
     let Ok(child_of) = q_headers.get(click.event_target()) else {
@@ -170,9 +206,9 @@ fn toggle_subpane_collapse(
 }
 
 fn update_subpane_collapse(
-    q_collapsed: Query<Entity, (With<PlumeSubpane>, Added<SubpaneCollapsed>)>,
+    q_collapsed: Query<Entity, (With<SubpaneRoot>, Added<SubpaneCollapsed>)>,
     mut removed: RemovedComponents<SubpaneCollapsed>,
-    q_subpanes: Query<(), With<PlumeSubpane>>,
+    q_subpanes: Query<(), With<SubpaneRoot>>,
     q_children: Query<&Children>,
     mut q_body: Query<&mut Node, With<SubpaneBody>>,
     mut q_chevrons: Query<&mut Text, With<SubpaneChevron>>,
@@ -208,9 +244,9 @@ fn update_subpane_collapse(
 /// The header gradient is set once at scene build, so [`Flat`] on the subpane root
 /// needs its own pass (unlike the controls, whose state resolvers read it).
 fn update_subpane_header_flat(
-    q_flagged: Query<(Entity, Has<Flat>), (With<PlumeSubpane>, Added<Flat>)>,
+    q_flagged: Query<(Entity, Has<Flat>), (With<SubpaneRoot>, Added<Flat>)>,
     mut removed_flat: RemovedComponents<Flat>,
-    q_subpanes: Query<Has<Flat>, With<PlumeSubpane>>,
+    q_subpanes: Query<Has<Flat>, With<SubpaneRoot>>,
     q_children: Query<&Children>,
     q_headers: Query<&ThemeBackgroundGradient, With<SubpaneHeader>>,
     mut commands: Commands,

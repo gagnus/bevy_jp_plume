@@ -230,3 +230,101 @@ Internally the pass still proceeds in small compiling commits (fork wiring → P
 with button/caption → value widgets + who-wins → dialog round-trip → select), stop-and-revert
 rather than patching forward — but the example is the single acceptance test, and nothing gets
 built that it doesn't need.
+
+## Pass 2 — imm surface status & remaining gaps
+
+Pass 2 is driven by `examples/debug_settings.rs` (the smoke debug menu, resource-backed, live
+`Debug`-printed, Reset→`Default`). Building it added, on top of pass 1: `toggle`, `vertical`
+(and `horizontal`/`vertical` now return `ImmResponse` so containers take `.grow()`/`.width()`),
+`subpane` (+ retained `subpane_frame`/`subpane_body` split mirroring the dialog, + `SubpaneRoot`
+plain marker so the frame isn't inserted as a bare scene-component), `icon_button`/`tool_button`,
+and `ImmResponse` builders `.variant()`/`.primary()`, `.range()`/`.precision()`/`.suffix()`,
+`.align_top()`, `.start_collapsed()`, `push_id`. `FaIcon`/`FaFace` gained `Hash` (icon is part of
+a widget id). `subpane_body` is `align_items: Stretch` (a `Start` slip regressed row fills).
+
+### Exposed vs. gaps (per control)
+
+| Control | imm surface | Not yet exposed |
+|---|---|---|
+| button | `button`, `icon_button`, `tool_button`, `.variant()`/`.primary()`, `.enabled()` | `corners` — deferred, see below |
+| checkbox | `checkbox(&mut bool, label)`, `.enabled()` | — |
+| toggle | `toggle(&mut bool)`, `.enabled()` | — (no props by design) |
+| slider | `slider(&mut f32, range)`, `.enabled()`, `.grow()`/`.width()` | **`.step()`**, **`.precision()`** |
+| number | `number(&mut f32)`, `.range()`, `.precision()`, `.suffix()`, `.enabled()`, `.width()` | **`.step()`** (Up/Down increment) |
+| select | `select(&mut usize, &[opts])`, `.enabled()`, `.grow()`/`.width()` | `max_visible`, `corners` |
+| text_edit | **none** | whole widget: `placeholder`, `filter`, `max_characters`, `visible_width`, `suffix` |
+| radio | **none** | whole widget: egui-style `radio(&mut value, variant, label)` |
+| color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
+| dialog | `dialog(title, &mut open, f)` | **`width`/`left`/`top`**, `closable`, `movable` |
+| subpane | `subpane(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
+| containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | `group`; `row`/`column` gap/align knobs — deferred, see below |
+
+### Priority order for closing the gaps (agreed 2026-07-19)
+
+1. **Dialog `width`/position** (`.grow()` layouts inside imm dialogs depend on it; the one
+   structural hole). Same body-owning constraint as pass 1's dialog — likely `ui.dialog`
+   builder args or an `ImmResponse`-style config.
+2. **slider/number `.step()`** (+ slider `.precision()`) — small; needed for honest numeric
+   controls (arrow stepping, drag rounding).
+3. **`radio` and `text_edit`** — the two whole widgets still missing (both need the
+   composite-widget / state-on-root pattern; text_edit's focused-text who-wins is designed but
+   unbuilt, and its field child is a scene child like the number suffix).
+4. **select `.max_visible()`**
+
+### Rename queued: `subpane` → `section` (decided 2026-07-19, not yet done)
+
+`subpane` is a feathers leftover — it implies a subdivision of a "pane" that no longer exists.
+Rename to **`section`** (chosen over `collapsing`/`collapsable_pane`: it doesn't lie about the
+non-collapsible `collapsible: false` case, drops the "pane" baggage, fits the single-word
+container set, and dodges the collapsible/collapsable spelling bikeshed). Collapse stays a
+behavior of a section (`.start_collapsed()`, `collapsible: false`), not its identity. Mechanical
+but broad — touches `PlumeSubpane`/`Props`, `subpane_frame`/`subpane_body`, the `Subpane*`
+markers + `SubpaneRoot`, `SubpanePlugin`, the public `SubpaneCollapsed`, the file `subpane.rs`,
+imm `ui.subpane`, and call sites in `smoke`/`debug_settings`. Cheap to do while uncommitted with
+no consumers; a good standalone next-session task.
+
+### Deferred until a real use case (not just missing — deliberately waiting)
+
+- **button `.corners()`** — only earns its keep for segmented/pill button groups (three
+  touching buttons as one shape); no consumer yet.
+- **`row`/`column` gap & align knobs** — `.align_top()` covered the one real need so far;
+  don't add a general `gap`/`align`/`justify` surface speculatively.
+
+### Id-scheme candidate: per-location counter (kill most `push_id`)
+
+Today an id is `hash(parent, Location::caller(), key)` with **no positional disambiguation**, so
+a widget-emitting helper (or loop body) called more than once under the same parent produces
+colliding ids unless the caller wraps each call in `push_id`. Forgetting it is a silent, nasty
+failure — **verified 2026-07-19**: continuous per-frame `entity id collision` warnings, the
+colliding widgets despawn+respawn every frame (thrash, entity ids climb). No panic; the UI still 
+roughly renders, which hides it. Currently `toggle_row`/`select_row` in `debug_settings` genuinely 
+need `push_id` (two of each share a subpane parent); `slider_row` doesn't collide today only because
+each subpane has one — a latent trap.
+
+Fix candidate (egui's approach): make the id `hash(parent, Location::caller(), per-location
+counter)` — a counter kept **per source location**, incremented on each visit. Repeated calls at
+the same location (helpers, loops) auto-disambiguate, while a conditional widget at its *own*
+location appearing/disappearing doesn't shift anyone else's counter — so it keeps the
+stable-conditional property that drove the pure-`Location::caller()` choice (deviation 1) while
+regaining positional disambiguation. `push_id` then survives only as an explicit override for
+genuinely dynamic keys (e.g. a reordered `Vec`). This is a change to the core id scheme (in
+`loc_id` + the `Current` scope state), so it's polish-list, not a mid-pass slip.
+
+### Still-open cross-cutting items (carried from pass 1)
+
+- **Top-level text context**: a widget at root scope has no `InheritableFont`/text-color
+  ancestor, so `ui.caption` there falls back to Bevy's default font. Needs the imm layer to
+  establish the dialog-root text context for top-level widgets (styled root panel), or text
+  scenes to carry their own fallback.
+- **Dynamic-label text updates**: labels are hashed into the widget id, so a changing caption
+  respawns its entity every change — fine for static labels, wrong for live readouts. Wants a
+  text-update path that leaves the entity in place.
+
+### New retained port-back candidate found in pass 2
+
+- **Editable-field alignment dropped on BSN spawn** — `bevy_ui`'s `update_editable_text_styles`
+  applies parley alignment only on `TextLayout::is_changed`, but a scene-spawned field's change
+  fires before it is layout-eligible (`ComputedUiRenderTargetInfo` lands later), so a non-default
+  justify (the number input's right-align) is silently dropped. Plume works around it with a
+  `reapply_field_justify` system re-touching `TextLayout` on `Added<ComputedUiRenderTargetInfo>`.
+  Same class as port-back item 2 (is_changed-filtered style systems miss scene-spawned entities).

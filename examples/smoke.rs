@@ -769,6 +769,7 @@ fn select_row(label: &str, options: impl IntoIterator<Item: AsRef<str>>) -> impl
             (
                 @PlumeSelect {
                     @options: {options},
+                    @max_visible: 4,
                 }
                 Node { width: Val::ZERO, flex_grow: 1.0 }
             ),
