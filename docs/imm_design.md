@@ -257,7 +257,7 @@ a widget id). `subpane_body` is `align_items: Stretch` (a `Start` slip regressed
 | color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
 | dialog | `dialog(title, &mut open, f)` | **`width`/`left`/`top`**, `closable`, `movable` |
 | subpane | `subpane(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
-| containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | `group`; `row`/`column` gap/align knobs — deferred, see below |
+| containers | `horizontal`/`vertical` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | **`group`** (trivial wrapper over `PlumeGroup`, not built — just no consumer yet); `row`/`column` gap/align knobs (deferred, see below) |
 
 ### Priority order for closing the gaps (agreed 2026-07-19)
 
