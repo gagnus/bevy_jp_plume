@@ -22,7 +22,7 @@ use bevy_ui_widgets::{
     ListBox, ReselectListRow, SetSelected, ValueChange, listbox_update_selection,
 };
 
-use super::listview::{ListRowCheck, PlumeListRow, PlumeListView};
+use super::listview::{ListRowCheck, ListRowIndex, PlumeListRow, PlumeListView};
 use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
 use crate::constants::size;
 use crate::display::caption;
@@ -36,6 +36,22 @@ use crate::rounded_corners::RoundedCorners;
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct PlumeSelect;
+
+/// The selected option's [`ListRowIndex`](super::listview::ListRowIndex), maintained
+/// on the [`PlumeSelect`] root whenever a row's selection settles.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
+pub struct SelectedIndex(pub usize);
+
+/// Programmatically select an option by index; the row's `Selected` state, the
+/// caption, and [`SelectedIndex`] all follow. No-op if the index has no row.
+#[derive(EntityEvent, Reflect)]
+pub struct SetSelectedIndex {
+    /// The [`PlumeSelect`] root.
+    pub entity: Entity,
+    /// Index into the select's options.
+    pub index: usize,
+}
 
 /// Marker for the caption which changes with selected item
 #[derive(Component, Default, Clone, Reflect)]
@@ -151,6 +167,43 @@ fn re_emit_listbox_value(
 
     if let Some(popup_ent) = popup_ent {
         commands.entity(popup_ent).insert(Visibility::Hidden);
+    }
+}
+
+fn sync_selected_index(
+    q_newly_selected: Query<(Entity, &ListRowIndex), (Added<Selected>, With<PlumeListRow>)>,
+    q_parents: Query<&ChildOf>,
+    q_select: Query<(), With<PlumeSelect>>,
+    mut commands: Commands,
+) {
+    for (row, row_index) in q_newly_selected.iter() {
+        if let Some(select) = q_parents
+            .iter_ancestors(row)
+            .find(|ancestor| q_select.contains(*ancestor))
+        {
+            commands.entity(select).insert(SelectedIndex(row_index.0));
+        }
+    }
+}
+
+fn select_on_set_selected_index(
+    ev: On<SetSelectedIndex>,
+    q_select: Query<(), With<PlumeSelect>>,
+    q_children: Query<&Children>,
+    q_rows: Query<&ListRowIndex, With<PlumeListRow>>,
+    mut commands: Commands,
+) {
+    if !q_select.contains(ev.entity) {
+        return;
+    }
+    if let Some(row) = q_children
+        .iter_descendants(ev.entity)
+        .find(|descendant| q_rows.get(*descendant).is_ok_and(|row| row.0 == ev.index))
+    {
+        commands.trigger(SetSelected {
+            entity: ev.entity,
+            row,
+        });
     }
 }
 
@@ -407,12 +460,14 @@ impl Plugin for SelectPlugin {
             Update,
             (
                 sync_caption,
+                sync_selected_index,
                 focus_select_popup,
                 sync_select_width,
                 sync_select_button_width,
                 sync_select_disabled,
             ),
         )
-        .add_observer(select_on_set_selected);
+        .add_observer(select_on_set_selected)
+        .add_observer(select_on_set_selected_index);
     }
 }
