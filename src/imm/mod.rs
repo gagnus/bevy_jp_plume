@@ -73,7 +73,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     pub fn screen(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Column> {
+    ) -> ImmResponse<'_, 'w, 's, kind::Screen> {
         self.imm.screen(f)
     }
 

@@ -117,11 +117,11 @@ pub trait PlumeImm<'w, 's> {
     /// Full-screen root surface: a transparent, padded column establishing the
     /// standard font and text color, so bare text works at root scope. It
     /// overlays the scene behind it and lets picks fall through empty areas.
-    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column>;
+    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen>;
 
     /// Filled box visually grouping related controls; children stretch to its
     /// width (a themed [`Self::vertical`]).
-    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column>;
+    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Group>;
 
     /// Collapsible section with a small-caps `header`; `f` builds its body.
     /// Collapse state persists across frames. Chain `.start_collapsed()`.
@@ -353,7 +353,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column> {
+    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(screen)
@@ -362,7 +362,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column> {
+    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Group> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(|| bsn! { @PlumeGroup })

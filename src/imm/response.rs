@@ -11,7 +11,7 @@ use bevy_ecs::{
 };
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 use bevy_scene::WorldSceneExt;
-use bevy_ui::{AlignItems, AlignSelf, Node, Val};
+use bevy_ui::{AlignItems, AlignSelf, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
@@ -30,8 +30,11 @@ pub mod kind {
     pub trait Numeric {}
     /// Kinds built on the text-input frame: number input, text edit.
     pub trait Field {}
-    /// Kinds that lay out children on a flex axis: row, column.
+    /// Kinds that lay out children on a flex axis: row, column, group, screen.
     pub trait Container {}
+    /// Kinds whose padding is layout rather than theming, so an app may set it:
+    /// row, column, screen. Excludes the themed containers (group, section).
+    pub trait Padded {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
@@ -49,9 +52,12 @@ pub mod kind {
     pub struct Section;
     /// `horizontal`: children flow left-to-right, so its cross axis is vertical.
     pub struct Row;
-    /// `vertical` / `group` / `screen`: children flow top-to-bottom, so its cross
-    /// axis is horizontal.
+    /// `vertical`: children flow top-to-bottom, so its cross axis is horizontal.
     pub struct Column;
+    /// `group`: a themed column, so its padding is not app-settable.
+    pub struct Group;
+    /// `screen`.
+    pub struct Screen;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -59,6 +65,11 @@ pub mod kind {
     impl Field for Text {}
     impl Container for Row {}
     impl Container for Column {}
+    impl Container for Group {}
+    impl Container for Screen {}
+    impl Padded for Row {}
+    impl Padded for Column {}
+    impl Padded for Screen {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -315,6 +326,28 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
                 .queue(move |mut entity: EntityWorldMut| {
                     if let Some(mut node) = entity.get_mut::<Node>() {
                         node.align_items = align;
+                    }
+                });
+        }
+        self
+    }
+}
+
+/// Builders for containers whose padding is layout, not theming.
+impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
+    /// Set the container's padding; `UiRect::ZERO` for a flush, full-bleed
+    /// surface such as a menu bar.
+    pub fn pad(mut self, padding: UiRect) -> Self {
+        struct PadKey;
+        if self
+            .e
+            .hash_update_typ::<PadKey>(Some(imm_id(format!("{padding:?}"))))
+        {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.padding = padding;
                     }
                 });
         }
