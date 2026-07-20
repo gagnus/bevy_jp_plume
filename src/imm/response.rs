@@ -4,6 +4,7 @@
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 
+use bevy_color::Color;
 use bevy_ecs::{
     entity::Entity,
     hierarchy::ChildOf,
@@ -11,7 +12,7 @@ use bevy_ecs::{
 };
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 use bevy_scene::WorldSceneExt;
-use bevy_ui::{AlignItems, AlignSelf, Node, UiRect, Val};
+use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
@@ -350,6 +351,19 @@ impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
                         node.padding = padding;
                     }
                 });
+        }
+        self
+    }
+
+    /// Paint the container's background; a plain row, column or screen has no
+    /// fill of its own, unlike a group or section.
+    pub fn background(mut self, color: Color) -> Self {
+        struct BackgroundKey;
+        if self
+            .e
+            .hash_update_typ::<BackgroundKey>(Some(imm_id(format!("{color:?}"))))
+        {
+            self.e.entity_commands().insert(BackgroundColor(color));
         }
         self
     }

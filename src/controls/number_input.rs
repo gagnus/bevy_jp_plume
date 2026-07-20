@@ -18,13 +18,14 @@ use bevy_scene::prelude::*;
 use bevy_text::{
     EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextFont, TextLayout,
 };
-use bevy_ui::Node;
+use bevy_ui::px;
 use bevy_ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
 use crate::{
-    constants::{fonts, size},
+    constants::fonts,
     controls::{
-        TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_suffix,
+        DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
+        text_input_suffix,
     },
 };
 
@@ -81,9 +82,9 @@ impl PlumeNumberInput {
     fn scene(props: PlumeNumberInputProps) -> impl Scene {
         bsn! {
             text_input_frame()
-            Node {
-                width: size::NUMBER_WIDTH,
-            }
+            // A value does measure, but a content-sized field would resize as
+            // digits come and go, so it keeps a fixed fallback.
+            DefaultWidth(px(60))
             PlumeNumberInput { precision: {props.precision} }
             SliderValue({props.value})
             SliderRange::new(props.min, props.max)

@@ -21,15 +21,16 @@ use bevy_scene::prelude::*;
 use bevy_ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
     InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
-    UiRect, Val, percent,
+    UiRect, Val, percent, px,
 };
 use bevy_ui_widgets::{
-    Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderValue, TrackClick,
-    slider_self_update,
+    Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderThumb, SliderValue,
+    TrackClick, slider_self_update,
 };
 
 use crate::{
     constants::size,
+    controls::DefaultWidth,
     cursor::EntityCursor,
     focus::FocusIndicator,
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
@@ -74,15 +75,15 @@ impl Default for PlumeSliderProps {
 impl PlumeSlider {
     fn scene(props: PlumeSliderProps) -> impl Scene {
         bsn! {
-            // No padding: the thumb's percent-left resolves against the padding box,
-            // so track and thumb must share the same width basis.
+            // The half-knob inset lives on the track inside, not as outer margin:
+            // margin sits outside an explicit width, so a caller's would overflow.
             Node {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
-                // Horizontal margin reserves the half-knob overhang at the track ends.
-                margin: {UiRect::horizontal(size::KNOB_SIZE / 2.0)},
-                width: size::CONTROL_WIDTH
+                min_width: px(40.0),
             }
+            // An empty track measures nothing, so `width: auto` would collapse it.
+            DefaultWidth(px(180.0))
             Hovered
             TabIndex(0)
             FocusIndicator
@@ -100,9 +101,13 @@ impl PlumeSlider {
             {props.precision.map(|precision| bsn!(SliderPrecision({precision})))}
             Children [
                 (
+                    // Inset half a knob each end so the thumb's sweep, not the bare
+                    // track, spans the full width; grown so the inset is subtracted.
                     Node {
                         height: {TRACK_HEIGHT},
-                        width: percent(100.),
+                        width: {Val::ZERO},
+                        flex_grow: 1.0,
+                        margin: {UiRect::horizontal(size::KNOB_SIZE / 2.0)},
                         border_radius: {TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
@@ -123,25 +128,28 @@ impl PlumeSlider {
                             color_space: InterpolationColorSpace::LinearRgba,
                         })]))
                     })
-                ),
-                (
-                    // Thumb; update_slider_pos moves it to the value position.
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: percent(0),
-                        top: percent(50),
-                        width: size::KNOB_SIZE,
-                        height: size::KNOB_SIZE,
-                        // Half-knob offsets center the thumb on the value position.
-                        margin: UiRect {
-                            left: {-(size::KNOB_SIZE / 2.0)},
-                            top: {-(size::KNOB_SIZE / 2.0)},
-                        },
-                        border_radius: BorderRadius::MAX,
-                    }
-                    template_value(control_box_shadow())
-                    SliderThumb
-                    ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
+                    Children [
+                        (
+                            // A child of the track, sharing its inset span — which is
+                            // the (width - thumb) span bevy's drag math assumes.
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: percent(0),
+                                top: percent(50),
+                                width: size::KNOB_SIZE,
+                                height: size::KNOB_SIZE,
+                                // Half-knob offsets center the thumb on the value position.
+                                margin: UiRect {
+                                    left: {-(size::KNOB_SIZE / 2.0)},
+                                    top: {-(size::KNOB_SIZE / 2.0)},
+                                },
+                                border_radius: BorderRadius::MAX,
+                            }
+                            template_value(control_box_shadow())
+                            SliderThumb
+                            ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
+                        )
+                    ]
                 )
             ]
         }
@@ -152,11 +160,6 @@ impl PlumeSlider {
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SliderTrack;
-
-/// Marker for the thumb
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-struct SliderThumb;
 
 fn update_slider_styles(
     q_sliders: Query<
