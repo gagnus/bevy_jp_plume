@@ -46,12 +46,8 @@ pub enum ButtonVariant {
     Plain,
 }
 
-/// A button widget.
-///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeButtonProps`].
-///
-/// Emits [`bevy_ui_widgets::Activate`] when the pointer is released while hovering over the
-/// button; disabled by adding [`bevy_ui::InteractionDisabled`].
+/// A button, spawnable as a scene component with optional [`PlumeButtonProps`].
+/// Emits [`bevy_ui_widgets::Activate`] on release while hovered.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeButtonProps)]
 #[derive(Reflect)]
@@ -113,12 +109,8 @@ impl PlumeButton {
     }
 }
 
-/// Tool button scene function: a smaller button for embedding in panel headers.
-///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeButtonProps`].
-///
-/// Emits [`bevy_ui_widgets::Activate`] when the pointer is released while hovering over the
-/// button; disabled by adding [`bevy_ui::InteractionDisabled`].
+/// A smaller button for embedding in panel headers, spawnable as a scene
+/// component with optional [`PlumeButtonProps`]. Emits [`bevy_ui_widgets::Activate`].
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeButtonProps)]
 #[derive(Reflect)]
@@ -278,21 +270,18 @@ fn set_button_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change background gradient
     if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
         commands
             .entity(button_ent)
             .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
-    // Change font color
     if font_color.0 != font_color_token {
         commands
             .entity(button_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
-    // Add/Remove box shadow
     let should_have_box_shadow =
         (*variant != ButtonVariant::Plain || hovered || pressed) && !disabled;
     if should_have_box_shadow && !has_box_shadow {
@@ -301,7 +290,6 @@ fn set_button_styles(
         commands.entity(button_ent).remove::<BoxShadow>();
     }
 
-    // Change cursor shape
     commands
         .entity(button_ent)
         .insert(EntityCursor::System(cursor_shape));

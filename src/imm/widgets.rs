@@ -114,12 +114,9 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
-    /// Full-screen root surface for top-level content: a transparent, padded
-    /// column (a dialog body sized to the viewport) that establishes the standard
-    /// font and text color, so bare `caption`/text works at root scope. Children
-    /// stretch to its width and pack from the top; it overlays whatever renders
-    /// behind it and lets picks fall through its empty areas. Wrap a system's
-    /// top-level widgets in one call.
+    /// Full-screen root surface: a transparent, padded column establishing the
+    /// standard font and text color, so bare text works at root scope. It
+    /// overlays the scene behind it and lets picks fall through empty areas.
     fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
     /// Filled box visually grouping related controls; children stretch to its
@@ -139,11 +136,10 @@ pub trait PlumeImm<'w, 's> {
     fn flex_spacer(&mut self);
 
     /// Scope child ids by `id`, making widget identity follow the key instead of
-    /// call order. Repeated calls of a widget-building helper already
-    /// auto-disambiguate (each repeat of the same id under one parent gets an
-    /// occurrence index), but that identity is positional: use `push_id` when
-    /// entries can reorder (e.g. rows of a sortable `Vec`) or when a conditional
-    /// sibling would shift the repeats that follow it, losing their widget state.
+    /// call order.
+    ///
+    /// Same-id repeats already auto-disambiguate by occurrence index, but that is
+    /// positional — use this when entries reorder or a conditional sibling shifts them.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
 }
 
@@ -230,9 +226,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         label: &str,
     ) -> ImmResponse<'_, 'w, 's> {
         let label_owned = label.to_owned();
-        // The checked sync sees a derived bool: pushing app state unchecks a
-        // sibling the frame after another radio wins; a user click lands as a
-        // pending true, which is written back through `value` below.
+        // The checked sync sees a derived bool, so a user click lands as a pending
+        // true that is written back through `value` below.
         let mut checked = *value == variant;
         let mut changed = false;
         let entity = self
@@ -446,30 +441,22 @@ impl DialogLayout {
 
 impl<'w, 's> ImmDialog<'_, 'w, 's> {
     /// Fix the dialog's width (default `Val::Auto` hugs the content). Rows that
-    /// distribute space (`.grow()`, `flex_spacer`) need a fixed width to resolve
-    /// against. Applied live: a changed value re-sizes the open dialog.
+    /// distribute space (`.grow()`, `flex_spacer`) need one to resolve against.
     pub fn width(mut self, width: Val) -> Self {
         self.layout.width = width;
         self
     }
 
-    /// Fix the dialog's outer height, title bar included, and scroll the body
-    /// vertically once the content outgrows it. Applied live, like
-    /// [`Self::width`].
-    ///
-    /// Prefer [`Self::max_height`] unless the dialog should hold its size while
-    /// near-empty. A height below the title bar's own is clamped away rather
-    /// than honored.
+    /// Fix the dialog's outer height, title bar included, scrolling the body once
+    /// the content outgrows it. Prefer [`Self::max_height`] unless the dialog
+    /// should hold its size while near-empty.
     pub fn height(mut self, height: Val) -> Self {
         self.layout.height = height;
         self
     }
 
-    /// Cap the dialog's outer height: it hugs its content as usual until it
-    /// would exceed `max_height`, then stops growing and scrolls the body.
-    ///
-    /// The usual choice for a settings dialog whose length depends on how many
-    /// sections happen to be expanded.
+    /// Cap the dialog's outer height: it hugs its content until it would exceed
+    /// `max_height`, then stops growing and scrolls the body.
     pub fn max_height(mut self, max_height: Val) -> Self {
         self.layout.max_height = max_height;
         self
@@ -543,9 +530,8 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
                 ui.ch_id("scroll_frame")
                     .on_spawn_apply_scene(dialog_scroll_frame)
                     .add(move |ui| {
-                        // The scroll area's entity is known before its spawn
-                        // command flushes, so the scrollbar beside it can point
-                        // at the viewport it drives.
+                        // The scroll area's entity is known before its spawn command
+                        // flushes, so the scrollbar can point at the viewport it drives.
                         let viewport = ui
                             .ch_id("scroll_area")
                             .on_spawn_apply_scene(dialog_scroll_area)

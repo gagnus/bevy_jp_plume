@@ -378,9 +378,8 @@ fn sync_select_width(
     }
 }
 
-// Match the menu button's width to the popup (widest row + popup chrome) and pin the caption
-// to the widest option, so picking a different option never resizes the control. Rows are
-// stretched to the popup, so their natural width is re-summed from their children.
+// Match the button's width to the popup and pin the caption to the widest option, so
+// picking never resizes the control. Stretched rows re-sum their width from children.
 fn sync_select_button_width(
     q_selects: Query<Entity, With<PlumeSelect>>,
     q_children: Query<&Children>,
@@ -427,9 +426,8 @@ fn sync_select_button_width(
             // The check tick stays in the popup, so it counts toward the row but not the caption.
             let (mut row_width, mut option_width) = (0.0f32, 0.0f32);
             for &child in row_children.iter() {
-                // Absolute children (the active-row outline) sit outside flex layout and
-                // must not count toward the row's natural width — their width follows the
-                // row's, so summing them feeds back into unbounded growth.
+                // The absolute active-row outline follows the row's width, so summing
+                // it into that width feeds back into unbounded growth.
                 if q_nodes
                     .get(child)
                     .is_ok_and(|node| node.position_type == PositionType::Absolute)

@@ -1,3 +1,4 @@
+//! Checkerboard UI material drawn behind translucent swatches to show alpha.
 use bevy_app::Plugin;
 use bevy_asset::{Asset, Assets, Handle};
 use bevy_ecs::{
@@ -35,13 +36,12 @@ impl FromWorld for AlphaPatternResource {
     }
 }
 
-/// Marker that tells us we want to fill in the [`MaterialNode`] with the alpha material.
+// Marker requesting that [`MaterialNode`] be filled in with the alpha material.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct AlphaPattern;
 
-/// Observer to fill in the material handle (since we don't have access to the materials asset
-/// in the template)
+// The template has no access to the materials asset, so the handle is filled in here.
 fn on_add_alpha_pattern(
     add: On<Add, AlphaPattern>,
     mut q_material_node: Query<&mut MaterialNode<AlphaPatternMaterial>>,
@@ -52,7 +52,7 @@ fn on_add_alpha_pattern(
     }
 }
 
-/// Plugin which registers the systems for updating the button styles.
+/// Registers the alpha-pattern material and its handle-filling observer.
 pub struct AlphaPatternPlugin;
 
 impl Plugin for AlphaPatternPlugin {

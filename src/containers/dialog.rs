@@ -37,11 +37,8 @@ pub struct PlumeDialogProps {
     /// Fixed outer height, title bar included. `Val::Auto` hugs the content.
     pub height: Val,
     /// Ceiling on the outer height: the window hugs its content until it would
-    /// exceed this, then stops growing. `Val::Auto` for no ceiling.
-    ///
-    /// Neither this nor [`height`](Self::height) can drive the body below zero —
-    /// the frame floors at [`size::DIALOG_HEADER_HEIGHT`] so the title bar can
-    /// never overflow the chrome that's meant to contain it.
+    /// exceed this, then stops growing. `Val::Auto` for no ceiling. Floored at
+    /// [`size::DIALOG_HEADER_HEIGHT`] so the title bar can never overflow.
     pub max_height: Val,
     /// Initial left offset (the window is absolutely positioned).
     pub left: Val,
@@ -90,8 +87,7 @@ impl PlumeDialog {
             movable,
         } = props;
         // A bounded dialog scrolls its body; an unbounded one holds the contents
-        // directly and spawns no scroll machinery. Same structure the imm layer
-        // builds, so both dialogs behave alike.
+        // directly and spawns no scroll machinery.
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
             Box::new(bsn_list!((
                 dialog_scroll_frame()
@@ -125,8 +121,7 @@ impl PlumeDialog {
                 top,
                 closable,
                 movable,
-                // The public dialog owns its body; the imm layer passes empty
-                // contents and reconciles the body itself.
+                // Empty for the imm layer, which reconciles the body itself.
                 contents: Box::new(bsn_list!((
                     @PlumeDialogBody
                     Children [
@@ -166,9 +161,8 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
                 width: {props.width},
                 height: {props.height},
                 max_height: {props.max_height},
-                // Floors the frame at the title bar's own height. Flexbox resolves
-                // `min` after `max`, so this also survives a `max_height` set below
-                // it — without which the bar would paint outside the dialog border.
+                // Flexbox resolves `min` after `max`, so this floor survives a
+                // `max_height` that would otherwise crush the title bar.
                 min_height: size::DIALOG_HEADER_HEIGHT,
             }
             Dialog
@@ -258,10 +252,8 @@ impl PlumeDialogBody {
                 align_items: AlignItems::Stretch,
                 row_gap: size::GAP,
                 padding: size::PAD,
-                // Take the height the title bar leaves over, and allow shrinking
-                // below the content size so a bounded dialog scrolls instead of
-                // pushing its content out the bottom. Both are inert while the
-                // dialog's own height is `Auto`.
+                // Shrinking below the content size lets a bounded dialog scroll
+                // instead of pushing content out the bottom. Inert while `Auto`.
                 flex_grow: 1.0,
                 min_height: px(0),
             }
@@ -277,9 +269,8 @@ impl PlumeDialogBody {
 /// Bounded frame inside a height-limited dialog body, holding the scrolling
 /// content and the scrollbar that drives it.
 ///
-/// Kept distinct from [`PlumeDialogBody`] because [`ScrollbarGutter`] *assigns*
-/// `padding.right` while the bar is visible, which on the body itself would eat
-/// the body's own padding every time the content started overflowing.
+/// Distinct from [`PlumeDialogBody`] because [`ScrollbarGutter`] *assigns*
+/// `padding.right`, which on the body would eat the body's own padding.
 pub(crate) fn dialog_scroll_frame() -> impl Scene {
     bsn! {
         Node {
@@ -311,11 +302,8 @@ pub(crate) fn dialog_scroll_area() -> impl Scene {
 }
 
 /// Placement shared by both dialog scrollbars: pinned down the trailing edge of
-/// [`dialog_scroll_frame`].
-///
-/// The two paths differ only in how they name the viewport they drive — the
-/// retained scene resolves a `#inner` reference within its own `bsn!`, while the
-/// imm layer holds a live [`Entity`] — so only the placement is shared.
+/// [`dialog_scroll_frame`]. The two paths name their viewport differently, so
+/// only the placement is shared.
 fn dialog_scrollbar_node() -> impl Scene {
     bsn! {
         Node {

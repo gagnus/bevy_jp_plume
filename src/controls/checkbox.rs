@@ -36,12 +36,8 @@ use crate::{
     tokens,
 };
 
-/// A checkbox widget.
-///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeCheckboxProps`].
-///
-/// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the checkbox changes
-/// state; disabled by adding [`bevy_ui::InteractionDisabled`].
+/// A checkbox, spawnable as a scene component with optional [`PlumeCheckboxProps`].
+/// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new state.
 #[derive(SceneComponent, FromTemplate)]
 #[scene(PlumeCheckboxProps)]
 #[derive(Reflect)]
@@ -77,9 +73,8 @@ impl PlumeCheckbox {
             Checkbox
             CheckboxFrame
             TabIndex(0)
-            // The row stretches to its container, but only the box and label react
-            // to clicks (children stay pickable and bubble up); the trailing dead
-            // space is inert.
+            // The row stretches to its container, but only the box and label react to
+            // clicks (children stay pickable and bubble up); the dead space is inert.
             Pickable::IGNORE
             on(checkbox_self_update)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
@@ -272,10 +267,15 @@ fn apply_checkbox_styles(
     else {
         return;
     };
-    // Safety: all three entities were just confirmed present in their queries.
-    let (bg_color, has_box_shadow) = q_bg.get(bg_ent).unwrap();
-    let outline_color = q_outline.get(outline_ent).unwrap();
-    let mark_color = q_mark.get(mark_ent).unwrap();
+    let (bg_color, has_box_shadow) = q_bg
+        .get(bg_ent)
+        .expect("bg entity was just found via q_bg::contains");
+    let outline_color = q_outline
+        .get(outline_ent)
+        .expect("outline entity was just found via q_outline::contains");
+    let mark_color = q_mark
+        .get(mark_ent)
+        .expect("mark entity was just found via q_mark::contains");
     set_checkbox_styles(
         checkbox_ent,
         bg_ent,
@@ -326,7 +326,7 @@ fn set_checkbox_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change background: gradient only when ticked, flat fill otherwise.
+    // Gradient only when ticked, flat fill otherwise.
     let bg_gradient_amount = if checked && !flat {
         GRADIENT_AMOUNT
     } else {
@@ -338,34 +338,29 @@ fn set_checkbox_styles(
             .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
-    // Change outline border
     if outline_color.0 != outline_token {
         commands
             .entity(outline_ent)
             .insert(ThemeBorderColor(outline_token));
     }
 
-    // Change mark color
     if mark_color.0 != mark_token {
         commands
             .entity(mark_ent)
             .insert(ThemeBorderColor(mark_token));
     }
 
-    // Change mark visibility
     commands.entity(mark_ent).insert(match checked {
         true => Visibility::Inherited,
         false => Visibility::Hidden,
     });
 
-    // Change font color
     if font_color.0 != font_color_token {
         commands
             .entity(checkbox_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
-    // Checked & Selected has a box shadow
     let should_have_box_shadow = checked && !disabled;
     if should_have_box_shadow && !has_box_shadow {
         commands.entity(bg_ent).insert(control_box_shadow());
@@ -373,7 +368,6 @@ fn set_checkbox_styles(
         commands.entity(bg_ent).remove::<BoxShadow>();
     }
 
-    // Change cursor shape
     commands
         .entity(checkbox_ent)
         .insert(EntityCursor::System(cursor_shape));

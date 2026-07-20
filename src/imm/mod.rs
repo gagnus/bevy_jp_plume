@@ -54,17 +54,13 @@ impl_capability_set!(
 /// live in [`PlumeImm`].
 pub type Ui<'w, 's> = Imm<'w, 's, PlumeCaps>;
 
-/// System param for immediate-mode UI systems: add a system taking
-/// `mut root: PlumeRoot` to `Update`, then open a top-level surface —
+/// System param for immediate-mode UI: open a top-level surface —
 /// [`screen`](Self::screen) or [`dialog`](Self::dialog) — to get the [`Ui`] that
 /// [`PlumeImm`] widgets are called on.
 ///
-/// Widgets are deliberately unreachable at root scope. The imm root is virtual
-/// (no entity), so a widget called there becomes its own UI root: it has no
-/// parent to flex against — every one anchors at the viewport origin, so they
-/// silently overlap — and no `InheritableFont`/text-color ancestor, so bare text
-/// falls back to Bevy's default font. Both failures are silent and warning-free,
-/// so a `Ui` is only ever handed out inside a surface that fixes them.
+/// Widgets are deliberately unreachable at root scope: the root is virtual, so a
+/// widget there would anchor at the viewport origin with no font ancestor, both
+/// silently. A `Ui` is only handed out inside a surface that fixes them.
 pub struct PlumeRoot<'w, 's> {
     imm: Ui<'w, 's>,
 }

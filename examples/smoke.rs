@@ -6,18 +6,11 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_jp_plume::{
-    PlumePlugins, TabGroup,
-    constants::font_awesome,
-    containers::{PlumeDialog, PlumeGroup, PlumeSection, flex_spacer, row},
-    controls::{
+    PlumePlugins, TabGroup, constants::font_awesome, containers::{PlumeDialog, PlumeGroup, PlumeSection, flex_spacer, row}, controls::{
         ButtonVariant, ColorSwatchValue, EditableTextFilter, ListRowIndex, PlumeButton,
         PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup,
         PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
-    },
-    dark_theme::default_dark_palette,
-    display::{caption, caption_small_caps, fa_icon, label_bright, label_dim},
-    theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme},
-    tokens,
+    }, dark_theme::default_dark_palette, display::{caption, caption_small_caps, fa_icon, label_bright, label_dim}, light_theme::default_light_palette, theme::{ThemeBackgroundColor, ThemeEditablePalette, ThemeToken, UiTheme}, tokens,
 };
 use bevy_ui::InteractionDisabled;
 
@@ -582,6 +575,37 @@ fn dialog() -> impl Scene {
             @left: px(320),
             @top: px(40),
             @contents: bsn_list! {
+                (
+                    @PlumeGroup
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        column_gap: px(10),
+                    }
+                    Children [
+                        (
+                            Node {
+                                flex_grow: 1.0,
+                            }
+                            @PlumeButton {
+                                @caption: bsn! { caption("Reset Dark") }
+                            }
+                            on(|_: On<Activate>, mut editor: ResMut<PaletteEditor>| {
+                                editor.0 = default_dark_palette();
+                            })
+                        ),
+                        (
+                            Node {
+                                flex_grow: 1.0,
+                            }
+                            @PlumeButton {
+                                @caption: bsn! { caption("Reset Light") }
+                            }
+                            on(|_: On<Activate>, mut editor: ResMut<PaletteEditor>| {
+                                editor.0 = default_light_palette();
+                            })
+                        )
+                    ]
+                ),
                 param_group("Neutrals", ramp_params(Ramp::Neutral), &palette),
                 param_group("Accent", ramp_params(Ramp::Accent), &palette),
                 param_group("Text", text_params, &palette),
@@ -612,9 +636,8 @@ fn param_group(
 fn param_row(param: PaletteParam, palette: &ThemeEditablePalette) -> Box<dyn SceneList> {
     let (min, max) = param.range();
     let value = param.get(palette);
-    // Lightness stops get a live swatch of the ramp's hue/chroma at this lightness.
     // The wrapper is always present so every slider lines up whether or not the row
-    // has a swatch (hue/chroma/alpha rows get an empty gap of the same width).
+    // has a swatch — hue/chroma/alpha rows get an empty gap of the same width.
     let swatch = param.swatch_color(palette).map(|color| {
         bsn! {
             @PlumeColorSwatch

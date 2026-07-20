@@ -33,12 +33,8 @@ use crate::{
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 
-/// A toggle switch widget.
-///
-/// This is spawnable by inheriting it as a "scene component".
-///
-/// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new value when the switch changes
-/// state; disabled by adding [`bevy_ui::InteractionDisabled`].
+/// A toggle switch, spawnable as a scene component. Emits
+/// [`bevy_ui_widgets::ValueChange<bool>`] with the new state.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct PlumeToggleSwitch;
@@ -46,7 +42,6 @@ pub struct PlumeToggleSwitch;
 impl PlumeToggleSwitch {
     fn scene() -> impl Scene {
         bsn! {
-            // Pill fill; vertical margin pads the outer box up to ROW_HEIGHT.
             // The border lives on a separate SwitchOutline overlay so the fill
             // gradient and the ring antialias cleanly (matches the checkbox split).
             Node {
@@ -82,8 +77,7 @@ impl PlumeToggleSwitch {
                     ThemeBorderColor(tokens::SWITCH_BORDER)
                 ),
                 (
-                    // Circular knob; styles slide it between the left/right insets.
-                    // A 2px inset nests the 16px knob (radius 8) concentrically inside
+                    // The 2px inset nests the 16px knob (radius 8) concentrically inside
                     // the pill's outer radius (9) minus the ring's border.
                     Node {
                         position_type: PositionType::Absolute,
@@ -225,9 +219,12 @@ fn apply_switch_styles(
     else {
         return;
     };
-    // Safety: both entities were just confirmed present in their queries.
-    let outline_border = q_outline.get(outline_ent).unwrap();
-    let (ref mut slide_style, slide_bg, has_box_shadow) = q_slide.get_mut(slide_ent).unwrap();
+    let outline_border = q_outline
+        .get(outline_ent)
+        .expect("outline entity was just found via q_outline::contains");
+    let (ref mut slide_style, slide_bg, has_box_shadow) = q_slide
+        .get_mut(slide_ent)
+        .expect("slide entity was just found via q_slide::contains");
     set_switch_styles(
         switch_ent,
         outline_ent,
@@ -279,28 +276,24 @@ fn set_switch_styles(
         GRADIENT_AMOUNT
     };
 
-    // Change pill background gradient
     if pill_bg.0 != pill_bg_token || pill_bg.1 != gradient_amount {
         commands
             .entity(switch_ent)
             .insert(ThemeBackgroundGradient(pill_bg_token, gradient_amount));
     }
 
-    // Change outline border
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
             .insert(ThemeBorderColor(outline_border_token));
     }
 
-    // more gradient for slide
     let slide_gradient_amount = if disabled || flat {
         0.0
     } else {
         SLIDE_GRADIENT_AMOUNT
     };
 
-    // Change slide background gradient
     if slide_bg.0 != slide_bg_token || slide_bg.1 != slide_gradient_amount {
         commands.entity(slide_ent).insert(ThemeBackgroundGradient(
             slide_bg_token,
@@ -308,7 +301,6 @@ fn set_switch_styles(
         ));
     }
 
-    // Change slide position
     if slide_style.left != slide_left {
         slide_style.left = slide_left;
     }
@@ -325,7 +317,6 @@ fn set_switch_styles(
         commands.entity(switch_ent).remove::<BoxShadow>();
     }
 
-    // Change cursor shape
     commands
         .entity(switch_ent)
         .insert(EntityCursor::System(cursor_shape));

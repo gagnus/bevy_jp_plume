@@ -224,12 +224,11 @@ where
     }
 }
 
-/// Synchronises an app `String` with a text input's buffer.
+/// Synchronises an app `String` with a text input's buffer, via the
+/// [`TextInputValue`] mirror (reads) and [`SetTextInputValue`] (writes).
 ///
-/// The buffer lives on the field child, which capabilities can't reach, so all
-/// state flows through the [`TextInputValue`] mirror on the frame root (reads)
-/// and [`SetTextInputValue`] (writes). Who-wins: the user's typing always lands
-/// in the app string; app pushes are held back while the field is focused.
+/// The user's typing always lands in the app string; app pushes are held back
+/// while the field is focused.
 pub struct CapabilityPlumeText;
 
 impl ImmCapability for CapabilityPlumeText {
@@ -272,9 +271,8 @@ where
             }
             self.hash_set_typ::<TextSyncKey>(imm_id(&*text));
         } else if *text != widget_text && !focused_within(&self) {
-            // The hash is deliberately left at the widget's value: until the push
-            // lands, re-push rather than reading the stale widget back. While the
-            // field is focused the widget wins, so the push waits for blur.
+            // Hash deliberately left at the widget's value: re-push until it lands
+            // rather than reading the stale widget back. Focused fields wait for blur.
             let input_entity = self.entity();
             let new_text = text.clone();
             self.commands().trigger(SetTextInputValue {

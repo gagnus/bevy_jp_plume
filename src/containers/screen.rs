@@ -1,3 +1,4 @@
+//! BSN scene function for the full-screen root surface.
 use bevy_picking::Pickable;
 use bevy_scene::{Scene, bsn};
 use bevy_text::FontWeight;
@@ -10,15 +11,11 @@ use crate::{
     tokens,
 };
 
-/// Full-screen root surface for top-level immediate-mode content: a transparent,
-/// padded column (like a dialog body sized to the viewport) that establishes the
-/// standard font and text color, so bare `caption`/text works at root scope where
-/// there is otherwise no [`InheritableFont`]/text-color ancestor.
+/// Transparent, padded column filling the viewport, establishing the standard
+/// [`InheritableFont`] and text color so bare text works at root scope.
 ///
-/// Fills the viewport and stretches children to its width; content goes in
-/// `Children`. It carries no background — it's an overlay over whatever renders
-/// behind it — and is [`Pickable::IGNORE`] so empty areas don't swallow picks
-/// meant for the scene below (children keep their own picking).
+/// [`Pickable::IGNORE`], so empty areas don't swallow picks meant for the scene
+/// behind it; children keep their own picking.
 pub fn screen() -> impl Scene {
     bsn! {
         Node {

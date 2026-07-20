@@ -260,27 +260,22 @@ fn update_theme(
     mut commands: Commands,
 ) {
     if theme.is_changed() {
-        // Update all background colors
         for (mut bg, theme_bg) in q_background.iter_mut() {
             bg.0 = theme.color(&theme_bg.0);
         }
 
-        // Update all background gradients
         for (mut gradient, theme_grad) in q_gradient.iter_mut() {
             *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
         }
 
-        // Update all border colors
         for (mut border, theme_border) in q_border.iter_mut() {
             border.set_all(theme.color(&theme_border.0));
         }
 
-        // Update all direct text span colors
         for (mut text_color, theme_text_color) in q_text_color.iter_mut() {
             text_color.0 = theme.color(&theme_text_color.0);
         }
 
-        // Re-propagate inheritable text colors (buttons, menus, list rows, etc.)
         for (entity, inherit) in &q_inherit {
             commands
                 .entity(entity)
@@ -297,7 +292,6 @@ fn on_changed_background(
     >,
     theme: Res<UiTheme>,
 ) {
-    // Update background colors where the design token has changed.
     if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
         bg.0 = theme.color(&theme_bg.0);
     }
@@ -311,7 +305,6 @@ fn on_changed_gradient(
     >,
     theme: Res<UiTheme>,
 ) {
-    // Rebuild the gradient where the design token has changed.
     if let Ok((mut gradient, theme_grad)) = q_gradient.get_mut(insert.entity) {
         *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
     }
@@ -322,7 +315,6 @@ fn on_changed_border(
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor), Changed<ThemeBorderColor>>,
     theme: Res<UiTheme>,
 ) {
-    // Update border colors where the design token has changed.
     if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
         border.set_all(theme.color(&theme_border.0));
     }
@@ -333,7 +325,6 @@ fn on_changed_text_color(
     mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
     theme: Res<UiTheme>,
 ) {
-    // Update text colors where the design token has changed.
     if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
         text_color.0 = theme.color(&theme_text_color.0);
     }

@@ -1,12 +1,9 @@
+//! BSN scene function for a fixed-size invisible gap.
 use bevy_scene::{Scene, bsn};
 use bevy_ui::{Node, Val};
 
-/// An invisible node of fixed size along its container's main axis: `length`
-/// wide in a [`row`](crate::containers::row), `length` tall in a
-/// [`column`](crate::containers::column).
-///
-/// The fixed-size counterpart to [`flex_spacer`](crate::containers::flex_spacer),
-/// for opening a deliberate gap wider than the container's own.
+/// An invisible node `length` along its container's main axis — the fixed-size
+/// counterpart to [`flex_spacer`](crate::containers::flex_spacer).
 pub fn space(length: Val) -> impl Scene {
     bsn! {
         Node {

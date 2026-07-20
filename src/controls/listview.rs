@@ -59,7 +59,6 @@ impl PlumeListView {
     /// Scene function for list view.
     pub fn scene(props: PlumeListViewProps) -> impl Scene {
         bsn! {
-            // Outer frame that holds the scrollbar
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
@@ -73,7 +72,6 @@ impl PlumeListView {
             TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
             Children [
-                // Inner part that scrolls
                 (
                     #inner
                     Node {
@@ -291,21 +289,18 @@ fn set_listrow_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change outline background
     if bg_color.0 != outline_bg_token {
         commands
             .entity(listrow_ent)
             .insert(ThemeBackgroundColor(outline_bg_token));
     }
 
-    // Change font color
     if font_color.0 != font_color_token {
         commands
             .entity(listrow_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
-    // Change tick visibility
     if let Some(check_ent) = check_ent {
         commands.entity(check_ent).insert(match selected {
             true => Visibility::Inherited,
@@ -313,7 +308,6 @@ fn set_listrow_styles(
         });
     }
 
-    // Change cursor shape
     commands
         .entity(listrow_ent)
         .insert(EntityCursor::System(cursor_shape));

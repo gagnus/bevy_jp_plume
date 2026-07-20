@@ -39,13 +39,8 @@ use crate::{
 /// Visible track strip thickness (the full-height node around it is the hit area).
 const TRACK_HEIGHT: Val = Val::Px(4.0);
 
-/// A slider widget.
-///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeSliderProps`].
-///
-/// Emits [`bevy_ui_widgets::ValueChange<f32>`] when the slider value is changed; disabled by
-/// adding [`bevy_ui::InteractionDisabled`]. Shows no value text — pair it with a separate
-/// display element when the number matters.
+/// A slider, spawnable as a scene component with optional [`PlumeSliderProps`].
+/// Emits [`bevy_ui_widgets::ValueChange<f32>`]; shows no value text of its own.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSliderProps)]
 #[require(Slider)]
@@ -79,7 +74,6 @@ impl Default for PlumeSliderProps {
 impl PlumeSlider {
     fn scene(props: PlumeSliderProps) -> impl Scene {
         bsn! {
-            // Full-height hit area; the visible track is a thin child strip.
             // No padding: the thumb's percent-left resolves against the padding box,
             // so track and thumb must share the same width basis.
             Node {
@@ -310,9 +304,12 @@ fn apply_slider_styles(
         return;
     };
 
-    // Safety: all three entities were just confirmed present in their queries.
-    let mut track_background_gradient = q_tracks.get_mut(track_ent).unwrap();
-    let (thumb_gradient_color, has_box_shadow) = q_thumbs.get(thumb_ent).unwrap();
+    let mut track_background_gradient = q_tracks
+        .get_mut(track_ent)
+        .expect("track entity was just found via q_tracks::contains");
+    let (thumb_gradient_color, has_box_shadow) = q_thumbs
+        .get(thumb_ent)
+        .expect("thumb entity was just found via q_thumbs::contains");
     set_slider_styles(
         slider_ent,
         thumb_ent,
@@ -377,7 +374,6 @@ fn set_slider_styles(
         commands.entity(thumb_ent).remove::<BoxShadow>();
     }
 
-    // Change cursor shape
     commands
         .entity(slider_ent)
         .insert(EntityCursor::System(cursor_shape));

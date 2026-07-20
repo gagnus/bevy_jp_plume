@@ -1,3 +1,4 @@
+//! BSN scene function for a vertical flex container.
 use bevy_scene::{Scene, bsn};
 use bevy_text::FontWeight;
 use bevy_ui::{AlignItems, Display, FlexDirection, Node};
@@ -9,11 +10,8 @@ use crate::{
     tokens,
 };
 
-/// Vertical container that stretches children to its own width,
-/// e.g. a stack of rows or sections; content goes in `Children`.
-///
-/// Carries the standard font and text color, so bare text works anywhere;
-/// contents slots (dialog/section/group bodies) are already column contexts.
+/// Vertical container that stretches children to its own width; content goes in
+/// `Children`. Carries the standard font and text color, so bare text works.
 pub fn column() -> impl Scene {
     bsn! {
         Node {

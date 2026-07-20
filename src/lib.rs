@@ -41,14 +41,12 @@ pub struct PlumeCorePlugin;
 
 impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy_app::App) {
-        // Embedded font
         embedded_asset!(app, "assets/fonts/NotoSans-Bold.ttf");
         embedded_asset!(app, "assets/fonts/NotoSans-Regular.ttf");
         embedded_asset!(app, "assets/fonts/NotoSansMono-Regular.ttf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Solid.otf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Regular.otf");
 
-        // Embedded shader
         embedded_asset!(app, "assets/shaders/alpha_pattern.wgsl");
 
         app.add_plugins((
@@ -65,8 +63,8 @@ impl Plugin for PlumeCorePlugin {
             UiMaterialPlugin::<AlphaPatternMaterial>::default(),
         ));
 
-        // This needs to run in UiSystems::Propagate so the fonts are up-to-date for `measure_text_system`
-        // and `detect_text_needs_rerender` in UiSystems::Content
+        // Fonts must be current before `measure_text_system` and
+        // `detect_text_needs_rerender` run in `UiSystems::Content`.
         app.configure_sets(
             PostUpdate,
             PropagateSet::<TextFont>::default().in_set(UiSystems::Propagate),

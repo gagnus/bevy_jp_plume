@@ -103,8 +103,7 @@ impl PlumeSection {
             section_frame(PlumeSectionProps {
                 header,
                 collapsible,
-                // The public section owns its body; the imm layer passes empty
-                // contents and reconciles the body itself.
+                // Empty for the imm layer, which reconciles the body itself.
                 contents: Box::new(bsn_list!((
                     section_body()
                     Children [

@@ -28,15 +28,11 @@ use crate::{
     },
 };
 
-/// A numeric input built on the [`PlumeTextInput`](crate::controls::PlumeTextInput) frame. Holds
-/// its value in [`SliderValue`] / [`SliderRange`] (interchangeable with a slider) and emits
-/// [`ValueChange<f32>`] on commit.
+/// A numeric input on the [`PlumeTextInput`](crate::controls::PlumeTextInput)
+/// frame, holding its value in [`SliderValue`] / [`SliderRange`] like a slider.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional
-/// [`PlumeNumberInputProps`]. Typing commits on Enter or focus loss (clamped to the
-/// range, rounded to `precision`); Escape or an unparsable entry reverts the text; Up/Down
-/// arrows step the value by [`SliderStep`]. The value and range live on this frame entity;
-/// the editable `TextInputField` child does the typing.
+/// Typing commits on Enter or focus loss (clamped and rounded to `precision`);
+/// Escape or an unparsable entry reverts; Up/Down step by [`SliderStep`].
 #[derive(SceneComponent, Clone, Reflect)]
 #[scene(PlumeNumberInputProps)]
 #[reflect(Component, Default, Clone)]
@@ -120,9 +116,8 @@ fn format_value(value: f32, precision: usize) -> String {
     format!("{value:.precision$}")
 }
 
-// Clamps + rounds `candidate` and writes it as the committed value (emitting
-// `ValueChange<f32>`). Idempotent for repeated calls. `source` is the
-// [`PlumeNumberInput`] frame that owns the value, not the editable field.
+// Clamps + rounds `candidate` and commits it, emitting `ValueChange<f32>`.
+// `source` is the [`PlumeNumberInput`] frame, not the editable field.
 fn apply_value(
     candidate: f32,
     precision: usize,

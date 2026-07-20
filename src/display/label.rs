@@ -18,14 +18,10 @@ pub fn caption(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// A caption rendered in small-caps via the font's OpenType features.
+/// A caption in small-caps, whatever the input casing.
 ///
-/// Enables both `smcp` (lowercase → small-caps) and `c2sc` (uppercase → small-
-/// caps), so the text renders as small-caps regardless of the input casing.
-///
-/// Unlike [`caption`], this pins the font face and size (they cannot be
-/// inherited alongside the features, since `TextFont` is set as a whole), so the
-/// glyphs match the standard caption font. Text color is still themed.
+/// Pins the font face and size, since `TextFont` is set as a whole and the
+/// features cannot be inherited alongside them. Text color is still themed.
 pub fn caption_small_caps(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)

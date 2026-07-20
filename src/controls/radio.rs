@@ -35,12 +35,8 @@ use crate::{
     tokens,
 };
 
-/// A radio widget.
-///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeRadioProps`].
-///
-/// Emits [`bevy_ui_widgets::ValueChange<bool>`] (true) when checked, and the radio group emits
-/// [`bevy_ui_widgets::ValueChange<Entity>`] with the newly selected radio.
+/// A radio, spawnable as a scene component with optional [`PlumeRadioProps`].
+/// Emits [`bevy_ui_widgets::ValueChange<bool>`] (always true) when checked.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeRadioProps)]
 #[derive(Reflect)]
@@ -75,9 +71,8 @@ impl PlumeRadio {
             }
             RadioButton
             TabIndex(0)
-            // The row stretches to its container, but only the disc and label react
-            // to clicks (children stay pickable and bubble up); the trailing dead
-            // space is inert.
+            // The row stretches to its container, but only the disc and label react to
+            // clicks (children stay pickable and bubble up); the dead space is inert.
             Pickable::IGNORE
             on(radio_check_self)
             EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
@@ -88,9 +83,7 @@ impl PlumeRadio {
                 weight: FontWeight::NORMAL,
             }
             Children [(
-                // Filled disc; the flex centering positions the mark dot.
-                // Gradient only when checked (the unchecked fill is transparent),
-                // matching the checkbox.
+                // Gradient only when checked, since the unchecked fill is transparent.
                 Node {
                     display: Display::Flex,
                     align_items: AlignItems::Center,
@@ -137,10 +130,7 @@ impl PlumeRadio {
 }
 
 /// Groups [`PlumeRadio`] children into a column and keeps their checks mutually
-/// exclusive. A radio outside any group still checks itself when clicked; only
-/// the unchecking of siblings needs the group.
-///
-/// This is spawnable by inheriting it as a "scene component".
+/// exclusive; emits [`bevy_ui_widgets::ValueChange<Entity>`] with the new pick.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct PlumeRadioGroup;
@@ -319,10 +309,15 @@ fn apply_radio_styles(
     else {
         return;
     };
-    // Safety: all three entities were just confirmed present in their queries.
-    let bg = q_bg.get(bg_ent).unwrap();
-    let outline_border = q_outline.get(outline_ent).unwrap();
-    let mark_color = q_mark.get(mark_ent).unwrap();
+    let bg = q_bg
+        .get(bg_ent)
+        .expect("bg entity was just found via q_bg::contains");
+    let outline_border = q_outline
+        .get(outline_ent)
+        .expect("outline entity was just found via q_outline::contains");
+    let mark_color = q_mark
+        .get(mark_ent)
+        .expect("mark entity was just found via q_mark::contains");
     set_radio_styles(
         radio_ent,
         bg_ent,
@@ -373,14 +368,13 @@ fn set_radio_styles(
         false => bevy_window::SystemCursorIcon::Pointer,
     };
 
-    // Change outline border
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
             .insert(ThemeBorderColor(outline_border_token));
     }
 
-    // Change disc background: gradient only when checked, flat fill otherwise.
+    // Gradient only when checked, flat fill otherwise.
     let bg_gradient_amount = if checked && !flat {
         GRADIENT_AMOUNT
     } else {
@@ -392,27 +386,23 @@ fn set_radio_styles(
             .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
-    // Change mark color
     if mark_color.0 != mark_token || bg.1 != bg_gradient_amount {
         commands
             .entity(mark_ent)
             .insert(ThemeBackgroundGradient(mark_token, bg_gradient_amount));
     }
 
-    // Change mark visibility
     commands.entity(mark_ent).insert(match checked {
         true => Visibility::Inherited,
         false => Visibility::Hidden,
     });
 
-    // Change font color
     if font_color.0 != font_color_token {
         commands
             .entity(radio_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
-    // Checked & Selected has a box shadow
     let should_have_box_shadow = checked && !disabled;
     if should_have_box_shadow && !has_box_shadow {
         commands.entity(bg_ent).insert(control_box_shadow());
@@ -420,7 +410,6 @@ fn set_radio_styles(
         commands.entity(bg_ent).remove::<BoxShadow>();
     }
 
-    // Change cursor shape
     commands
         .entity(radio_ent)
         .insert(EntityCursor::System(cursor_shape));

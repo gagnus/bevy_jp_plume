@@ -103,13 +103,10 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     }
 
     /// Place this one child on its container's cross axis, overriding the
-    /// container's own `align_items` — vertical placement inside a
-    /// [`horizontal`](super::PlumeImm::horizontal), horizontal inside a
-    /// [`vertical`](super::PlumeImm::vertical).
+    /// container's `align_items`.
     ///
-    /// `AlignSelf::Start` in a column is the way to stop a control stretching to
-    /// the full width; `AlignSelf::Stretch` only bites on children that don't
-    /// already fix their own cross-axis size.
+    /// `AlignSelf::Start` in a column is how to stop a control stretching to full
+    /// width; `Stretch` only bites on children that don't fix their own size.
     pub fn align_self(mut self, align: AlignSelf) -> Self {
         struct AlignSelfKey;
         if self
@@ -302,15 +299,11 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
 
 /// Builders shared by the container kinds (row, column).
 impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
-    /// Place every child on the container's cross axis. That axis follows the
-    /// container: on a [`Row`](kind::Row) `Start` means top, on a
-    /// [`Column`](kind::Column) it means left.
+    /// Place every child on the container's cross axis — `Start` means top on a
+    /// [`Row`](kind::Row), left on a [`Column`](kind::Column).
     ///
-    /// A column defaults to `Stretch` (children fill its width, which is what
-    /// `.grow()` in nested rows resolves against) and a row to `Center` (a label
-    /// sits level with the control beside it); override for a row of
-    /// unequal-height columns that should anchor to the top. To move a single
-    /// child instead, use [`align_self`](Self::align_self).
+    /// Columns default to `Stretch` (what `.grow()` in nested rows resolves
+    /// against), rows to `Center`. For a single child, see [`Self::align_self`].
     pub fn align_items(mut self, align: AlignItems) -> Self {
         struct AlignItemsKey;
         if self

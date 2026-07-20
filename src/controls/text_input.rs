@@ -185,9 +185,8 @@ pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: S
     }
 }
 
-// Push a scene-seeded [`TextInputValue`] into the field's buffer. `Added` only
-// fires for the scene insert: the mirror below writes the component solely when
-// the buffer already differs, and [`SetTextInputValue`] edits the buffer directly.
+// Push a scene-seeded [`TextInputValue`] into the field's buffer. `Added` fires only
+// for the scene insert, so this never fights the mirror below.
 fn seed_text_input_value(
     q_seeded: Query<(Entity, &TextInputValue), (With<PlumeTextInput>, Added<TextInputValue>)>,
     q_children: Query<&Children>,
@@ -525,11 +524,8 @@ impl Plugin for TextInputPlugin {
     }
 }
 
-// Upstream applies a field's parley alignment only on `TextLayout` change, but a
-// BSN-spawned field's `TextLayout` change fires before it is layout-eligible (no
-// `ComputedUiRenderTargetInfo` yet), so a non-default justify is silently dropped
-// (same scene-spawn/change-filter gap as port-back item 2). Re-touch `TextLayout`
-// once the field is realized so the alignment is applied.
+// A BSN-spawned field's `TextLayout` change fires before it is layout-eligible, so
+// upstream drops the justify; re-touch it once the field is realized.
 fn reapply_field_justify(
     mut q_fields: Query<&mut TextLayout, (With<TextInputField>, Added<ComputedUiRenderTargetInfo>)>,
 ) {

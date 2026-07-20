@@ -161,7 +161,6 @@ impl PlumeMenuButton {
             ActivateOnPress
             MenuButton
             PlumeMenuButton
-            // Additional children for menu chevron
             Children [
                 {
                     props.arrow.then(|| bsn_list!(
