@@ -91,13 +91,13 @@ fn debug_settings_ui(mut ui: PlumeUi, mut settings: ResMut<DebugSettings>) {
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
-                    ui.push_id("rendering", |ui| rendering_pane(ui, &mut s));
-                    ui.push_id("physics", |ui| physics_pane(ui, &mut s));
+                    rendering_pane(ui, &mut s);
+                    physics_pane(ui, &mut s);
                 })
                 .grow();
                 ui.vertical(|ui| {
-                    ui.push_id("diagnostics", |ui| diagnostics_pane(ui, &mut s));
-                    ui.push_id("cheats", |ui| cheats_pane(ui, &mut s));
+                    diagnostics_pane(ui, &mut s);
+                    cheats_pane(ui, &mut s);
                 })
                 .grow();
             })
@@ -154,13 +154,11 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
         select_row(ui, "Overlay", &mut s.overlay, &OVERLAY_CORNERS);
         // Inline (not select_row) to chain .max_visible(): the popup caps at
         // three rows and scrolls the remaining two.
-        ui.push_id("Log level", |ui| {
-            ui.horizontal(|ui| {
-                ui.caption("Log level").width(px(84));
-                ui.select(&mut s.log_level, &LOG_LEVELS)
-                    .grow()
-                    .max_visible(3);
-            });
+        ui.horizontal(|ui| {
+            ui.caption("Log level").width(px(84));
+            ui.select(&mut s.log_level, &LOG_LEVELS)
+                .grow()
+                .max_visible(3);
         });
     });
 }
@@ -181,7 +179,8 @@ fn cheats_pane(ui: &mut Ui, s: &mut DebugSettings) {
     });
 }
 
-// Reusable rows: distinct `id` scoping per label keeps repeated calls collision-free.
+// Reusable rows: repeated calls under one parent need no `push_id` — same-id
+// repeats are disambiguated by occurrence index.
 fn slider_row(
     ui: &mut Ui,
     label: &str,
@@ -191,40 +190,34 @@ fn slider_row(
     precision: usize,
     suffix: Option<&str>,
 ) {
-    ui.push_id(label, |ui| {
-        ui.horizontal(|ui| {
-            ui.caption(label).width(px(84));
-            ui.slider(value, range.clone())
-                .grow()
-                .step(step)
-                .precision(precision);
-            let number = ui
-                .number(value)
-                .range(range)
-                .step(step)
-                .precision(precision);
-            if let Some(suffix) = suffix {
-                number.suffix(suffix);
-            }
-        });
+    ui.horizontal(|ui| {
+        ui.caption(label).width(px(84));
+        ui.slider(value, range.clone())
+            .grow()
+            .step(step)
+            .precision(precision);
+        let number = ui
+            .number(value)
+            .range(range)
+            .step(step)
+            .precision(precision);
+        if let Some(suffix) = suffix {
+            number.suffix(suffix);
+        }
     });
 }
 
 fn select_row(ui: &mut Ui, label: &str, index: &mut usize, options: &[&str]) {
-    ui.push_id(label, |ui| {
-        ui.horizontal(|ui| {
-            ui.caption(label).width(px(84));
-            ui.select(index, options).grow();
-        });
+    ui.horizontal(|ui| {
+        ui.caption(label).width(px(84));
+        ui.select(index, options).grow();
     });
 }
 
 fn toggle_row(ui: &mut Ui, label: &str, value: &mut bool) {
-    ui.push_id(label, |ui| {
-        ui.horizontal(|ui| {
-            ui.caption(label);
-            ui.flex_spacer();
-            ui.toggle(value);
-        });
+    ui.horizontal(|ui| {
+        ui.caption(label);
+        ui.flex_spacer();
+        ui.toggle(value);
     });
 }

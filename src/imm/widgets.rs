@@ -128,9 +128,12 @@ pub trait PlumeImm<'w, 's> {
     /// the trailing edge).
     fn flex_spacer(&mut self);
 
-    /// Scope child ids by `id`. A widget-building helper called more than once
-    /// needs this: every `#[track_caller]` call site inside the helper shares one
-    /// source location, so without a distinct `id` per call the ids collide.
+    /// Scope child ids by `id`, making widget identity follow the key instead of
+    /// call order. Repeated calls of a widget-building helper already
+    /// auto-disambiguate (each repeat of the same id under one parent gets an
+    /// occurrence index), but that identity is positional: use `push_id` when
+    /// entries can reorder (e.g. rows of a sortable `Vec`) or when a conditional
+    /// sibling would shift the repeats that follow it, losing their widget state.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
 }
 

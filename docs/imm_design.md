@@ -335,25 +335,32 @@ dodges the collapsible/collapsable spelling bikeshed. Collapse is a behavior of 
 - **`row`/`column` gap & align knobs** — `.align_top()` covered the one real need so far;
   don't add a general `gap`/`align`/`justify` surface speculatively.
 
-### Id-scheme candidate: per-location counter (kill most `push_id`)
+### Id scheme: occurrence counter (DONE 2026-07-20 — killed most `push_id`)
 
-Today an id is `hash(parent, Location::caller(), key)` with **no positional disambiguation**, so
-a widget-emitting helper (or loop body) called more than once under the same parent produces
-colliding ids unless the caller wraps each call in `push_id`. Forgetting it is a silent, nasty
-failure — **verified 2026-07-19**: continuous per-frame `entity id collision` warnings, the
-colliding widgets despawn+respawn every frame (thrash, entity ids climb). No panic; the UI still 
-roughly renders, which hides it. Currently `toggle_row`/`select_row` in `debug_settings` genuinely 
-need `push_id` (two of each share a section parent); `slider_row` doesn't collide today only because
-each section has one — a latent trap.
+Previously an id was `hash(parent, Location::caller(), key)` with **no positional
+disambiguation**, so a widget-emitting helper (or loop body) called more than once under the
+same parent produced colliding ids unless the caller wrapped each call in `push_id`. Forgetting
+it was a silent, nasty failure — verified 2026-07-19: continuous per-frame `entity id collision`
+warnings, the colliding widgets despawn+respawn every frame (thrash, entity ids climb). No
+panic; the UI still roughly renders, which hides it.
 
-Fix candidate (egui's approach): make the id `hash(parent, Location::caller(), per-location
-counter)` — a counter kept **per source location**, incremented on each visit. Repeated calls at
-the same location (helpers, loops) auto-disambiguate, while a conditional widget at its *own*
-location appearing/disappearing doesn't shift anyone else's counter — so it keeps the
-stable-conditional property that drove the pure-`Location::caller()` choice (deviation 1) while
-regaining positional disambiguation. `push_id` then survives only as an explicit override for
-genuinely dynamic keys (e.g. a reordered `Vec`). This is a change to the core id scheme (in
-`loc_id` + the `Current` scope state), so it's polish-list, not a mid-pass slip.
+Implemented (a strict superset of the per-location-counter candidate): the counter is keyed by
+the **fully resolved hierarchy id** — `Imm` carries a per-pass `hierarchy_occurrences` map
+(fresh each system run, so no reset logic), and `ImmIdBuilder::Hierarchy` resolution counts
+occurrences of each resolved `hash(parent, id_pref, sui_id)`. The first occurrence keeps the
+plain id (no churn vs. the old scheme; a widget appearing once resolves identically); repeat
+occurrences mix in their occurrence index. Because the key includes location *and* the widget's
+own key *and* scope, a conditional widget only ever shifts later repeats of its own exact id —
+distinct-location/key/scope siblings keep the stable-conditional property (deviation 1). Since
+it lives in `resolve`, `ch_id` dups are covered too, not just `loc_id`. This is the first
+source change in the vendored fork beyond the Cargo.toml path-dep rewrite (~20 lines:
+`immediate/id.rs` + the `Imm` field).
+
+`push_id` survives as an explicit override for identity that should follow **data** rather than
+call order: reorderable `Vec` rows, or repeats after a conditional sibling *of the same id*
+(positional identity shifts there, respawning widget-local state like collapse/focus).
+`debug_settings` now uses zero `push_id` calls — its repeated `toggle_row`/`select_row`/
+`slider_row` helpers are the acceptance test (no collision warnings, screenshot-identical).
 
 ### Still-open cross-cutting items (carried from pass 1)
 
