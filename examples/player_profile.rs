@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
     constants::font_awesome,
-    imm::{PlumeImm, PlumeUi},
+    imm::{PlumeImm, PlumeRoot},
 };
 
 #[path = "common/mod.rs"]
@@ -61,20 +61,24 @@ fn main() {
     app.run();
 }
 
-fn profile_ui(mut ui: PlumeUi, mut settings: ResMut<ProfileSettings>) {
+fn profile_ui(mut root: PlumeRoot, mut settings: ResMut<ProfileSettings>) {
     // Build the UI against a local clone and write back with `set_if_neq`, so the
     // resource only registers as changed when a control actually changed it.
     let mut s = settings.clone();
 
-    if ui.button("Player Profile").enabled(!s.open).clicked {
-        s.open = true;
-    }
+    root.screen(|ui| {
+        ui.horizontal(|ui| {
+            if ui.button("Player Profile").enabled(!s.open).clicked {
+                s.open = true;
+            }
+        });
+    });
 
     // Local copy dodges the borrow conflict between `&mut open` and the fields;
     // `done` closes from inside the body (the dialog holds `open` until `show` ends).
     let mut open = s.open;
     let mut done = false;
-    ui.dialog("Player Profile", &mut open)
+    root.dialog("Player Profile", &mut open)
         .width(px(340))
         .at(px(160), px(100))
         .show(|ui| {

@@ -16,7 +16,8 @@ use crate::{
     constants::FaIcon,
     containers::{
         DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeGroup, PlumeSectionProps,
-        column, dialog_frame, flex_spacer, row, section_body, section_frame, separator,
+        column, dialog_frame, dialog_scroll_area, dialog_scroll_frame, dialog_scrollbar,
+        flex_spacer, row, screen, section_body, section_frame, separator, space,
     },
     controls::{
         PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
@@ -39,8 +40,14 @@ pub trait PlumeImm<'w, 's> {
     /// the builders and `hovered` work as usual.
     fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's>;
 
-    /// Hairline horizontal rule.
+    /// Hairline rule across the container: a horizontal line in a
+    /// [`Self::vertical`], a vertical one in a [`Self::horizontal`].
     fn separator(&mut self);
+
+    /// Fixed gap along the container's main axis — `length` of width in a
+    /// [`Self::horizontal`], of height in a [`Self::vertical`]. For a gap that
+    /// absorbs whatever is left over instead, use [`Self::flex_spacer`].
+    fn space(&mut self, length: Val);
 
     /// Push button; `.clicked` on the response fires once per activation.
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
@@ -97,24 +104,27 @@ pub trait PlumeImm<'w, 's> {
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
     /// The response chains `.grow()`/`.width()` to size the row itself.
-    fn horizontal(
-        &mut self,
-        f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
+    fn horizontal(&mut self, f: impl FnOnce(&mut Ui<'w, 's>))
+    -> ImmResponse<'_, 'w, 's, kind::Row>;
 
     /// Vertical container; children stretch to its width. The response chains
     /// `.grow()`/`.width()` to size the column itself (e.g. equal-width columns).
     fn vertical(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
+    ) -> ImmResponse<'_, 'w, 's, kind::Column>;
+
+    /// Full-screen root surface for top-level content: a transparent, padded
+    /// column (a dialog body sized to the viewport) that establishes the standard
+    /// font and text color, so bare `caption`/text works at root scope. Children
+    /// stretch to its width and pack from the top; it overlays whatever renders
+    /// behind it and lets picks fall through its empty areas. Wrap a system's
+    /// top-level widgets in one call.
+    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
     /// Filled box visually grouping related controls; children stretch to its
     /// width (a themed [`Self::vertical`]).
-    fn group(
-        &mut self,
-        f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container>;
+    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
     /// Collapsible section with a small-caps `header`; `f` builds its body.
     /// Collapse state persists across frames. Chain `.start_collapsed()`.
@@ -161,6 +171,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn separator(&mut self) {
         self.ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(separator);
+    }
+
+    #[track_caller]
+    fn space(&mut self, length: Val) {
+        self.ch_with_manual_id(loc_id(format!("{length:?}")))
+            .on_spawn_apply_scene(move || space(length));
     }
 
     #[track_caller]
@@ -305,11 +321,15 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             caller: Location::caller(),
             title: title.to_owned(),
             open,
-            width: Val::Auto,
-            left: px(120),
-            top: px(120),
-            closable: true,
-            movable: true,
+            layout: DialogLayout {
+                width: Val::Auto,
+                height: Val::Auto,
+                max_height: Val::Auto,
+                left: px(120),
+                top: px(120),
+                closable: true,
+                movable: true,
+            },
         }
     }
 
@@ -317,7 +337,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn horizontal(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
+    ) -> ImmResponse<'_, 'w, 's, kind::Row> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(row)
@@ -329,7 +349,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn vertical(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
+    ) -> ImmResponse<'_, 'w, 's, kind::Column> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(column)
@@ -338,10 +358,16 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn group(
-        &mut self,
-        f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Container> {
+    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column> {
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(screen)
+            .add(f);
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Column> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(|| bsn! { @PlumeGroup })
@@ -394,11 +420,28 @@ pub struct ImmDialog<'a, 'w, 's> {
     caller: &'static Location<'static>,
     title: String,
     open: &'a mut bool,
+    layout: DialogLayout,
+}
+
+/// The dialog's frame-level props, split out so they travel to the scene as one
+/// value instead of eight positional arguments.
+#[derive(Clone, Copy)]
+struct DialogLayout {
     width: Val,
+    height: Val,
+    max_height: Val,
     left: Val,
     top: Val,
     closable: bool,
     movable: bool,
+}
+
+impl DialogLayout {
+    /// Whether the body needs the scrolling machinery: either height knob bounds
+    /// the dialog, so its content can no longer be assumed to fit.
+    fn scrolls(&self) -> bool {
+        self.height != Val::Auto || self.max_height != Val::Auto
+    }
 }
 
 impl<'w, 's> ImmDialog<'_, 'w, 's> {
@@ -406,27 +449,49 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
     /// distribute space (`.grow()`, `flex_spacer`) need a fixed width to resolve
     /// against. Applied live: a changed value re-sizes the open dialog.
     pub fn width(mut self, width: Val) -> Self {
-        self.width = width;
+        self.layout.width = width;
+        self
+    }
+
+    /// Fix the dialog's outer height, title bar included, and scroll the body
+    /// vertically once the content outgrows it. Applied live, like
+    /// [`Self::width`].
+    ///
+    /// Prefer [`Self::max_height`] unless the dialog should hold its size while
+    /// near-empty. A height below the title bar's own is clamped away rather
+    /// than honored.
+    pub fn height(mut self, height: Val) -> Self {
+        self.layout.height = height;
+        self
+    }
+
+    /// Cap the dialog's outer height: it hugs its content as usual until it
+    /// would exceed `max_height`, then stops growing and scrolls the body.
+    ///
+    /// The usual choice for a settings dialog whose length depends on how many
+    /// sections happen to be expanded.
+    pub fn max_height(mut self, max_height: Val) -> Self {
+        self.layout.max_height = max_height;
         self
     }
 
     /// Initial position (default `120, 120`). Spawn-time only — once open, the
     /// user's dragging owns the position.
     pub fn at(mut self, left: Val, top: Val) -> Self {
-        self.left = left;
-        self.top = top;
+        self.layout.left = left;
+        self.layout.top = top;
         self
     }
 
     /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
     pub fn closable(mut self, closable: bool) -> Self {
-        self.closable = closable;
+        self.layout.closable = closable;
         self
     }
 
     /// `false` omits the drag handle, pinning the dialog in place.
     pub fn movable(mut self, movable: bool) -> Self {
-        self.movable = movable;
+        self.layout.movable = movable;
         self
     }
 
@@ -437,32 +502,59 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
             return;
         }
         let id = ImmIdBuilder::Hierarchy(ImmId::new((self.caller, self.title.as_str())));
-        let (title, width) = (self.title, self.width);
-        let (left, top, closable, movable) = (self.left, self.top, self.closable, self.movable);
-        let mut entity = self.ui.ch_with_manual_id(id).on_spawn_apply_scene(move || {
-            imm_dialog_scene(title, width, left, top, closable, movable)
-        });
+        let (title, layout) = (self.title, self.layout);
+        let mut entity = self
+            .ui
+            .ch_with_manual_id(id)
+            .on_spawn_apply_scene(move || imm_dialog_scene(title, layout));
         if entity.close_requested() {
             *self.open = false;
             entity.entity_commands().despawn();
             return;
         }
-        // Width is app-owned even while open; position is not re-applied (the
+        // Size is app-owned even while open; position is not re-applied (the
         // user's dragging owns it after spawn).
-        struct DialogWidthKey;
-        if entity.hash_update_typ::<DialogWidthKey>(Some(imm_id(format!("{width:?}")))) {
+        struct DialogSizeKey;
+        let size_key = format!(
+            "{:?}{:?}{:?}",
+            layout.width, layout.height, layout.max_height
+        );
+        if entity.hash_update_typ::<DialogSizeKey>(Some(imm_id(size_key))) {
             entity
                 .entity_commands()
                 .queue(move |mut entity: EntityWorldMut| {
                     if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.width = width;
+                        node.width = layout.width;
+                        node.height = layout.height;
+                        node.max_height = layout.max_height;
                     }
                 });
         }
-        entity.add(|ui| {
-            ui.ch_id("dialog_body")
-                .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody })
-                .add(f);
+        let scrolls = layout.scrolls();
+        entity.add(move |ui| {
+            let body = ui
+                .ch_id("dialog_body")
+                .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
+            if !scrolls {
+                body.add(f);
+                return;
+            }
+            body.add(move |ui| {
+                ui.ch_id("scroll_frame")
+                    .on_spawn_apply_scene(dialog_scroll_frame)
+                    .add(move |ui| {
+                        // The scroll area's entity is known before its spawn
+                        // command flushes, so the scrollbar beside it can point
+                        // at the viewport it drives.
+                        let viewport = ui
+                            .ch_id("scroll_area")
+                            .on_spawn_apply_scene(dialog_scroll_area)
+                            .add(f)
+                            .entity();
+                        ui.ch_id("scrollbar")
+                            .on_spawn_apply_scene(move || dialog_scrollbar(viewport));
+                    });
+            });
         });
     }
 }
@@ -492,19 +584,23 @@ fn respond<'r, 'w, 's, K>(
     }
 }
 
-fn imm_dialog_scene(
-    title: String,
-    width: Val,
-    left: Val,
-    top: Val,
-    closable: bool,
-    movable: bool,
-) -> impl Scene {
+fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
+    let DialogLayout {
+        width,
+        height,
+        max_height,
+        left,
+        top,
+        closable,
+        movable,
+    } = layout;
     bsn! {
         // Empty contents: the imm layer reconciles the body itself.
         dialog_frame(PlumeDialogProps {
             title: Box::new(bsn_list!(caption(title))),
             width,
+            height,
+            max_height,
             left,
             top,
             closable,

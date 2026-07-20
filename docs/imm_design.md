@@ -240,7 +240,8 @@ Pass 2 is driven by `examples/debug_settings.rs` (the smoke debug menu, resource
 `section` (+ retained `section_frame`/`section_body` split mirroring the dialog, + `SectionRoot`
 plain marker so the frame isn't inserted as a bare scene-component), `icon_button`/`tool_button`,
 and `ImmResponse` builders `.variant()`/`.primary()`, `.range()`/`.precision()`/`.suffix()`,
-`.align_top()`, `.start_collapsed()`, `push_id`. `FaIcon`/`FaFace` gained `Hash` (icon is part of
+`.align_top()` (since superseded by `.align_items()`), `.start_collapsed()`, `push_id`.
+`FaIcon`/`FaFace` gained `Hash` (icon is part of
 a widget id). `section_body` is `align_items: Stretch` (a `Start` slip regressed row fills).
 
 ### Exposed vs. gaps (per control)
@@ -256,13 +257,62 @@ a widget id). `section_body` is `align_items: Stretch` (a `Start` slip regressed
 | text_edit | `text_edit(&mut String)`, `.placeholder()`, `.suffix()`, `.enabled()`, `.grow()`/`.width()` | `filter`, `max_characters`, `visible_width` |
 | radio | `radio(&mut value, variant, label)`, `.enabled()` | group arrow-key nav (each radio is its own tab stop) |
 | color_swatch | **none** | whole widget: `show_alpha`, `opaque_color_percentage` |
-| dialog | `dialog(title, &mut open)` builder: `.width()` (live), `.at(left, top)` (spawn-only), `.closable()`, `.movable()`, `.show(f)` | — |
+| dialog | `dialog(title, &mut open)` builder: `.width()`/`.height()`/`.max_height()` (live), `.at(left, top)` (spawn-only), `.closable()`, `.movable()`, `.show(f)` | — |
 | section | `section(header, f)`, `.start_collapsed()` | `collapsible: false` (titled non-collapsing box) |
-| containers | `horizontal`/`vertical`/`group` (+`.grow`/`.width`/`.align_top`), `separator`, `flex_spacer`, `push_id` | `row`/`column` gap/align knobs (deferred, see below) |
+| containers | `horizontal`/`vertical`/`group`/`screen` (+`.grow`/`.width`/`.align_items`), `separator`, `space`, `flex_spacer`, `push_id` | `row`/`column` gap knobs (deferred, see below) |
 
 ### Priority order for closing the gaps (agreed 2026-07-19)
 
 **None** — every per-control gap above is closed; next is the theme_editor dogfood (step 7).
+
+Done 2026-07-20: **layout axis pass**. `kind::Container` split into `kind::Row` (`horizontal`)
+and `kind::Column` (`vertical`/`group`/`screen`) behind a `kind::Container` marker trait,
+matching the existing `Numeric`/`Field` pattern. Both kinds share `.align_items()` today — the
+split earns nothing for that method alone and is an investment in row-only/column-only builders
+later. `.align_top()` is **gone**: it set `align_items: Start` but was implemented on every
+container, so on a column it silently left-aligned and dropped the `Stretch` that `.grow()`
+resolves against. Added `.align_self(AlignSelf)` (universal) for the case a column's `Stretch`
+has to be escaped by one child — previously only expressible by wrapping the child in a
+`horizontal` + `flex_spacer`.
+
+Done 2026-07-20: **bounded, scrolling dialogs**. `.height(Val)` (fixed outer height) and
+`.max_height(Val)` (hug content up to a ceiling) on the imm dialog builder, plus matching
+`height`/`max_height` on `PlumeDialogProps` for the retained `PlumeDialog`. Either one bounds the
+frame and grows the body a scrolling viewport; neither set keeps the old hug-the-content shape and
+spawns no scroll entities at all. `max_height` is the one to reach for on settings dialogs.
+
+**Both dialogs build the same structure** — scrolling is a dialog property, not something a
+caller assembles. `examples/smoke.rs` used to hand-build a scroll frame, gutter, `ScrollArea` and
+`PlumeScrollbar` inside its `@contents`; it now passes `@max_height: px(600)` and nothing else.
+The two paths diverge only in how the scrollbar names the viewport it drives: the retained scene
+resolves a `#inner` reference inside its own `bsn!`, while the imm layer holds a live `Entity`
+(`EntityTemplate::from_reference` needs macro-generated invocation data, so it can't be built by
+hand across the imm boundary). Only the scrollbar's placement is shared, as
+`dialog_scrollbar_node`.
+
+Structure mirrors what the theme editor used to build by hand: body → `dialog_scroll_frame`
+(`ScrollbarGutter`) → `dialog_scroll_area` (`ScrollArea`, `Overflow::scroll_y`) + an absolutely
+positioned `PlumeScrollbar` beside it. Vertical only, by construction — the orientation and
+overflow axis are hardcoded, so no caller can produce a sideways-scrolling dialog. The scroll
+frame stays a distinct entity from `PlumeDialogBody` because `update_scrollbar_visibility`
+*assigns* `padding.right` for the gutter, which on the body would eat its own padding whenever
+content started overflowing. The scrollbar finds its target because `ch_id` returns the `Entity`
+before the spawn command flushes, and `EntityTemplate: From<Entity>` takes it directly — no `#id`
+scene path needed across the imm boundary.
+
+Two traps worth remembering. **`min_height: 0` is load-bearing** on the body, scroll frame and
+scroll area: flex items floor at their content size, so without it a bounded dialog pushes content
+out the bottom instead of scrolling. And the frame carries **`min_height: DIALOG_HEADER_HEIGHT`**
+— `min` resolves after `max`, so a `height`/`max_height` set below the title bar's own height is
+clamped away instead of painting the bar outside the dialog's border. Verified: a bounded dialog
+scrolls with the bar visible and the gutter reserved, an unbounded one is unchanged, `height(20)`
+degrades to a bare title bar with intact chrome, and a select popup opening past the bottom edge
+is *not* clipped by the scroll area (`OverrideClip` on `PlumeMenuPopup` already handled it).
+
+`separator` and the new `space(length)` are orientation-free by construction: `flex_basis` sizes
+the main axis whichever way the parent flows, and the separator adds `align_self: Stretch` to
+span the cross axis even in a row's `Center`. No parent lookup, no direction flag — and it fixed
+a silent failure, since the old height-only separator rendered as a zero-size node in a row.
 
 Done 2026-07-19: **slider/number `.step()` + slider `.precision()`** — one `.step()` builder
 (change-gated `SliderStep` insert; the retained widgets already read it for arrow keys and
@@ -332,8 +382,10 @@ dodges the collapsible/collapsable spelling bikeshed. Collapse is a behavior of 
 
 - **button `.corners()`** — only earns its keep for segmented/pill button groups (three
   touching buttons as one shape); no consumer yet.
-- **`row`/`column` gap & align knobs** — `.align_top()` covered the one real need so far;
-  don't add a general `gap`/`align`/`justify` surface speculatively.
+- **`row`/`column` gap knobs** — no consumer has needed to deviate from `size::GAP`.
+- **`justify_content`** — `flex_spacer` covers main-axis distribution so far.
+- **per-kind directional align sugar** (`Row::align_top`, `Column::align_left`) — the kind
+  split makes it possible; wait until `align_items`' axis flip is a demonstrated nuisance.
 
 ### Id scheme: occurrence counter (DONE 2026-07-20 — killed most `push_id`)
 
@@ -362,12 +414,31 @@ call order: reorderable `Vec` rows, or repeats after a conditional sibling *of t
 `debug_settings` now uses zero `push_id` calls — its repeated `toggle_row`/`select_row`/
 `slider_row` helpers are the acceptance test (no collision warnings, screenshot-identical).
 
+### Top-level text context: `ui.screen` (DONE 2026-07-20)
+
+`caption()` spawns a bare `Text` + `ThemedText` with no font or color of its own; both arrive by
+propagation from an ancestor carrying `InheritableFont` (→ `Propagate<TextFont>`) and
+`InheritableThemeTextColor` (→ `Propagate<TextColor>`). `build_immediate_root` starts with
+`entity: None` — a *virtual* root — so top-level widgets spawn as separate UI roots with no
+common parent, and a bare `ui.caption` at root scope had no such ancestor and fell back to
+Bevy's default font. Nesting already fixed it (`row`/`column`, and therefore
+`ui.horizontal`/`ui.vertical`, carry the pair); only unwrapped root widgets were affected.
+
+Resolved with an **explicit container**, `ui.screen(|ui| …)`, over auto-wrapping every root:
+auto-wrapping would force a full-screen surface on dialog-centric apps (the existing examples
+are exactly that — a trigger button plus `ui.dialog`) and would need a way to descend `Imm`'s
+private `current` permanently, i.e. another vendored-fork change. `screen` is an ordinary
+container like `group`/`vertical`, so it costs nothing when unused.
+
+The `screen()` scene is a viewport-filling `column`: absolute, 100%×100%, flex column with
+`GAP`/`PAD`, plus the same `InheritableFont` + `InheritableThemeTextColor` pair. It is
+deliberately **transparent** (no background token — an overlay over whatever renders behind)
+and `Pickable::IGNORE`, so empty areas don't swallow picks meant for the scene below while
+children keep their own picking. `examples/screen_demo.rs` is the acceptance case: bare
+caption, separator, buttons and a checkbox at root scope, all themed.
+
 ### Still-open cross-cutting items (carried from pass 1)
 
-- **Top-level text context**: a widget at root scope has no `InheritableFont`/text-color
-  ancestor, so `ui.caption` there falls back to Bevy's default font. Needs the imm layer to
-  establish the dialog-root text context for top-level widgets (styled root panel), or text
-  scenes to carry their own fallback.
 - **Dynamic-label text updates**: labels are hashed into the widget id, so a changing caption
   respawns its entity every change — fine for static labels, wrong for live readouts. Wants a
   text-update path that leaves the entity in place.

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
     constants::font_awesome,
-    imm::{PlumeImm, PlumeUi, Ui},
+    imm::{PlumeImm, PlumeRoot, Ui},
 };
 
 #[path = "common/mod.rs"]
@@ -74,19 +74,23 @@ fn main() {
     app.run();
 }
 
-fn debug_settings_ui(mut ui: PlumeUi, mut settings: ResMut<DebugSettings>) {
+fn debug_settings_ui(mut root: PlumeRoot, mut settings: ResMut<DebugSettings>) {
     // Build the UI against a local clone and write back with `set_if_neq`, so the
     // resource only registers as changed when a control actually changed it.
     let mut s = settings.clone();
 
-    if ui.button("Debug Options").enabled(!s.open).clicked {
-        s.open = true;
-    }
+    root.screen(|ui| {
+        ui.horizontal(|ui| {
+            if ui.button("Debug Options").enabled(!s.open).clicked {
+                s.open = true;
+            }
+        });
+    });
 
     // Local copy dodges the borrow conflict between `&mut open` and the fields.
     let mut open = s.open;
     // Fixed width so the equal-.grow() columns have something to resolve against.
-    ui.dialog("Debug Options", &mut open)
+    root.dialog("Debug Options", &mut open)
         .width(px(600))
         .show(|ui| {
             ui.horizontal(|ui| {
@@ -101,7 +105,7 @@ fn debug_settings_ui(mut ui: PlumeUi, mut settings: ResMut<DebugSettings>) {
                 })
                 .grow();
             })
-            .align_top();
+            .align_items(AlignItems::Start);
 
             ui.separator();
 

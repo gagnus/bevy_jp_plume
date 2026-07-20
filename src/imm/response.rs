@@ -11,7 +11,7 @@ use bevy_ecs::{
 };
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 use bevy_scene::WorldSceneExt;
-use bevy_ui::{AlignItems, Node, Val};
+use bevy_ui::{AlignItems, AlignSelf, Node, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
@@ -30,6 +30,8 @@ pub mod kind {
     pub trait Numeric {}
     /// Kinds built on the text-input frame: number input, text edit.
     pub trait Field {}
+    /// Kinds that lay out children on a flex axis: row, column.
+    pub trait Container {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
@@ -45,13 +47,18 @@ pub mod kind {
     pub struct Select;
     /// `section`.
     pub struct Section;
-    /// `horizontal` / `vertical` / `group`.
-    pub struct Container;
+    /// `horizontal`: children flow left-to-right, so its cross axis is vertical.
+    pub struct Row;
+    /// `vertical` / `group` / `screen`: children flow top-to-bottom, so its cross
+    /// axis is horizontal.
+    pub struct Column;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
     impl Field for Number {}
     impl Field for Text {}
+    impl Container for Row {}
+    impl Container for Column {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -89,6 +96,31 @@ impl<K> ImmResponse<'_, '_, '_, K> {
                     if let Some(mut node) = entity.get_mut::<Node>() {
                         node.width = Val::ZERO;
                         node.flex_grow = 1.0;
+                    }
+                });
+        }
+        self
+    }
+
+    /// Place this one child on its container's cross axis, overriding the
+    /// container's own `align_items` — vertical placement inside a
+    /// [`horizontal`](super::PlumeImm::horizontal), horizontal inside a
+    /// [`vertical`](super::PlumeImm::vertical).
+    ///
+    /// `AlignSelf::Start` in a column is the way to stop a control stretching to
+    /// the full width; `AlignSelf::Stretch` only bites on children that don't
+    /// already fix their own cross-axis size.
+    pub fn align_self(mut self, align: AlignSelf) -> Self {
+        struct AlignSelfKey;
+        if self
+            .e
+            .hash_update_typ::<AlignSelfKey>(Some(imm_id(format!("{align:?}"))))
+        {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.align_self = align;
                     }
                 });
         }
@@ -268,18 +300,28 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::Container> {
-    /// Top-align the container's children (`align_items: Start`), e.g. a
-    /// [`horizontal`](super::PlumeImm::horizontal) row of unequal-height columns
-    /// so a shorter one anchors to the top instead of centering.
-    pub fn align_top(mut self) -> Self {
-        struct AlignTopKey;
-        if self.e.hash_update_typ::<AlignTopKey>(Some(imm_id(true))) {
+/// Builders shared by the container kinds (row, column).
+impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
+    /// Place every child on the container's cross axis. That axis follows the
+    /// container: on a [`Row`](kind::Row) `Start` means top, on a
+    /// [`Column`](kind::Column) it means left.
+    ///
+    /// A column defaults to `Stretch` (children fill its width, which is what
+    /// `.grow()` in nested rows resolves against) and a row to `Center` (a label
+    /// sits level with the control beside it); override for a row of
+    /// unequal-height columns that should anchor to the top. To move a single
+    /// child instead, use [`align_self`](Self::align_self).
+    pub fn align_items(mut self, align: AlignItems) -> Self {
+        struct AlignItemsKey;
+        if self
+            .e
+            .hash_update_typ::<AlignItemsKey>(Some(imm_id(format!("{align:?}"))))
+        {
             self.e
                 .entity_commands()
-                .queue(|mut entity: EntityWorldMut| {
+                .queue(move |mut entity: EntityWorldMut| {
                     if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.align_items = AlignItems::Start;
+                        node.align_items = align;
                     }
                 });
         }

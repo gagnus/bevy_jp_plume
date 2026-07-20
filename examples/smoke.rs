@@ -3,17 +3,16 @@
 use bevy::{
     prelude::*,
     ui::Checked,
-    ui_widgets::{Activate, ControlOrientation, ScrollArea, SliderValue, ValueChange},
+    ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_jp_plume::{
     PlumePlugins, TabGroup,
-    constants::{font_awesome, size},
+    constants::font_awesome,
     containers::{PlumeDialog, PlumeGroup, PlumeSection, flex_spacer, row},
     controls::{
         ButtonVariant, ColorSwatchValue, EditableTextFilter, ListRowIndex, PlumeButton,
         PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput, PlumeRadio, PlumeRadioGroup,
-        PlumeScrollbar, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
-        ScrollbarGutter, list_rows_from_strings,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
     },
     dark_theme::default_dark_palette,
     display::{caption, caption_small_caps, fa_icon, label_bright, label_dim},
@@ -577,50 +576,15 @@ fn dialog() -> impl Scene {
         @PlumeDialog {
             @title: bsn! { caption("Theme Editor") },
             @width: px(320),
+            // Taller than the viewport allows, so the dialog bounds itself and
+            // scrolls its own body — no hand-built scroll frame needed.
+            @max_height: px(600),
             @left: px(320),
             @top: px(40),
             @contents: bsn_list! {
-                // Bounded frame holding the scrollbar; the inner node scrolls.
-                (
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Stretch,
-                        height: px(560),
-                    }
-                    ScrollbarGutter(size::SCROLLBAR_GUTTER)
-                    Children [
-                        (
-                            #inner
-                            Node {
-                                display: Display::Flex,
-                                flex_direction: FlexDirection::Column,
-                                align_items: AlignItems::Stretch,
-                                row_gap: size::GAP,
-                                overflow: Overflow::scroll_y(),
-                            }
-                            ScrollArea
-                            Children [
-                                param_group("Neutrals", ramp_params(Ramp::Neutral), &palette),
-                                param_group("Accent", ramp_params(Ramp::Accent), &palette),
-                                param_group("Text", text_params, &palette),
-                            ]
-                        ),
-                        (
-                            @PlumeScrollbar {
-                                @target: #inner,
-                                @orientation: {ControlOrientation::Vertical},
-                            }
-                            Node {
-                                position_type: PositionType::Absolute,
-                                right: Val::ZERO,
-                                top: Val::ZERO,
-                                bottom: Val::ZERO,
-                                width: size::SCROLLBAR_WIDTH,
-                            }
-                        ),
-                    ]
-                ),
+                param_group("Neutrals", ramp_params(Ramp::Neutral), &palette),
+                param_group("Accent", ramp_params(Ramp::Accent), &palette),
+                param_group("Text", text_params, &palette),
             }
         }
     }

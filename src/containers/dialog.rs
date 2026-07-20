@@ -1,23 +1,25 @@
 //! Movable floating dialog with a draggable title bar and close button.
 use bevy_color::{Alpha, Srgba};
 use bevy_ecs::{
-    component::Component, event::EntityEvent, hierarchy::Children, observer::On,
-    reflect::ReflectComponent, system::Commands,
+    component::Component, entity::Entity, event::EntityEvent, hierarchy::Children, observer::On,
+    reflect::ReflectComponent, system::Commands, template::EntityTemplate,
 };
 use bevy_input_focus::tab_navigation::TabGroup;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, Node,
+    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, Node, Overflow,
     PositionType, UiRect, Val, px,
 };
-use bevy_ui_widgets::{Activate, Dialog, DialogDragHandle, RequestClose};
+use bevy_ui_widgets::{
+    Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose, ScrollArea,
+};
 
 use crate::{
     constants::{font_awesome, fonts, size},
     containers::flex_spacer,
-    controls::{ButtonVariant, PlumeToolButton},
+    controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton, ScrollbarGutter},
     display::fa_icon,
     font_styles::InheritableFont,
     theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
@@ -32,6 +34,15 @@ pub struct PlumeDialogProps {
     pub contents: Box<dyn SceneList>,
     /// How wide the window should be.
     pub width: Val,
+    /// Fixed outer height, title bar included. `Val::Auto` hugs the content.
+    pub height: Val,
+    /// Ceiling on the outer height: the window hugs its content until it would
+    /// exceed this, then stops growing. `Val::Auto` for no ceiling.
+    ///
+    /// Neither this nor [`height`](Self::height) can drive the body below zero —
+    /// the frame floors at [`size::DIALOG_HEADER_HEIGHT`] so the title bar can
+    /// never overflow the chrome that's meant to contain it.
+    pub max_height: Val,
     /// Initial left offset (the window is absolutely positioned).
     pub left: Val,
     /// Initial top offset.
@@ -48,6 +59,8 @@ impl Default for PlumeDialogProps {
             title: Box::new(bsn_list!()),
             contents: Box::new(bsn_list!()),
             width: Val::Auto,
+            height: Val::Auto,
+            max_height: Val::Auto,
             left: px(120),
             top: px(120),
             closable: true,
@@ -69,15 +82,45 @@ impl PlumeDialog {
             title,
             contents,
             width,
+            height,
+            max_height,
             left,
             top,
             closable,
             movable,
         } = props;
+        // A bounded dialog scrolls its body; an unbounded one holds the contents
+        // directly and spawns no scroll machinery. Same structure the imm layer
+        // builds, so both dialogs behave alike.
+        let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
+            Box::new(bsn_list!((
+                dialog_scroll_frame()
+                Children [
+                    (
+                        #inner
+                        dialog_scroll_area()
+                        Children [
+                            {contents}
+                        ]
+                    ),
+                    (
+                        @PlumeScrollbar {
+                            @target: #inner,
+                            @orientation: {ControlOrientation::Vertical},
+                        }
+                        dialog_scrollbar_node()
+                    ),
+                ]
+            )))
+        } else {
+            contents
+        };
         bsn! {
             dialog_frame(PlumeDialogProps {
                 title,
                 width,
+                height,
+                max_height,
                 left,
                 top,
                 closable,
@@ -87,7 +130,7 @@ impl PlumeDialog {
                 contents: Box::new(bsn_list!((
                     @PlumeDialogBody
                     Children [
-                        {contents}
+                        {body}
                     ]
                 ))),
             })
@@ -121,6 +164,12 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
                 border_radius: size::DIALOG_RADIUS,
                 border: UiRect::all(size::CONTAINER_BORDER),
                 width: {props.width},
+                height: {props.height},
+                max_height: {props.max_height},
+                // Floors the frame at the title bar's own height. Flexbox resolves
+                // `min` after `max`, so this also survives a `max_height` set below
+                // it — without which the bar would paint outside the dialog border.
+                min_height: size::DIALOG_HEADER_HEIGHT,
             }
             Dialog
             // Tab-traversal scope for the dialog's fields.
@@ -209,6 +258,12 @@ impl PlumeDialogBody {
                 align_items: AlignItems::Stretch,
                 row_gap: size::GAP,
                 padding: size::PAD,
+                // Take the height the title bar leaves over, and allow shrinking
+                // below the content size so a bounded dialog scrolls instead of
+                // pushing its content out the bottom. Both are inert while the
+                // dialog's own height is `Auto`.
+                flex_grow: 1.0,
+                min_height: px(0),
             }
             InheritableFont {
                 font: fonts::REGULAR,
@@ -216,5 +271,72 @@ impl PlumeDialogBody {
                 weight: FontWeight::NORMAL,
             }
         }
+    }
+}
+
+/// Bounded frame inside a height-limited dialog body, holding the scrolling
+/// content and the scrollbar that drives it.
+///
+/// Kept distinct from [`PlumeDialogBody`] because [`ScrollbarGutter`] *assigns*
+/// `padding.right` while the bar is visible, which on the body itself would eat
+/// the body's own padding every time the content started overflowing.
+pub(crate) fn dialog_scroll_frame() -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            flex_grow: 1.0,
+            min_height: px(0),
+        }
+        ScrollbarGutter(size::SCROLLBAR_GUTTER)
+    }
+}
+
+/// The scrolling viewport itself: the dialog's content lands here. Vertical
+/// only — a dialog is never allowed to scroll sideways.
+pub(crate) fn dialog_scroll_area() -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: size::GAP,
+            flex_grow: 1.0,
+            min_height: px(0),
+            overflow: Overflow::scroll_y(),
+        }
+        ScrollArea
+    }
+}
+
+/// Placement shared by both dialog scrollbars: pinned down the trailing edge of
+/// [`dialog_scroll_frame`].
+///
+/// The two paths differ only in how they name the viewport they drive — the
+/// retained scene resolves a `#inner` reference within its own `bsn!`, while the
+/// imm layer holds a live [`Entity`] — so only the placement is shared.
+fn dialog_scrollbar_node() -> impl Scene {
+    bsn! {
+        Node {
+            position_type: PositionType::Absolute,
+            right: Val::ZERO,
+            top: Val::ZERO,
+            bottom: Val::ZERO,
+            width: size::SCROLLBAR_WIDTH,
+        }
+    }
+}
+
+/// Vertical scrollbar driving the scroll area at `target`. Hidden, and its
+/// gutter reclaimed, whenever the content fits — see
+/// `update_scrollbar_visibility`.
+pub(crate) fn dialog_scrollbar(target: Entity) -> impl Scene {
+    bsn! {
+        @PlumeScrollbar {
+            @target: {EntityTemplate::from(target)},
+            @orientation: {ControlOrientation::Vertical},
+        }
+        dialog_scrollbar_node()
     }
 }

@@ -8,10 +8,7 @@ mod widgets;
 pub use response::{ImmResponse, kind};
 pub use widgets::{ImmDialog, PlumeImm};
 
-use core::{
-    ops::{Deref, DerefMut},
-    sync::atomic::{AtomicU64, Ordering},
-};
+use core::sync::atomic::{AtomicU64, Ordering};
 
 use bevy_app::Plugin;
 use bevy_ecs::{
@@ -57,43 +54,69 @@ impl_capability_set!(
 /// live in [`PlumeImm`].
 pub type Ui<'w, 's> = Imm<'w, 's, PlumeCaps>;
 
-/// System param for immediate-mode UI systems: add a system taking `mut ui: PlumeUi`
-/// to `Update` and call [`PlumeImm`] widgets on it directly.
-pub struct PlumeUi<'w, 's> {
+/// System param for immediate-mode UI systems: add a system taking
+/// `mut root: PlumeRoot` to `Update`, then open a top-level surface —
+/// [`screen`](Self::screen) or [`dialog`](Self::dialog) — to get the [`Ui`] that
+/// [`PlumeImm`] widgets are called on.
+///
+/// Widgets are deliberately unreachable at root scope. The imm root is virtual
+/// (no entity), so a widget called there becomes its own UI root: it has no
+/// parent to flex against — every one anchors at the viewport origin, so they
+/// silently overlap — and no `InheritableFont`/text-color ancestor, so bare text
+/// falls back to Bevy's default font. Both failures are silent and warning-free,
+/// so a `Ui` is only ever handed out inside a surface that fixes them.
+pub struct PlumeRoot<'w, 's> {
     imm: Ui<'w, 's>,
 }
 
-impl<'w, 's> Deref for PlumeUi<'w, 's> {
-    type Target = Ui<'w, 's>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.imm
+impl<'w, 's> PlumeRoot<'w, 's> {
+    /// Full-screen surface for a system's top-level content: a transparent,
+    /// padded column filling the viewport that establishes the standard font and
+    /// text color. The usual choice for screen-filling UI.
+    #[track_caller]
+    pub fn screen(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Column> {
+        self.imm.screen(f)
     }
-}
 
-impl DerefMut for PlumeUi<'_, '_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.imm
+    /// Movable floating dialog — the other top-level surface. Configure via the
+    /// returned [`ImmDialog`] and build the body with [`ImmDialog::show`]; the
+    /// dialog is absolutely positioned, so it stands alone at root scope.
+    #[track_caller]
+    pub fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's> {
+        self.imm.dialog(title, open)
+    }
+
+    /// Scope surface ids by `id`, for keying several screens/dialogs built in a
+    /// loop by data rather than call order. See [`PlumeImm::push_id`].
+    pub fn push_id<R>(
+        &mut self,
+        id: impl core::hash::Hash,
+        f: impl FnOnce(&mut Ui<'w, 's>) -> R,
+    ) -> R {
+        self.imm.push_id(id, f)
     }
 }
 
 type CtxStatic = ImmCtx<'static, 'static, PlumeCaps>;
 
-/// State for [`PlumeUi`]: the inner context state plus a unique per-system root id.
-pub struct PlumeUiState {
+/// State for [`PlumeRoot`]: the inner context state plus a unique per-system root id.
+pub struct PlumeRootState {
     ctx: <CtxStatic as SystemParam>::State,
     root_id: u64,
 }
 
 // SAFETY: delegates all access registration and fetching to `ImmCtx`'s impl;
 // only wraps the fetched ctx into a rooted `Imm`.
-unsafe impl SystemParam for PlumeUi<'_, '_> {
-    type State = PlumeUiState;
-    type Item<'w, 's> = PlumeUi<'w, 's>;
+unsafe impl SystemParam for PlumeRoot<'_, '_> {
+    type State = PlumeRootState;
+    type Item<'w, 's> = PlumeRoot<'w, 's>;
 
     fn init_state(world: &mut World) -> Self::State {
         static NEXT_ROOT_ID: AtomicU64 = AtomicU64::new(0);
-        PlumeUiState {
+        PlumeRootState {
             ctx: <CtxStatic as SystemParam>::init_state(world),
             root_id: NEXT_ROOT_ID.fetch_add(1, Ordering::Relaxed),
         }
@@ -135,7 +158,7 @@ unsafe impl SystemParam for PlumeUi<'_, '_> {
         let ctx = unsafe {
             <CtxStatic as SystemParam>::get_param(&mut state.ctx, system_meta, world, change_tick)
         }?;
-        Ok(PlumeUi {
+        Ok(PlumeRoot {
             imm: ctx.build_immediate_root(("plume_ui_root", state.root_id)),
         })
     }

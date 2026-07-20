@@ -4,7 +4,7 @@
 use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
-    imm::{PlumeImm, PlumeUi},
+    imm::{PlumeImm, PlumeRoot},
 };
 
 #[path = "common/mod.rs"]
@@ -44,18 +44,22 @@ fn main() {
     app.run();
 }
 
-fn audio_settings_ui(mut ui: PlumeUi, mut settings: ResMut<AudioSettings>) {
+fn audio_settings_ui(mut root: PlumeRoot, mut settings: ResMut<AudioSettings>) {
     // Build the UI against a local clone and write back with `set_if_neq`, so the
     // resource only registers as changed when a control actually changed it.
     let mut s = settings.clone();
 
-    if ui.button("Audio Settings").enabled(!s.open).clicked {
-        s.open = true;
-    }
+    root.screen(|ui| {
+        ui.horizontal(|ui| {
+            if ui.button("Audio Settings").enabled(!s.open).clicked {
+                s.open = true;
+            }
+        });
+    });
 
     // Local copy dodges the borrow conflict between `&mut open` and the fields.
     let mut open = s.open;
-    ui.dialog("Audio", &mut open).show(|ui| {
+    root.dialog("Audio", &mut open).show(|ui| {
         ui.horizontal(|ui| {
             ui.caption("Volume");
             ui.slider(&mut s.volume, 0.0..=1.0).enabled(!s.muted);
