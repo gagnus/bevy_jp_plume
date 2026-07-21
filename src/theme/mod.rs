@@ -372,6 +372,7 @@ pub enum ThemeSlot {
 
     /// Disabled control chrome.
     /// - `BUTTON_BG_DISABLED`
+    /// - `BUTTON_OUTLINE_BORDER_DISABLED`
     /// - `BUTTON_PRIMARY_BG_DISABLED`
     /// - `CHECKBOX_BORDER_CHECKED_DISABLED`
     /// - `CHECKBOX_BORDER_DISABLED`
@@ -393,6 +394,7 @@ pub enum ThemeSlot {
 
     /// Control rest backgrounds and borders.
     /// - `BUTTON_BG`
+    /// - `BUTTON_OUTLINE_BORDER`
     /// - `CHECKBOX_BORDER`
     /// - `DIALOG_BORDER`
     /// - `MENU_BORDER`
@@ -407,6 +409,8 @@ pub enum ThemeSlot {
 
     /// Neutral control hover.
     /// - `BUTTON_BG_HOVER`
+    /// - `BUTTON_OUTLINE_BG_HOVER`
+    /// - `BUTTON_OUTLINE_BORDER_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
     /// - `LISTROW_BG_HOVER`
     /// - `SCROLLBAR_THUMB_HOVER`
@@ -414,6 +418,8 @@ pub enum ThemeSlot {
 
     /// Neutral control pressed.
     /// - `BUTTON_BG_PRESSED`
+    /// - `BUTTON_OUTLINE_BG_PRESSED`
+    /// - `BUTTON_OUTLINE_BORDER_PRESSED`
     /// - `BUTTON_PLAIN_BG_PRESSED`
     /// - `SCROLLBAR_THUMB_PRESSED`
     Neutral6,
@@ -496,6 +502,9 @@ pub enum ThemeSlot {
     ZAxis,
 
     /// Always [`Color::NONE`]; for tokens that paint nothing.
+    /// - `BUTTON_BORDER_NONE`
+    /// - `BUTTON_OUTLINE_BG`
+    /// - `BUTTON_OUTLINE_BG_DISABLED`
     /// - `BUTTON_PLAIN_BG`
     /// - `BUTTON_PLAIN_BG_DISABLED`
     /// - `CHECKBOX_BG`
@@ -707,6 +716,15 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::BUTTON_PLAIN_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::BUTTON_PLAIN_BG_PRESSED, ThemeSlot::Neutral6),
     (tokens::BUTTON_PLAIN_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::BUTTON_OUTLINE_BG, ThemeSlot::Transparent),
+    (tokens::BUTTON_OUTLINE_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::BUTTON_OUTLINE_BG_PRESSED, ThemeSlot::Neutral6),
+    (tokens::BUTTON_OUTLINE_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::BUTTON_OUTLINE_BORDER, ThemeSlot::Neutral4),
+    (tokens::BUTTON_OUTLINE_BORDER_HOVER, ThemeSlot::Neutral5),
+    (tokens::BUTTON_OUTLINE_BORDER_PRESSED, ThemeSlot::Neutral6),
+    (tokens::BUTTON_OUTLINE_BORDER_DISABLED, ThemeSlot::Neutral3),
+    (tokens::BUTTON_BORDER_NONE, ThemeSlot::Transparent),
     (tokens::BUTTON_TEXT, ThemeSlot::Text0),
     (tokens::BUTTON_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::BUTTON_PRIMARY_TEXT, ThemeSlot::Contrast),
@@ -774,7 +792,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     ),
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
-    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral1),
+    (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_ACTIVE, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_TEXT, ThemeSlot::Text1),

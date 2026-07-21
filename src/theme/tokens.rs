@@ -61,6 +61,33 @@ pub const BUTTON_PLAIN_BG_DISABLED: ThemeToken =
 pub const BUTTON_PLAIN_BG_PRESSED: ThemeToken =
     ThemeToken::new_static("plume.button.plain.bg.pressed");
 
+// Outline buttons (transparent background, visible border)
+
+/// Outline button background
+pub const BUTTON_OUTLINE_BG: ThemeToken = ThemeToken::new_static("plume.button.outline.bg");
+/// Outline button background (hovered)
+pub const BUTTON_OUTLINE_BG_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.bg.hover");
+/// Outline button background (disabled)
+pub const BUTTON_OUTLINE_BG_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.bg.disabled");
+/// Outline button background (pressed)
+pub const BUTTON_OUTLINE_BG_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.bg.pressed");
+/// Outline button border
+pub const BUTTON_OUTLINE_BORDER: ThemeToken = ThemeToken::new_static("plume.button.outline.border");
+/// Outline button border (hovered)
+pub const BUTTON_OUTLINE_BORDER_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.hover");
+/// Outline button border (disabled)
+pub const BUTTON_OUTLINE_BORDER_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.disabled");
+/// Outline button border (pressed)
+pub const BUTTON_OUTLINE_BORDER_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.pressed");
+/// Border color for the button variants that paint no outline
+pub const BUTTON_BORDER_NONE: ThemeToken = ThemeToken::new_static("plume.button.border.none");
+
 // Slider
 
 /// Background for slider
@@ -310,6 +337,20 @@ pub mod sets {
         hover: super::BUTTON_PLAIN_BG_HOVER,
         pressed: super::BUTTON_PLAIN_BG_PRESSED,
         disabled: super::BUTTON_PLAIN_BG_DISABLED,
+    };
+    /// Outline button background
+    pub const BUTTON_OUTLINE_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_OUTLINE_BG,
+        hover: super::BUTTON_OUTLINE_BG_HOVER,
+        pressed: super::BUTTON_OUTLINE_BG_PRESSED,
+        disabled: super::BUTTON_OUTLINE_BG_DISABLED,
+    };
+    /// Outline button border
+    pub const BUTTON_OUTLINE_BORDER: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_OUTLINE_BORDER,
+        hover: super::BUTTON_OUTLINE_BORDER_HOVER,
+        pressed: super::BUTTON_OUTLINE_BORDER_PRESSED,
+        disabled: super::BUTTON_OUTLINE_BORDER_DISABLED,
     };
     /// Slider track background
     pub const SLIDER_BG: InteractionTokens = InteractionTokens {

@@ -2,7 +2,7 @@
 use bevy_picking::Pickable;
 use bevy_scene::{Scene, bsn};
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, Node, PositionType, percent, px};
+use bevy_ui::{AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, percent, px};
 
 use crate::{
     constants::{fonts, size},
@@ -36,6 +36,9 @@ pub fn screen() -> impl Scene {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,
             weight: FontWeight::NORMAL,
+        }
+        LayoutConfig {
+            use_rounding: false,
         }
     }
 }

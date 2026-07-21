@@ -26,7 +26,7 @@ fn main() {
             Update,
             (screen_demo_ui, common::log_on_change::<DemoSettings>),
         );
-    common::screenshot_on_arg(&mut app);
+    common::apply_args(&mut app);
     app.run();
 }
 

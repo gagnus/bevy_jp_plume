@@ -8,12 +8,12 @@ pub fn default_light_palette() -> ThemeEditablePalette {
         neutrals: OklchaArray {
             hue: 240.0,
             chroma: 0.017,
-            l: [0.99, 0.92, 0.83, 0.77, 0.73, 0.75, 0.77],
+            l: [0.99, 0.84, 0.79, 0.74, 0.69, 0.71, 0.73],
         },
         accent: OklchaArray {
             hue: 240.0,
             chroma: 0.110,
-            l: [0.62, 0.72, 0.82, 0.40],
+            l: [0.62, 0.64, 0.66, 0.40],
         },
         text: OklchaArray {
             hue: 240.0,

@@ -53,6 +53,7 @@ too_many_arguments = "allow"
 
 [dev-dependencies]
 bevy = { path = "../3rdParty/bevy", features = ["bevy_ui_widgets", "png"] }
+argh = "0.1.13"
 
 [features]
 default = []

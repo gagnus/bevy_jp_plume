@@ -151,13 +151,13 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_with_manual_id(loc_id(text))
             .on_spawn_apply_scene(move || caption(text_owned));
         let hovered = entity.hovered();
-        let spawned = entity.will_be_spawned();
+        let will_be_spawned = entity.will_be_spawned();
         ImmResponse {
             clicked: false,
             changed: false,
             hovered,
             entity: entity.entity(),
-            spawned,
+            will_be_spawned,
             e: entity,
             kind: PhantomData,
         }
@@ -558,13 +558,13 @@ fn respond<'r, 'w, 's, K>(
 ) -> ImmResponse<'r, 'w, 's, K> {
     let clicked = entity.activated();
     let hovered = entity.hovered();
-    let spawned = entity.will_be_spawned();
+    let will_be_spawned = entity.will_be_spawned();
     ImmResponse {
         clicked,
         changed,
         hovered,
         entity: entity.entity(),
-        spawned,
+        will_be_spawned,
         e: entity,
         kind: PhantomData,
     }

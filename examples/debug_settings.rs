@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
     constants::font_awesome,
+    controls::ButtonVariant,
     imm::{PlumeImm, PlumeRoot, Ui},
 };
 
@@ -70,7 +71,7 @@ fn main() {
             Update,
             (debug_settings_ui, common::log_on_change::<DebugSettings>),
         );
-    common::screenshot_on_arg(&mut app);
+    common::apply_args(&mut app);
     app.run();
 }
 
@@ -112,13 +113,14 @@ fn debug_settings_ui(mut root: PlumeRoot, mut settings: ResMut<DebugSettings>) {
             ui.horizontal(|ui| {
                 if ui
                     .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
+                    .variant(ButtonVariant::Outline)
                     .clicked
                 {
                     let open = s.open;
                     s = DebugSettings { open, ..default() };
                 }
                 ui.flex_spacer();
-                ui.button("Cancel");
+                ui.button("Cancel").variant(ButtonVariant::Outline);
                 ui.button("Apply").primary();
             });
         });

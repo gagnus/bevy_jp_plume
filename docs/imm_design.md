@@ -364,8 +364,9 @@ resource-backed with `Default` + `Clone` + `PartialEq`; build the UI against a c
 back with `set_if_neq` (passing `&mut settings.field` straight from a `ResMut` marks the
 resource changed every frame regardless of edits); shared scaffolding in `examples/common/mod.rs`
 (`#[path]`-included): `log_on_change::<R>` prints the resource on real changes, and
-`screenshot_on_arg` saves a PNG + exits when a path is passed as the first program argument
-(`cargo run --example … -- shot.png`) for headless verification.
+`apply_args` parses the example command line (`argh`) — `--screenshot shot.png` saves a PNG +
+exits for headless verification, `--light` swaps the dark default palette for the light one
+(`cargo run --example … -- --screenshot shot.png --light`).
 
 ### Naming: the container is `section` (renamed from `subpane` 2026-07-19)
 

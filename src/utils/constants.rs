@@ -47,7 +47,7 @@ pub mod size {
     pub const DIALOG_RADIUS: Val = Val::Px(8.0);
 
     /// Border width of control chrome (checkbox, radio, toggle)
-    pub const CONTROL_BORDER: Val = Val::Px(2.0);
+    pub const CONTROL_BORDER: Val = Val::Px(1.0);
 
     /// Border width of containers (dialog, section header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(1.0);

@@ -24,7 +24,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .add_systems(Startup, scene.spawn());
-    common::screenshot_on_arg(&mut app);
+    common::apply_args(&mut app);
     app.run();
 }
 

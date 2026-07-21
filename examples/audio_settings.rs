@@ -40,7 +40,7 @@ fn main() {
             Update,
             (audio_settings_ui, common::log_on_change::<AudioSettings>),
         );
-    common::screenshot_on_arg(&mut app);
+    common::apply_args(&mut app);
     app.run();
 }
 

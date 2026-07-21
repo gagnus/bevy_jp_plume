@@ -9,8 +9,8 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, Node, Overflow,
-    PositionType, UiRect, Val, px,
+    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
+    Node, Overflow, PositionType, UiRect, Val, px,
 };
 use bevy_ui_widgets::{
     Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose, ScrollArea,
@@ -178,6 +178,9 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
                 px(4),
                 px(16),
             )
+            LayoutConfig {
+                use_rounding: false,
+            }
             Children [
                 // Title bar; dragging it moves the window.
                 (

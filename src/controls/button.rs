@@ -5,17 +5,20 @@ use bevy_ecs::{
     entity::Entity,
     hierarchy::Children,
     lifecycle::RemovedComponents,
-    query::{Added, Changed, Has, Or},
+    query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
 use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, BoxShadow, InteractionDisabled, JustifyContent, Node, Pressed, UiRect};
+use bevy_ui::{
+    AlignItems, BoxShadow, InteractionDisabled, JustifyContent, Node, PositionType, Pressed,
+    UiRect, px,
+};
 use bevy_ui_widgets::Button;
 
 use crate::{
@@ -26,7 +29,7 @@ use crate::{
     rounded_corners::RoundedCorners,
     theme::{
         Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
-        control_box_shadow,
+        ThemeBorderColor, control_box_shadow,
     },
     tokens,
 };
@@ -44,6 +47,9 @@ pub enum ButtonVariant {
     Primary,
     /// Don't display the button background unless hovering or pressed.
     Plain,
+    /// A bordered button with no fill at rest: a secondary action that stays legible on any
+    /// surface, where [`Normal`](Self::Normal) would read as grey-on-grey.
+    Outline,
 }
 
 /// A button, spawnable as a scene component with optional [`PlumeButtonProps`].
@@ -75,10 +81,21 @@ impl Default for PlumeButtonProps {
     }
 }
 
+impl ButtonVariant {
+    /// Whether this variant paints a solid background at rest. The unfilled variants swap the
+    /// resting drop shadow for a hover/press-only one.
+    fn filled(&self) -> bool {
+        !matches!(self, ButtonVariant::Plain | ButtonVariant::Outline)
+    }
+}
+
 impl PlumeButton {
     fn scene(props: PlumeButtonProps) -> impl Scene {
-        let box_shadow = (props.variant != ButtonVariant::Plain)
+        let box_shadow = props
+            .variant
+            .filled()
             .then(|| bsn! { template_value(control_box_shadow()) });
+        let corners = props.corners;
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -86,7 +103,7 @@ impl PlumeButton {
                 align_items: AlignItems::Center,
                 column_gap: size::GAP,
                 padding: UiRect::horizontal(size::GAP),
-                border_radius: {props.corners.to_border_radius(size::CORNER_RADIUS)},
+                border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
             }
             Button
             template_value(props.variant)
@@ -103,11 +120,34 @@ impl PlumeButton {
                 weight: FontWeight::NORMAL,
             }
             Children [
+                (
+                    // The border lives on an overlay child rather than on the button node: drawn
+                    // over the fill, it leaves no seam between body and border the way a node's
+                    // own inset border does.
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: px(0),
+                        right: px(0),
+                        top: px(0),
+                        bottom: px(0),
+                        border: size::CONTROL_BORDER,
+                        border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
+                    }
+                    ButtonOutline
+                    Pickable::IGNORE
+                    ThemeBorderColor(tokens::BUTTON_BORDER_NONE)
+                ),
                 {props.caption}
             ]
         }
     }
 }
+
+/// Marker for a button's border overlay. Every button carries one; only
+/// [`ButtonVariant::Outline`] paints it, so a runtime variant swap needs no respawn.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ButtonOutline;
 
 /// A smaller button for embedding in panel headers, spawnable as a scene
 /// component with optional [`PlumeButtonProps`]. Emits [`bevy_ui_widgets::Activate`].
@@ -154,6 +194,8 @@ fn update_button_styles(
             Added<Flat>,
         )>,
     >,
+    q_children: Query<&Children>,
+    q_outline: Query<&ThemeBorderColor, With<ButtonOutline>>,
     mut commands: Commands,
 ) {
     for (
@@ -178,9 +220,23 @@ fn update_button_styles(
             bg_color,
             font_color,
             has_box_shadow,
+            outline_child(button_ent, &q_children, &q_outline),
             &mut commands,
         );
     }
+}
+
+/// The button's border overlay child, if it has spawned yet.
+fn outline_child<'a>(
+    button_ent: Entity,
+    q_children: &Query<&Children>,
+    q_outline: &'a Query<&ThemeBorderColor, With<ButtonOutline>>,
+) -> Option<(Entity, &'a ThemeBorderColor)> {
+    q_children
+        .get(button_ent)
+        .ok()?
+        .iter()
+        .find_map(|&child| Some((child, q_outline.get(child).ok()?)))
 }
 
 fn update_button_styles_remove(
@@ -195,6 +251,8 @@ fn update_button_styles_remove(
         &InheritableThemeTextColor,
         Has<BoxShadow>,
     )>,
+    q_children: Query<&Children>,
+    q_outline: Query<&ThemeBorderColor, With<ButtonOutline>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_pressed: RemovedComponents<Pressed>,
     mut removed_flat: RemovedComponents<Flat>,
@@ -227,6 +285,7 @@ fn update_button_styles_remove(
                     bg_color,
                     font_color,
                     has_box_shadow,
+                    outline_child(button_ent, &q_children, &q_outline),
                     &mut commands,
                 );
             }
@@ -243,12 +302,14 @@ fn set_button_styles(
     bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
     has_box_shadow: bool,
+    outline: Option<(Entity, &ThemeBorderColor)>,
     commands: &mut Commands,
 ) {
     let bg_set = match variant {
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
+        ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BG,
     };
     let bg_token = bg_set.pick(disabled, pressed, hovered);
     // Disabled buttons read as inert: flat fill, no gradient.
@@ -258,11 +319,18 @@ fn set_button_styles(
         GRADIENT_AMOUNT
     };
 
+    let border_token = match variant {
+        ButtonVariant::Outline => {
+            tokens::sets::BUTTON_OUTLINE_BORDER.pick(disabled, pressed, hovered)
+        }
+        _ => tokens::BUTTON_BORDER_NONE,
+    };
+
     let font_color_token = match (variant, disabled) {
         (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
         (ButtonVariant::Primary, false) => tokens::BUTTON_PRIMARY_TEXT,
-        (ButtonVariant::Normal | ButtonVariant::Plain, true) => tokens::BUTTON_TEXT_DISABLED,
-        (ButtonVariant::Normal | ButtonVariant::Plain, false) => tokens::BUTTON_TEXT,
+        (_, true) => tokens::BUTTON_TEXT_DISABLED,
+        (_, false) => tokens::BUTTON_TEXT,
     };
 
     let cursor_shape = match disabled {
@@ -282,8 +350,15 @@ fn set_button_styles(
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
-    let should_have_box_shadow =
-        (*variant != ButtonVariant::Plain || hovered || pressed) && !disabled;
+    if let Some((outline_ent, outline_color)) = outline
+        && outline_color.0 != border_token
+    {
+        commands
+            .entity(outline_ent)
+            .insert(ThemeBorderColor(border_token));
+    }
+
+    let should_have_box_shadow = (variant.filled() || hovered || pressed) && !disabled;
     if should_have_box_shadow && !has_box_shadow {
         commands.entity(button_ent).insert(control_box_shadow());
     } else if !should_have_box_shadow && has_box_shadow {

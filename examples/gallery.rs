@@ -57,7 +57,7 @@ fn main() {
             commands.spawn(Camera2d);
         })
         .add_systems(Update, (gallery_ui, common::log_on_change::<GalleryState>));
-    common::screenshot_on_arg(&mut app);
+    common::apply_args(&mut app);
     app.run();
 }
 
@@ -101,12 +101,19 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
         ui.caption(if disabled { "Disabled" } else { "Enabled" });
 
         ui.horizontal(|ui| {
-            ui.button("Button").enabled(!disabled);
-            ui.button("Primary").primary().enabled(!disabled);
+            ui.button("Button").grow().enabled(!disabled);
+            ui.button("Primary").primary().grow().enabled(!disabled);
+            ui.button("Outline")
+                .variant(ButtonVariant::Outline)
+                .grow()
+                .enabled(!disabled);
             ui.button("Plain")
                 .variant(ButtonVariant::Plain)
+                .grow()
                 .enabled(!disabled);
         });
+
+        ui.separator();
 
         ui.horizontal(|ui| {
             ui.checkbox(&mut state.checkbox_a, "Off").enabled(!disabled);

@@ -9,7 +9,7 @@ use bevy_ecs::{
     hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
     observer::On,
-    query::{Added, Has, With},
+    query::{Added, Changed, Has, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
@@ -42,25 +42,31 @@ use crate::{
 #[reflect(Component, Clone, Default)]
 pub struct PlumeSection;
 
-/// Plain root marker carrying the collapse behavior, inserted by [`section_frame`]
+/// Plain root marker, inserted by [`section_frame`]
 /// in both the retained and imm paths (unlike the [`PlumeSection`] scene-component,
 /// which must not be inserted as a bare component).
-#[derive(Component, Clone, Reflect)]
+#[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub(crate) struct SectionRoot {
-    pub collapsible: bool,
-}
-
-impl Default for SectionRoot {
-    fn default() -> Self {
-        Self { collapsible: true }
-    }
-}
+pub(crate) struct SectionRoot;
 
 /// Marker for a collapsed [`PlumeSection`]; insert it to start collapsed.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct SectionCollapsed;
+
+/// Whether a section's header responds to clicks by folding its body. App-owned
+/// config (unlike [`SectionCollapsed`], which is user state), so the imm layer
+/// reconciles it every frame from the `.collapsible(_)` builder. Absent means
+/// collapsible, matching the [`Default`].
+#[derive(Component, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct SectionCollapsible(pub(crate) bool);
+
+impl Default for SectionCollapsible {
+    fn default() -> Self {
+        Self(true)
+    }
+}
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -130,7 +136,8 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
             align_items: AlignItems::Stretch,
             border_radius: size::CORNER_RADIUS,
         }
-        SectionRoot { collapsible: {props.collapsible} }
+        SectionRoot
+        template_value(SectionCollapsible(props.collapsible))
         ThemeBackgroundColor(tokens::SECTION_BODY_BG)
         Children [
             (
@@ -187,17 +194,18 @@ pub(crate) fn section_body() -> impl Scene {
 fn toggle_section_collapse(
     click: On<Pointer<Click>>,
     q_headers: Query<&ChildOf, With<SectionHeader>>,
-    q_sections: Query<(&SectionRoot, Has<SectionCollapsed>)>,
+    q_sections: Query<(Option<&SectionCollapsible>, Has<SectionCollapsed>), With<SectionRoot>>,
     mut commands: Commands,
 ) {
     let Ok(child_of) = q_headers.get(click.event_target()) else {
         return;
     };
     let root = child_of.parent();
-    let Ok((section, collapsed)) = q_sections.get(root) else {
+    let Ok((collapsible, collapsed)) = q_sections.get(root) else {
         return;
     };
-    if !section.collapsible {
+    // Absent means collapsible (the component's Default); only an explicit false locks it.
+    if matches!(collapsible, Some(SectionCollapsible(false))) {
         return;
     }
     if collapsed {
@@ -235,6 +243,30 @@ fn update_section_collapse(
     for root in removed.read() {
         if q_sections.contains(root) {
             apply(root, false);
+        }
+    }
+}
+
+/// The chevron is spawned once at build time, but the imm layer sets
+/// [`SectionCollapsible`] after the fact via `.collapsible(_)`, so its visibility
+/// tracks the component here rather than the spawn-time prop.
+fn update_section_collapsible(
+    q_changed: Query<
+        (Entity, &SectionCollapsible),
+        (With<SectionRoot>, Changed<SectionCollapsible>),
+    >,
+    q_children: Query<&Children>,
+    mut q_chevrons: Query<&mut Node, With<SectionChevron>>,
+) {
+    for (root, collapsible) in q_changed.iter() {
+        for descendant in q_children.iter_descendants(root) {
+            if let Ok(mut node) = q_chevrons.get_mut(descendant) {
+                node.display = if collapsible.0 {
+                    Display::Flex
+                } else {
+                    Display::None
+                };
+            }
         }
     }
 }
@@ -278,7 +310,12 @@ impl Plugin for SectionPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_systems(
             PreUpdate,
-            (update_section_collapse, update_section_header_flat).in_set(PickingSystems::Last),
+            (
+                update_section_collapse,
+                update_section_collapsible,
+                update_section_header_flat,
+            )
+                .in_set(PickingSystems::Last),
         );
     }
 }

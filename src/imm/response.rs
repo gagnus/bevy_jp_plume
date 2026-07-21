@@ -16,7 +16,7 @@ use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
-use crate::containers::SectionCollapsed;
+use crate::containers::{SectionCollapsed, SectionCollapsible};
 use crate::controls::{
     ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
     text_input_suffix,
@@ -84,7 +84,7 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
     pub hovered: bool,
     /// The widget's root entity — the escape hatch to the retained layer.
     pub entity: Entity,
-    pub(crate) spawned: bool,
+    pub(crate) will_be_spawned: bool,
     pub(crate) e: ImmEntity<'r, 'w, 's, PlumeCaps>,
     pub(crate) kind: PhantomData<K>,
 }
@@ -97,8 +97,8 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Fill the remaining space in a row (`flex_grow` from a zero basis), e.g. a
-    /// slider spanning the middle of a caption/value row.
+    /// Fill the remaining space along the container's main axis (`flex_grow` from
+    /// a zero `flex_basis`).
     pub fn grow(mut self) -> Self {
         struct GrowKey;
         if self.e.hash_update_typ::<GrowKey>(Some(imm_id(true))) {
@@ -106,7 +106,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
                 .entity_commands()
                 .queue(|mut entity: EntityWorldMut| {
                     if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.width = Val::ZERO;
+                        node.flex_basis = Val::ZERO;
                         node.flex_grow = 1.0;
                     }
                 });
@@ -250,7 +250,7 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
     /// Append a dim, non-editable unit suffix to the input (e.g. `m/s`).
     /// Seeded on first spawn only — units don't change, and the id doesn't track it.
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
-        if self.spawned {
+        if self.will_be_spawned {
             let parent = self.entity;
             let suffix = suffix.into();
             self.e.commands().queue(move |world: &mut World| {
@@ -267,7 +267,7 @@ impl ImmResponse<'_, '_, '_, kind::Text> {
     /// Dim hint shown while the field is empty and unfocused.
     /// Seeded on first spawn only — hints don't change, and the id doesn't track it.
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
-        if self.spawned {
+        if self.will_be_spawned {
             let parent = self.entity;
             let placeholder = placeholder.into();
             self.e.commands().queue(move |world: &mut World| {
@@ -302,8 +302,24 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
     /// entity owns its collapse state (a no-op on already-spawned widgets, so it
     /// never fights the user's expand/collapse).
     pub fn start_collapsed(mut self) -> Self {
-        if self.spawned {
+        if self.will_be_spawned {
             self.e.entity_commands().insert(SectionCollapsed);
+        }
+        self
+    }
+
+    /// Whether the header folds the body when clicked (default true). App-owned
+    /// config, so it reconciles every frame; the hash guard re-inserts only when
+    /// the value actually changes rather than each frame.
+    pub fn collapsible(mut self, collapsible: bool) -> Self {
+        struct CollapsibleKey;
+        if self
+            .e
+            .hash_update_typ::<CollapsibleKey>(Some(imm_id(collapsible)))
+        {
+            self.e
+                .entity_commands()
+                .insert(SectionCollapsible(collapsible));
         }
         self
     }
