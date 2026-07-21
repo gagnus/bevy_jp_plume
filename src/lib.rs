@@ -19,6 +19,7 @@ use crate::{
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
     theme::{ThemePlugin, ThemedText},
+    utils::anim::UiAnimPlugin,
 };
 
 mod alpha_pattern;
@@ -52,6 +53,7 @@ impl Plugin for PlumeCorePlugin {
         app.add_plugins((
             ControlsPlugin,
             imm::ImmPlugin,
+            UiAnimPlugin,
             containers::SectionPlugin,
             CursorIconPlugin,
             ThemePlugin,

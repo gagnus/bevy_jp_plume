@@ -765,7 +765,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SWITCH_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_BORDER_CHECKED, ThemeSlot::Transparent),
     (tokens::SWITCH_BORDER_CHECKED_DISABLED, ThemeSlot::Neutral3),
-    (tokens::SWITCH_SLIDE_BG, ThemeSlot::Text0),
+    (tokens::SWITCH_SLIDE_BG, ThemeSlot::Contrast),
     (tokens::SWITCH_SLIDE_BG_DISABLED, ThemeSlot::Neutral3),
     (tokens::SWITCH_SLIDE_BG_CHECKED, ThemeSlot::Contrast),
     (

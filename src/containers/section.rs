@@ -1,4 +1,6 @@
 //! Collapsible section container with a header bar.
+use core::f32::consts::FRAC_PI_2;
+
 use bevy_app::{Plugin, PreUpdate};
 use bevy_ecs::{
     component::Component,
@@ -19,7 +21,7 @@ use bevy_picking::{
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, widget::Text};
+use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
 
 use crate::{
     constants::{font_awesome, fonts, size},
@@ -30,6 +32,7 @@ use crate::{
         ThemeBackgroundGradient, control_box_shadow,
     },
     tokens,
+    utils::anim::AnimState,
 };
 
 /// A section: a header bar over a body. Collapsible by default — clicking the
@@ -152,7 +155,7 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
                 }
                 on(toggle_section_collapse)
                 Children [
-                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron) })},
+                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron template_value(AnimState::rotation(0.0, -FRAC_PI_2)) UiTransform::default()) })},
                     {props.header}
                 ]
             ),
@@ -210,7 +213,7 @@ fn update_section_collapse(
     q_sections: Query<(), With<SectionRoot>>,
     q_children: Query<&Children>,
     mut q_body: Query<&mut Node, With<SectionBody>>,
-    mut q_chevrons: Query<&mut Text, With<SectionChevron>>,
+    mut q_chevrons: Query<&mut AnimState, With<SectionChevron>>,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
         for descendant in q_children.iter_descendants(root) {
@@ -222,11 +225,7 @@ fn update_section_collapse(
                 };
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
-                chevron.0 = if collapsed {
-                    font_awesome::solid::ANGLE_RIGHT.glyph().into()
-                } else {
-                    font_awesome::solid::ANGLE_DOWN.glyph().into()
-                };
+                chevron.target = if collapsed { 1.0 } else { 0.0 };
             }
         }
     };

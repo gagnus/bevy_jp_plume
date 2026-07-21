@@ -6,8 +6,10 @@ use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
-    hierarchy::Children,
+    event::EntityEvent,
+    hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
+    observer::On,
     query::{Added, Changed, Has, Or, With},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
@@ -15,13 +17,17 @@ use bevy_ecs::{
     template::template,
 };
 use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{PickingSystems, hover::Hovered};
+use bevy_picking::{
+    PickingSystems,
+    events::{Pointer, Press},
+    hover::Hovered,
+};
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
     InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
-    UiRect, Val, percent, px,
+    UiRect, UiTransform, Val, percent, px,
 };
 use bevy_ui_widgets::{
     Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderThumb, SliderValue,
@@ -35,10 +41,14 @@ use crate::{
     focus::FocusIndicator,
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
     tokens,
+    utils::anim::AnimState,
 };
 
 /// Visible track strip thickness (the full-height node around it is the hit area).
 const TRACK_HEIGHT: Val = Val::Px(4.0);
+
+/// Thumb scale while grabbed: the knob grows this much on press for grab feedback.
+const THUMB_GRABBED_SCALE: f32 = 1.15;
 
 /// A slider, spawnable as a scene component with optional [`PlumeSliderProps`].
 /// Emits [`bevy_ui_widgets::ValueChange<f32>`]; shows no value text of its own.
@@ -147,6 +157,9 @@ impl PlumeSlider {
                             }
                             template_value(control_box_shadow())
                             SliderThumb
+                            template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
+                            UiTransform::default()
+                            on(grab_thumb_on_press)
                             ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
                         )
                     ]
@@ -183,6 +196,7 @@ fn update_slider_styles(
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -196,6 +210,7 @@ fn update_slider_styles(
             &q_children,
             &mut q_tracks,
             &q_thumbs,
+            &mut q_thumb_anim,
             &theme,
             &mut commands,
         );
@@ -219,6 +234,7 @@ fn update_slider_styles_remove(
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -237,6 +253,7 @@ fn update_slider_styles_remove(
                     &q_children,
                     &mut q_tracks,
                     &q_thumbs,
+                    &mut q_thumb_anim,
                     &theme,
                     &mut commands,
                 );
@@ -259,6 +276,7 @@ fn update_slider_styles_theme(
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -275,6 +293,7 @@ fn update_slider_styles_theme(
             &q_children,
             &mut q_tracks,
             &q_thumbs,
+            &mut q_thumb_anim,
             &theme,
             &mut commands,
         );
@@ -291,6 +310,7 @@ fn apply_slider_styles(
     q_children: &Query<&Children>,
     q_tracks: &mut Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumb_anim: &mut Query<&mut AnimState, With<SliderThumb>>,
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
@@ -306,6 +326,11 @@ fn apply_slider_styles(
     else {
         return;
     };
+
+    // Drive the grow: the thumb eases to full scale while the slider is pressed.
+    if let Ok(mut thumb_anim) = q_thumb_anim.get_mut(thumb_ent) {
+        thumb_anim.target = if pressed { 1.0 } else { 0.0 };
+    }
 
     let mut track_background_gradient = q_tracks
         .get_mut(track_ent)
@@ -411,6 +436,28 @@ fn update_slider_pos(
                 thumb.left = percent(percent_value);
             }
         });
+    }
+}
+
+/// On mouse-down, mark the slider [`Pressed`] so the thumb grows at once. The
+/// widget only sets [`Pressed`] on a track click, not a thumb grab; its own
+/// release/cancel/drag-end handlers clear it either way.
+fn grab_thumb_on_press(
+    press: On<Pointer<Press>>,
+    q_child_of: Query<&ChildOf>,
+    q_slider: Query<Has<InteractionDisabled>, With<PlumeSlider>>,
+    mut commands: Commands,
+) {
+    // Thumb → track → slider, which carries the Pressed state.
+    let Ok(track) = q_child_of.get(press.event_target()) else {
+        return;
+    };
+    let Ok(slider) = q_child_of.get(track.parent()) else {
+        return;
+    };
+    let slider_ent = slider.parent();
+    if q_slider.get(slider_ent).is_ok_and(|disabled| !disabled) {
+        commands.entity(slider_ent).insert(Pressed);
     }
 }
 

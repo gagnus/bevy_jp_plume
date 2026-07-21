@@ -34,6 +34,7 @@ use crate::{
         ThemeBorderColor, control_box_shadow,
     },
     tokens,
+    utils::anim::AnimState,
 };
 
 /// A checkbox, spawnable as a scene component with optional [`PlumeCheckboxProps`].
@@ -121,6 +122,7 @@ impl PlumeCheckbox {
                             }
                             UiTransform::from_rotation(Rot2::FRAC_PI_4)
                             CheckboxMark
+                            template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             Visibility::Hidden
                             ThemeBorderColor(tokens::CHECKBOX_MARK)
                         )
@@ -176,6 +178,7 @@ fn update_checkbox_styles(
     q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
     for (checkbox_ent, disabled, checked, flat, font_color) in q_checkboxes.iter() {
@@ -189,6 +192,7 @@ fn update_checkbox_styles(
             &q_bg,
             &q_outline,
             &q_mark,
+            &mut q_mark_anim,
             &mut commands,
         );
     }
@@ -209,6 +213,7 @@ fn update_checkbox_styles_remove(
     q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut removed_flat: RemovedComponents<Flat>,
@@ -230,6 +235,7 @@ fn update_checkbox_styles_remove(
                     &q_bg,
                     &q_outline,
                     &q_mark,
+                    &mut q_mark_anim,
                     &mut commands,
                 );
             }
@@ -247,6 +253,7 @@ fn apply_checkbox_styles(
     q_bg: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: &Query<&ThemeBorderColor, With<CheckboxOutline>>,
     q_mark: &Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_mark_anim: &mut Query<&mut AnimState, With<CheckboxMark>>,
     commands: &mut Commands,
 ) {
     let Some(bg_ent) = q_children
@@ -267,6 +274,11 @@ fn apply_checkbox_styles(
     else {
         return;
     };
+
+    // Drive the pop: the tick eases to full scale (and shows) while checked.
+    if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
+        mark_anim.target = if checked { 1.0 } else { 0.0 };
+    }
     let (bg_color, has_box_shadow) = q_bg
         .get(bg_ent)
         .expect("bg entity was just found via q_bg::contains");
@@ -349,11 +361,6 @@ fn set_checkbox_styles(
             .entity(mark_ent)
             .insert(ThemeBorderColor(mark_token));
     }
-
-    commands.entity(mark_ent).insert(match checked {
-        true => Visibility::Inherited,
-        false => Visibility::Hidden,
-    });
 
     if font_color.0 != font_color_token {
         commands

@@ -11,15 +11,14 @@ use bevy_ecs::{
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
-    world::Mut,
 };
 use bevy_input_focus::tab_navigation::TabIndex;
 use bevy_picking::PickingSystems;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_ui::{
-    BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, Val,
-    percent, px,
+    BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, UiTransform,
+    Val, percent, px,
 };
 use bevy_ui_widgets::{Checkbox, checkbox_self_update};
 
@@ -29,9 +28,14 @@ use crate::{
     focus::FocusIndicator,
     theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
     tokens,
+    utils::anim::AnimState,
 };
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
+
+/// Horizontal knob travel between off and on, in px: pill width 32 − knob 16 −
+/// a 1px inset at each end, so the knob keeps a 1px margin on both sides.
+const KNOB_TRAVEL: f32 = 14.0;
 
 /// A toggle switch, spawnable as a scene component. Emits
 /// [`bevy_ui_widgets::ValueChange<bool>`] with the new state.
@@ -78,16 +82,20 @@ impl PlumeToggleSwitch {
                 ),
                 (
                     // The 2px inset nests the 16px knob (radius 8) concentrically inside
-                    // the pill's outer radius (9) minus the ring's border.
+                    // the pill's outer radius (9) minus the ring's border. The knob keeps
+                    // this off-position in layout; the on/off slide is a post-layout
+                    // `UiTransform` translation so it never triggers a relayout.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: px(2),
+                        left: px(1),
                         top: px(1),
                         width: size::KNOB_SIZE,
                         height: size::KNOB_SIZE,
                         border_radius: BorderRadius::MAX,
                     }
                     ToggleSwitchSlide
+                    template_value(AnimState::translate_x(0.0, KNOB_TRAVEL))
+                    UiTransform::default()
                     ThemeBackgroundGradient(tokens::SWITCH_SLIDE_BG, SLIDE_GRADIENT_AMOUNT)
                     template_value(control_box_shadow())
                 )
@@ -128,10 +136,8 @@ fn update_switch_styles(
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    mut q_slide: Query<
-        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
-        With<ToggleSwitchSlide>,
-    >,
+    q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut commands: Commands,
 ) {
     for (switch_ent, disabled, checked, flat, pill_bg) in q_switches.iter() {
@@ -143,7 +149,8 @@ fn update_switch_styles(
             pill_bg,
             &q_children,
             &q_outline,
-            &mut q_slide,
+            &q_slide,
+            &mut q_slide_anim,
             &mut commands,
         );
     }
@@ -162,10 +169,8 @@ fn update_switch_styles_remove(
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    mut q_slide: Query<
-        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
-        With<ToggleSwitchSlide>,
-    >,
+    q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut removed_flat: RemovedComponents<Flat>,
@@ -185,7 +190,8 @@ fn update_switch_styles_remove(
                     pill_bg,
                     &q_children,
                     &q_outline,
-                    &mut q_slide,
+                    &q_slide,
+                    &mut q_slide_anim,
                     &mut commands,
                 );
             }
@@ -201,10 +207,8 @@ fn apply_switch_styles(
     pill_bg: &ThemeBackgroundGradient,
     q_children: &Query<&Children>,
     q_outline: &Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
-    q_slide: &mut Query<
-        (&mut Node, &ThemeBackgroundGradient, Has<BoxShadow>),
-        With<ToggleSwitchSlide>,
-    >,
+    q_slide: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    q_slide_anim: &mut Query<&mut AnimState, With<ToggleSwitchSlide>>,
     commands: &mut Commands,
 ) {
     let Some(outline_ent) = q_children
@@ -219,11 +223,16 @@ fn apply_switch_styles(
     else {
         return;
     };
+    // Drive the slide: the knob eases to the on end while checked.
+    if let Ok(mut slide_anim) = q_slide_anim.get_mut(slide_ent) {
+        slide_anim.target = if checked { 1.0 } else { 0.0 };
+    }
+
     let outline_border = q_outline
         .get(outline_ent)
         .expect("outline entity was just found via q_outline::contains");
-    let (ref mut slide_style, slide_bg, has_box_shadow) = q_slide
-        .get_mut(slide_ent)
+    let (slide_bg, has_box_shadow) = q_slide
+        .get(slide_ent)
         .expect("slide entity was just found via q_slide::contains");
     set_switch_styles(
         switch_ent,
@@ -234,7 +243,6 @@ fn apply_switch_styles(
         flat,
         pill_bg,
         outline_border,
-        slide_style,
         slide_bg,
         has_box_shadow,
         commands,
@@ -250,7 +258,6 @@ fn set_switch_styles(
     flat: bool,
     pill_bg: &ThemeBackgroundGradient,
     outline_border: &ThemeBorderColor,
-    slide_style: &mut Mut<Node>,
     slide_bg: &ThemeBackgroundGradient,
     has_box_shadow: bool,
     commands: &mut Commands,
@@ -258,11 +265,6 @@ fn set_switch_styles(
     let outline_border_token = tokens::sets::SWITCH_BORDER.pick(checked, disabled);
     let pill_bg_token = tokens::sets::SWITCH_BG.pick(checked, disabled);
     let slide_bg_token = tokens::sets::SWITCH_SLIDE_BG.pick(checked, disabled);
-
-    let (slide_left, slide_right) = match checked {
-        true => (Val::Auto, Val::ZERO),
-        false => (Val::ZERO, Val::Auto),
-    };
 
     let cursor_shape = match disabled {
         true => bevy_window::SystemCursorIcon::NotAllowed,
@@ -299,13 +301,6 @@ fn set_switch_styles(
             slide_bg_token,
             slide_gradient_amount,
         ));
-    }
-
-    if slide_style.left != slide_left {
-        slide_style.left = slide_left;
-    }
-    if slide_style.right != slide_right {
-        slide_style.right = slide_right;
     }
 
     let should_have_box_shadow = !disabled;

@@ -27,6 +27,7 @@ bevy_reflect = { path = "../3rdParty/bevy/crates/bevy_reflect" }
 bevy_render = { path = "../3rdParty/bevy/crates/bevy_render" }
 bevy_scene = { path = "../3rdParty/bevy/crates/bevy_scene" }
 bevy_text = { path = "../3rdParty/bevy/crates/bevy_text" }
+bevy_time = { path = "../3rdParty/bevy/crates/bevy_time" }
 bevy_ui = { path = "../3rdParty/bevy/crates/bevy_ui", features = [
   "bevy_picking",
 ] }

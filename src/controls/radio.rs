@@ -19,7 +19,7 @@ use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
-    JustifyContent, Node, PositionType, Val, percent, px,
+    JustifyContent, Node, PositionType, UiTransform, Val, percent, px,
 };
 use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
@@ -33,6 +33,7 @@ use crate::{
         ThemeBorderColor, control_box_shadow,
     },
     tokens,
+    utils::anim::AnimState,
 };
 
 /// A radio, spawnable as a scene component with optional [`PlumeRadioProps`].
@@ -119,6 +120,8 @@ impl PlumeRadio {
                             border_radius: BorderRadius::MAX,
                         }
                         RadioMark
+                        template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
+                        UiTransform::default()
                         Visibility::Hidden
                         ThemeBackgroundGradient(tokens::RADIO_MARK)
                     )
@@ -212,6 +215,7 @@ fn update_radio_styles(
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut commands: Commands,
 ) {
     for (radio_ent, disabled, checked, flat, font_color, has_box_shadow) in q_radios.iter() {
@@ -225,6 +229,7 @@ fn update_radio_styles(
             &q_bg,
             &q_outline,
             &q_mark,
+            &mut q_mark_anim,
             has_box_shadow,
             &mut commands,
         );
@@ -247,6 +252,7 @@ fn update_radio_styles_remove(
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
     mut removed_flat: RemovedComponents<Flat>,
@@ -270,6 +276,7 @@ fn update_radio_styles_remove(
                     &q_bg,
                     &q_outline,
                     &q_mark,
+                    &mut q_mark_anim,
                     has_box_shadow,
                     &mut commands,
                 );
@@ -288,6 +295,7 @@ fn apply_radio_styles(
     q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
     q_outline: &Query<&ThemeBorderColor, With<RadioOutline>>,
     q_mark: &Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    q_mark_anim: &mut Query<&mut AnimState, With<RadioMark>>,
     has_box_shadow: bool,
     commands: &mut Commands,
 ) {
@@ -309,6 +317,12 @@ fn apply_radio_styles(
     else {
         return;
     };
+
+    // Drive the pop: the disc eases to full scale (and shows) while checked.
+    if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
+        mark_anim.target = if checked { 1.0 } else { 0.0 };
+    }
+
     let bg = q_bg
         .get(bg_ent)
         .expect("bg entity was just found via q_bg::contains");
@@ -391,11 +405,6 @@ fn set_radio_styles(
             .entity(mark_ent)
             .insert(ThemeBackgroundGradient(mark_token, bg_gradient_amount));
     }
-
-    commands.entity(mark_ent).insert(match checked {
-        true => Visibility::Inherited,
-        false => Visibility::Hidden,
-    });
 
     if font_color.0 != font_color_token {
         commands
