@@ -99,10 +99,13 @@ fn debug_hub_ui(
         .show(|ui| {
             ui.horizontal(|ui| {
                 if ui
-                    .tool_button(font_awesome::solid::BARS)
+                    .tool_button(if *expanded {
+                        font_awesome::solid::XMARK
+                    } else {
+                        font_awesome::solid::BARS
+                    })
                     .flat()
                     .checkable()
-                    .checked(*expanded)
                     .variant(ButtonVariant::Plain)
                     .clicked
                 {

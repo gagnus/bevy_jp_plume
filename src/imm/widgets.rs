@@ -4,7 +4,10 @@ use core::ops::RangeInclusive;
 use core::panic::Location;
 
 use bevy_color::Color;
-use bevy_ecs::{event::EntityEvent, observer::On, system::Commands, world::EntityWorldMut};
+use bevy_ecs::{
+    entity::Entity, event::EntityEvent, hierarchy::Children, observer::On, system::Commands,
+    world::EntityWorldMut,
+};
 use bevy_immediate::{
     ImmEntity, ImmId, ImmIdBuilder, imm_id,
     ui::{activated::ImmUiActivated, interaction::ImmUiInteraction},
@@ -252,21 +255,43 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
-        let entity = self
-            .ch_with_manual_id(loc_id((icon, label)))
+        // Keys on the face and label, not the glyph, so a glyph toggle reconciles in
+        // place instead of respawning; see `tool_button`. The icon is the first
+        // `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
+        let mut entity = self
+            .ch_with_manual_id(loc_id((icon.face(), label)))
             .on_spawn_apply_scene(move || {
                 bsn! { @PlumeButton { @caption: bsn_list! { fa_icon(icon), caption(label_owned) } } }
             });
+        struct IconButtonGlyph;
+        if entity.hash_update_typ::<IconButtonGlyph>(Some(imm_id(icon.glyph())))
+            && !entity.will_be_spawned()
+        {
+            entity
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| set_icon_glyph(&mut e, icon.glyph()));
+        }
         respond(entity, false)
     }
 
     #[track_caller]
     fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button> {
-        let entity = self
-            .ch_with_manual_id(loc_id(icon))
+        // Identity keys on the face, not the glyph, so toggling the glyph within a
+        // face reconciles in place instead of respawning (a visible pop). The face
+        // stays in the key because it selects the font, a runtime asset handle.
+        let mut entity = self
+            .ch_with_manual_id(loc_id(icon.face()))
             .on_spawn_apply_scene(move || {
                 bsn! { @PlumeToolButton { @caption: bsn! { fa_icon(icon) } } }
             });
+        struct ToolGlyph;
+        if entity.hash_update_typ::<ToolGlyph>(Some(imm_id(icon.glyph())))
+            && !entity.will_be_spawned()
+        {
+            entity
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| set_icon_glyph(&mut e, icon.glyph()));
+        }
         respond(entity, false)
     }
 
@@ -701,6 +726,23 @@ fn reconcile_frame_body<'e, 'w, 's>(
 #[track_caller]
 fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
     ImmIdBuilder::Hierarchy(ImmId::new((Location::caller(), key)))
+}
+
+/// Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
+/// spawned, since the face keys the button's identity.
+fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
+    let children: Vec<Entity> = button
+        .get::<Children>()
+        .map(|children| children.iter().copied().collect())
+        .unwrap_or_default();
+    button.world_scope(|world| {
+        for child in children {
+            if let Some(mut text) = world.get_mut::<Text>(child) {
+                text.0 = glyph.to_owned();
+                break;
+            }
+        }
+    });
 }
 
 fn respond<'r, 'w, 's, K>(

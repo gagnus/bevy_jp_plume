@@ -4,19 +4,24 @@ use bevy_color::Oklcha;
 
 /// Default plume light palette editable inputs
 pub fn default_light_palette() -> ThemeEditablePalette {
+    light_palette(120.0)
+}
+
+/// Plume light palette editable inputs with given hue
+pub fn light_palette(hue: f32) -> ThemeEditablePalette {
     ThemeEditablePalette {
         neutrals: OklchaArray {
-            hue: 240.0,
+            hue: hue,
             chroma: 0.017,
             l: [0.99, 0.84, 0.79, 0.74, 0.69, 0.71, 0.73],
         },
         accent: OklchaArray {
-            hue: 240.0,
+            hue: hue,
             chroma: 0.110,
             l: [0.62, 0.64, 0.66, 0.40],
         },
         text: OklchaArray {
-            hue: 240.0,
+            hue: hue,
             chroma: 0.044,
             l: [0.1, 0.4],
         },

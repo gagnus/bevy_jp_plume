@@ -74,7 +74,7 @@ fn theme_editor_dialog(
     root.dialog(TITLE, &mut open)
         .width(px(320))
         .max_height(px(600))
-        .at(px(900), px(80))
+        .at(px(900), px(90))
         .icon(font_awesome::solid::PALETTE)
         .show(|ui| {
             ui.horizontal(|ui| {

@@ -94,7 +94,7 @@ fn player_profile_dialog(
     let mut done = false;
     root.dialog(TITLE, &mut open)
         .width(px(380))
-        .at(px(450), px(80))
+        .at(px(450), px(60))
         .icon(font_awesome::solid::PERSON)
         .show(|ui| {
             // Identity: three text/choice fields sharing the gutter.

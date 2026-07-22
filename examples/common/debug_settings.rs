@@ -87,7 +87,7 @@ fn debug_settings_dialog(
     // Fixed width so the equal-.grow() columns have something to resolve against.
     root.dialog(TITLE, &mut open)
         .width(px(600))
-        .at(px(60), px(320))
+        .at(px(20), px(320))
         .icon(font_awesome::solid::BUG)
         .show(|ui| {
             ui.horizontal(|ui| {
