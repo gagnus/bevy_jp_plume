@@ -60,12 +60,17 @@ const OVERLAY_CORNERS: [&str; 4] = ["Top left", "Top right", "Bottom left", "Bot
 const LOG_LEVELS: [&str; 5] = ["Error", "Warn", "Info", "Debug", "Trace"];
 
 /// Adds the debug-menu dialog: its resource, its dialog system + hub entry, and its log.
-pub struct DebugSettingsPlugin;
+pub struct DebugSettingsPlugin(pub bool);
 
 impl Plugin for DebugSettingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DebugSettings>()
-            .add_debug_dialog(TITLE, font_awesome::solid::BUG, true, debug_settings_dialog)
+            .add_debug_dialog(
+                TITLE,
+                font_awesome::solid::BUG,
+                self.0,
+                debug_settings_dialog,
+            )
             .add_systems(Update, log_on_change::<DebugSettings>);
     }
 }
@@ -82,7 +87,7 @@ fn debug_settings_dialog(
     // Fixed width so the equal-.grow() columns have something to resolve against.
     root.dialog(TITLE, &mut open)
         .width(px(600))
-        .at(px(40), px(300))
+        .at(px(60), px(320))
         .icon(font_awesome::solid::BUG)
         .show(|ui| {
             ui.horizontal(|ui| {

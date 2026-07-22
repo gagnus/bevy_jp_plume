@@ -6,17 +6,16 @@ mod common;
 
 use common::{
     audio_settings::AudioSettingsPlugin, debug_settings::DebugSettingsPlugin,
-    gallery::GalleryPlugin, player_profile::PlayerProfilePlugin, theme_editor::ThemeEditorPlugin,
+    player_profile::PlayerProfilePlugin, theme_editor::ThemeEditorPlugin,
 };
 
 fn main() {
-    let mut app = common::demo_app();
+    let mut app = common::demo_app(true);
     app.add_plugins((
-        GalleryPlugin,
-        AudioSettingsPlugin,
-        DebugSettingsPlugin,
-        PlayerProfilePlugin,
-        ThemeEditorPlugin,
+        AudioSettingsPlugin(false),
+        DebugSettingsPlugin(false),
+        PlayerProfilePlugin(false),
+        ThemeEditorPlugin(false),
     ));
     app.run();
 }

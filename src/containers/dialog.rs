@@ -48,6 +48,9 @@ pub struct PlumeDialogProps {
     pub closable: bool,
     /// `false` omits the drag handle, pinning the dialog in place.
     pub movable: bool,
+    /// `false` omits the whole title bar (with it, the title, ✕ and drag), leaving a
+    /// bare floating panel — see the imm `panel`. Also drops the header-height floor.
+    pub header: bool,
 }
 
 impl Default for PlumeDialogProps {
@@ -62,6 +65,7 @@ impl Default for PlumeDialogProps {
             top: px(120),
             closable: true,
             movable: true,
+            header: true,
         }
     }
 }
@@ -85,6 +89,7 @@ impl PlumeDialog {
             top,
             closable,
             movable,
+            header,
         } = props;
         // A bounded dialog scrolls its body; an unbounded one holds the contents
         // directly and spawns no scroll machinery.
@@ -121,6 +126,7 @@ impl PlumeDialog {
                 top,
                 closable,
                 movable,
+                header,
                 // Empty for the imm layer, which reconciles the body itself.
                 contents: Box::new(bsn_list!((
                     @PlumeDialogBody
@@ -148,22 +154,76 @@ pub(crate) struct DialogCloseRequested;
 /// dialog wraps it in a [`PlumeDialogBody`]; the imm layer leaves it empty and
 /// reconciles the body itself).
 pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
+    let PlumeDialogProps {
+        title,
+        contents,
+        width,
+        height,
+        max_height,
+        left,
+        top,
+        closable,
+        movable,
+        header,
+    } = props;
+    // The header-height floor only exists to keep a `max_height` from crushing the
+    // title bar; a headerless panel has no such reserve.
+    let frame_min_height = if header {
+        size::DIALOG_HEADER_HEIGHT
+    } else {
+        Val::ZERO
+    };
+    let title_bar = header.then(|| {
+        bsn! {
+            // Title bar; dragging it moves the window. Same chrome as the section
+            // header; the dialog is distinguished by its drop shadow, not a
+            // different header.
+            (
+                Node {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Start,
+                    padding: UiRect::horizontal(size::PAD * 2.0),
+                    min_height: size::DIALOG_HEADER_HEIGHT,
+                    column_gap: size::GAP,
+                    border: UiRect::bottom(size::CONTAINER_BORDER),
+                    border_radius: BorderRadius::top(size::DIALOG_RADIUS),
+                }
+                {movable.then(|| bsn!(DialogDragHandle))}
+                InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
+                ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
+                ThemeBorderColor(tokens::DIALOG_BORDER)
+                InheritableFont {
+                    font: fonts::REGULAR,
+                    font_size: size::MEDIUM_FONT,
+                    weight: FontWeight::NORMAL,
+                }
+                Children [
+                    {title},
+                    // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
+                    flex_spacer(),
+                    {closable.then(|| bsn_list!(@PlumeDialogClose))}
+                ]
+            )
+        }
+    });
     bsn! {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
                 position_type: PositionType::Absolute,
-                left: {props.left},
-                top: {props.top},
+                left: {left},
+                top: {top},
                 border_radius: size::DIALOG_RADIUS,
                 border: UiRect::all(size::CONTAINER_BORDER),
-                width: {props.width},
-                height: {props.height},
-                max_height: {props.max_height},
+                width: {width},
+                height: {height},
+                max_height: {max_height},
                 // Flexbox resolves `min` after `max`, so this floor survives a
                 // `max_height` that would otherwise crush the title bar.
-                min_height: size::DIALOG_HEADER_HEIGHT,
+                min_height: {frame_min_height},
             }
             Dialog
             // Tab-traversal scope for the dialog's fields.
@@ -182,38 +242,8 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
                 use_rounding: false,
             }
             Children [
-                // Title bar; dragging it moves the window.
-                (
-                    // Same chrome as the section header; the dialog is distinguished
-                    // by its drop shadow, not a different header.
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Start,
-                        padding: UiRect::horizontal(size::PAD * 2.0),
-                        min_height: size::DIALOG_HEADER_HEIGHT,
-                        column_gap: size::GAP,
-                        border: UiRect::bottom(size::CONTAINER_BORDER),
-                        border_radius: BorderRadius::top(size::DIALOG_RADIUS),
-                    }
-                    {props.movable.then(|| bsn!(DialogDragHandle))}
-                    InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
-                    ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
-                    ThemeBorderColor(tokens::DIALOG_BORDER)
-                    InheritableFont {
-                        font: fonts::REGULAR,
-                        font_size: size::MEDIUM_FONT,
-                        weight: FontWeight::NORMAL,
-                    }
-                    Children [
-                        {props.title},
-                        // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
-                        flex_spacer(),
-                        {props.closable.then(|| bsn_list!(@PlumeDialogClose))}
-                    ]
-                ),
-                {props.contents}
+                {title_bar},
+                {contents}
             ]
     }
 }

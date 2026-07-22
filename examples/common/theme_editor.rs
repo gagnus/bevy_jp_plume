@@ -38,7 +38,7 @@ impl ThemeEditor {
 
 /// Adds the theme-editor dialog: seeds its palette resource (matching `--light`), bakes
 /// edits into `UiTheme`, and registers its dialog + hub entry and log.
-pub struct ThemeEditorPlugin;
+pub struct ThemeEditorPlugin(pub bool);
 
 impl Plugin for ThemeEditorPlugin {
     fn build(&self, app: &mut App) {
@@ -48,7 +48,7 @@ impl Plugin for ThemeEditorPlugin {
             .add_debug_dialog(
                 TITLE,
                 font_awesome::solid::PALETTE,
-                true,
+                self.0,
                 theme_editor_dialog,
             )
             .add_systems(Update, rebuild_theme.after(theme_editor_dialog))
@@ -74,7 +74,7 @@ fn theme_editor_dialog(
     root.dialog(TITLE, &mut open)
         .width(px(320))
         .max_height(px(600))
-        .at(px(700), px(360))
+        .at(px(900), px(80))
         .icon(font_awesome::solid::PALETTE)
         .show(|ui| {
             ui.horizontal(|ui| {

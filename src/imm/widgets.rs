@@ -108,6 +108,11 @@ pub trait PlumeImm<'w, 's> {
     /// writes back through `open`. Dragged position persists.
     fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's>;
 
+    /// Headerless floating surface — a [`Self::dialog`] with no title bar (and so no
+    /// title, ✕ or drag). Positioned chrome only; the caller controls whether it's
+    /// drawn. Floats above a [`Self::screen`] like a dialog does.
+    fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
+
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
     /// The response chains `.grow()`/`.width()` to size the row itself.
@@ -390,6 +395,23 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
+        ImmPanel {
+            ui: self,
+            caller: Location::caller(),
+            layout: DialogLayout {
+                width: Val::Auto,
+                height: Val::Auto,
+                max_height: Val::Auto,
+                left: px(120),
+                top: px(120),
+                closable: false,
+                movable: false,
+            },
+        }
+    }
+
+    #[track_caller]
     fn horizontal(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
@@ -501,7 +523,7 @@ impl DialogLayout {
     }
 }
 
-impl<'w, 's> ImmDialog<'_, 'w, 's> {
+impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     /// Fix the dialog's width (default `Val::Auto` hugs the content). Rows that
     /// distribute space (`.grow()`, `flex_spacer`) need one to resolve against.
     pub fn width(mut self, width: Val) -> Self {
@@ -552,9 +574,12 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
 
     /// Build the dialog and its body. While `*open` the dialog exists and `f`
     /// fills its body; the ✕ writes back through `open`.
-    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) {
+    pub fn show(
+        self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
         if !*self.open {
-            return;
+            return None;
         }
         let id = ImmIdBuilder::Hierarchy(ImmId::new((self.caller, self.title.as_str())));
         let (title, icon, layout) = (self.title, self.icon, self.layout);
@@ -565,52 +590,110 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
         if entity.close_requested() {
             *self.open = false;
             entity.entity_commands().despawn();
+            return None;
+        }
+        Some(reconcile_frame_body(entity, layout, f))
+    }
+}
+
+/// Deferred panel configuration returned by [`PlumeImm::panel`]; the panel only
+/// exists once [`Self::show`] runs.
+#[must_use = "a panel does nothing until .show(|ui| …) builds it"]
+pub struct ImmPanel<'a, 'w, 's> {
+    ui: &'a mut Ui<'w, 's>,
+    caller: &'static Location<'static>,
+    layout: DialogLayout,
+}
+
+impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
+    /// Fix the panel's width (default `Val::Auto` hugs the content).
+    pub fn width(mut self, width: Val) -> Self {
+        self.layout.width = width;
+        self
+    }
+
+    /// Fix the panel's outer height, scrolling the body once the content outgrows it.
+    pub fn height(mut self, height: Val) -> Self {
+        self.layout.height = height;
+        self
+    }
+
+    /// Cap the panel's outer height: it hugs its content until it would exceed
+    /// `max_height`, then stops growing and scrolls the body.
+    pub fn max_height(mut self, max_height: Val) -> Self {
+        self.layout.max_height = max_height;
+        self
+    }
+
+    /// Position (the panel is absolutely positioned). Spawn-time only.
+    pub fn at(mut self, left: Val, top: Val) -> Self {
+        self.layout.left = left;
+        self.layout.top = top;
+        self
+    }
+
+    /// Build the panel and its body.
+    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
+        let id = ImmIdBuilder::Hierarchy(ImmId::new(self.caller));
+        let layout = self.layout;
+        let entity = self
+            .ui
+            .ch_with_manual_id(id)
+            .on_spawn_apply_scene(move || imm_panel_scene(layout));
+        reconcile_frame_body(entity, layout, f)
+    }
+}
+
+/// Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
+/// content in the scrolling machinery when a height knob bounds it. Position is not
+/// re-applied — the user's dragging owns it after spawn.
+fn reconcile_frame_body<'e, 'w, 's>(
+    mut entity: ImmEntity<'e, 'w, 's, PlumeCaps>,
+    layout: DialogLayout,
+    f: impl FnOnce(&mut Ui<'w, 's>),
+) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
+    struct FrameSizeKey;
+    let size_key = format!(
+        "{:?}{:?}{:?}",
+        layout.width, layout.height, layout.max_height
+    );
+    if entity.hash_update_typ::<FrameSizeKey>(Some(imm_id(size_key))) {
+        entity
+            .entity_commands()
+            .queue(move |mut entity: EntityWorldMut| {
+                if let Some(mut node) = entity.get_mut::<Node>() {
+                    node.width = layout.width;
+                    node.height = layout.height;
+                    node.max_height = layout.max_height;
+                }
+            });
+    }
+    let scrolls = layout.scrolls();
+    let entity = entity.add(move |ui| {
+        let body = ui
+            .ch_id("dialog_body")
+            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
+        if !scrolls {
+            body.add(f);
             return;
         }
-        // Size is app-owned even while open; position is not re-applied (the
-        // user's dragging owns it after spawn).
-        struct DialogSizeKey;
-        let size_key = format!(
-            "{:?}{:?}{:?}",
-            layout.width, layout.height, layout.max_height
-        );
-        if entity.hash_update_typ::<DialogSizeKey>(Some(imm_id(size_key))) {
-            entity
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.width = layout.width;
-                        node.height = layout.height;
-                        node.max_height = layout.max_height;
-                    }
+        body.add(move |ui| {
+            ui.ch_id("scroll_frame")
+                .on_spawn_apply_scene(dialog_scroll_frame)
+                .add(move |ui| {
+                    // The scroll area's entity is known before its spawn command
+                    // flushes, so the scrollbar can point at the viewport it drives.
+                    let viewport = ui
+                        .ch_id("scroll_area")
+                        .on_spawn_apply_scene(dialog_scroll_area)
+                        .add(f)
+                        .entity();
+                    ui.ch_id("scrollbar")
+                        .on_spawn_apply_scene(move || dialog_scrollbar(viewport));
                 });
-        }
-        let scrolls = layout.scrolls();
-        entity.add(move |ui| {
-            let body = ui
-                .ch_id("dialog_body")
-                .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
-            if !scrolls {
-                body.add(f);
-                return;
-            }
-            body.add(move |ui| {
-                ui.ch_id("scroll_frame")
-                    .on_spawn_apply_scene(dialog_scroll_frame)
-                    .add(move |ui| {
-                        // The scroll area's entity is known before its spawn command
-                        // flushes, so the scrollbar can point at the viewport it drives.
-                        let viewport = ui
-                            .ch_id("scroll_area")
-                            .on_spawn_apply_scene(dialog_scroll_area)
-                            .add(f)
-                            .entity();
-                        ui.ch_id("scrollbar")
-                            .on_spawn_apply_scene(move || dialog_scrollbar(viewport));
-                    });
-            });
         });
-    }
+    });
+    respond(entity, false)
 }
 
 // Combining the caller location with a key means label/options changes respawn the
@@ -663,6 +746,32 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
         })
         on(|close: On<RequestClose>, mut commands: Commands| {
             commands.entity(close.event_target()).insert(DialogCloseRequested);
+        })
+    }
+}
+
+fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
+    let DialogLayout {
+        width,
+        height,
+        max_height,
+        left,
+        top,
+        ..
+    } = layout;
+    // Headerless: no title bar, so no close button or drag handle either — and no
+    // `RequestClose` observer, since a panel has no ✕.
+    bsn! {
+        dialog_frame(PlumeDialogProps {
+            header: false,
+            closable: false,
+            movable: false,
+            width,
+            height,
+            max_height,
+            left,
+            top,
+            ..Default::default()
         })
     }
 }

@@ -4,7 +4,7 @@
 mod common;
 
 fn main() {
-    let mut app = common::demo_app();
-    app.add_plugins(common::theme_editor::ThemeEditorPlugin);
+    let mut app = common::demo_app(true);
+    app.add_plugins(common::theme_editor::ThemeEditorPlugin(true));
     app.run();
 }

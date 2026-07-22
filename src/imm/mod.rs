@@ -6,7 +6,7 @@ mod response;
 mod widgets;
 
 pub use response::{ImmResponse, kind};
-pub use widgets::{ImmDialog, PlumeImm};
+pub use widgets::{ImmDialog, ImmPanel, PlumeImm};
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
@@ -83,6 +83,13 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     #[track_caller]
     pub fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's> {
         self.imm.dialog(title, open)
+    }
+
+    /// Headerless floating surface — a [`Self::dialog`] with no title bar. Configure
+    /// via the returned [`ImmPanel`] and build the body with [`ImmPanel::show`].
+    #[track_caller]
+    pub fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
+        self.imm.panel()
     }
 
     /// Scope surface ids by `id`, for keying several screens/dialogs built in a

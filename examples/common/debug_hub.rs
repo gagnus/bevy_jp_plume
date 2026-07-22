@@ -7,7 +7,7 @@ use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::ScheduleSystem;
 use bevy::prelude::*;
 use bevy_jp_plume::{
-    constants::FaIcon,
+    constants::{FaIcon, font_awesome},
     controls::ButtonVariant,
     imm::{PlumeImm, PlumeRoot},
 };
@@ -83,30 +83,51 @@ impl AddDebugDialog for App {
     }
 }
 
-fn debug_hub_ui(mut root: PlumeRoot, mut registry: ResMut<DebugDialogRegistry>) {
+fn debug_hub_ui(
+    mut root: PlumeRoot,
+    mut expanded: Local<bool>,
+    mut registry: ResMut<DebugDialogRegistry>,
+    mouse: Res<ButtonInput<MouseButton>>,
+) {
     let entries = registry.entries();
     let mut toggled: Vec<&'static str> = vec![];
-    // Always-open, pinned toolbar: closing it would strip the only way back to the
-    // dialogs. A dialog rather than a screen, so the gallery stays the one screen.
-    let mut open = true;
-    root.dialog("Dialogs", &mut open)
-        .closable(false)
-        .movable(false)
+    // Headerless panel: an always-present, pinned toolbar with no title bar to close or
+    // drag. A panel (not a screen), so the gallery stays the one screen.
+    let content_hovered = root
+        .panel()
         .at(px(16), px(16))
         .show(|ui| {
             ui.horizontal(|ui| {
-                for &(title, (icon, is_open)) in &entries {
-                    let variant = if is_open {
-                        ButtonVariant::Primary
-                    } else {
-                        ButtonVariant::Outline
-                    };
-                    if ui.icon_button(icon, title).variant(variant).clicked {
-                        toggled.push(title);
+                if ui
+                    .tool_button(font_awesome::solid::BARS)
+                    .flat()
+                    .checkable()
+                    .checked(*expanded)
+                    .variant(ButtonVariant::Plain)
+                    .clicked
+                {
+                    *expanded = !*expanded;
+                }
+                if *expanded {
+                    for &(title, (icon, is_open)) in &entries {
+                        if ui
+                            .icon_button(icon, title)
+                            .flat()
+                            .checkable()
+                            .checked(is_open)
+                            .variant(ButtonVariant::Outline)
+                            .clicked
+                        {
+                            toggled.push(title);
+                        }
                     }
                 }
             });
-        });
+        })
+        .hovered;
+    if *expanded && mouse.just_pressed(MouseButton::Left) && !content_hovered {
+        *expanded = false;
+    }
     for title in toggled {
         let now = registry.is_open(title);
         registry.set_open(title, !now);

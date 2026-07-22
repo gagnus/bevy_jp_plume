@@ -12,7 +12,7 @@ use bevy_ecs::{
 };
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 use bevy_scene::WorldSceneExt;
-use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Node, UiRect, Val};
+use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
@@ -68,6 +68,8 @@ pub mod kind {
     pub struct Group;
     /// `screen`.
     pub struct Screen;
+    /// `dialog`
+    pub struct Dialog;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -221,6 +223,29 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
     /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` — the confirm button.
     pub fn primary(self) -> Self {
         self.variant(ButtonVariant::Primary)
+    }
+
+    pub fn checked(mut self, checked: bool) -> Self {
+        struct CheckedKey;
+        if self
+            .e
+            .hash_update_typ::<CheckedKey>(Some(imm_id(format!("{checked:?}"))))
+        {
+            if checked {
+                self.e.entity_commands().insert(Checked);
+            } else {
+                self.e.entity_commands().remove::<Checked>();
+            }
+        }
+        self
+    }
+
+    pub fn checkable(mut self) -> Self {
+        struct CheckableKey;
+        if self.e.hash_update_typ::<CheckableKey>(Some(imm_id(true))) {
+            self.e.entity_commands().insert(Checkable);
+        }
+        self
     }
 }
 

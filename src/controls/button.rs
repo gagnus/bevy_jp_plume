@@ -16,8 +16,8 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
-    AlignItems, BoxShadow, InteractionDisabled, JustifyContent, Node, PositionType, Pressed,
-    UiRect, px,
+    AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
+    PositionType, Pressed, UiRect, px,
 };
 use bevy_ui_widgets::Button;
 
@@ -69,6 +69,8 @@ pub struct PlumeButtonProps {
     pub variant: ButtonVariant,
     /// Rounded corners options
     pub corners: RoundedCorners,
+    /// If true does not respond with color change hover and pressed
+    pub checkable: bool,
 }
 
 impl Default for PlumeButtonProps {
@@ -77,6 +79,7 @@ impl Default for PlumeButtonProps {
             caption: Box::new(bsn_list!()),
             variant: ButtonVariant::default(),
             corners: Default::default(),
+            checkable: false,
         }
     }
 }
@@ -108,6 +111,7 @@ impl PlumeButton {
             Button
             template_value(props.variant)
             {box_shadow}
+            {props.checkable.then(|| bsn! { Checkable })}
             Hovered
             TabIndex(0)
             FocusIndicator
@@ -181,6 +185,8 @@ fn update_button_styles(
             Has<InteractionDisabled>,
             Has<Pressed>,
             &Hovered,
+            Has<Checked>,
+            Has<Checkable>,
             Has<Flat>,
             &ThemeBackgroundGradient,
             &InheritableThemeTextColor,
@@ -192,6 +198,7 @@ fn update_button_styles(
             Added<Pressed>,
             Added<InteractionDisabled>,
             Added<Flat>,
+            Added<Checked>,
         )>,
     >,
     q_children: Query<&Children>,
@@ -204,6 +211,8 @@ fn update_button_styles(
         disabled,
         pressed,
         hovered,
+        checked,
+        checkable,
         flat,
         bg_color,
         font_color,
@@ -216,6 +225,8 @@ fn update_button_styles(
             disabled,
             pressed,
             hovered.0,
+            checked,
+            checkable,
             flat,
             bg_color,
             font_color,
@@ -246,6 +257,8 @@ fn update_button_styles_remove(
         Has<InteractionDisabled>,
         Has<Pressed>,
         &Hovered,
+        Has<Checked>,
+        Has<Checkable>,
         Has<Flat>,
         &ThemeBackgroundGradient,
         &InheritableThemeTextColor,
@@ -255,6 +268,8 @@ fn update_button_styles_remove(
     q_outline: Query<&ThemeBorderColor, With<ButtonOutline>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_pressed: RemovedComponents<Pressed>,
+    mut removed_checked: RemovedComponents<Checked>,
+    mut removed_checkable: RemovedComponents<Checkable>,
     mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
@@ -262,6 +277,8 @@ fn update_button_styles_remove(
         .read()
         .chain(removed_pressed.read())
         .chain(removed_flat.read())
+        .chain(removed_checked.read())
+        .chain(removed_checkable.read())
         .for_each(|ent| {
             if let Ok((
                 button_ent,
@@ -269,6 +286,8 @@ fn update_button_styles_remove(
                 disabled,
                 pressed,
                 hovered,
+                checked,
+                checkable,
                 flat,
                 bg_color,
                 font_color,
@@ -281,6 +300,8 @@ fn update_button_styles_remove(
                     disabled,
                     pressed,
                     hovered.0,
+                    checked,
+                    checkable,
                     flat,
                     bg_color,
                     font_color,
@@ -298,6 +319,8 @@ fn set_button_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
+    checked: bool,
+    checkable: bool,
     flat: bool,
     bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
@@ -305,32 +328,41 @@ fn set_button_styles(
     outline: Option<(Entity, &ThemeBorderColor)>,
     commands: &mut Commands,
 ) {
+    let variant = if checkable && checked {
+        &ButtonVariant::Primary
+    } else {
+        variant
+    };
+
     let bg_set = match variant {
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
         ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BG,
     };
-    let bg_token = bg_set.pick(disabled, pressed, hovered);
+    let bg_token = bg_set.pick(disabled, pressed && !checkable, hovered && !checkable);
+
+    let border_token = match variant {
+        ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BORDER.pick(
+            disabled,
+            pressed && !checkable,
+            hovered && !checkable,
+        ),
+        _ => tokens::BUTTON_BORDER_NONE,
+    };
+
+    let text_token = match (variant, disabled) {
+        (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
+        (ButtonVariant::Primary, false) => tokens::BUTTON_PRIMARY_TEXT,
+        (_, true) => tokens::BUTTON_TEXT_DISABLED,
+        (_, false) => tokens::BUTTON_TEXT,
+    };
+
     // Disabled buttons read as inert: flat fill, no gradient.
     let bg_gradient_amount = if disabled || flat {
         0.0
     } else {
         GRADIENT_AMOUNT
-    };
-
-    let border_token = match variant {
-        ButtonVariant::Outline => {
-            tokens::sets::BUTTON_OUTLINE_BORDER.pick(disabled, pressed, hovered)
-        }
-        _ => tokens::BUTTON_BORDER_NONE,
-    };
-
-    let font_color_token = match (variant, disabled) {
-        (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
-        (ButtonVariant::Primary, false) => tokens::BUTTON_PRIMARY_TEXT,
-        (_, true) => tokens::BUTTON_TEXT_DISABLED,
-        (_, false) => tokens::BUTTON_TEXT,
     };
 
     let cursor_shape = match disabled {
@@ -344,10 +376,10 @@ fn set_button_styles(
             .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
     }
 
-    if font_color.0 != font_color_token {
+    if font_color.0 != text_token {
         commands
             .entity(button_ent)
-            .insert(InheritableThemeTextColor(font_color_token));
+            .insert(InheritableThemeTextColor(text_token));
     }
 
     if let Some((outline_ent, outline_color)) = outline

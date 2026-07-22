@@ -4,7 +4,6 @@
 mod common;
 
 fn main() {
-    let mut app = common::demo_app();
-    app.add_plugins(common::gallery::GalleryPlugin);
+    let mut app = common::demo_app(true);
     app.run();
 }

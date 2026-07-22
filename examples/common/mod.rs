@@ -9,6 +9,8 @@ use std::path::PathBuf;
 use bevy::prelude::*;
 use bevy_jp_plume::{PlumePlugins, light_theme, theme::UiTheme};
 
+use crate::common::gallery::GalleryPlugin;
+
 pub mod audio_settings;
 pub mod debug_hub;
 pub mod debug_settings;
@@ -18,19 +20,19 @@ pub mod theme_editor;
 
 /// Base app every example builds on: default + plume plugins, a camera, the dialog hub,
 /// and the shared command-line handling. Callers add their feature plugin(s) and `run`.
-pub fn demo_app() -> App {
+pub fn demo_app(default_gallery: bool) -> App {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .add_plugins(debug_hub::DebugDialogHubPlugin)
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2d);
         });
-    apply_args(&mut app);
+    apply_args(&mut app, default_gallery);
     app
 }
 
 /// Command-line options accepted by every example.
-#[derive(argh::FromArgs)]
+#[derive(argh::FromArgs, Debug)]
 struct ExampleArgs {
     /// save a screenshot here once the UI has settled, then exit
     #[argh(option)]
@@ -39,6 +41,14 @@ struct ExampleArgs {
     /// build the UI with the light theme instead of the default dark one
     #[argh(switch)]
     light: bool,
+
+    /// show the gallery
+    #[argh(switch)]
+    gallery: bool,
+
+    /// don't show the gallery
+    #[argh(switch)]
+    no_gallery: bool,
 }
 
 /// Print the backing resource whenever it changes, to confirm every control
@@ -55,8 +65,12 @@ pub fn log_on_change<R: Resource + core::fmt::Debug>(res: Res<R>) {
 ///   save a PNG once the UI has settled, then exit. Without it the app runs normally.
 /// - `--light`: swap in the light palette. `PlumePlugins` installs the dark one, so
 ///   this overwrites [`UiTheme`] and must be called after the plugins are added.
-pub fn apply_args(app: &mut App) {
+pub fn apply_args(app: &mut App, default_gallery: bool) {
     let args: ExampleArgs = argh::from_env();
+
+    if (default_gallery && !args.no_gallery) || args.gallery {
+        app.add_plugins(GalleryPlugin);
+    }
 
     if args.light {
         let mut theme = UiTheme::default();

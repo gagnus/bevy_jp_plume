@@ -22,7 +22,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .add_systems(Startup, scene.spawn());
-    common::apply_args(&mut app);
+    common::apply_args(&mut app, false);
     app.run();
 }
 

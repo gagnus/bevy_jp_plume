@@ -27,7 +27,7 @@ impl Default for AudioSettings {
 }
 
 /// Adds the audio dialog: its resource, its dialog system + hub entry, and its log.
-pub struct AudioSettingsPlugin;
+pub struct AudioSettingsPlugin(pub bool);
 
 impl Plugin for AudioSettingsPlugin {
     fn build(&self, app: &mut App) {
@@ -35,7 +35,7 @@ impl Plugin for AudioSettingsPlugin {
             .add_debug_dialog(
                 TITLE,
                 font_awesome::solid::VOLUME,
-                true,
+                self.0,
                 audio_settings_dialog,
             )
             .add_systems(Update, log_on_change::<AudioSettings>);
@@ -52,7 +52,7 @@ fn audio_settings_dialog(
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
-        .at(px(120), px(120))
+        .at(px(60), px(80))
         .icon(font_awesome::solid::VOLUME)
         .show(|ui| {
             ui.horizontal(|ui| {

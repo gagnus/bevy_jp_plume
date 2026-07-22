@@ -4,7 +4,7 @@
 mod common;
 
 fn main() {
-    let mut app = common::demo_app();
-    app.add_plugins(common::player_profile::PlayerProfilePlugin);
+    let mut app = common::demo_app(false);
+    app.add_plugins(common::player_profile::PlayerProfilePlugin(true));
     app.run();
 }

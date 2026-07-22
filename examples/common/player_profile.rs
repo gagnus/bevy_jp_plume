@@ -58,7 +58,7 @@ impl Default for ProfileSettings {
 }
 
 /// Adds the player-profile dialog: its resource, its dialog system + hub entry, and its log.
-pub struct PlayerProfilePlugin;
+pub struct PlayerProfilePlugin(pub bool);
 
 impl Plugin for PlayerProfilePlugin {
     fn build(&self, app: &mut App) {
@@ -66,7 +66,7 @@ impl Plugin for PlayerProfilePlugin {
             .add_debug_dialog(
                 TITLE,
                 font_awesome::solid::PERSON,
-                true,
+                self.0,
                 player_profile_dialog,
             )
             .add_systems(Update, log_on_change::<ProfileSettings>);
@@ -94,7 +94,7 @@ fn player_profile_dialog(
     let mut done = false;
     root.dialog(TITLE, &mut open)
         .width(px(380))
-        .at(px(700), px(100))
+        .at(px(450), px(80))
         .icon(font_awesome::solid::PERSON)
         .show(|ui| {
             // Identity: three text/choice fields sharing the gutter.

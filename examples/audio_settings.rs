@@ -4,7 +4,7 @@
 mod common;
 
 fn main() {
-    let mut app = common::demo_app();
-    app.add_plugins(common::audio_settings::AudioSettingsPlugin);
+    let mut app = common::demo_app(false);
+    app.add_plugins(common::audio_settings::AudioSettingsPlugin(true));
     app.run();
 }
