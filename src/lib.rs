@@ -12,17 +12,14 @@ use bevy_asset::embedded_asset;
 use bevy_ecs::{query::With, schedule::IntoScheduleConfigs};
 use bevy_text::TextFont;
 use bevy_ui::UiSystems;
-use bevy_ui_render::UiMaterialPlugin;
 
 use crate::{
-    alpha_pattern::{AlphaPatternMaterial, AlphaPatternResource},
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
     theme::{ThemePlugin, ThemedText},
     utils::anim::UiAnimPlugin,
 };
 
-mod alpha_pattern;
 pub mod containers;
 pub mod controls;
 pub mod display;
@@ -48,8 +45,6 @@ impl Plugin for PlumeCorePlugin {
         embedded_asset!(app, "assets/fonts/FontAwesome-Solid.otf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Regular.otf");
 
-        embedded_asset!(app, "assets/shaders/alpha_pattern.wgsl");
-
         app.add_plugins((
             ControlsPlugin,
             imm::ImmPlugin,
@@ -62,7 +57,6 @@ impl Plugin for PlumeCorePlugin {
             bevy_input_focus::tab_navigation::TabNavigationPlugin,
             focus::FocusPlugin,
             HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
-            UiMaterialPlugin::<AlphaPatternMaterial>::default(),
         ));
 
         // Fonts must be current before `measure_text_system` and
@@ -77,8 +71,6 @@ impl Plugin for PlumeCorePlugin {
         )));
 
         app.add_observer(font_styles::on_changed_font);
-
-        app.init_resource::<AlphaPatternResource>();
     }
 }
 

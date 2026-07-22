@@ -594,7 +594,7 @@ impl core::ops::Index<ThemeSlot> for ThemeResolvedPalette {
 }
 
 /// Represents a set of [`Oklcha`] colors which have same hue and chroma but different lightnesses
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct OklchaArray<const N: usize> {
     /// Hue of the colors
     pub hue: f32,
@@ -615,7 +615,7 @@ impl<const N: usize> OklchaArray<N> {
 
 /// The theme's parametric palette.
 /// Call [`Self::resolve`] to bake it into a [`ThemeResolvedPalette`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ThemeEditablePalette {
     /// Neutral ramp; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
     pub neutrals: OklchaArray<7>,
@@ -808,6 +808,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TEXT_INPUT_BORDER, ThemeSlot::Neutral3),
     (tokens::TEXT_INPUT_BORDER_ACTIVE, ThemeSlot::Accent0),
     (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
+    (tokens::COLOR_SWATCH_BORDER, ThemeSlot::Neutral4),
     (tokens::SECTION_HEADER_BG, ThemeSlot::Neutral2),
     (tokens::SECTION_HEADER_TEXT, ThemeSlot::Text0),
     (tokens::SECTION_HEADER_MUTED_TEXT, ThemeSlot::Text1),

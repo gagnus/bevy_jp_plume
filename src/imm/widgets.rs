@@ -3,6 +3,7 @@ use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
+use bevy_color::Color;
 use bevy_ecs::{event::EntityEvent, observer::On, system::Commands, world::EntityWorldMut};
 use bevy_immediate::{
     ImmEntity, ImmId, ImmIdBuilder, imm_id,
@@ -20,8 +21,9 @@ use crate::{
         flex_spacer, row, screen, section_body, section_frame, separator, space,
     },
     controls::{
-        PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, list_rows_from_strings,
+        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput,
+        PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+        list_rows_from_strings,
     },
     display::{caption, caption_small_caps, fa_icon},
 };
@@ -43,6 +45,11 @@ pub trait PlumeImm<'w, 's> {
     /// Hairline rule across the container: a horizontal line in a
     /// [`Self::vertical`], a vertical one in a [`Self::horizontal`].
     fn separator(&mut self);
+
+    /// Non-interactive color preview: a themed, bordered rounded box filled with
+    /// `color`. Defaults to a [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT)
+    /// square; chain `.square()`/`.width()`/`.height()` to resize.
+    fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
 
     /// Fixed gap along the container's main axis — `length` of width in a
     /// [`Self::horizontal`], of height in a [`Self::vertical`]. For a gap that
@@ -183,6 +190,43 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn separator(&mut self) {
         self.ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(separator);
+    }
+
+    #[track_caller]
+    fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch> {
+        // Identity is the call site, not the color: an animating value reconciles its
+        // ColorSwatchValue in place rather than respawning the box every change.
+        let mut entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(move || bsn! { @PlumeColorSwatch ColorSwatchValue({color}) });
+        struct SwatchColor;
+        let lin = color.to_linear();
+        let key = (
+            lin.red.to_bits(),
+            lin.green.to_bits(),
+            lin.blue.to_bits(),
+            lin.alpha.to_bits(),
+        );
+        if entity.hash_update_typ::<SwatchColor>(Some(imm_id(key))) && !entity.will_be_spawned() {
+            entity
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| {
+                    if let Some(mut value) = e.get_mut::<ColorSwatchValue>() {
+                        value.0 = color;
+                    }
+                });
+        }
+        let hovered = entity.hovered();
+        let will_be_spawned = entity.will_be_spawned();
+        ImmResponse {
+            clicked: false,
+            changed: false,
+            hovered,
+            entity: entity.entity(),
+            will_be_spawned,
+            e: entity,
+            kind: PhantomData,
+        }
     }
 
     #[track_caller]

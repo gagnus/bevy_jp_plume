@@ -32,7 +32,6 @@ pub use bevy_text::EditableTextFilter;
 
 use listview::ListViewPlugin;
 
-use crate::alpha_pattern::AlphaPatternPlugin;
 use bevy_app::Plugin;
 use default_width::DefaultWidthPlugin;
 
@@ -42,7 +41,6 @@ pub struct ControlsPlugin;
 impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_plugins((
-            AlphaPatternPlugin,
             ButtonPlugin,
             CheckboxPlugin,
             ColorSwatchPlugin,

@@ -39,11 +39,17 @@ pub mod kind {
     /// Kinds whose padding is layout rather than theming, so an app may set it:
     /// row, column, screen. Excludes the themed containers (group, section).
     pub trait Padded {}
+    /// Kinds that centre their content and derive nothing from their height, so an
+    /// app may set it: button, color swatch. Excludes controls whose height is
+    /// font-driven or fixed geometry (caption, toggle, slider, checkbox, radio).
+    pub trait Sizable {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
     /// `button` / `icon_button` / `tool_button`.
     pub struct Button;
+    /// `color_swatch`.
+    pub struct Swatch;
     /// `slider`.
     pub struct Slider;
     /// `number`.
@@ -74,6 +80,8 @@ pub mod kind {
     impl Padded for Row {}
     impl Padded for Column {}
     impl Padded for Screen {}
+    impl Sizable for Button {}
+    impl Sizable for Swatch {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -165,6 +173,35 @@ impl<K> ImmResponse<'_, '_, '_, K> {
                 });
         }
         self
+    }
+}
+
+/// Height builders, only on kinds that centre their content and derive nothing from
+/// their height (button, swatch); forcing a height elsewhere clips text or deforms
+/// fixed control geometry.
+impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
+    /// Override the control's height. Written into the retained `Node` only when
+    /// the value changes.
+    pub fn height(mut self, height: Val) -> Self {
+        struct HeightKey;
+        if self
+            .e
+            .hash_update_typ::<HeightKey>(Some(imm_id(format!("{height:?}"))))
+        {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.height = height;
+                    }
+                });
+        }
+        self
+    }
+
+    /// Set both axes to `size` — the natural call for a square swatch or button.
+    pub fn square(self, size: Val) -> Self {
+        self.width(size).height(size)
     }
 }
 

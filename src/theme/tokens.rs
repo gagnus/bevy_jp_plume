@@ -265,6 +265,11 @@ pub const TEXT_INPUT_BORDER_ACTIVE: ThemeToken =
 pub const TEXT_INPUT_BORDER_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.textinput.border.disabled");
 
+// Color swatch
+
+/// Border around a color swatch
+pub const COLOR_SWATCH_BORDER: ThemeToken = ThemeToken::new_static("plume.swatch.border");
+
 // Section
 
 /// Section background
