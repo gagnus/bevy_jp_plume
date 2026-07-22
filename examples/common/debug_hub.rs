@@ -90,6 +90,10 @@ fn debug_hub_ui(
     mouse: Res<ButtonInput<MouseButton>>,
 ) {
     let entries = registry.entries();
+    if entries.is_empty() {
+        return;
+    }
+
     let mut toggled: Vec<&'static str> = vec![];
     // Headerless panel: an always-present, pinned toolbar with no title bar to close or
     // drag. A panel (not a screen), so the gallery stays the one screen.
@@ -118,7 +122,7 @@ fn debug_hub_ui(
                             .flat()
                             .checkable()
                             .checked(is_open)
-                            .variant(ButtonVariant::Outline)
+                            .variant(ButtonVariant::Plain)
                             .clicked
                         {
                             toggled.push(title);
