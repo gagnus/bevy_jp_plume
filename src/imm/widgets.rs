@@ -375,6 +375,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             ui: self,
             caller: Location::caller(),
             title: title.to_owned(),
+            icon: None,
             open,
             layout: DialogLayout {
                 width: Val::Auto,
@@ -474,6 +475,7 @@ pub struct ImmDialog<'a, 'w, 's> {
     ui: &'a mut Ui<'w, 's>,
     caller: &'static Location<'static>,
     title: String,
+    icon: Option<FaIcon>,
     open: &'a mut bool,
     layout: DialogLayout,
 }
@@ -530,6 +532,12 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
         self
     }
 
+    /// Leading FontAwesome icon in the title bar, before the title text.
+    pub fn icon(mut self, icon: FaIcon) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
     /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
     pub fn closable(mut self, closable: bool) -> Self {
         self.layout.closable = closable;
@@ -549,11 +557,11 @@ impl<'w, 's> ImmDialog<'_, 'w, 's> {
             return;
         }
         let id = ImmIdBuilder::Hierarchy(ImmId::new((self.caller, self.title.as_str())));
-        let (title, layout) = (self.title, self.layout);
+        let (title, icon, layout) = (self.title, self.icon, self.layout);
         let mut entity = self
             .ui
             .ch_with_manual_id(id)
-            .on_spawn_apply_scene(move || imm_dialog_scene(title, layout));
+            .on_spawn_apply_scene(move || imm_dialog_scene(title, icon, layout));
         if entity.close_requested() {
             *self.open = false;
             entity.entity_commands().despawn();
@@ -630,7 +638,7 @@ fn respond<'r, 'w, 's, K>(
     }
 }
 
-fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
+fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -> impl Scene {
     let DialogLayout {
         width,
         height,
@@ -643,7 +651,7 @@ fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
     bsn! {
         // Empty contents: the imm layer reconciles the body itself.
         dialog_frame(PlumeDialogProps {
-            title: Box::new(bsn_list!(caption(title))),
+            title: Box::new(bsn_list![ {icon.map(|icon| bsn! { fa_icon(icon) })}, caption(title)]),
             width,
             height,
             max_height,

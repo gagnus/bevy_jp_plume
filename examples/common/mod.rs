@@ -1,9 +1,33 @@
 //! Scaffolding shared by the imm acceptance examples: resource change logging,
-//! headless screenshot verification and theme selection.
+//! headless screenshot verification, theme selection, and the feature modules each
+//! example (and the combined `showcase`) mounts as a plugin.
+// Every example bin compiles all of `common` but mounts only some feature modules, so
+// the rest are unavoidably dead code in that bin.
+#![allow(dead_code)]
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use bevy_jp_plume::{light_theme, theme::UiTheme};
+use bevy_jp_plume::{PlumePlugins, light_theme, theme::UiTheme};
+
+pub mod audio_settings;
+pub mod debug_hub;
+pub mod debug_settings;
+pub mod gallery;
+pub mod player_profile;
+pub mod theme_editor;
+
+/// Base app every example builds on: default + plume plugins, a camera, the dialog hub,
+/// and the shared command-line handling. Callers add their feature plugin(s) and `run`.
+pub fn demo_app() -> App {
+    let mut app = App::new();
+    app.add_plugins((DefaultPlugins, PlumePlugins))
+        .add_plugins(debug_hub::DebugDialogHubPlugin)
+        .add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Camera2d);
+        });
+    apply_args(&mut app);
+    app
+}
 
 /// Command-line options accepted by every example.
 #[derive(argh::FromArgs)]

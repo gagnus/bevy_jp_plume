@@ -15,8 +15,6 @@ use bevy_jp_plume::{
     tokens,
 };
 
-// Nothing is wired to a resource, so `log_on_change` goes unused.
-#[allow(dead_code)]
 #[path = "common/mod.rs"]
 mod common;
 
