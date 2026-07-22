@@ -191,7 +191,7 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Start,
-                        padding: UiRect::horizontal(size::HEADER_PAD_X),
+                        padding: UiRect::horizontal(size::PAD * 2.0),
                         min_height: size::DIALOG_HEADER_HEIGHT,
                         column_gap: size::GAP,
                         border: UiRect::bottom(size::CONTAINER_BORDER),

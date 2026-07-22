@@ -1,15 +1,21 @@
-//! Pass-2 acceptance example for `text_edit` + `radio`: a player profile dialog
-//! backed by one resource, printed live, with Reset wired to `Default`.
+//! Pass-2 acceptance example for `text_edit` + `radio`, grown into a design
+//! showcase: one resource-backed dialog laid out on a single label gutter, its
+//! controls grouped under flat (non-collapsible) section headers.
 use bevy::prelude::*;
 use bevy_jp_plume::{
     PlumePlugins,
     constants::font_awesome,
     controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot},
+    imm::{PlumeImm, PlumeRoot, Ui},
 };
 
 #[path = "common/mod.rs"]
 mod common;
+
+/// Width of the label gutter every row aligns to.
+const GUTTER: f32 = 76.0;
+
+const CLASSES: &[&str] = &["Warrior", "Mage", "Rogue"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Difficulty {
@@ -31,8 +37,11 @@ struct ProfileSettings {
     open: bool,
     name: String,
     motto: String,
+    class: usize,
     difficulty: Difficulty,
     team: Team,
+    permadeath: bool,
+    music: f32,
 }
 
 impl Default for ProfileSettings {
@@ -41,8 +50,11 @@ impl Default for ProfileSettings {
             open: true,
             name: "Player One".into(),
             motto: String::new(),
+            class: 0,
             difficulty: Difficulty::default(),
             team: Team::default(),
+            permadeath: false,
+            music: 70.0,
         }
     }
 }
@@ -60,6 +72,14 @@ fn main() {
         );
     common::apply_args(&mut app);
     app.run();
+}
+
+/// One gutter row: a caption pinned to [`GUTTER`], then whatever `f` builds.
+fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
+    ui.horizontal(|ui| {
+        ui.caption(label).width(px(GUTTER));
+        f(ui);
+    });
 }
 
 fn profile_ui(mut root: PlumeRoot, mut settings: ResMut<ProfileSettings>) {
@@ -80,34 +100,51 @@ fn profile_ui(mut root: PlumeRoot, mut settings: ResMut<ProfileSettings>) {
     let mut open = s.open;
     let mut done = false;
     root.dialog("Player Profile", &mut open)
-        .width(px(540))
+        .width(px(380))
         .at(px(160), px(100))
         .show(|ui| {
-            ui.horizontal(|ui| {
-                ui.vertical(|ui| {
-                    ui.caption("Name").width(px(56));
-                    ui.text_edit(&mut s.name);
-                    ui.caption("Motto").width(px(56));
-                    ui.text_edit(&mut s.motto).placeholder("A few words…");
-                })
-                .align_self(AlignSelf::Start)
-                .grow();
-                ui.separator();
-                ui.vertical(|ui| {
-                    ui.section("Difficulty", |ui| {
-                        ui.radio(&mut s.difficulty, Difficulty::Easy, "Easy");
-                        ui.radio(&mut s.difficulty, Difficulty::Normal, "Normal");
-                        ui.radio(&mut s.difficulty, Difficulty::Hard, "Hard");
-                    })
-                    .collapsible(false);
-                    ui.section("Team", |ui| {
-                        ui.radio(&mut s.team, Team::Red, "Red");
-                        ui.radio(&mut s.team, Team::Blue, "Blue");
-                    })
-                    .collapsible(false);
-                })
-                .width(percent(25));
-            });
+            // Identity: three text/choice fields sharing the gutter.
+            ui.section("Profile", |ui| {
+                field(ui, "Name", |ui| {
+                    ui.text_edit(&mut s.name).grow();
+                });
+                field(ui, "Motto", |ui| {
+                    ui.text_edit(&mut s.motto)
+                        .grow()
+                        .placeholder("A few words…");
+                });
+                field(ui, "Class", |ui| {
+                    ui.select(&mut s.class, CLASSES).grow();
+                });
+            })
+            .collapsible(false);
+
+            // Match settings: radio groups laid out along the same gutter.
+            ui.section("Match", |ui| {
+                field(ui, "Difficulty", |ui| {
+                    ui.radio(&mut s.difficulty, Difficulty::Easy, "Easy");
+                    ui.radio(&mut s.difficulty, Difficulty::Normal, "Normal");
+                    ui.radio(&mut s.difficulty, Difficulty::Hard, "Hard");
+                });
+                field(ui, "Team", |ui| {
+                    ui.radio(&mut s.team, Team::Red, "Red");
+                    ui.radio(&mut s.team, Team::Blue, "Blue");
+                });
+            })
+            .collapsible(false);
+
+            // Options: a right-aligned toggle and a slider with a live read-out.
+            ui.section("Options", |ui| {
+                field(ui, "Permadeath", |ui| {
+                    ui.flex_spacer();
+                    ui.toggle(&mut s.permadeath);
+                });
+                field(ui, "Music", |ui| {
+                    ui.slider(&mut s.music, 0.0..=100.0).grow().step(1.0);
+                    ui.caption(&format!("{:.0}%", s.music)).width(px(36));
+                });
+            })
+            .collapsible(false);
 
             ui.separator();
 

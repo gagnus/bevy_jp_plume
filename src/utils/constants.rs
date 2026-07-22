@@ -62,9 +62,6 @@ pub mod size {
     /// Container body padding (dialog, group, section)
     pub const PAD: Val = Val::Px(6.0);
 
-    /// Header horizontal padding (dialog, section)
-    pub const HEADER_PAD_X: Val = Val::Px(10.0);
-
     /// Knob diameter (slider thumb, toggle knob)
     pub const KNOB_SIZE: Val = Val::Px(16.0);
 

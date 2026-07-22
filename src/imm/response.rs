@@ -16,10 +16,13 @@ use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
-use crate::containers::{SectionCollapsed, SectionCollapsible};
 use crate::controls::{
     ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
     text_input_suffix,
+};
+use crate::{
+    containers::{SectionCollapsed, SectionCollapsible},
+    theme::Flat,
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -94,6 +97,15 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     /// Enable or disable the control (manages [`bevy_ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
+        self
+    }
+
+    /// Set `Flat` (not all controls use this but a lot have a gradient).
+    pub fn flat(mut self) -> Self {
+        struct FlatKey;
+        if self.e.hash_update_typ::<FlatKey>(Some(imm_id(true))) {
+            self.e.entity_commands().insert(Flat);
+        }
         self
     }
 

@@ -358,7 +358,7 @@ fn set_button_styles(
             .insert(ThemeBorderColor(border_token));
     }
 
-    let should_have_box_shadow = (variant.filled() || hovered || pressed) && !disabled;
+    let should_have_box_shadow = (variant.filled() || hovered || pressed) && !disabled && !flat;
     if should_have_box_shadow && !has_box_shadow {
         commands.entity(button_ent).insert(control_box_shadow());
     } else if !should_have_box_shadow && has_box_shadow {

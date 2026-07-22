@@ -438,6 +438,7 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_TEXT`
     /// - `DIALOG_TEXT`
     /// - `RADIO_TEXT`
+    /// - `SECTION_HEADER_MUTED_TEXT`
     /// - `TEXT_DIM`
     /// - `TEXT_INPUT_TEXT`
     Text1,
@@ -809,6 +810,7 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TEXT_INPUT_BORDER_DISABLED, ThemeSlot::Neutral3),
     (tokens::SECTION_HEADER_BG, ThemeSlot::Neutral2),
     (tokens::SECTION_HEADER_TEXT, ThemeSlot::Text0),
+    (tokens::SECTION_HEADER_MUTED_TEXT, ThemeSlot::Text1),
     (tokens::SECTION_BODY_BG, ThemeSlot::Neutral1),
     (tokens::GROUP_BG, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),

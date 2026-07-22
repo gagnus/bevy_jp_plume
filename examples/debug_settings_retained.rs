@@ -137,13 +137,15 @@ fn debug_options_dialog() -> impl Scene {
                                 @caption: bsn_list! {
                                     fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
                                     caption("Reset to defaults")
-                                }
+                                },
+                                @variant: ButtonVariant::Outline,
                             }
                         ),
                         flex_spacer(),
                         (
                             @PlumeButton {
                                 @caption: bsn! { caption("Cancel") },
+                                @variant: ButtonVariant::Outline,
                             }
                         ),
                         (

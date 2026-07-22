@@ -27,10 +27,7 @@ use crate::{
     constants::{font_awesome, fonts, size},
     display::fa_icon,
     font_styles::InheritableFont,
-    theme::{
-        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundColor,
-        ThemeBackgroundGradient, control_box_shadow,
-    },
+    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
     utils::anim::AnimState,
 };
@@ -146,14 +143,16 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::HEADER_PAD_X),
+                    padding: UiRect::horizontal(size::PAD),
                     min_height: size::HEADER_HEIGHT,
                     column_gap: size::GAP,
                     border_radius: size::CORNER_RADIUS,
                 }
-                template_value(control_box_shadow())
                 SectionHeader
-                ThemeBackgroundGradient(tokens::SECTION_HEADER_BG, GRADIENT_AMOUNT)
+                ThemeBackgroundColor(tokens::SECTION_HEADER_BG)
+                // The border is themed here but sized (to a bottom hairline) only by
+                // `update_section_header_style` on a non-collapsible section.
+                ThemeBorderColor(tokens::SEPARATOR)
                 InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
                 InheritableFont {
                     font: fonts::REGULAR,
@@ -271,34 +270,43 @@ fn update_section_collapsible(
     }
 }
 
-/// The header gradient is set once at scene build, so [`Flat`] on the section root
-/// needs its own pass (unlike the controls, whose state resolvers read it).
-fn update_section_header_flat(
-    q_flagged: Query<(Entity, Has<Flat>), (With<SectionRoot>, Added<Flat>)>,
-    mut removed_flat: RemovedComponents<Flat>,
-    q_sections: Query<Has<Flat>, With<SectionRoot>>,
+/// Header with `collapsible` false (`SectionCollapsible(false)`) is non-filled.
+fn update_section_header_style(
+    q_changed: Query<Entity, (With<SectionRoot>, Changed<SectionCollapsible>)>,
+    q_sections: Query<Option<&SectionCollapsible>, With<SectionRoot>>,
     q_children: Query<&Children>,
-    q_headers: Query<&ThemeBackgroundGradient, With<SectionHeader>>,
+    mut q_headers: Query<&mut Node, With<SectionHeader>>,
     mut commands: Commands,
 ) {
-    let apply = |root: Entity, flat: bool, commands: &mut Commands| {
-        let amount = if flat { 0.0 } else { GRADIENT_AMOUNT };
+    for root in q_changed.iter() {
+        let Ok(collapsible) = q_sections.get(root) else {
+            continue;
+        };
+        // Absent means collapsible (the component's Default); only explicit false is flat.
+        let collapsible = !matches!(collapsible, Some(SectionCollapsible(false)));
+
         for descendant in q_children.iter_descendants(root) {
-            if let Ok(header_bg) = q_headers.get(descendant)
-                && header_bg.1 != amount
-            {
-                commands
-                    .entity(descendant)
-                    .insert(ThemeBackgroundGradient(tokens::SECTION_HEADER_BG, amount));
-            }
-        }
-    };
-    for (root, flat) in q_flagged.iter() {
-        apply(root, flat, &mut commands);
-    }
-    for root in removed_flat.read() {
-        if let Ok(flat) = q_sections.get(root) {
-            apply(root, flat, &mut commands);
+            let Ok(mut node) = q_headers.get_mut(descendant) else {
+                continue;
+            };
+            let (bg_token, text_token, border) = if !collapsible {
+                (
+                    tokens::SECTION_BODY_BG,
+                    tokens::SECTION_HEADER_MUTED_TEXT,
+                    UiRect::bottom(size::CONTAINER_BORDER),
+                )
+            } else {
+                (
+                    tokens::SECTION_HEADER_BG,
+                    tokens::SECTION_HEADER_TEXT,
+                    UiRect::ZERO,
+                )
+            };
+            node.border = border;
+            commands.entity(descendant).insert((
+                ThemeBackgroundColor(bg_token),
+                InheritableThemeTextColor(text_token),
+            ));
         }
     }
 }
@@ -313,7 +321,7 @@ impl Plugin for SectionPlugin {
             (
                 update_section_collapse,
                 update_section_collapsible,
-                update_section_header_flat,
+                update_section_header_style,
             )
                 .in_set(PickingSystems::Last),
         );

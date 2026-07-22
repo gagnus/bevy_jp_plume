@@ -9,7 +9,7 @@ use bevy_immediate::{
     ui::{activated::ImmUiActivated, interaction::ImmUiInteraction},
 };
 use bevy_scene::{Scene, bsn, bsn_list, on};
-use bevy_ui::{Node, Val, px};
+use bevy_ui::{Node, Val, px, widget::Text};
 use bevy_ui_widgets::RequestClose;
 
 use crate::{
@@ -146,10 +146,26 @@ pub trait PlumeImm<'w, 's> {
 impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's> {
-        let text_owned = text.to_owned();
-        let mut entity = self
-            .ch_with_manual_id(loc_id(text))
-            .on_spawn_apply_scene(move || caption(text_owned));
+        // Identity is the call site, not the text. A caption whose text changes
+        // (e.g. a live value read-out) then reconciles its `Text` in place rather
+        // than respawning — a `Text` child spawned after the initial frame never
+        // re-receives the ancestor's propagated `InheritableFont`, so a respawn
+        // would silently drop back to the default font.
+        let mut entity = self.ch_with_manual_id(loc_id(())).on_spawn_apply_scene({
+            let text = text.to_owned();
+            move || caption(text)
+        });
+        struct CaptionText;
+        if entity.hash_update_typ::<CaptionText>(Some(imm_id(text))) && !entity.will_be_spawned() {
+            let text = text.to_owned();
+            entity
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| {
+                    if let Some(mut node_text) = e.get_mut::<Text>() {
+                        node_text.0 = text;
+                    }
+                });
+        }
         let hovered = entity.hovered();
         let will_be_spawned = entity.will_be_spawned();
         ImmResponse {
