@@ -16,7 +16,7 @@ use bevy_immediate::{
     },
 };
 use bevy_scene::{Scene, bsn, bsn_list, on};
-use bevy_ui::{Node, Val, px, widget::Text};
+use bevy_ui::{JustifyContent, Node, Val, px, widget::Text};
 use bevy_ui_widgets::RequestClose;
 
 use crate::{
@@ -70,6 +70,16 @@ pub trait PlumeImm<'w, 's> {
 
     /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
     fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button>;
+
+    /// A non-interactive FontAwesome glyph in the current text color — the icon
+    /// counterpart to [`Self::caption`].
+    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's>;
+
+    /// A push button whose content is built by `f` instead of a single label.
+    fn button_container(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Labeled checkbox bound to `value`.
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's>;
@@ -322,6 +332,54 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 .entity_commands()
                 .queue(move |mut e: EntityWorldMut| set_icon_glyph(&mut e, icon.glyph()));
         }
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's> {
+        // Keyed on the face (a runtime font handle), not the glyph, so toggling the
+        // glyph within a face reconciles in place rather than respawning — as tool_button does.
+        let mut entity = self
+            .ch_with_manual_id(loc_id(icon.face()))
+            .on_spawn_apply_scene(move || fa_icon(icon));
+        struct IconGlyph;
+        if entity.hash_update_typ::<IconGlyph>(Some(imm_id(icon.glyph())))
+            && !entity.will_be_spawned()
+        {
+            entity
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| {
+                    if let Some(mut text) = e.get_mut::<Text>() {
+                        text.0 = icon.glyph().to_owned();
+                    }
+                });
+        }
+        let hovered = entity.hovered();
+        let will_be_spawned = entity.will_be_spawned();
+        ImmResponse {
+            clicked: false,
+            changed: false,
+            hovered,
+            entity: entity.entity(),
+            will_be_spawned,
+            e: entity,
+            kind: PhantomData,
+        }
+    }
+
+    #[track_caller]
+    fn button_container(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Button> {
+        // Empty caption in the scene; the row's content comes from `f`. Left-aligned
+        // so content packs from the leading edge rather than centering like a label.
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(|| {
+                bsn! { @PlumeButton Node { justify_content: JustifyContent::Start } }
+            })
+            .add(f);
         respond(entity, false)
     }
 
