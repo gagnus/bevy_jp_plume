@@ -49,6 +49,9 @@ pub mod size {
     /// Border width of control chrome (checkbox, radio, toggle)
     pub const CONTROL_BORDER: Val = Val::Px(1.0);
 
+    /// Thickness of the accent underline marking the selected tab
+    pub const TAB_INDICATOR_HEIGHT: Val = Val::Px(2.0);
+
     /// Border width of containers (dialog, section header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(1.0);
 

@@ -282,6 +282,25 @@ pub const SECTION_HEADER_MUTED_TEXT: ThemeToken =
 /// Section body background
 pub const SECTION_BODY_BG: ThemeToken = ThemeToken::new_static("plume.section.body.bg");
 
+// Tabs
+
+/// Tab strip (header) background
+pub const TABS_STRIP_BG: ThemeToken = ThemeToken::new_static("plume.tabs.strip.bg");
+/// Tab container body background
+pub const TABS_BODY_BG: ThemeToken = ThemeToken::new_static("plume.tabs.body.bg");
+/// Tab background
+pub const TAB_BG: ThemeToken = ThemeToken::new_static("plume.tab.bg");
+/// Tab background (hovered)
+pub const TAB_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.tab.bg.hover");
+/// Tab text color
+pub const TAB_TEXT: ThemeToken = ThemeToken::new_static("plume.tab.text");
+/// Tab text color (selected)
+pub const TAB_TEXT_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.text.selected");
+/// Tab text color (disabled)
+pub const TAB_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.tab.text.disabled");
+/// Underline marking the selected tab
+pub const TAB_INDICATOR: ThemeToken = ThemeToken::new_static("plume.tab.indicator");
+
 // Group
 
 /// Group background

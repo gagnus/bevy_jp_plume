@@ -3,6 +3,9 @@
 //! Controls self-update their own value and work when simply dropped into a dialog.
 //! The parametric theme pipeline (palette → slot → token) styles everything.
 
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+
 extern crate alloc;
 
 use bevy_app::{
@@ -16,7 +19,7 @@ use bevy_ui::UiSystems;
 use crate::{
     controls::ControlsPlugin,
     cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
-    theme::{ThemePlugin, ThemedText},
+    theme::{ThemePlugin, ThemedText, on_themed_text_inserted},
     utils::anim::UiAnimPlugin,
 };
 
@@ -50,6 +53,7 @@ impl Plugin for PlumeCorePlugin {
             imm::ImmPlugin,
             UiAnimPlugin,
             containers::SectionPlugin,
+            containers::TabsPlugin,
             CursorIconPlugin,
             ThemePlugin,
             // Click-to-focus plus Tab/Shift-Tab traversal of every control; tabbable
@@ -71,6 +75,8 @@ impl Plugin for PlumeCorePlugin {
         )));
 
         app.add_observer(font_styles::on_changed_font);
+        // Companion to the `TextColor` registration in `ThemePlugin`.
+        app.add_observer(on_themed_text_inserted::<TextFont>);
     }
 }
 

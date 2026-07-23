@@ -11,17 +11,17 @@ pub fn default_light_palette() -> ThemeEditablePalette {
 pub fn light_palette(hue: f32) -> ThemeEditablePalette {
     ThemeEditablePalette {
         neutrals: OklchaArray {
-            hue: hue,
+            hue,
             chroma: 0.008,
             l: [0.99, 0.88, 0.79, 0.74, 0.69, 0.71, 0.73],
         },
         accent: OklchaArray {
-            hue: hue,
+            hue,
             chroma: 0.110,
             l: [0.62, 0.64, 0.66, 0.40],
         },
         text: OklchaArray {
-            hue: hue,
+            hue,
             chroma: 0.044,
             l: [0.1, 0.4],
         },

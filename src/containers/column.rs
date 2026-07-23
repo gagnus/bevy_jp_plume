@@ -20,7 +20,7 @@ pub fn column() -> impl Scene {
             align_items: AlignItems::Stretch,
             row_gap: size::GAP,
         }
-        InheritableThemeTextColor(tokens::TEXT_MAIN)
+        InheritableThemeTextColor(tokens::TEXT_DIM)
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,

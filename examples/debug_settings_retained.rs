@@ -10,7 +10,7 @@ use bevy_jp_plume::{
         ButtonVariant, PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider,
         PlumeToggleSwitch, list_rows_from_strings,
     },
-    display::{caption, caption_small_caps, fa_icon, label_dim},
+    display::{caption, caption_small_caps, fa_icon},
     theme::ThemeBackgroundColor,
     tokens,
 };
@@ -179,7 +179,7 @@ fn select_row(label: &str, options: impl IntoIterator<Item: AsRef<str>>) -> impl
         row()
         Children [
             (
-                label_dim(label.to_string())
+                caption(label.to_string())
                 Node { width: px(84) }
             ),
             (
@@ -203,7 +203,7 @@ fn toggle_row(label: &str, on: bool) -> impl Scene {
     bsn! {
         row()
         Children [
-            label_dim(label.to_string()),
+            caption(label.to_string()),
             flex_spacer(),
             (
                 @PlumeToggleSwitch
@@ -227,7 +227,7 @@ fn slider_row(
         row()
         Children [
             (
-                label_dim(label.to_string())
+                caption(label.to_string())
                 Node { width: px(84) }
             ),
             (

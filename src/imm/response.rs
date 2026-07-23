@@ -4,6 +4,7 @@
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 
+use bevy_app::PropagateOver;
 use bevy_color::Color;
 use bevy_ecs::{
     entity::Entity,
@@ -11,14 +12,18 @@ use bevy_ecs::{
     world::{EntityWorldMut, World},
 };
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
-use bevy_scene::WorldSceneExt;
+use bevy_scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
+use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
 use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
 use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
-use crate::controls::{
-    ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
-    text_input_suffix,
+use crate::{
+    constants::{fonts, size},
+    controls::{
+        ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
+        text_input_suffix,
+    },
 };
 use crate::{
     containers::{SectionCollapsed, SectionCollapsible},
@@ -39,13 +44,19 @@ pub mod kind {
     /// Kinds whose padding is layout rather than theming, so an app may set it:
     /// row, column, screen. Excludes the themed containers (group, section).
     pub trait Padded {}
-    /// Kinds that centre their content and derive nothing from their height, so an
-    /// app may set it: button, color swatch. Excludes controls whose height is
-    /// font-driven or fixed geometry (caption, toggle, slider, checkbox, radio).
-    pub trait Sizable {}
+    /// Kinds an app may give a height: they either centre their content (button,
+    /// swatch) or hold whatever size they are handed (tabs, scroll area). Excludes
+    /// controls whose height is font-driven or fixed geometry (caption, toggle,
+    /// slider, checkbox, radio), where forcing one clips text or deforms the control.
+    pub trait Heightable {}
+    /// Kinds that derive nothing from either axis, so an app may set both: button,
+    /// color swatch.
+    pub trait Sizable: Heightable {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
+    /// `caption`.
+    pub struct Caption;
     /// `button` / `icon_button` / `tool_button`.
     pub struct Button;
     /// `color_swatch`.
@@ -60,6 +71,8 @@ pub mod kind {
     pub struct Select;
     /// `section`.
     pub struct Section;
+    /// `tabs`.
+    pub struct Tabs;
     /// `scroll_area`.
     pub struct ScrollArea;
     /// `horizontal`: children flow left-to-right, so its cross axis is vertical.
@@ -84,6 +97,10 @@ pub mod kind {
     impl Padded for Row {}
     impl Padded for Column {}
     impl Padded for Screen {}
+    impl Heightable for Button {}
+    impl Heightable for Swatch {}
+    impl Heightable for Tabs {}
+    impl Heightable for ScrollArea {}
     impl Sizable for Button {}
     impl Sizable for Swatch {}
 }
@@ -106,6 +123,33 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
 
 /// Universal builders, available on every kind.
 impl<K> ImmResponse<'_, '_, '_, K> {
+    // Guard shared by every value-carrying builder: true when `value` differs from
+    // the last one stored under `Key` for this entity, so a builder only queues a
+    // command when its argument actually changed. `Key` is a per-builder marker
+    // type, giving each its own slot in the entity's hash memory.
+    fn key_changed<Key: 'static>(&mut self, value: impl core::hash::Hash) -> bool {
+        self.e.hash_update_typ::<Key>(Some(imm_id(value)))
+    }
+
+    // Write one `Node` field, guarded by `Key`. Layout values (`Val`, `UiRect`) hold
+    // floats and so aren't `Hash`; their `Debug` form keys them instead.
+    fn set_node<Key: 'static, T: core::fmt::Debug + Send + 'static>(
+        mut self,
+        value: T,
+        set: impl FnOnce(&mut Node, T) + Send + 'static,
+    ) -> Self {
+        if self.key_changed::<Key>(format!("{value:?}")) {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        set(&mut node, value);
+                    }
+                });
+        }
+        self
+    }
+
     /// Enable or disable the control (manages [`bevy_ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
@@ -115,7 +159,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     /// Set `Flat` (not all controls use this but a lot have a gradient).
     pub fn flat(mut self) -> Self {
         struct FlatKey;
-        if self.e.hash_update_typ::<FlatKey>(Some(imm_id(true))) {
+        if self.key_changed::<FlatKey>(true) {
             self.e.entity_commands().insert(Flat);
         }
         self
@@ -123,19 +167,12 @@ impl<K> ImmResponse<'_, '_, '_, K> {
 
     /// Fill the remaining space along the container's main axis (`flex_grow` from
     /// a zero `flex_basis`).
-    pub fn grow(mut self) -> Self {
+    pub fn grow(self) -> Self {
         struct GrowKey;
-        if self.e.hash_update_typ::<GrowKey>(Some(imm_id(true))) {
-            self.e
-                .entity_commands()
-                .queue(|mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.flex_basis = Val::ZERO;
-                        node.flex_grow = 1.0;
-                    }
-                });
-        }
-        self
+        self.set_node::<GrowKey, _>(true, |node, _| {
+            node.flex_basis = Val::ZERO;
+            node.flex_grow = 1.0;
+        })
     }
 
     /// Place this one child on its container's cross axis, overriding the
@@ -143,69 +180,54 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     ///
     /// `AlignSelf::Start` in a column is how to stop a control stretching to full
     /// width; `Stretch` only bites on children that don't fix their own size.
-    pub fn align_self(mut self, align: AlignSelf) -> Self {
+    pub fn align_self(self, align: AlignSelf) -> Self {
         struct AlignSelfKey;
-        if self
-            .e
-            .hash_update_typ::<AlignSelfKey>(Some(imm_id(format!("{align:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.align_self = align;
-                    }
-                });
-        }
-        self
+        self.set_node::<AlignSelfKey, _>(align, |node, align| node.align_self = align)
     }
 
     /// Override the control's width. Written into the retained `Node` only when
     /// the value changes.
-    pub fn width(mut self, width: Val) -> Self {
+    pub fn width(self, width: Val) -> Self {
         struct WidthKey;
-        if self
-            .e
-            .hash_update_typ::<WidthKey>(Some(imm_id(format!("{width:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.width = width;
-                    }
-                });
-        }
-        self
+        self.set_node::<WidthKey, _>(width, |node, width| node.width = width)
     }
 }
 
-/// Height builders, only on kinds that centre their content and derive nothing from
-/// their height (button, swatch); forcing a height elsewhere clips text or deforms
-/// fixed control geometry.
-impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
-    /// Override the control's height. Written into the retained `Node` only when
-    /// the value changes.
-    pub fn height(mut self, height: Val) -> Self {
+impl<K: kind::Heightable> ImmResponse<'_, '_, '_, K> {
+    /// Fix the control's height instead of letting it hug its content. On a kind
+    /// that scrolls, content past it scrolls: prefer `max_height` there unless the
+    /// region should hold its size while near-empty.
+    pub fn height(self, height: Val) -> Self {
         struct HeightKey;
-        if self
-            .e
-            .hash_update_typ::<HeightKey>(Some(imm_id(format!("{height:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.height = height;
-                    }
-                });
-        }
-        self
+        self.set_node::<HeightKey, _>(height, |node, height| node.height = height)
     }
+}
 
+impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
     /// Set both axes to `size` — the natural call for a square swatch or button.
     pub fn square(self, size: Val) -> Self {
         self.width(size).height(size)
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::Caption> {
+    /// Set caption to be small caps
+    pub fn small_caps(mut self) -> Self {
+        struct SmallCapsKey;
+        if self.key_changed::<SmallCapsKey>(()) {
+            self.e.entity_commands().apply_scene(bsn! {
+                TextFont {
+                    font: FontSourceTemplate::Handle(fonts::REGULAR),
+                    font_size: size::MEDIUM_FONT,
+                    font_features: FontFeatures::from([
+                        FontFeatureTag::SMALL_CAPS,
+                        FontFeatureTag::CAPS_TO_SMALL_CAPS,
+                    ]),
+                }
+                PropagateOver<TextFont>
+            });
+        }
+        self
     }
 }
 
@@ -213,10 +235,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
     /// Set the button's color variant (the styling systems re-style on change).
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
         struct VariantKey;
-        if self
-            .e
-            .hash_update_typ::<VariantKey>(Some(imm_id(format!("{variant:?}"))))
-        {
+        if self.key_changed::<VariantKey>(format!("{variant:?}")) {
             self.e.entity_commands().insert(variant);
         }
         self
@@ -231,7 +250,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
     /// states move it.
     pub fn inert(mut self) -> Self {
         struct InertKey;
-        if self.e.hash_update_typ::<InertKey>(Some(imm_id(true))) {
+        if self.key_changed::<InertKey>(true) {
             self.e.entity_commands().insert(Inert);
         }
         self
@@ -240,10 +259,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
     /// Set checked on a button also marked as checkable
     pub fn checked(mut self, checked: bool) -> Self {
         struct CheckedKey;
-        if self
-            .e
-            .hash_update_typ::<CheckedKey>(Some(imm_id(format!("{checked:?}"))))
-        {
+        if self.key_changed::<CheckedKey>(format!("{checked:?}")) {
             if checked {
                 self.e.entity_commands().insert(Checked);
             } else {
@@ -257,7 +273,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
     /// also implies inert()
     pub fn checkable(mut self) -> Self {
         struct CheckableKey;
-        if self.e.hash_update_typ::<CheckableKey>(Some(imm_id(true))) {
+        if self.key_changed::<CheckableKey>(true) {
             self.e.entity_commands().insert(Checkable);
         }
         self
@@ -270,10 +286,7 @@ impl<K: kind::Numeric> ImmResponse<'_, '_, '_, K> {
     /// (number input). A slider defaults to 1% of its range, a number input to 1.
     pub fn step(mut self, step: f32) -> Self {
         struct StepKey;
-        if self
-            .e
-            .hash_update_typ::<StepKey>(Some(imm_id(step.to_bits())))
-        {
+        if self.key_changed::<StepKey>(step.to_bits()) {
             self.e.entity_commands().insert(SliderStep(step));
         }
         self
@@ -284,10 +297,7 @@ impl ImmResponse<'_, '_, '_, kind::Slider> {
     /// Decimal places drag values are rounded to (`0` = integer).
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
-        if self
-            .e
-            .hash_update_typ::<PrecisionKey>(Some(imm_id(precision)))
-        {
+        if self.key_changed::<PrecisionKey>(precision) {
             self.e
                 .entity_commands()
                 .insert(SliderPrecision(precision as i32));
@@ -301,10 +311,7 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
     pub fn range(mut self, range: RangeInclusive<f32>) -> Self {
         let (min, max) = (*range.start(), *range.end());
         struct RangeKey;
-        if self
-            .e
-            .hash_update_typ::<RangeKey>(Some(imm_id((min.to_bits(), max.to_bits()))))
-        {
+        if self.key_changed::<RangeKey>((min.to_bits(), max.to_bits())) {
             self.e.entity_commands().insert(SliderRange::new(min, max));
         }
         self
@@ -314,10 +321,7 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
     /// Reprints the value.
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
-        if self
-            .e
-            .hash_update_typ::<PrecisionKey>(Some(imm_id(precision)))
-        {
+        if self.key_changed::<PrecisionKey>(precision) {
             self.e
                 .entity_commands()
                 .queue(move |mut entity: EntityWorldMut| {
@@ -373,10 +377,7 @@ impl ImmResponse<'_, '_, '_, kind::Select> {
     /// Cap the popup at `max_visible` rows before it scrolls (default 8).
     pub fn max_visible(mut self, max_visible: usize) -> Self {
         struct MaxVisibleKey;
-        if self
-            .e
-            .hash_update_typ::<MaxVisibleKey>(Some(imm_id(max_visible)))
-        {
+        if self.key_changed::<MaxVisibleKey>(max_visible) {
             let select_ent = self.entity;
             self.e.commands().queue(move |world: &mut World| {
                 set_select_max_visible(world, select_ent, max_visible);
@@ -402,10 +403,7 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
     /// the value actually changes rather than each frame.
     pub fn collapsible(mut self, collapsible: bool) -> Self {
         struct CollapsibleKey;
-        if self
-            .e
-            .hash_update_typ::<CollapsibleKey>(Some(imm_id(collapsible)))
-        {
+        if self.key_changed::<CollapsibleKey>(collapsible) {
             self.e
                 .entity_commands()
                 .insert(SectionCollapsible(collapsible));
@@ -418,40 +416,11 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     /// Cap the region's height: it hugs its content until it would exceed
     /// `max_height`, then stops growing and scrolls. The natural bound when the
     /// area sits in an auto-height surface.
-    pub fn max_height(mut self, max_height: Val) -> Self {
+    pub fn max_height(self, max_height: Val) -> Self {
         struct MaxHeightKey;
-        if self
-            .e
-            .hash_update_typ::<MaxHeightKey>(Some(imm_id(format!("{max_height:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.max_height = max_height;
-                    }
-                });
-        }
-        self
-    }
-
-    /// Fix the region's height, scrolling once the content outgrows it. Prefer
-    /// [`Self::max_height`] unless the area should hold its size while near-empty.
-    pub fn height(mut self, height: Val) -> Self {
-        struct HeightKey;
-        if self
-            .e
-            .hash_update_typ::<HeightKey>(Some(imm_id(format!("{height:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.height = height;
-                    }
-                });
-        }
-        self
+        self.set_node::<MaxHeightKey, _>(max_height, |node, max_height| {
+            node.max_height = max_height
+        })
     }
 }
 
@@ -462,21 +431,9 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
     ///
     /// Columns default to `Stretch` (what `.grow()` in nested rows resolves
     /// against), rows to `Center`. For a single child, see [`Self::align_self`].
-    pub fn align_items(mut self, align: AlignItems) -> Self {
+    pub fn align_items(self, align: AlignItems) -> Self {
         struct AlignItemsKey;
-        if self
-            .e
-            .hash_update_typ::<AlignItemsKey>(Some(imm_id(format!("{align:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.align_items = align;
-                    }
-                });
-        }
-        self
+        self.set_node::<AlignItemsKey, _>(align, |node, align| node.align_items = align)
     }
 }
 
@@ -484,31 +441,16 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
 impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
     /// Set the container's padding; `UiRect::ZERO` for a flush, full-bleed
     /// surface such as a menu bar.
-    pub fn pad(mut self, padding: UiRect) -> Self {
+    pub fn pad(self, padding: UiRect) -> Self {
         struct PadKey;
-        if self
-            .e
-            .hash_update_typ::<PadKey>(Some(imm_id(format!("{padding:?}"))))
-        {
-            self.e
-                .entity_commands()
-                .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut node) = entity.get_mut::<Node>() {
-                        node.padding = padding;
-                    }
-                });
-        }
-        self
+        self.set_node::<PadKey, _>(padding, |node, padding| node.padding = padding)
     }
 
     /// Paint the container's background; a plain row, column or screen has no
     /// fill of its own, unlike a group or section.
     pub fn background(mut self, color: Color) -> Self {
         struct BackgroundKey;
-        if self
-            .e
-            .hash_update_typ::<BackgroundKey>(Some(imm_id(format!("{color:?}"))))
-        {
+        if self.key_changed::<BackgroundKey>(format!("{color:?}")) {
             self.e.entity_commands().insert(BackgroundColor(color));
         }
         self

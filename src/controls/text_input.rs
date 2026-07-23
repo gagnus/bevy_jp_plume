@@ -25,14 +25,13 @@ use bevy_text::{
 };
 use bevy_ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
-    px,
+    px, widget::Text,
 };
 
 use crate::{
     constants::{fonts, size},
     controls::DefaultWidth,
     cursor::EntityCursor,
-    display::label_dim,
     focus::FocusWithinIndicator,
     theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
     tokens,
@@ -261,7 +260,14 @@ struct TextInputPlaceholder;
 // align_items centers it without displacing the field.
 pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     bsn! {
-        label_dim(text)
+        Text(text)
+        TextFont {
+            font: FontSourceTemplate::Handle(fonts::REGULAR),
+            font_size: size::MEDIUM_FONT,
+            weight: FontWeight::NORMAL,
+        }
+        PropagateOver<TextFont>
+        ThemeTextColor(tokens::TEXT_DIM)
         Node {
             position_type: PositionType::Absolute,
             left: TEXT_INPUT_PAD_X,
@@ -274,7 +280,14 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
 /// A non-interactive dim suffix (unit) shown after the editable field.
 pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
     bsn! {
-        label_dim(text)
+        Text(text)
+        TextFont {
+            font: FontSourceTemplate::Handle(fonts::REGULAR),
+            font_size: size::MEDIUM_FONT,
+            weight: FontWeight::NORMAL,
+        }
+        PropagateOver<TextFont>
+        ThemeTextColor(tokens::TEXT_DIM)
         Node {
             margin: {UiRect::left(size::GAP_TIGHT)},
         }

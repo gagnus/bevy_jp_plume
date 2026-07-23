@@ -9,6 +9,7 @@ mod scroll_area;
 mod section;
 mod separator;
 mod space;
+mod tabs;
 
 pub use column::*;
 pub use dialog::*;
@@ -20,3 +21,4 @@ pub(crate) use scroll_area::*;
 pub use section::*;
 pub use separator::*;
 pub use space::*;
+pub use tabs::*;

@@ -1,13 +1,17 @@
 //! A framework for theming.
-use bevy_app::{App, HierarchyPropagatePlugin, Plugin, PostUpdate, Propagate, PropagateOver};
+use bevy_app::{
+    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
+    PropagateStop,
+};
 use bevy_color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
 use bevy_ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
+    hierarchy::ChildOf,
     lifecycle::Insert,
     observer::On,
-    query::{Changed, With},
+    query::{Changed, With, Without},
     reflect::{ReflectComponent, ReflectResource},
     resource::Resource,
     system::{Commands, Query, Res},
@@ -239,6 +243,29 @@ pub struct ThemeTextColor(pub ThemeToken);
 #[reflect(Component)]
 pub struct ThemedText;
 
+/// Finish propagating `C` to a child that gained [`ThemedText`] after it was
+/// parented.
+///
+/// Propagation copies `Inherited<C>` onto a new child when its `ChildOf` lands, but
+/// only onto children already matching the `With<ThemedText>` filter. The imm
+/// reconciler parents an entity before its scene applies the marker, so that copy is
+/// missed and the text keeps the engine default font/color; this repeats it from the
+/// other side. Entities whose parent's `Inherited<C>` is itself new are covered by
+/// the ordinary downward pass.
+pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
+    insert: On<Insert, ThemedText>,
+    q_unresolved: Query<&ChildOf, (Without<Propagate<C>>, Without<Inherited<C>>)>,
+    q_inherited: Query<&Inherited<C>, Without<PropagateStop<C>>>,
+    mut commands: Commands,
+) {
+    let Ok(child_of) = q_unresolved.get(insert.entity) else {
+        return;
+    };
+    if let Ok(inherited) = q_inherited.get(child_of.parent()) {
+        commands.entity(insert.entity).insert(inherited.clone());
+    }
+}
+
 /// Installs the [`UiTheme`] resource, the theme refresh system, the themed
 /// text-color propagation, and the token-change observers.
 pub struct ThemePlugin;
@@ -252,7 +279,8 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_gradient)
             .add_observer(on_changed_border)
             .add_observer(on_changed_font_color)
-            .add_observer(on_changed_text_color);
+            .add_observer(on_changed_text_color)
+            .add_observer(on_themed_text_inserted::<TextColor>);
     }
 }
 
@@ -358,6 +386,7 @@ fn on_changed_font_color(
 pub enum ThemeSlot {
     /// Deepest background: the window, the scrollbar track, and the active text input.
     /// - `SCROLLBAR_BG`
+    /// - `TABS_STRIP_BG`
     /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
     #[default]
@@ -368,12 +397,14 @@ pub enum ThemeSlot {
     /// - `DIALOG_HEADER_BG`
     /// - `MENU_BG`
     /// - `SECTION_BODY_BG`
+    /// - `TABS_BODY_BG`
     /// - `TEXT_INPUT_BG`
     Neutral1,
 
     /// Raised container chrome: section headers and the group box.
     /// - `GROUP_BG`
     /// - `SECTION_HEADER_BG`
+    /// - `TAB_BG_HOVER`
     Neutral2,
 
     /// Disabled control chrome.
@@ -436,6 +467,7 @@ pub enum ThemeSlot {
     /// - `LISTROW_TEXT`
     /// - `SECTION_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
+    /// - `TAB_TEXT_SELECTED`
     /// - `TEXT_INPUT_TEXT_ACTIVE`
     /// - `TEXT_MAIN`
     Text0,
@@ -445,6 +477,7 @@ pub enum ThemeSlot {
     /// - `DIALOG_TEXT`
     /// - `RADIO_TEXT`
     /// - `SECTION_HEADER_MUTED_TEXT`
+    /// - `TAB_TEXT`
     /// - `TEXT_DIM`
     /// - `TEXT_INPUT_TEXT`
     Text1,
@@ -458,6 +491,7 @@ pub enum ThemeSlot {
     /// Disabled body text.
     /// - `CHECKBOX_TEXT_DISABLED`
     /// - `RADIO_TEXT_DISABLED`
+    /// - `TAB_TEXT_DISABLED`
     /// - `TEXT_INPUT_TEXT_DISABLED`
     TextDisabled1,
 
@@ -468,6 +502,7 @@ pub enum ThemeSlot {
     /// - `SLIDER_BAR`
     /// - `SLIDER_THUMB`
     /// - `SWITCH_BG_CHECKED`
+    /// - `TAB_INDICATOR`
     /// - `TEXT_INPUT_BORDER_ACTIVE`
     /// - `TEXT_INPUT_SELECTION`
     Accent0,
@@ -523,6 +558,7 @@ pub enum ThemeSlot {
     /// - `RADIO_BG_DISABLED`
     /// - `SWITCH_BG_CHECKED_DISABLED`
     /// - `SWITCH_BG_DISABLED`
+    /// - `TAB_BG`
     /// - `TEXT_INPUT_SELECTION_UNFOCUSED`
     /// - `CHECKBOX_BORDER_CHECKED`
     /// - `RADIO_BORDER_CHECKED`
@@ -819,6 +855,14 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SECTION_HEADER_TEXT, ThemeSlot::Text0),
     (tokens::SECTION_HEADER_MUTED_TEXT, ThemeSlot::Text1),
     (tokens::SECTION_BODY_BG, ThemeSlot::Neutral1),
+    (tokens::TABS_STRIP_BG, ThemeSlot::Neutral0),
+    (tokens::TABS_BODY_BG, ThemeSlot::Neutral1),
+    (tokens::TAB_BG, ThemeSlot::Transparent),
+    (tokens::TAB_BG_HOVER, ThemeSlot::Neutral2),
+    (tokens::TAB_TEXT, ThemeSlot::Text1),
+    (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),
+    (tokens::TAB_TEXT_DISABLED, ThemeSlot::TextDisabled1),
+    (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
     (tokens::GROUP_BG, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),
     (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),

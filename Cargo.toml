@@ -46,11 +46,6 @@ bevy_immediate = { path = "../3rdParty/bevy_immediate", default-features = false
 # other
 accesskit = "0.24"
 
-[workspace.lints.clippy]
-# Upstream Bevy's workspace allows these; the feathers-derived code relies on them.
-type_complexity = "allow"
-too_many_arguments = "allow"
-
 [dev-dependencies]
 bevy = { path = "../3rdParty/bevy", features = ["bevy_ui_widgets", "png"] }
 argh = "0.1.13"

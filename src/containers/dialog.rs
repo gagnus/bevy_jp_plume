@@ -228,7 +228,7 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
             TabGroup::new(0)
             ThemeBackgroundColor(tokens::DIALOG_BG)
             ThemeBorderColor(tokens::DIALOG_BORDER)
-            InheritableThemeTextColor(tokens::TEXT_MAIN)
+            InheritableThemeTextColor(tokens::TEXT_DIM)
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
                 px(4),

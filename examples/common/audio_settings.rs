@@ -13,7 +13,14 @@ const TITLE: &str = "Audio Settings";
 pub struct AudioSettings {
     volume: f32,
     muted: bool,
-    output: usize,
+    output: Output,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum Output {
+    #[default]
+    Speakers,
+    Headphones,
 }
 
 impl Default for AudioSettings {
@@ -21,7 +28,7 @@ impl Default for AudioSettings {
         Self {
             volume: 0.5,
             muted: false,
-            output: 0,
+            output: Output::default(),
         }
     }
 }
@@ -62,7 +69,10 @@ fn audio_settings_dialog(
             });
 
             ui.checkbox(&mut s.muted, "Mute");
-            ui.select(&mut s.output, &["Speakers", "Headphones"]);
+            ui.select(&mut s.output, |select| {
+                select.option(Output::Speakers, "Speakers");
+                select.option(Output::Headphones, "Headphones");
+            });
             ui.separator();
 
             ui.horizontal(|ui| {

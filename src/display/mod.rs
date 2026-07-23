@@ -1,5 +1,5 @@
 //! Static widgets that only display data and are not interactive.
 
-mod label;
+mod caption;
 
-pub use label::*;
+pub use caption::*;

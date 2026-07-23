@@ -15,7 +15,13 @@ const TITLE: &str = "Player Profile";
 /// Width of the label gutter every row aligns to.
 const GUTTER: f32 = 76.0;
 
-const CLASSES: &[&str] = &["Warrior", "Mage", "Rogue"];
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum Class {
+    #[default]
+    Warrior,
+    Mage,
+    Rogue,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Difficulty {
@@ -36,7 +42,7 @@ enum Team {
 pub struct ProfileSettings {
     name: String,
     motto: String,
-    class: usize,
+    class: Class,
     difficulty: Difficulty,
     team: Team,
     permadeath: bool,
@@ -48,7 +54,7 @@ impl Default for ProfileSettings {
         Self {
             name: "Player One".into(),
             motto: String::new(),
-            class: 0,
+            class: Class::default(),
             difficulty: Difficulty::default(),
             team: Team::default(),
             permadeath: false,
@@ -108,7 +114,12 @@ fn player_profile_dialog(
                         .placeholder("A few words…");
                 });
                 field(ui, "Class", |ui| {
-                    ui.select(&mut s.class, CLASSES).grow();
+                    ui.select(&mut s.class, |select| {
+                        select.option(Class::Warrior, "Warrior");
+                        select.option(Class::Mage, "Mage");
+                        select.option(Class::Rogue, "Rogue");
+                    })
+                    .grow();
                 });
             })
             .collapsible(false);

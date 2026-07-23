@@ -1,20 +1,28 @@
 //! BSN scene function for displaying a plain text string in the correct font.
 use bevy_app::PropagateOver;
 use bevy_scene::{Scene, bsn};
-use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, FontWeight, TextFont};
+use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
 use bevy_ui::widget::Text;
 
 use crate::{
     constants::{FaIcon, fonts, size},
-    theme::{ThemeTextColor, ThemedText},
-    tokens,
+    theme::{ThemeTextColor, ThemeToken, ThemedText},
 };
 
-/// A caption within, say, a button.
+/// A caption within, say, a button using inherited color.
 pub fn caption(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         ThemedText
+    }
+}
+
+/// A caption but override color
+pub fn caption_color(text: impl Into<String>, token: ThemeToken) -> impl Scene {
+    bsn! {
+        Text(text)
+        ThemedText
+        ThemeTextColor(token)
     }
 }
 
@@ -50,33 +58,5 @@ pub fn fa_icon(icon: FaIcon) -> impl Scene {
             font: FontSourceTemplate::Handle(font_path),
             font_size: size::MEDIUM_FONT,
         }
-    }
-}
-
-/// A text label.
-pub fn label_bright(text: impl Into<String>) -> impl Scene {
-    bsn! {
-        Text(text)
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-        PropagateOver<TextFont>
-        ThemeTextColor(tokens::TEXT_MAIN)
-    }
-}
-
-/// A text label with a dimmed color.
-pub fn label_dim(text: impl Into<String>) -> impl Scene {
-    bsn! {
-        Text(text)
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-        PropagateOver<TextFont>
-        ThemeTextColor(tokens::TEXT_DIM)
     }
 }

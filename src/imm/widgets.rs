@@ -10,7 +10,10 @@ use bevy_ecs::{
 };
 use bevy_immediate::{
     ImmEntity, ImmId, ImmIdBuilder, imm_id,
-    ui::{activated::ImmUiActivated, interaction::ImmUiInteraction},
+    ui::{
+        activated::ImmUiActivated, disabled::ImmUiInteractionsDisabled,
+        interaction::ImmUiInteraction,
+    },
 };
 use bevy_scene::{Scene, bsn, bsn_list, on};
 use bevy_ui::{Node, Val, px, widget::Text};
@@ -21,7 +24,7 @@ use crate::{
     containers::{
         DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeGroup, PlumeSectionProps,
         column, dialog_frame, flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar,
-        section_body, section_frame, separator, space,
+        section_body, section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDisclosure,
@@ -43,7 +46,7 @@ pub trait PlumeImm<'w, 's> {
     /// Themed text in the current container's font and color. The response's
     /// `clicked`/`changed` are always false (text has no activation behavior);
     /// the builders and `hovered` work as usual.
-    fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's>;
+    fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's, kind::Caption>;
 
     /// Hairline rule across the container: a horizontal line in a
     /// [`Self::vertical`], a vertical one in a [`Self::horizontal`].
@@ -102,11 +105,14 @@ pub trait PlumeImm<'w, 's> {
     /// blur. Chain `.placeholder()`/`.suffix()`.
     fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's, kind::Text>;
 
-    /// Dropdown bound to `index` into `options`.
-    fn select(
+    /// Dropdown: `f` declares the options on the [`ImmSelect`] collector, in popup
+    /// order. Selection is value-keyed like [`Self::radio`] — each option names the
+    /// value it stands for, and picking one writes that value into `selected`. A
+    /// `selected` matching no option falls back to the first.
+    fn select<T: PartialEq>(
         &mut self,
-        index: &mut usize,
-        options: &[&str],
+        selected: &mut T,
+        f: impl FnOnce(&mut ImmSelect<T>),
     ) -> ImmResponse<'_, 'w, 's, kind::Select>;
 
     /// Movable floating dialog: configure via the returned [`ImmDialog`] and build
@@ -141,6 +147,19 @@ pub trait PlumeImm<'w, 's> {
     /// width (a themed [`Self::vertical`]).
     fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Group>;
 
+    /// Tab container: a header strip over a body showing one tab at a time.
+    /// `f` declares the tabs on the [`ImmTabs`] collector; only the selected tab's
+    /// body closure runs, so hidden tabs cost nothing.
+    ///
+    /// Selection is value-keyed like [`Self::radio`]: each tab names the value it
+    /// stands for, and clicking one writes that value into `selected`. A `selected`
+    /// matching no tab falls back to the first.
+    fn tabs<'t, T: PartialEq>(
+        &mut self,
+        selected: &mut T,
+        f: impl FnOnce(&mut ImmTabs<'t, 'w, 's, T>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Tabs>;
+
     /// Collapsible section with a small-caps `header`; `f` builds its body.
     /// Collapse state persists across frames. Chain `.start_collapsed()`.
     fn section(
@@ -173,12 +192,10 @@ pub trait PlumeImm<'w, 's> {
 
 impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
-    fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's> {
-        // Identity is the call site, not the text. A caption whose text changes
-        // (e.g. a live value read-out) then reconciles its `Text` in place rather
-        // than respawning — a `Text` child spawned after the initial frame never
-        // re-receives the ancestor's propagated `InheritableFont`, so a respawn
-        // would silently drop back to the default font.
+    fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's, kind::Caption> {
+        // Identity is the call site, not the text, so a caption whose text changes
+        // (e.g. a live value read-out) reconciles its `Text` in place rather than
+        // respawning an entity every frame the value moves.
         let mut entity = self.ch_with_manual_id(loc_id(())).on_spawn_apply_scene({
             let text = text.to_owned();
             move || caption(text)
@@ -404,21 +421,37 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn select(
+    fn select<T: PartialEq>(
         &mut self,
-        index: &mut usize,
-        options: &[&str],
+        selected: &mut T,
+        f: impl FnOnce(&mut ImmSelect<T>),
     ) -> ImmResponse<'_, 'w, 's, kind::Select> {
-        let options_owned: Vec<String> = options.iter().map(|option| option.to_string()).collect();
-        *index = (*index).min(options.len().saturating_sub(1));
-        let initial = *index;
+        let mut collector = ImmSelect {
+            options: Vec::new(),
+        };
+        f(&mut collector);
+        let options = collector.options;
+
+        // A `selected` naming no declared option (an empty select, or a value whose
+        // option was conditionally dropped) shows the first without writing back.
+        let mut index = options
+            .iter()
+            .position(|option| option.key == *selected)
+            .unwrap_or(0);
+        let initial = index;
+        let labels: Vec<String> = options.iter().map(|option| option.label.clone()).collect();
         let mut changed = false;
+        // The labels key the widget: the rows are seeded at spawn, so an edited
+        // option list has to respawn rather than keep the stale popup.
         let entity = self
-            .ch_with_manual_id(loc_id(options))
+            .ch_with_manual_id(loc_id(&labels))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeSelect { @options: {list_rows_from_strings(options_owned, Some(initial))} } }
+                bsn! { @PlumeSelect { @options: {list_rows_from_strings(labels, Some(initial))} } }
             })
-            .plume_select(index, &mut changed);
+            .plume_select(&mut index, &mut changed);
+        if changed && let Some(option) = options.into_iter().nth(index) {
+            *selected = option.key;
+        }
         respond(entity, changed)
     }
 
@@ -527,6 +560,70 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn tabs<'t, T: PartialEq>(
+        &mut self,
+        selected: &mut T,
+        f: impl FnOnce(&mut ImmTabs<'t, 'w, 's, T>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Tabs> {
+        let mut collector = ImmTabs {
+            entries: Vec::new(),
+        };
+        f(&mut collector);
+        let entries = collector.entries;
+
+        // A `selected` naming no declared tab (an empty container, or a value whose
+        // tab was conditionally dropped) shows the first tab without writing back.
+        let mut index = entries
+            .iter()
+            .position(|entry| entry.key == *selected)
+            .unwrap_or(0);
+        let initial = index;
+        let mut changed = false;
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(move || tabs_frame(initial))
+            .plume_select(&mut index, &mut changed);
+
+        let mut strip_items = Vec::with_capacity(entries.len());
+        let mut selected_body = None;
+        for (slot, entry) in entries.into_iter().enumerate() {
+            let TabEntry {
+                key,
+                label,
+                icon,
+                enabled,
+                body,
+            } = entry;
+            strip_items.push((label, icon, enabled));
+            if slot == index {
+                selected_body = Some(body);
+                if changed {
+                    *selected = key;
+                }
+            }
+        }
+
+        let entity = entity.add(move |ui| {
+            ui.ch_id("tab_strip")
+                .on_spawn_apply_scene(tab_strip)
+                .add(move |ui| {
+                    for (slot, (label, icon, enabled)) in strip_items.into_iter().enumerate() {
+                        // The label and glyph key the tab: a renamed tab respawns
+                        // rather than keeping the old caption at the same slot.
+                        ui.ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
+                            .on_spawn_apply_scene(move || tab_button(label, icon))
+                            .interactions_enabled(enabled);
+                    }
+                });
+            let body = ui.ch_id("tab_body").on_spawn_apply_scene(tab_body);
+            if let Some(selected_body) = selected_body {
+                body.add(selected_body);
+            }
+        });
+        respond(entity, changed)
+    }
+
+    #[track_caller]
     fn scroll_area(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
@@ -557,6 +654,90 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R {
         let mut scope = self.with_add_id_pref(id);
         f(&mut scope)
+    }
+}
+
+/// Option collector handed to [`PlumeImm::select`]'s closure: declare one
+/// [`option`](Self::option) per row, in popup order.
+pub struct ImmSelect<T> {
+    options: Vec<SelectOption<T>>,
+}
+
+// One declared option: the value it stands for and the row's label.
+struct SelectOption<T> {
+    key: T,
+    label: String,
+}
+
+impl<T> ImmSelect<T> {
+    /// Declare an option standing for `key`, labeled `label`.
+    pub fn option(&mut self, key: T, label: &str) {
+        self.options.push(SelectOption {
+            key,
+            label: label.to_owned(),
+        });
+    }
+}
+
+/// Tab collector handed to [`PlumeImm::tabs`]'s closure: declare one
+/// [`tab`](Self::tab) per tab, in strip order.
+pub struct ImmTabs<'t, 'w, 's, T> {
+    entries: Vec<TabEntry<'t, 'w, 's, T>>,
+}
+
+// One declared tab. The body is boxed because every tab's closure is built while
+// only the selected one is called.
+struct TabEntry<'t, 'w, 's, T> {
+    key: T,
+    label: String,
+    icon: Option<FaIcon>,
+    enabled: bool,
+    body: Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>,
+}
+
+impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
+    /// Declare a tab standing for `key`, labeled `label`, whose contents `body`
+    /// builds while it is the selected tab. Chain `.icon()`/`.enabled()` on the
+    /// returned handle.
+    pub fn tab(
+        &mut self,
+        key: T,
+        label: &str,
+        body: impl FnOnce(&mut Ui<'w, 's>) + 't,
+    ) -> ImmTab<'_, 't, 'w, 's, T> {
+        self.entries.push(TabEntry {
+            key,
+            label: label.to_owned(),
+            icon: None,
+            enabled: true,
+            body: Box::new(body),
+        });
+        ImmTab {
+            entry: self
+                .entries
+                .last_mut()
+                .expect("the entry was just pushed onto entries"),
+        }
+    }
+}
+
+/// Handle to a just-declared tab, for its per-tab options.
+pub struct ImmTab<'a, 't, 'w, 's, T> {
+    entry: &'a mut TabEntry<'t, 'w, 's, T>,
+}
+
+impl<T> ImmTab<'_, '_, '_, '_, T> {
+    /// Leading FontAwesome icon, before the label.
+    pub fn icon(self, icon: FaIcon) -> Self {
+        self.entry.icon = Some(icon);
+        self
+    }
+
+    /// Grey the tab out and ignore clicks on it. A disabled tab that is
+    /// nonetheless selected still shows its body.
+    pub fn enabled(self, enabled: bool) -> Self {
+        self.entry.enabled = enabled;
+        self
     }
 }
 

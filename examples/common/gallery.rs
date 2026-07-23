@@ -11,7 +11,14 @@ use bevy_jp_plume::{
 
 use super::log_on_change;
 
-const SELECT_OPTIONS: [&str; 4] = ["Alpha", "Beta", "Gamma", "Delta"];
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum SelectChoice {
+    #[default]
+    Alpha,
+    Beta,
+    Gamma,
+    Delta,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum RadioChoice {
@@ -30,7 +37,7 @@ pub struct GalleryState {
     toggle_b: bool,
     radio: RadioChoice,
     slider: f32,
-    select: usize,
+    select: SelectChoice,
     text: String,
     number: f32,
 }
@@ -46,7 +53,7 @@ impl Default for GalleryState {
             toggle_b: true,
             radio: RadioChoice::default(),
             slider: 30.0,
-            select: 0,
+            select: SelectChoice::default(),
             text: String::new(),
             number: 4.0,
         }
@@ -139,8 +146,13 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
         });
 
         ui.slider(&mut state.slider, 0.0..=100.0).enabled(!disabled);
-        ui.select(&mut state.select, &SELECT_OPTIONS)
-            .enabled(!disabled);
+        ui.select(&mut state.select, |select| {
+            select.option(SelectChoice::Alpha, "Alpha");
+            select.option(SelectChoice::Beta, "Beta");
+            select.option(SelectChoice::Gamma, "Gamma");
+            select.option(SelectChoice::Delta, "Delta");
+        })
+        .enabled(!disabled);
         ui.text_edit(&mut state.text)
             .placeholder("Type here")
             .enabled(!disabled);

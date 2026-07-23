@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_jp_plume::{
     constants::font_awesome,
     controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot, Ui},
+    imm::{ImmSelect, PlumeImm, PlumeRoot, Ui},
 };
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
@@ -18,7 +18,7 @@ pub struct DebugSettings {
     wireframe: bool,
     show_colliders: bool,
     freeze_culling: bool,
-    view_mode: usize,
+    view_mode: ViewMode,
     gamma: f32,
     // Physics
     pause_sim: bool,
@@ -26,8 +26,8 @@ pub struct DebugSettings {
     // Diagnostics
     fps_overlay: bool,
     entity_inspector: bool,
-    overlay: usize,
-    log_level: usize,
+    overlay: OverlayCorner,
+    log_level: LogLevel,
     // Cheats
     noclip: bool,
     infinite_health: bool,
@@ -40,14 +40,14 @@ impl Default for DebugSettings {
             wireframe: false,
             show_colliders: true,
             freeze_culling: false,
-            view_mode: 0,
+            view_mode: ViewMode::default(),
             gamma: 2.2,
             pause_sim: false,
             time_scale: 1.0,
             fps_overlay: true,
             entity_inspector: false,
-            overlay: 0,
-            log_level: 0,
+            overlay: OverlayCorner::default(),
+            log_level: LogLevel::default(),
             noclip: false,
             infinite_health: false,
             move_speed: 6.0,
@@ -55,9 +55,34 @@ impl Default for DebugSettings {
     }
 }
 
-const VIEW_MODES: [&str; 5] = ["Lit", "Albedo", "Normals", "Depth", "Overdraw"];
-const OVERLAY_CORNERS: [&str; 4] = ["Top left", "Top right", "Bottom left", "Bottom right"];
-const LOG_LEVELS: [&str; 5] = ["Error", "Warn", "Info", "Debug", "Trace"];
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum ViewMode {
+    #[default]
+    Lit,
+    Albedo,
+    Normals,
+    Depth,
+    Overdraw,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum OverlayCorner {
+    #[default]
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum LogLevel {
+    Error,
+    Warn,
+    #[default]
+    Info,
+    Debug,
+    Trace,
+}
 
 /// Adds the debug-menu dialog: its resource, its dialog system + hub entry, and its log.
 pub struct DebugSettingsPlugin(pub bool);
@@ -130,7 +155,13 @@ fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
         ui.checkbox(&mut s.wireframe, "Wireframe");
         ui.checkbox(&mut s.show_colliders, "Show colliders");
         ui.checkbox(&mut s.freeze_culling, "Freeze frustum culling");
-        select_row(ui, "View mode", &mut s.view_mode, &VIEW_MODES);
+        select_row(ui, "View mode", &mut s.view_mode, |select| {
+            select.option(ViewMode::Lit, "Lit");
+            select.option(ViewMode::Albedo, "Albedo");
+            select.option(ViewMode::Normals, "Normals");
+            select.option(ViewMode::Depth, "Depth");
+            select.option(ViewMode::Overdraw, "Overdraw");
+        });
         slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 0.1, 2, None);
     });
 }
@@ -154,14 +185,25 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
     ui.section("Diagnostics", |ui| {
         toggle_row(ui, "FPS overlay", &mut s.fps_overlay);
         toggle_row(ui, "Entity inspector", &mut s.entity_inspector);
-        select_row(ui, "Overlay", &mut s.overlay, &OVERLAY_CORNERS);
+        select_row(ui, "Overlay", &mut s.overlay, |select| {
+            select.option(OverlayCorner::TopLeft, "Top left");
+            select.option(OverlayCorner::TopRight, "Top right");
+            select.option(OverlayCorner::BottomLeft, "Bottom left");
+            select.option(OverlayCorner::BottomRight, "Bottom right");
+        });
         // Inline (not select_row) to chain .max_visible(): the popup caps at
         // three rows and scrolls the remaining two.
         ui.horizontal(|ui| {
             ui.caption("Log level").width(px(84));
-            ui.select(&mut s.log_level, &LOG_LEVELS)
-                .grow()
-                .max_visible(3);
+            ui.select(&mut s.log_level, |select| {
+                select.option(LogLevel::Error, "Error");
+                select.option(LogLevel::Warn, "Warn");
+                select.option(LogLevel::Info, "Info");
+                select.option(LogLevel::Debug, "Debug");
+                select.option(LogLevel::Trace, "Trace");
+            })
+            .grow()
+            .max_visible(3);
         });
     });
 }
@@ -210,10 +252,15 @@ fn slider_row(
     });
 }
 
-fn select_row(ui: &mut Ui, label: &str, index: &mut usize, options: &[&str]) {
+fn select_row<T: PartialEq>(
+    ui: &mut Ui,
+    label: &str,
+    selected: &mut T,
+    options: impl FnOnce(&mut ImmSelect<T>),
+) {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(84));
-        ui.select(index, options).grow();
+        ui.select(selected, options).grow();
     });
 }
 
