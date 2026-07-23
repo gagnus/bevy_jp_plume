@@ -4,6 +4,7 @@ mod button;
 mod checkbox;
 mod color_swatch;
 mod default_width;
+mod disclosure;
 mod listview;
 mod menu;
 mod number_input;
@@ -18,6 +19,7 @@ pub use button::*;
 pub use checkbox::*;
 pub use color_swatch::*;
 pub use default_width::DefaultWidth;
+pub use disclosure::*;
 pub use listview::{ListRowIndex, PlumeListRow, list_rows_from_strings};
 pub use number_input::*;
 pub use radio::*;
@@ -45,6 +47,7 @@ impl Plugin for ControlsPlugin {
             CheckboxPlugin,
             ColorSwatchPlugin,
             DefaultWidthPlugin,
+            DisclosurePlugin,
             ListViewPlugin,
             NumberInputPlugin,
             RadioPlugin,

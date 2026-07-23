@@ -24,6 +24,8 @@ enum RadioChoice {
 pub struct GalleryState {
     checkbox_a: bool,
     checkbox_b: bool,
+    disclosure_a: bool,
+    disclosure_b: bool,
     toggle_a: bool,
     toggle_b: bool,
     radio: RadioChoice,
@@ -38,6 +40,8 @@ impl Default for GalleryState {
         Self {
             checkbox_a: false,
             checkbox_b: true,
+            disclosure_a: false,
+            disclosure_b: true,
             toggle_a: false,
             toggle_b: true,
             radio: RadioChoice::default(),
@@ -121,6 +125,10 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
             ui.checkbox(&mut state.checkbox_a, "Off").enabled(!disabled);
             ui.checkbox(&mut state.checkbox_b, "On").enabled(!disabled);
             ui.separator();
+            ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
+            ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
+        });
+        ui.horizontal(|ui| {
             ui.toggle(&mut state.toggle_a).enabled(!disabled);
             ui.toggle(&mut state.toggle_b).enabled(!disabled);
             ui.separator();

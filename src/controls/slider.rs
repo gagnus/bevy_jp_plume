@@ -185,7 +185,9 @@ fn update_slider_styles(
         ),
         (
             With<PlumeSlider>,
+            // Added<PlumeSlider> guarantees the initial style pass on spawn.
             Or<(
+                Added<PlumeSlider>,
                 Added<InteractionDisabled>,
                 Changed<Hovered>,
                 Added<Pressed>,
@@ -329,7 +331,7 @@ fn apply_slider_styles(
 
     // Drive the grow: the thumb eases to full scale while the slider is pressed.
     if let Ok(mut thumb_anim) = q_thumb_anim.get_mut(thumb_ent) {
-        thumb_anim.target = if pressed { 1.0 } else { 0.0 };
+        thumb_anim.set_target(if pressed { 1.0 } else { 0.0 });
     }
 
     let mut track_background_gradient = q_tracks

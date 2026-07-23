@@ -167,9 +167,6 @@ fn tree_view_dialog(
         .show(|ui| {
             // Only the tree scrolls; the footer below stays pinned.
             ui.scroll_area(|ui| {
-                ui.section("Test", |ui| {
-                    ui.caption("Hello");
-                });
                 for (i, node) in state.roots.iter_mut().enumerate() {
                     ui.push_id(i, |ui| node_row(ui, node, 0));
                 }
@@ -215,21 +212,9 @@ fn node_row(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
         if depth > 0 {
             ui.space(px(depth as f32 * INDENT));
         }
-        // A chevron toggles the fold; a leaf reserves the same width so labels align.
+        // A twisty toggles the fold; a leaf reserves the same width so labels align.
         if has_children {
-            let glyph = if node.expanded {
-                font_awesome::solid::ANGLE_DOWN
-            } else {
-                font_awesome::solid::ANGLE_RIGHT
-            };
-            if ui
-                .tool_button(glyph)
-                .flat()
-                .variant(ButtonVariant::Plain)
-                .clicked
-            {
-                node.expanded = !node.expanded;
-            }
+            ui.disclosure(&mut node.expanded);
         } else {
             ui.space(size::ROW_HEIGHT);
         }

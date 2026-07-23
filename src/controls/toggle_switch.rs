@@ -225,7 +225,7 @@ fn apply_switch_styles(
     };
     // Drive the slide: the knob eases to the on end while checked.
     if let Ok(mut slide_anim) = q_slide_anim.get_mut(slide_ent) {
-        slide_anim.target = if checked { 1.0 } else { 0.0 };
+        slide_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
 
     let outline_border = q_outline

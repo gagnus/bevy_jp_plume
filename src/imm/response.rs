@@ -22,7 +22,7 @@ use crate::controls::{
 };
 use crate::{
     containers::{SectionCollapsed, SectionCollapsible},
-    theme::Flat,
+    theme::{Flat, Inert},
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -227,6 +227,17 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         self.variant(ButtonVariant::Primary)
     }
 
+    /// Don't respond to hover and press, so only the checked and disabled
+    /// states move it.
+    pub fn inert(mut self) -> Self {
+        struct InertKey;
+        if self.e.hash_update_typ::<InertKey>(Some(imm_id(true))) {
+            self.e.entity_commands().insert(Inert);
+        }
+        self
+    }
+
+    /// Set checked on a button also marked as checkable
     pub fn checked(mut self, checked: bool) -> Self {
         struct CheckedKey;
         if self
@@ -242,6 +253,8 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         self
     }
 
+    /// Button is checkable, which will display as primary variant when checked is true
+    /// also implies inert()
     pub fn checkable(mut self) -> Self {
         struct CheckableKey;
         if self.e.hash_update_typ::<CheckableKey>(Some(imm_id(true))) {

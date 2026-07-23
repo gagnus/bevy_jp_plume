@@ -24,9 +24,9 @@ use crate::{
         section_body, section_frame, separator, space,
     },
     controls::{
-        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput,
-        PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
-        list_rows_from_strings,
+        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDisclosure,
+        PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
+        PlumeToolButton, list_rows_from_strings,
     },
     display::{caption, caption_small_caps, fa_icon},
 };
@@ -70,6 +70,9 @@ pub trait PlumeImm<'w, 's> {
 
     /// Labeled checkbox bound to `value`.
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's>;
+
+    /// Disclosure toggle bound to `open`.
+    fn disclosure(&mut self, open: &mut bool) -> ImmResponse<'_, 'w, 's>;
 
     /// Labeled radio button: checked while `*value == variant`; clicking it (or
     /// Space on focus) writes `variant` into `value`. A group is just several
@@ -315,6 +318,16 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 move || bsn! { @PlumeCheckbox { @caption: bsn! { caption(label_owned) } } },
             )
             .plume_checked(value, &mut changed);
+        respond(entity, changed)
+    }
+
+    #[track_caller]
+    fn disclosure(&mut self, open: &mut bool) -> ImmResponse<'_, 'w, 's> {
+        let mut changed = false;
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(|| bsn! { @PlumeDisclosure })
+            .plume_checked(open, &mut changed);
         respond(entity, changed)
     }
 

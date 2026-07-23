@@ -28,7 +28,7 @@ use crate::{
     font_styles::InheritableFont,
     rounded_corners::RoundedCorners,
     theme::{
-        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
+        Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextColor, ThemeBackgroundGradient,
         ThemeBorderColor, control_box_shadow,
     },
     tokens,
@@ -188,6 +188,7 @@ fn update_button_styles(
             Has<Checked>,
             Has<Checkable>,
             Has<Flat>,
+            Has<Inert>,
             &ThemeBackgroundGradient,
             &InheritableThemeTextColor,
             Has<BoxShadow>,
@@ -198,6 +199,7 @@ fn update_button_styles(
             Added<Pressed>,
             Added<InteractionDisabled>,
             Added<Flat>,
+            Added<Inert>,
             Added<Checked>,
         )>,
     >,
@@ -214,6 +216,7 @@ fn update_button_styles(
         checked,
         checkable,
         flat,
+        inert,
         bg_color,
         font_color,
         has_box_shadow,
@@ -228,6 +231,7 @@ fn update_button_styles(
             checked,
             checkable,
             flat,
+            inert,
             bg_color,
             font_color,
             has_box_shadow,
@@ -260,6 +264,7 @@ fn update_button_styles_remove(
         Has<Checked>,
         Has<Checkable>,
         Has<Flat>,
+        Has<Inert>,
         &ThemeBackgroundGradient,
         &InheritableThemeTextColor,
         Has<BoxShadow>,
@@ -271,6 +276,7 @@ fn update_button_styles_remove(
     mut removed_checked: RemovedComponents<Checked>,
     mut removed_checkable: RemovedComponents<Checkable>,
     mut removed_flat: RemovedComponents<Flat>,
+    mut removed_inert: RemovedComponents<Inert>,
     mut commands: Commands,
 ) {
     removed_disabled
@@ -279,6 +285,7 @@ fn update_button_styles_remove(
         .chain(removed_flat.read())
         .chain(removed_checked.read())
         .chain(removed_checkable.read())
+        .chain(removed_inert.read())
         .for_each(|ent| {
             if let Ok((
                 button_ent,
@@ -289,6 +296,7 @@ fn update_button_styles_remove(
                 checked,
                 checkable,
                 flat,
+                inert,
                 bg_color,
                 font_color,
                 has_box_shadow,
@@ -303,6 +311,7 @@ fn update_button_styles_remove(
                     checked,
                     checkable,
                     flat,
+                    inert,
                     bg_color,
                     font_color,
                     has_box_shadow,
@@ -322,6 +331,7 @@ fn set_button_styles(
     checked: bool,
     checkable: bool,
     flat: bool,
+    inert: bool,
     bg_color: &ThemeBackgroundGradient,
     font_color: &InheritableThemeTextColor,
     has_box_shadow: bool,
@@ -334,20 +344,22 @@ fn set_button_styles(
         variant
     };
 
+    // A checkable button's feedback is its checked fill, so hover/press must not
+    // also move it: `Checkable` implies `Inert`.
+    let inert = inert || checkable;
+
     let bg_set = match variant {
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
         ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BG,
     };
-    let bg_token = bg_set.pick(disabled, pressed && !checkable, hovered && !checkable);
+    let bg_token = bg_set.pick(disabled, pressed && !inert, hovered && !inert);
 
     let border_token = match variant {
-        ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BORDER.pick(
-            disabled,
-            pressed && !checkable,
-            hovered && !checkable,
-        ),
+        ButtonVariant::Outline => {
+            tokens::sets::BUTTON_OUTLINE_BORDER.pick(disabled, pressed && !inert, hovered && !inert)
+        }
         _ => tokens::BUTTON_BORDER_NONE,
     };
 
@@ -358,7 +370,7 @@ fn set_button_styles(
         (_, false) => tokens::BUTTON_TEXT,
     };
 
-    // Disabled buttons read as inert: flat fill, no gradient.
+    // Disabled buttons read as dead: flat fill, no gradient.
     let bg_gradient_amount = if disabled || flat {
         0.0
     } else {
@@ -390,7 +402,10 @@ fn set_button_styles(
             .insert(ThemeBorderColor(border_token));
     }
 
-    let should_have_box_shadow = (variant.filled() || hovered || pressed) && !disabled && !flat;
+    // An inert button's unfilled variants stay shadowless: the lift is the same
+    // hover/press promise the fill was suppressed for.
+    let lifted = !inert && (hovered || pressed);
+    let should_have_box_shadow = (variant.filled() || lifted) && !disabled && !flat;
     if should_have_box_shadow && !has_box_shadow {
         commands.entity(button_ent).insert(control_box_shadow());
     } else if !should_have_box_shadow && has_box_shadow {

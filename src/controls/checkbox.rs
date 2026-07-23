@@ -277,7 +277,7 @@ fn apply_checkbox_styles(
 
     // Drive the pop: the tick eases to full scale (and shows) while checked.
     if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
-        mark_anim.target = if checked { 1.0 } else { 0.0 };
+        mark_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
     let (bg_color, has_box_shadow) = q_bg
         .get(bg_ent)

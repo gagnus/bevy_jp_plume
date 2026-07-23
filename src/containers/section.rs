@@ -25,6 +25,7 @@ use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, 
 
 use crate::{
     constants::{font_awesome, fonts, size},
+    cursor::EntityCursor,
     display::fa_icon,
     font_styles::InheritableFont,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
@@ -150,9 +151,8 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
                 }
                 SectionHeader
                 ThemeBackgroundColor(tokens::SECTION_HEADER_BG)
-                // The border is themed here but sized (to a bottom hairline) only by
-                // `update_section_header_style` on a non-collapsible section.
                 ThemeBorderColor(tokens::SEPARATOR)
+                EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
                 InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
                 InheritableFont {
                     font: fonts::REGULAR,
@@ -232,7 +232,7 @@ fn update_section_collapse(
                 };
             }
             if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
-                chevron.target = if collapsed { 1.0 } else { 0.0 };
+                chevron.set_target(if collapsed { 1.0 } else { 0.0 });
             }
         }
     };
@@ -251,20 +251,22 @@ fn update_section_collapse(
 /// tracks the component here rather than the spawn-time prop.
 fn update_section_collapsible(
     q_changed: Query<
-        (Entity, &SectionCollapsible),
+        (Entity, &SectionCollapsible, Has<SectionCollapsed>),
         (With<SectionRoot>, Changed<SectionCollapsible>),
     >,
     q_children: Query<&Children>,
-    mut q_chevrons: Query<&mut Node, With<SectionChevron>>,
+    mut q_chevrons: Query<(&mut Node, &mut AnimState), With<SectionChevron>>,
 ) {
-    for (root, collapsible) in q_changed.iter() {
+    for (root, collapsible, collapsed) in q_changed.iter() {
         for descendant in q_children.iter_descendants(root) {
-            if let Ok(mut node) = q_chevrons.get_mut(descendant) {
+            if let Ok((mut node, mut anim)) = q_chevrons.get_mut(descendant) {
                 node.display = if collapsible.0 {
                     Display::Flex
                 } else {
                     Display::None
                 };
+                // Settle the chevron without a spin.
+                anim.set_target(if collapsed { 1.0 } else { 0.0 });
             }
         }
     }
@@ -289,23 +291,26 @@ fn update_section_header_style(
             let Ok(mut node) = q_headers.get_mut(descendant) else {
                 continue;
             };
-            let (bg_token, text_token, border) = if !collapsible {
+            let (bg_token, text_token, border, cursor) = if !collapsible {
                 (
                     tokens::SECTION_BODY_BG,
                     tokens::SECTION_HEADER_MUTED_TEXT,
                     UiRect::bottom(size::CONTAINER_BORDER),
+                    bevy_window::SystemCursorIcon::Default,
                 )
             } else {
                 (
                     tokens::SECTION_HEADER_BG,
                     tokens::SECTION_HEADER_TEXT,
                     UiRect::ZERO,
+                    bevy_window::SystemCursorIcon::Pointer,
                 )
             };
             node.border = border;
             commands.entity(descendant).insert((
                 ThemeBackgroundColor(bg_token),
                 InheritableThemeTextColor(text_token),
+                EntityCursor::System(cursor),
             ));
         }
     }

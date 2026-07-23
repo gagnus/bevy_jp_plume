@@ -3,6 +3,7 @@
 use bevy_app::{Plugin, Update};
 use bevy_camera::visibility::Visibility;
 use bevy_ecs::{
+    change_detection::DetectChanges,
     component::Component,
     reflect::ReflectComponent,
     system::{Query, Res},
@@ -60,19 +61,32 @@ impl AnimOutput {
 }
 
 /// A UI micro-animation on an entity's [`UiTransform`]: `pos` eases toward
-/// `target` (both `0..=1`) each frame, driving `output`. The owning control sets
-/// `target`; [`advance_ui_anims`] owns `pos` and the transform write.
+/// `target` (both `0..=1`) each frame, driving `output`. The owning control calls
+/// [`set_target`](Self::set_target).
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub(crate) struct AnimState {
     pos: f32,
     /// The end `pos` is easing toward, set by the owning control's style pass.
-    pub(crate) target: f32,
+    target: f32,
+    /// Whether the owner has reported a state yet. Until it has there is nothing to
+    /// ease from, so the first target is adopted outright; see [`Self::set_target`].
+    settled: bool,
     output: AnimOutput,
     hide_at_zero: bool,
 }
 
 impl AnimState {
+    /// Point the animation at `target`. First call adopts it instantly so ensure
+    /// it is called once during setup.
+    pub(crate) fn set_target(&mut self, target: f32) {
+        self.target = target;
+        if !self.settled {
+            self.settled = true;
+            self.pos = target;
+        }
+    }
+
     /// Ease uniform [`UiTransform`] scale between `from` (at rest) and `to`.
     pub(crate) fn scale(from: f32, to: f32) -> Self {
         Self::new(AnimOutput::Scale(from, to))
@@ -99,6 +113,7 @@ impl AnimState {
         Self {
             pos: 0.0,
             target: 0.0,
+            settled: false,
             output,
             hide_at_zero: false,
         }
@@ -113,10 +128,12 @@ fn advance_ui_anims(
 ) {
     let dt = time.delta_secs();
     for (mut anim, mut transform, visibility) in q_anims.iter_mut() {
-        if anim.pos == anim.target {
+        if anim.pos != anim.target {
+            anim.pos = approach(anim.pos, anim.target, UI_ANIM_RATE, dt);
+        // still do a set on changed (initial `set_value`)
+        } else if !anim.is_changed() {
             continue;
         }
-        anim.pos = approach(anim.pos, anim.target, UI_ANIM_RATE, dt);
         anim.output.apply(anim.pos, &mut transform);
         if anim.hide_at_zero
             && let Some(mut visibility) = visibility
