@@ -20,8 +20,8 @@ use crate::{
     constants::FaIcon,
     containers::{
         DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeGroup, PlumeSectionProps,
-        column, dialog_frame, dialog_scroll_area, dialog_scroll_frame, dialog_scrollbar,
-        flex_spacer, row, screen, section_body, section_frame, separator, space,
+        column, dialog_frame, flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar,
+        section_body, section_frame, separator, space,
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeNumberInput,
@@ -145,6 +145,16 @@ pub trait PlumeImm<'w, 's> {
         header: &str,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Section>;
+
+    /// Vertically scrolling region: `f` builds the content, which scrolls inside a
+    /// managed viewport (with a self-hiding scrollbar) once it outgrows the height
+    /// set via `.max_height()`/`.height()`. Unbounded it just stacks its content
+    /// like a [`Self::vertical`]. Use it to scroll one part of a surface while the
+    /// rest — headers, footers — stays pinned.
+    fn scroll_area(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
 
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
     /// the trailing edge).
@@ -504,6 +514,28 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn scroll_area(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea> {
+        let entity = self
+            .ch_with_manual_id(loc_id(()))
+            .on_spawn_apply_scene(scroll_frame)
+            .add(move |ui| {
+                // The viewport's entity is known before its spawn command flushes,
+                // so the scrollbar can point at the viewport it drives.
+                let viewport = ui
+                    .ch_id("scroll_area")
+                    .on_spawn_apply_scene(scroll_viewport)
+                    .add(f)
+                    .entity();
+                ui.ch_id("scrollbar")
+                    .on_spawn_apply_scene(move || scrollbar(viewport));
+            });
+        respond(entity, false)
+    }
+
+    #[track_caller]
     fn flex_spacer(&mut self) {
         self.ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(flex_spacer);
@@ -704,17 +736,17 @@ fn reconcile_frame_body<'e, 'w, 's>(
         }
         body.add(move |ui| {
             ui.ch_id("scroll_frame")
-                .on_spawn_apply_scene(dialog_scroll_frame)
+                .on_spawn_apply_scene(scroll_frame)
                 .add(move |ui| {
                     // The scroll area's entity is known before its spawn command
                     // flushes, so the scrollbar can point at the viewport it drives.
                     let viewport = ui
                         .ch_id("scroll_area")
-                        .on_spawn_apply_scene(dialog_scroll_area)
+                        .on_spawn_apply_scene(scroll_viewport)
                         .add(f)
                         .entity();
                     ui.ch_id("scrollbar")
-                        .on_spawn_apply_scene(move || dialog_scrollbar(viewport));
+                        .on_spawn_apply_scene(move || scrollbar(viewport));
                 });
         });
     });

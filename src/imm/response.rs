@@ -60,6 +60,8 @@ pub mod kind {
     pub struct Select;
     /// `section`.
     pub struct Section;
+    /// `scroll_area`.
+    pub struct ScrollArea;
     /// `horizontal`: children flow left-to-right, so its cross axis is vertical.
     pub struct Row;
     /// `vertical`: children flow top-to-bottom, so its cross axis is horizontal.
@@ -394,6 +396,47 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
             self.e
                 .entity_commands()
                 .insert(SectionCollapsible(collapsible));
+        }
+        self
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
+    /// Cap the region's height: it hugs its content until it would exceed
+    /// `max_height`, then stops growing and scrolls. The natural bound when the
+    /// area sits in an auto-height surface.
+    pub fn max_height(mut self, max_height: Val) -> Self {
+        struct MaxHeightKey;
+        if self
+            .e
+            .hash_update_typ::<MaxHeightKey>(Some(imm_id(format!("{max_height:?}"))))
+        {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.max_height = max_height;
+                    }
+                });
+        }
+        self
+    }
+
+    /// Fix the region's height, scrolling once the content outgrows it. Prefer
+    /// [`Self::max_height`] unless the area should hold its size while near-empty.
+    pub fn height(mut self, height: Val) -> Self {
+        struct HeightKey;
+        if self
+            .e
+            .hash_update_typ::<HeightKey>(Some(imm_id(format!("{height:?}"))))
+        {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.height = height;
+                    }
+                });
         }
         self
     }

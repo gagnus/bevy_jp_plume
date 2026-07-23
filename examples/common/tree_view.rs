@@ -1,0 +1,269 @@
+//! Tree-view dialog as a self-contained feature plugin: a collapsible world outliner
+//! where every node carries a checkbox and a label, non-leaf nodes fold their
+//! children on a chevron click, and a footer expands/collapses the whole tree.
+//!
+//! The whole thing is written against the public imm API — `horizontal`, `space`,
+//! `tool_button`, `checkbox`, `push_id` — with no bespoke widget. Per-node
+//! expand/checked state lives on the nodes themselves in one resource; the recursion
+//! keys each node with `push_id` so identity follows the data, not call order.
+use bevy::prelude::*;
+use bevy_jp_plume::{
+    constants::{font_awesome, size},
+    controls::ButtonVariant,
+    imm::{PlumeImm, PlumeRoot, Ui},
+};
+
+use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
+
+const TITLE: &str = "World Outliner";
+
+/// Indent applied per depth level, in pixels.
+const INDENT: f32 = 14.0;
+
+/// One node in the outliner: a label, its own checkbox and fold state, and children.
+struct TreeNode {
+    label: String,
+    checked: bool,
+    expanded: bool,
+    children: Vec<TreeNode>,
+}
+
+fn leaf(label: &str, checked: bool) -> TreeNode {
+    TreeNode {
+        label: label.to_owned(),
+        checked,
+        expanded: false,
+        children: Vec::new(),
+    }
+}
+
+fn branch(label: &str, checked: bool, expanded: bool, children: Vec<TreeNode>) -> TreeNode {
+    TreeNode {
+        label: label.to_owned(),
+        checked,
+        expanded,
+        children,
+    }
+}
+
+/// The outliner's backing state: a forest of root nodes.
+#[derive(Resource)]
+pub struct OutlinerState {
+    roots: Vec<TreeNode>,
+}
+
+impl Default for OutlinerState {
+    fn default() -> Self {
+        // Invented dungeon scene graph — deep enough to show nesting and folding.
+        Self {
+            roots: vec![
+                branch(
+                    "The Sunless Keep",
+                    true,
+                    true,
+                    vec![
+                        branch(
+                            "Entrance Hall",
+                            true,
+                            true,
+                            vec![
+                                leaf("Torch Sconce ×4", true),
+                                leaf("Oak Door", true),
+                                leaf("Cobweb Decor", false),
+                            ],
+                        ),
+                        branch(
+                            "Guard Barracks",
+                            true,
+                            false,
+                            vec![leaf("Skeleton Sentry", true), leaf("Weapon Rack", true)],
+                        ),
+                        branch(
+                            "Crypt Level",
+                            true,
+                            true,
+                            vec![
+                                branch(
+                                    "Bone Pit",
+                                    true,
+                                    false,
+                                    vec![
+                                        leaf("Skeletal Warrior", true),
+                                        leaf("Skeletal Archer", true),
+                                    ],
+                                ),
+                                leaf("Sarcophagus", true),
+                                leaf("Cursed Altar", false),
+                            ],
+                        ),
+                    ],
+                ),
+                branch(
+                    "Lighting",
+                    true,
+                    true,
+                    vec![
+                        leaf("Ambient Fog", true),
+                        leaf("Torch Flicker", true),
+                        leaf("Moon Shaft", false),
+                    ],
+                ),
+                branch(
+                    "Navigation",
+                    true,
+                    false,
+                    vec![leaf("Nav Mesh", true), leaf("Patrol Routes", true)],
+                ),
+                branch(
+                    "Encounters",
+                    true,
+                    true,
+                    vec![
+                        leaf("Wandering Wraith", true),
+                        leaf("Trap: Spike Pit", true),
+                        leaf("Boss: The Gravekeeper", false),
+                    ],
+                ),
+                branch(
+                    "Audio",
+                    false,
+                    false,
+                    vec![leaf("Dungeon Ambience", false), leaf("Water Drips", false)],
+                ),
+            ],
+        }
+    }
+}
+
+/// Adds the outliner dialog: its resource plus its dialog system and hub entry.
+pub struct TreeViewPlugin(pub bool);
+
+impl Plugin for TreeViewPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<OutlinerState>().add_debug_dialog(
+            TITLE,
+            font_awesome::solid::SITEMAP,
+            self.0,
+            tree_view_dialog,
+        );
+    }
+}
+
+fn tree_view_dialog(
+    mut root: PlumeRoot,
+    mut registry: ResMut<DebugDialogRegistry>,
+    mut state: ResMut<OutlinerState>,
+) {
+    let mut open = registry.is_open(TITLE);
+    // Counts are read before the body borrows the tree mutably.
+    let (checked, total) = tree_totals(&state.roots);
+    // Deferred whole-tree action, applied after the body closure releases `state`.
+    let mut set_all: Option<bool> = None;
+
+    root.dialog(TITLE, &mut open)
+        .width(px(340))
+        .at(px(40), px(60))
+        .icon(font_awesome::solid::SITEMAP)
+        .show(|ui| {
+            // Only the tree scrolls; the footer below stays pinned.
+            ui.scroll_area(|ui| {
+                ui.section("Test", |ui| {
+                    ui.caption("Hello");
+                });
+                for (i, node) in state.roots.iter_mut().enumerate() {
+                    ui.push_id(i, |ui| node_row(ui, node, 0));
+                }
+            })
+            .height(px(300));
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                if ui
+                    .icon_button(font_awesome::solid::ANGLES_DOWN, "Expand")
+                    .variant(ButtonVariant::Outline)
+                    .clicked
+                {
+                    set_all = Some(true);
+                }
+                if ui
+                    .icon_button(font_awesome::solid::ANGLES_UP, "Collapse")
+                    .variant(ButtonVariant::Outline)
+                    .clicked
+                {
+                    set_all = Some(false);
+                }
+                ui.flex_spacer();
+                ui.caption(&format!("{checked}/{total} enabled"));
+            });
+        });
+
+    if let Some(expanded) = set_all {
+        for node in &mut state.roots {
+            set_expanded_recursive(node, expanded);
+        }
+    }
+    if open != registry.is_open(TITLE) {
+        registry.set_open(TITLE, open);
+    }
+}
+
+/// Render one node's row, then recurse into its children when expanded.
+fn node_row(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
+    let has_children = !node.children.is_empty();
+    ui.horizontal(|ui| {
+        if depth > 0 {
+            ui.space(px(depth as f32 * INDENT));
+        }
+        // A chevron toggles the fold; a leaf reserves the same width so labels align.
+        if has_children {
+            let glyph = if node.expanded {
+                font_awesome::solid::ANGLE_DOWN
+            } else {
+                font_awesome::solid::ANGLE_RIGHT
+            };
+            if ui
+                .tool_button(glyph)
+                .flat()
+                .variant(ButtonVariant::Plain)
+                .clicked
+            {
+                node.expanded = !node.expanded;
+            }
+        } else {
+            ui.space(size::ROW_HEIGHT);
+        }
+        ui.checkbox(&mut node.checked, &node.label);
+    });
+
+    if has_children && node.expanded {
+        for (i, child) in node.children.iter_mut().enumerate() {
+            ui.push_id(i, |ui| node_row(ui, child, depth + 1));
+        }
+    }
+}
+
+/// Count `(checked, total)` leaves-and-branches over the whole forest.
+fn tree_totals(roots: &[TreeNode]) -> (usize, usize) {
+    fn walk(node: &TreeNode, checked: &mut usize, total: &mut usize) {
+        *total += 1;
+        if node.checked {
+            *checked += 1;
+        }
+        for child in &node.children {
+            walk(child, checked, total);
+        }
+    }
+    let (mut checked, mut total) = (0, 0);
+    for node in roots {
+        walk(node, &mut checked, &mut total);
+    }
+    (checked, total)
+}
+
+fn set_expanded_recursive(node: &mut TreeNode, expanded: bool) {
+    node.expanded = expanded;
+    for child in &mut node.children {
+        set_expanded_recursive(child, expanded);
+    }
+}

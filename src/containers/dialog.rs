@@ -1,8 +1,8 @@
 //! Movable floating dialog with a draggable title bar and close button.
 use bevy_color::{Alpha, Srgba};
 use bevy_ecs::{
-    component::Component, entity::Entity, event::EntityEvent, hierarchy::Children, observer::On,
-    reflect::ReflectComponent, system::Commands, template::EntityTemplate,
+    component::Component, event::EntityEvent, hierarchy::Children, observer::On,
+    reflect::ReflectComponent, system::Commands,
 };
 use bevy_input_focus::tab_navigation::TabGroup;
 use bevy_reflect::{Reflect, prelude::ReflectDefault};
@@ -10,16 +10,14 @@ use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
-    Node, Overflow, PositionType, UiRect, Val, px,
+    Node, PositionType, UiRect, Val, px,
 };
-use bevy_ui_widgets::{
-    Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose, ScrollArea,
-};
+use bevy_ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
     constants::{font_awesome, fonts, size},
-    containers::flex_spacer,
-    controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton, ScrollbarGutter},
+    containers::{flex_spacer, scroll_frame, scroll_viewport, scrollbar_node},
+    controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton},
     display::fa_icon,
     font_styles::InheritableFont,
     theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
@@ -95,11 +93,11 @@ impl PlumeDialog {
         // directly and spawns no scroll machinery.
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
             Box::new(bsn_list!((
-                dialog_scroll_frame()
+                scroll_frame()
                 Children [
                     (
                         #inner
-                        dialog_scroll_area()
+                        scroll_viewport()
                         Children [
                             {contents}
                         ]
@@ -109,7 +107,7 @@ impl PlumeDialog {
                             @target: #inner,
                             @orientation: {ControlOrientation::Vertical},
                         }
-                        dialog_scrollbar_node()
+                        scrollbar_node()
                     ),
                 ]
             )))
@@ -296,68 +294,5 @@ impl PlumeDialogBody {
                 weight: FontWeight::NORMAL,
             }
         }
-    }
-}
-
-/// Bounded frame inside a height-limited dialog body, holding the scrolling
-/// content and the scrollbar that drives it.
-///
-/// Distinct from [`PlumeDialogBody`] because [`ScrollbarGutter`] *assigns*
-/// `padding.right`, which on the body would eat the body's own padding.
-pub(crate) fn dialog_scroll_frame() -> impl Scene {
-    bsn! {
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-            flex_grow: 1.0,
-            min_height: px(0),
-        }
-        ScrollbarGutter(size::SCROLLBAR_GUTTER)
-    }
-}
-
-/// The scrolling viewport itself: the dialog's content lands here. Vertical
-/// only — a dialog is never allowed to scroll sideways.
-pub(crate) fn dialog_scroll_area() -> impl Scene {
-    bsn! {
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-            row_gap: size::GAP,
-            flex_grow: 1.0,
-            min_height: px(0),
-            overflow: Overflow::scroll_y(),
-        }
-        ScrollArea
-    }
-}
-
-/// Placement shared by both dialog scrollbars: pinned down the trailing edge of
-/// [`dialog_scroll_frame`]. The two paths name their viewport differently, so
-/// only the placement is shared.
-fn dialog_scrollbar_node() -> impl Scene {
-    bsn! {
-        Node {
-            position_type: PositionType::Absolute,
-            right: Val::ZERO,
-            top: Val::ZERO,
-            bottom: Val::ZERO,
-            width: size::SCROLLBAR_WIDTH,
-        }
-    }
-}
-
-/// Vertical scrollbar driving the scroll area at `target`. Hidden, and its
-/// gutter reclaimed, whenever the content fits — see
-/// `update_scrollbar_visibility`.
-pub(crate) fn dialog_scrollbar(target: Entity) -> impl Scene {
-    bsn! {
-        @PlumeScrollbar {
-            @target: {EntityTemplate::from(target)},
-            @orientation: {ControlOrientation::Vertical},
-        }
-        dialog_scrollbar_node()
     }
 }

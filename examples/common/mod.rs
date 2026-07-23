@@ -17,6 +17,7 @@ pub mod debug_settings;
 pub mod gallery;
 pub mod player_profile;
 pub mod theme_editor;
+pub mod tree_view;
 
 /// Base app every example builds on: default + plume plugins, a camera, the dialog hub,
 /// and the shared command-line handling. Callers add their feature plugin(s) and `run`.

@@ -73,7 +73,6 @@ fn theme_editor_dialog(
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
         .width(px(320))
-        .max_height(px(600))
         .at(px(900), px(90))
         .icon(font_awesome::solid::PALETTE)
         .show(|ui| {
@@ -96,23 +95,26 @@ fn theme_editor_dialog(
                 }
             });
 
-            ui.section("Neutrals", |ui| ramp_rows(ui, &mut s.palette.neutrals, 0.2))
+            ui.scroll_area(|ui| {
+                ui.section("Neutrals", |ui| ramp_rows(ui, &mut s.palette.neutrals, 0.2))
+                    .collapsible(false);
+                ui.section("Accent", |ui| ramp_rows(ui, &mut s.palette.accent, 0.5))
+                    .collapsible(false);
+                ui.section("Text", |ui| {
+                    ramp_rows(ui, &mut s.palette.text, 0.2);
+                    param_row(
+                        ui,
+                        "Disabled \u{3b1}",
+                        &mut s.palette.disabled_text_alpha_modifier,
+                        0.0..=1.0,
+                        3,
+                        None,
+                        None,
+                    );
+                })
                 .collapsible(false);
-            ui.section("Accent", |ui| ramp_rows(ui, &mut s.palette.accent, 0.5))
-                .collapsible(false);
-            ui.section("Text", |ui| {
-                ramp_rows(ui, &mut s.palette.text, 0.2);
-                param_row(
-                    ui,
-                    "Disabled \u{3b1}",
-                    &mut s.palette.disabled_text_alpha_modifier,
-                    0.0..=1.0,
-                    3,
-                    None,
-                    None,
-                );
             })
-            .collapsible(false);
+            .max_height(px(500));
         });
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
