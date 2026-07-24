@@ -10,8 +10,8 @@ pub use widgets::{ImmDialog, ImmPanel, ImmSelect, ImmTab, ImmTabs, PlumeImm};
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use bevy_app::Plugin;
-use bevy_ecs::{
+use bevy::app::Plugin;
+use bevy::ecs::{
     change_detection::Tick,
     query::FilteredAccessSet,
     system::{SystemMeta, SystemParam, SystemParamValidationError},
@@ -146,7 +146,7 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
     fn queue(
         state: &mut Self::State,
         system_meta: &SystemMeta,
-        world: bevy_ecs::world::DeferredWorld,
+        world: bevy::ecs::world::DeferredWorld,
     ) {
         <CtxStatic as SystemParam>::queue(&mut state.ctx, system_meta, world);
     }
@@ -171,7 +171,7 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
 pub(crate) struct ImmPlugin;
 
 impl Plugin for ImmPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_plugins(BevyImmediatePlugin::<PlumeCaps>::new());
     }
 }

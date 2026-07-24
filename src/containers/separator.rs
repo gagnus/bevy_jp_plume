@@ -1,6 +1,6 @@
 //! BSN scene function for a hairline rule.
-use bevy_scene::{Scene, bsn};
-use bevy_ui::{AlignSelf, Node};
+use bevy::scene::{Scene, bsn};
+use bevy::ui::{AlignSelf, Node};
 
 use crate::{constants::size, theme::ThemeBackgroundColor, tokens};
 

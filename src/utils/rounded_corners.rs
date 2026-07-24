@@ -1,6 +1,6 @@
 //! Mechanism for specifying which corners of a widget are rounded, used for segmented buttons
 //! and control groups.
-use bevy_ui::{BorderRadius, Val, Val2};
+use bevy::ui::{BorderRadius, Val, Val2};
 
 /// Which corners of a control are rounded, all at the same radius. Only the
 /// combinations that make sense for segmented buttons are offered.

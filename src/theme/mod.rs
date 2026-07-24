@@ -1,10 +1,10 @@
 //! A framework for theming.
-use bevy_app::{
+use bevy::app::{
     App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
     PropagateStop,
 };
-use bevy_color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
-use bevy_ecs::{
+use bevy::color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
+use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
@@ -16,11 +16,11 @@ use bevy_ecs::{
     resource::Resource,
     system::{Commands, Query, Res},
 };
-use bevy_log::warn_once;
-use bevy_platform::collections::HashMap;
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_text::TextColor;
-use bevy_ui::{
+use bevy::log::warn_once;
+use bevy::platform::collections::HashMap;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::text::TextColor;
+use bevy::ui::{
     BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
     InterpolationColorSpace, LinearGradient, Val, percent,
 };
@@ -174,7 +174,7 @@ pub const GRADIENT_AMOUNT: f32 = 0.05;
 pub struct Flat;
 
 /// Opt-in marker: the entity does not repond to hover and pressed. Currently only
-/// respected by `PlumeButton`. Implied by [`bevy_ui::Checkable`].
+/// respected by `PlumeButton`. Implied by [`bevy::ui::Checkable`].
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct Inert;

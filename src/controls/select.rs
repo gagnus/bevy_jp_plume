@@ -1,8 +1,8 @@
 //! Dropdown select control built on an internal menu popup and list view.
-use bevy_app::{Plugin, Update};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::lifecycle::RemovedComponents;
-use bevy_ecs::{
+use bevy::app::{Plugin, Update};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     event::EntityEvent,
@@ -13,13 +13,13 @@ use bevy_ecs::{
     system::{Commands, Query, ResMut},
     world::World,
 };
-use bevy_input_focus::{FocusCause, InputFocus};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{
+use bevy::input_focus::{FocusCause, InputFocus};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{
     ComputedNode, InteractionDisabled, Node, PositionType, Selected, Val, px, widget::Text,
 };
-use bevy_ui_widgets::{
+use bevy::ui_widgets::{
     ListBox, ReselectListRow, SetSelected, ValueChange, listbox_update_selection,
 };
 
@@ -31,7 +31,7 @@ use crate::rounded_corners::RoundedCorners;
 
 /// Select control which spawns a menu popup with a list of string options
 /// # Emitted events
-/// * [`ValueChange<Entity>`](bevy_ui_widgets::ValueChange) when the selected option is changed.
+/// * [`ValueChange<Entity>`](bevy::ui_widgets::ValueChange) when the selected option is changed.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeSelectProps)]
 #[derive(Reflect)]
@@ -476,7 +476,7 @@ fn sync_select_button_width(
 pub struct SelectPlugin;
 
 impl Plugin for SelectPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             Update,
             (

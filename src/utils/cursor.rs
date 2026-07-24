@@ -1,7 +1,6 @@
 //! Provides a way to automatically set the mouse cursor based on hovered entity.
-use bevy_app::{App, Plugin, PreUpdate};
-use bevy_derive::Deref;
-use bevy_ecs::{
+use bevy::app::{App, Plugin, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::ChildOf,
@@ -12,11 +11,12 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::FromTemplate,
 };
-use bevy_picking::{PickingSystems, hover::HoverMap, pointer::PointerId};
-use bevy_reflect::{Reflect, std_traits::ReflectDefault};
+use bevy::picking::{PickingSystems, hover::HoverMap, pointer::PointerId};
+use bevy::prelude::Deref;
+use bevy::reflect::{Reflect, std_traits::ReflectDefault};
 #[cfg(feature = "custom_cursor")]
-use bevy_window::CustomCursor;
-use bevy_window::{CursorIcon, SystemCursorIcon, Window};
+use bevy::window::CustomCursor;
+use bevy::window::{CursorIcon, SystemCursorIcon, Window};
 
 /// A resource that specifies the cursor icon to be used when the mouse is not hovering over
 /// any other entity. This is used to set the default cursor icon for the window.
@@ -27,7 +27,7 @@ pub struct DefaultCursor(pub EntityCursor);
 /// A component that specifies the cursor shape to be used when the pointer hovers over an entity.
 /// This is copied to the windows's [`CursorIcon`] component.
 ///
-/// This is effectively the same type as `bevy_window::CustomCursor` but with
+/// This is effectively the same type as `bevy::window::CustomCursor` but with
 /// different methods, and used in different places.
 #[derive(Component, Debug, Clone, Reflect, PartialEq, Eq, FromTemplate)]
 #[reflect(Component, Debug, Default, PartialEq, Clone)]
@@ -62,7 +62,7 @@ impl EntityCursor {
     /// Compare the [`EntityCursor`] to a [`CursorIcon`] so that we can see whether or not
     /// the window cursor needs to be changed.
     pub fn eq_cursor_icon(&self, cursor_icon: &CursorIcon) -> bool {
-        // `as_system` lets bevy_window check its own `custom_cursor` feature; matching
+        // `as_system` lets bevy::window check its own `custom_cursor` feature; matching
         // on it directly can't stay exhaustive-and-unreachable-free across every combination.
         match (self, cursor_icon, cursor_icon.as_system()) {
             #[cfg(feature = "custom_cursor")]

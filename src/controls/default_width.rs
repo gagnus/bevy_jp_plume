@@ -1,6 +1,6 @@
 //! Parent-aware default width for controls with nothing inside to measure.
-use bevy_app::{Plugin, PostUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PostUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::ChildOf,
@@ -9,8 +9,8 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_ui::{AlignItems, AlignSelf, Display, FlexDirection, Node, UiSystems, Val};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ui::{AlignItems, AlignSelf, Display, FlexDirection, Node, UiSystems, Val};
 
 /// Width for a control with nothing inside to measure, applied only where the
 /// layout won't size it; a stretching column fills it, and an explicit width wins.
@@ -81,7 +81,7 @@ fn apply_default_width(
 pub struct DefaultWidthPlugin;
 
 impl Plugin for DefaultWidthPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         // Before layout, so a control is never laid out at the wrong width.
         app.add_systems(PostUpdate, apply_default_width.in_set(UiSystems::Prepare));
     }

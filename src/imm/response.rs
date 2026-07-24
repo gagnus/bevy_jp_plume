@@ -4,18 +4,18 @@
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 
-use bevy_app::PropagateOver;
-use bevy_color::Color;
-use bevy_ecs::{
+use bevy::app::PropagateOver;
+use bevy::color::Color;
+use bevy::ecs::{
     entity::Entity,
     hierarchy::ChildOf,
     world::{EntityWorldMut, World},
 };
+use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
+use bevy::ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
+use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
-use bevy_scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
-use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
-use bevy_ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
-use bevy_ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 
 use super::PlumeCaps;
 use crate::{
@@ -147,7 +147,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Enable or disable the control (manages [`bevy_ui::InteractionDisabled`]).
+    /// Enable or disable the control (manages [`bevy::ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
         self

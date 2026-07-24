@@ -1,6 +1,6 @@
 //! Focus outlines and Tab-order upkeep for focusable controls.
-use bevy_app::{Plugin, PostUpdate, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
+use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
@@ -11,11 +11,11 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res},
 };
-use bevy_input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
-use bevy_picking::PickingSystems;
-use bevy_platform::collections::HashSet;
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_ui::{InteractionDisabled, Outline, UiSystems, px};
+use bevy::input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
+use bevy::picking::PickingSystems;
+use bevy::platform::collections::HashSet;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ui::{InteractionDisabled, Outline, UiSystems, px};
 
 use crate::{theme::UiTheme, tokens};
 
@@ -106,7 +106,7 @@ fn sync_disabled_tab_index(
 pub struct FocusPlugin;
 
 impl Plugin for FocusPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PostUpdate,
             manage_focus_indicators.in_set(UiSystems::Content),

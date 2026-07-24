@@ -1,10 +1,10 @@
 //! Generic vertical scroll region: a gutter-reserving frame, its scrolling
 //! viewport, and the scrollbar that drives it. Shared by the dialog body and the
 //! imm `scroll_area` widget.
-use bevy_ecs::{entity::Entity, template::EntityTemplate};
-use bevy_scene::{Scene, bsn};
-use bevy_ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val};
-use bevy_ui_widgets::{ControlOrientation, ScrollArea};
+use bevy::ecs::{entity::Entity, template::EntityTemplate};
+use bevy::scene::{Scene, bsn};
+use bevy::ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val};
+use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::{
     constants::size,

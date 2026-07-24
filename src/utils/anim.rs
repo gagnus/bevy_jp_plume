@@ -1,17 +1,17 @@
 //! Shared easing for the crate's UI micro-interactions: an [`AnimState`] glides a
 //! `pos` toward a target each frame and applies it to the entity's transform.
-use bevy_app::{Plugin, Update};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::app::{Plugin, Update};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
     reflect::ReflectComponent,
     system::{Query, Res},
 };
-use bevy_math::{Rot2, Vec2};
-use bevy_reflect::Reflect;
-use bevy_time::Time;
-use bevy_ui::{UiTransform, px};
+use bevy::math::{Rot2, Vec2};
+use bevy::reflect::Reflect;
+use bevy::time::Time;
+use bevy::ui::{UiTransform, px};
 
 /// Exponential-approach rate for the crate's UI micro-transitions; higher settles
 /// faster.
@@ -154,7 +154,7 @@ fn advance_ui_anims(
 pub(crate) struct UiAnimPlugin;
 
 impl Plugin for UiAnimPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(Update, advance_ui_anims);
     }
 }

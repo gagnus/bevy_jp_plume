@@ -6,34 +6,24 @@ description = "Plume: a bevy_ui control framework for game editors"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# bevy (path deps into the local bevy fork; uses main-only APIs)
-bevy_a11y = { path = "../3rdParty/bevy/crates/bevy_a11y" }
-bevy_app = { path = "../3rdParty/bevy/crates/bevy_app" }
-bevy_asset = { path = "../3rdParty/bevy/crates/bevy_asset" }
-bevy_camera = { path = "../3rdParty/bevy/crates/bevy_camera" }
-bevy_color = { path = "../3rdParty/bevy/crates/bevy_color" }
-bevy_ui_widgets = { path = "../3rdParty/bevy/crates/bevy_ui_widgets" }
-bevy_ecs = { path = "../3rdParty/bevy/crates/bevy_ecs" }
-bevy_input = { path = "../3rdParty/bevy/crates/bevy_input" }
-bevy_input_focus = { path = "../3rdParty/bevy/crates/bevy_input_focus", features = [
-  "bevy_picking",
+# bevy umbrella (path dep into the local fork; uses main-only APIs).
+# default-features off keeps the pull lean — only the crates plume's controls
+# reference are enabled. `ui_picking` forwards to bevy_ui + bevy_input_focus's
+# picking backends; `bevy_window` is what re-exports `bevy::a11y`.
+bevy = { path = "../3rdParty/bevy", default-features = false, features = [
+  "bevy_asset",
+  "bevy_camera",
+  "bevy_color",
+  "bevy_log",
+  "bevy_scene",
+  "bevy_text",
+  "bevy_ui",
+  "bevy_ui_render",
+  "bevy_ui_widgets",
+  "bevy_window",
+  "bevy_input_focus",
+  "ui_picking",
 ] }
-bevy_log = { path = "../3rdParty/bevy/crates/bevy_log" }
-bevy_math = { path = "../3rdParty/bevy/crates/bevy_math" }
-bevy_picking = { path = "../3rdParty/bevy/crates/bevy_picking" }
-bevy_shader = { path = "../3rdParty/bevy/crates/bevy_shader" }
-bevy_platform = { path = "../3rdParty/bevy/crates/bevy_platform" }
-bevy_reflect = { path = "../3rdParty/bevy/crates/bevy_reflect" }
-bevy_render = { path = "../3rdParty/bevy/crates/bevy_render" }
-bevy_scene = { path = "../3rdParty/bevy/crates/bevy_scene" }
-bevy_text = { path = "../3rdParty/bevy/crates/bevy_text" }
-bevy_time = { path = "../3rdParty/bevy/crates/bevy_time" }
-bevy_ui = { path = "../3rdParty/bevy/crates/bevy_ui", features = [
-  "bevy_picking",
-] }
-bevy_ui_render = { path = "../3rdParty/bevy/crates/bevy_ui_render" }
-bevy_window = { path = "../3rdParty/bevy/crates/bevy_window" }
-bevy_derive = { path = "../3rdParty/bevy/crates/bevy_derive" }
 smol_str = { version = "0.2", default-features = false }
 
 # immediate-mode reconciler under `src/imm` (vendored fork wired to the bevy fork above)
@@ -52,6 +42,6 @@ argh = "0.1.13"
 
 [features]
 default = []
-custom_cursor = ["bevy_window/custom_cursor"]
+custom_cursor = ["bevy/custom_cursor"]
 webgl = []
 webgpu = []

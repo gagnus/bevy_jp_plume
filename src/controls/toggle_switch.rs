@@ -1,8 +1,8 @@
 //! On/off toggle switch control.
 use accesskit::Role;
-use bevy_a11y::AccessibilityNode;
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::a11y::AccessibilityNode;
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -12,15 +12,15 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::PickingSystems;
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::PickingSystems;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{
     BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, UiTransform,
     Val, percent, px,
 };
-use bevy_ui_widgets::{Checkbox, checkbox_self_update};
+use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
     constants::size,
@@ -38,7 +38,7 @@ const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 const KNOB_TRAVEL: f32 = 14.0;
 
 /// A toggle switch, spawnable as a scene component. Emits
-/// [`bevy_ui_widgets::ValueChange<bool>`] with the new state.
+/// [`bevy::ui_widgets::ValueChange<bool>`] with the new state.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct PlumeToggleSwitch;
@@ -64,7 +64,7 @@ impl PlumeToggleSwitch {
             ThemeBackgroundGradient(tokens::SWITCH_BG, GRADIENT_AMOUNT)
             template_value(control_box_shadow())
             AccessibilityNode(accesskit::Node::new(Role::Switch))
-            EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             Children [
                 (
                     // Border ring overlaying the pill; only its color is themed.
@@ -267,8 +267,8 @@ fn set_switch_styles(
     let slide_bg_token = tokens::sets::SWITCH_SLIDE_BG.pick(checked, disabled);
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     // Disabled reads inert: flat fill, no gradient.
@@ -321,7 +321,7 @@ fn set_switch_styles(
 pub struct ToggleSwitchPlugin;
 
 impl Plugin for ToggleSwitchPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_switch_styles, update_switch_styles_remove).in_set(PickingSystems::Last),

@@ -1,8 +1,8 @@
 //! BSN scene function for displaying a plain text string in the correct font.
-use bevy_app::PropagateOver;
-use bevy_scene::{Scene, bsn};
-use bevy_text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
-use bevy_ui::widget::Text;
+use bevy::app::PropagateOver;
+use bevy::scene::{Scene, bsn};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
+use bevy::ui::widget::Text;
 
 use crate::{
     constants::{FaIcon, fonts, size},

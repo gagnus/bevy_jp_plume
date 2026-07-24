@@ -1,7 +1,7 @@
 //! Radio button control.
-use bevy_app::{Plugin, PreUpdate};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -12,16 +12,16 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{Pickable, PickingSystems};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_text::FontWeight;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::text::FontWeight;
+use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, PositionType, UiTransform, Val, percent, px,
 };
-use bevy_ui_widgets::{RadioButton, RadioGroup, ValueChange};
+use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
     constants::{fonts, size},
@@ -37,7 +37,7 @@ use crate::{
 };
 
 /// A radio, spawnable as a scene component with optional [`PlumeRadioProps`].
-/// Emits [`bevy_ui_widgets::ValueChange<bool>`] (always true) when checked.
+/// Emits [`bevy::ui_widgets::ValueChange<bool>`] (always true) when checked.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeRadioProps)]
 #[derive(Reflect)]
@@ -76,7 +76,7 @@ impl PlumeRadio {
             // clicks (children stay pickable and bubble up); the dead space is inert.
             Pickable::IGNORE
             on(radio_check_self)
-            EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
             InheritableFont {
                 font: fonts::REGULAR,
@@ -133,7 +133,7 @@ impl PlumeRadio {
 }
 
 /// Groups [`PlumeRadio`] children into a column and keeps their checks mutually
-/// exclusive; emits [`bevy_ui_widgets::ValueChange<Entity>`] with the new pick.
+/// exclusive; emits [`bevy::ui_widgets::ValueChange<Entity>`] with the new pick.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct PlumeRadioGroup;
@@ -378,8 +378,8 @@ fn set_radio_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     if outline_border.0 != outline_border_token {
@@ -428,7 +428,7 @@ fn set_radio_styles(
 pub struct RadioPlugin;
 
 impl Plugin for RadioPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_radio_styles, update_radio_styles_remove).in_set(PickingSystems::Last),

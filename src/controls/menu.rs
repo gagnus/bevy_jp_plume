@@ -1,22 +1,22 @@
 //! Internal menu container, button, and popup used by the select control.
-use bevy_camera::visibility::Visibility;
-use bevy_color::{Alpha, Srgba};
-use bevy_ecs::{
+use bevy::camera::visibility::Visibility;
+use bevy::color::{Alpha, Srgba};
+use bevy::ecs::{
     hierarchy::Children,
     observer::On,
     query::With,
     reflect::ReflectComponent,
     system::{Commands, Query, ResMut},
 };
-use bevy_log::warn;
-use bevy_reflect::Reflect;
-use bevy_reflect::std_traits::ReflectDefault;
-use bevy_scene::prelude::*;
-use bevy_ui::{
+use bevy::log::warn;
+use bevy::reflect::Reflect;
+use bevy::reflect::std_traits::ReflectDefault;
+use bevy::scene::prelude::*;
+use bevy::ui::{
     AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node,
     OverrideClip, PositionType, UiRect, Val, px,
 };
-use bevy_ui_widgets::{
+use bevy::ui_widgets::{
     ActivateOnPress, MenuAction, MenuButton, MenuEvent, MenuFocusState, MenuPopup,
     popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
 };
@@ -29,7 +29,7 @@ use crate::{
     theme::{ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
-use bevy_input_focus::{FocusCause, InputFocus, tab_navigation::NavAction};
+use bevy::input_focus::{FocusCause, InputFocus, tab_navigation::NavAction};
 
 /// Top-level menu container. This wraps the menu button and provides an anchor for the popover.
 ///

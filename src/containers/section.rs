@@ -1,8 +1,8 @@
 //! Collapsible section container with a header bar.
 use core::f32::consts::FRAC_PI_2;
 
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     event::EntityEvent,
@@ -14,14 +14,14 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_picking::{
+use bevy::picking::{
     PickingSystems,
     events::{Click, Pointer},
 };
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::text::FontWeight;
+use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
 
 use crate::{
     constants::{font_awesome, fonts, size},
@@ -152,7 +152,7 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
                 SectionHeader
                 ThemeBackgroundColor(tokens::SECTION_HEADER_BG)
                 ThemeBorderColor(tokens::SEPARATOR)
-                EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+                EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
                 InheritableFont {
                     font: fonts::REGULAR,
@@ -296,14 +296,14 @@ fn update_section_header_style(
                     tokens::SECTION_BODY_BG,
                     tokens::SECTION_HEADER_MUTED_TEXT,
                     UiRect::bottom(size::CONTAINER_BORDER),
-                    bevy_window::SystemCursorIcon::Default,
+                    bevy::window::SystemCursorIcon::Default,
                 )
             } else {
                 (
                     tokens::SECTION_HEADER_BG,
                     tokens::SECTION_HEADER_TEXT,
                     UiRect::ZERO,
-                    bevy_window::SystemCursorIcon::Pointer,
+                    bevy::window::SystemCursorIcon::Pointer,
                 )
             };
             node.border = border;
@@ -320,7 +320,7 @@ fn update_section_header_style(
 pub struct SectionPlugin;
 
 impl Plugin for SectionPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (

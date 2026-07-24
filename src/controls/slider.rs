@@ -1,8 +1,8 @@
 //! Horizontal slider: thin track with a round draggable thumb.
 use core::f32::consts::PI;
 
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
@@ -16,20 +16,20 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::template,
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::{
     PickingSystems,
     events::{Pointer, Press},
     hover::Hovered,
 };
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
     InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
     UiRect, UiTransform, Val, percent, px,
 };
-use bevy_ui_widgets::{
+use bevy::ui_widgets::{
     Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderThumb, SliderValue,
     TrackClick, slider_self_update,
 };
@@ -48,7 +48,7 @@ use crate::{
 const THUMB_GRABBED_SCALE: f32 = 1.15;
 
 /// A slider, spawnable as a scene component with optional [`PlumeSliderProps`].
-/// Emits [`bevy_ui_widgets::ValueChange<f32>`]; shows no value text of its own.
+/// Emits [`bevy::ui_widgets::ValueChange<f32>`]; shows no value text of its own.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSliderProps)]
 #[require(Slider)]
@@ -377,8 +377,8 @@ fn set_slider_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     if let [Gradient::Linear(linear_gradient)] = &mut track_background_gradient.0[..] {
@@ -464,7 +464,7 @@ fn grab_thumb_on_press(
 pub struct SliderPlugin;
 
 impl Plugin for SliderPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (

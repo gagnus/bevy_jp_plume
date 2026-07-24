@@ -1,18 +1,18 @@
 //! Movable floating dialog with a draggable title bar and close button.
-use bevy_color::{Alpha, Srgba};
-use bevy_ecs::{
+use bevy::color::{Alpha, Srgba};
+use bevy::ecs::{
     component::Component, event::EntityEvent, hierarchy::Children, observer::On,
     reflect::ReflectComponent, system::Commands,
 };
-use bevy_input_focus::tab_navigation::TabGroup;
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
-use bevy_text::FontWeight;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabGroup;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::text::FontWeight;
+use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
     Node, PositionType, UiRect, Val,
 };
-use bevy_ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
+use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
 use crate::{
     constants::{font_awesome, fonts, size},

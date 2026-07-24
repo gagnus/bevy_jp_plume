@@ -1,6 +1,6 @@
 //! The standard Plume light theme.
 use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
-use bevy_color::Oklcha;
+use bevy::color::Oklcha;
 
 /// Default plume light palette editable inputs
 pub fn default_light_palette() -> ThemeEditablePalette {

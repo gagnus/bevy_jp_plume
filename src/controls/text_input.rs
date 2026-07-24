@@ -1,7 +1,7 @@
 //! Editable text field and its decorative container.
-use bevy_app::{Plugin, PreUpdate, PropagateOver};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate, PropagateOver};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     change_detection::{DetectChanges, DetectChangesMut},
     component::Component,
     entity::Entity,
@@ -14,16 +14,16 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res, ResMut},
 };
-use bevy_input_focus::{InputFocus, tab_navigation::TabIndex};
-use bevy_picking::{Pickable, PickingSystems};
-use bevy_reflect::Reflect;
-use bevy_reflect::std_traits::ReflectDefault;
-use bevy_scene::prelude::*;
-use bevy_text::{
+use bevy::input_focus::{InputFocus, tab_navigation::TabIndex};
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::Reflect;
+use bevy::reflect::std_traits::ReflectDefault;
+use bevy::scene::prelude::*;
+use bevy::text::{
     EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
     TextCursorStyle, TextEdit, TextFont, TextLayout,
 };
-use bevy_ui::{
+use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
     widget::Text,
 };
@@ -138,7 +138,7 @@ pub(crate) fn text_input_frame() -> impl Scene {
         ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
         // On the frame so the whole box (padding included) shows the text cursor; the cursor
         // resolver walks up from the hovered field to find it.
-        EntityCursor::System(bevy_window::SystemCursorIcon::Text)
+        EntityCursor::System(bevy::window::SystemCursorIcon::Text)
     }
 }
 
@@ -446,8 +446,8 @@ fn set_text_input_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Text,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Text,
     };
 
     // Background and border chrome live on the frame. Skip redundant re-inserts so a focus
@@ -522,7 +522,7 @@ fn update_text_input_placeholders(
 pub struct TextInputPlugin;
 
 impl Plugin for TextInputPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (

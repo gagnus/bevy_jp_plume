@@ -3,11 +3,14 @@ use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
-use bevy_color::Color;
-use bevy_ecs::{
+use bevy::color::Color;
+use bevy::ecs::{
     entity::Entity, event::EntityEvent, hierarchy::Children, observer::On, system::Commands,
     world::EntityWorldMut,
 };
+use bevy::scene::{Scene, bsn, bsn_list, on};
+use bevy::ui::{JustifyContent, Node, UiRect, Val, widget::Text};
+use bevy::ui_widgets::RequestClose;
 use bevy_immediate::{
     ImmEntity, ImmId, ImmIdBuilder, imm_id,
     ui::{
@@ -15,9 +18,6 @@ use bevy_immediate::{
         interaction::ImmUiInteraction,
     },
 };
-use bevy_scene::{Scene, bsn, bsn_list, on};
-use bevy_ui::{JustifyContent, Node, UiRect, Val, widget::Text};
-use bevy_ui_widgets::RequestClose;
 
 use crate::{
     constants::{FaIcon, size},

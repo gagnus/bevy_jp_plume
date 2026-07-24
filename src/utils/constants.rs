@@ -16,8 +16,8 @@ pub mod fonts {
 
 /// Size constants
 pub mod size {
-    use bevy_text::FontSize;
-    use bevy_ui::{Val, Val2};
+    use bevy::text::FontSize;
+    use bevy::ui::{Val, Val2};
 
     /// Common row size for buttons, sliders, spinners, etc.
     pub const ROW_HEIGHT: Val = Val::Px(24.0);

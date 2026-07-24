@@ -1,9 +1,9 @@
 //! Internal scrolling list view and its selectable rows.
 use accesskit::Role;
-use bevy_a11y::AccessibilityNode;
-use bevy_app::{Plugin, PostUpdate, PreUpdate};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::a11y::AccessibilityNode;
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
     entity::Entity,
@@ -14,16 +14,16 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs as _,
     system::{Commands, Query, Res},
 };
-use bevy_input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
-use bevy_picking::{PickingSystems, hover::Hovered};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, template_value};
-use bevy_text::FontWeight;
-use bevy_ui::{
+use bevy::input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
+use bevy::picking::{PickingSystems, hover::Hovered};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, template_value};
+use bevy::text::FontWeight;
+use bevy::ui::{
     AlignItems, BorderRadius, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
     Overflow, PositionType, Selected, UiRect, Val, px,
 };
-use bevy_ui_widgets::{ActiveDescendant, ControlOrientation, ListBox, ListItem, ScrollArea};
+use bevy::ui_widgets::{ActiveDescendant, ControlOrientation, ListBox, ListItem, ScrollArea};
 
 use crate::{
     constants::{font_awesome, fonts, size},
@@ -285,8 +285,8 @@ fn set_listrow_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     if bg_color.0 != outline_bg_token {
@@ -371,7 +371,7 @@ fn update_active_row_outline(
 pub struct ListViewPlugin;
 
 impl Plugin for ListViewPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_listrow_styles, update_listrow_styles_remove).in_set(PickingSystems::Last),

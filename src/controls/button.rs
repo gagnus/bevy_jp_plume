@@ -1,6 +1,6 @@
 //! Styled button controls.
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -10,16 +10,16 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{Pickable, PickingSystems, hover::Hovered};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_text::FontWeight;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::text::FontWeight;
+use bevy::ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
     PositionType, Pressed, UiRect, Val,
 };
-use bevy_ui_widgets::Button;
+use bevy::ui_widgets::Button;
 
 use crate::{
     constants::{fonts, size},
@@ -53,7 +53,7 @@ pub enum ButtonVariant {
 }
 
 /// A button, spawnable as a scene component with optional [`PlumeButtonProps`].
-/// Emits [`bevy_ui_widgets::Activate`] on release while hovered.
+/// Emits [`bevy::ui_widgets::Activate`] on release while hovered.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeButtonProps)]
 #[derive(Reflect)]
@@ -115,7 +115,7 @@ impl PlumeButton {
             Hovered
             TabIndex(0)
             FocusIndicator
-            EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
             InheritableThemeTextColor(tokens::BUTTON_TEXT)
             InheritableFont {
@@ -154,7 +154,7 @@ impl PlumeButton {
 struct ButtonOutline;
 
 /// A smaller button for embedding in panel headers, spawnable as a scene
-/// component with optional [`PlumeButtonProps`]. Emits [`bevy_ui_widgets::Activate`].
+/// component with optional [`PlumeButtonProps`]. Emits [`bevy::ui_widgets::Activate`].
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeButtonProps)]
 #[derive(Reflect)]
@@ -378,8 +378,8 @@ fn set_button_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
@@ -421,7 +421,7 @@ fn set_button_styles(
 pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_button_styles, update_button_styles_remove).in_set(PickingSystems::Last),

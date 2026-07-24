@@ -30,18 +30,18 @@ pub use text_input::*;
 pub use toggle_switch::*;
 
 // Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
-pub use bevy_text::EditableTextFilter;
+pub use bevy::text::EditableTextFilter;
 
 use listview::ListViewPlugin;
 
-use bevy_app::Plugin;
+use bevy::app::Plugin;
 use default_width::DefaultWidthPlugin;
 
 /// Plugin which registers all controls.
 pub struct ControlsPlugin;
 
 impl Plugin for ControlsPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_plugins((
             ButtonPlugin,
             CheckboxPlugin,

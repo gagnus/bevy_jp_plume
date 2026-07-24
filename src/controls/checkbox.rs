@@ -1,7 +1,7 @@
 //! Labeled checkbox control.
-use bevy_app::{Plugin, PreUpdate};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -12,17 +12,17 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::FromTemplate,
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_math::Rot2;
-use bevy_picking::{Pickable, PickingSystems};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_text::FontWeight;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::math::Rot2;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::text::FontWeight;
+use bevy::ui::{
     AlignItems, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
     Node, PositionType, UiRect, UiTransform, px,
 };
-use bevy_ui_widgets::{Checkbox, checkbox_self_update};
+use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
     constants::{fonts, size},
@@ -38,7 +38,7 @@ use crate::{
 };
 
 /// A checkbox, spawnable as a scene component with optional [`PlumeCheckboxProps`].
-/// Emits [`bevy_ui_widgets::ValueChange<bool>`] with the new state.
+/// Emits [`bevy::ui_widgets::ValueChange<bool>`] with the new state.
 #[derive(SceneComponent, FromTemplate)]
 #[scene(PlumeCheckboxProps)]
 #[derive(Reflect)]
@@ -78,7 +78,7 @@ impl PlumeCheckbox {
             // clicks (children stay pickable and bubble up); the dead space is inert.
             Pickable::IGNORE
             on(checkbox_self_update)
-            EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::CHECKBOX_TEXT)
             InheritableFont {
                 font: fonts::REGULAR,
@@ -334,8 +334,8 @@ fn set_checkbox_styles(
     };
 
     let cursor_shape = match disabled {
-        true => bevy_window::SystemCursorIcon::NotAllowed,
-        false => bevy_window::SystemCursorIcon::Pointer,
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
     };
 
     // Gradient only when ticked, flat fill otherwise.
@@ -384,7 +384,7 @@ fn set_checkbox_styles(
 pub struct CheckboxPlugin;
 
 impl Plugin for CheckboxPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_checkbox_styles, update_checkbox_styles_remove).in_set(PickingSystems::Last),

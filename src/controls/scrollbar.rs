@@ -1,7 +1,7 @@
 //! Themed scrollbar control.
-use bevy_app::{Plugin, PostUpdate, PreUpdate};
-use bevy_camera::visibility::Visibility;
-use bevy_ecs::{
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
+use bevy::camera::visibility::Visibility;
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::{ChildOf, Children},
@@ -11,17 +11,17 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::EntityTemplate,
 };
-use bevy_math::Vec2;
-use bevy_picking::{PickingSystems, hover::Hovered};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{ComputedNode, Node, UiSystems, Val};
-use bevy_ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
+use bevy::math::Vec2;
+use bevy::picking::{PickingSystems, hover::Hovered};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{ComputedNode, Node, UiSystems, Val};
+use bevy::ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
 use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
 
 /// A scrollbar. The `target` property should point to an entity whose
-/// [`ScrollPosition`](bevy_ui::ScrollPosition) will be synchronized with the scrollbar.
+/// [`ScrollPosition`](bevy::ui::ScrollPosition) will be synchronized with the scrollbar.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeScrollbarProps)]
 #[reflect(Component, Clone, Default)]
@@ -67,7 +67,7 @@ impl PlumeScrollbar {
                     border_radius: {size::SCROLLBAR_WIDTH / 2.0}
                 }
                 PlumeScrollbarThumb
-                EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+                EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             )]
         }
     }
@@ -135,7 +135,7 @@ fn update_scrollbar_visibility(
 pub struct ScrollbarPlugin;
 
 impl Plugin for ScrollbarPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             update_scrollbar_thumb_styles.in_set(PickingSystems::Last),

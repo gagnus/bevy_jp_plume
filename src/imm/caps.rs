@@ -1,13 +1,13 @@
 //! Plume-owned immediate-mode capabilities: who-wins value flow, select sync,
 //! and dialog close detection.
-use bevy_ecs::hierarchy::Children;
+use bevy::ecs::hierarchy::Children;
+use bevy::input_focus::InputFocus;
+use bevy::ui::{Checked, Pressed};
+use bevy::ui_widgets::SliderValue;
 use bevy_immediate::{
     CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImplCap, imm_id,
     ui::track_value_change_plugin::{NewValueChange, TrackValueChangePlugin},
 };
-use bevy_input_focus::InputFocus;
-use bevy_ui::{Checked, Pressed};
-use bevy_ui_widgets::SliderValue;
 
 use crate::{
     containers::DialogCloseRequested,
@@ -22,7 +22,7 @@ use crate::{
 pub struct CapabilityPlumeValue;
 
 impl ImmCapability for CapabilityPlumeValue {
-    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_write::<NewValueChange<f32>>(app.world_mut());
         cap_req.request_component_read::<SliderValue>(app.world_mut());
         cap_req.request_component_read::<Pressed>(app.world_mut());
@@ -106,7 +106,7 @@ fn focused_within<Cap: CapSet>(entity: &ImmEntity<'_, '_, '_, Cap>) -> bool {
 pub struct CapabilityPlumeChecked;
 
 impl ImmCapability for CapabilityPlumeChecked {
-    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_write::<NewValueChange<bool>>(app.world_mut());
         cap_req.request_component_read::<Checked>(app.world_mut());
 
@@ -175,7 +175,7 @@ where
 pub struct CapabilityPlumeSelect;
 
 impl ImmCapability for CapabilityPlumeSelect {
-    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_read::<SelectedIndex>(app.world_mut());
     }
 }
@@ -232,7 +232,7 @@ where
 pub struct CapabilityPlumeText;
 
 impl ImmCapability for CapabilityPlumeText {
-    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_read::<TextInputValue>(app.world_mut());
         cap_req.request_component_read::<Children>(app.world_mut());
         cap_req.request_resource_read::<InputFocus>(app.world_mut());
@@ -288,7 +288,7 @@ where
 pub struct CapabilityPlumeDialog;
 
 impl ImmCapability for CapabilityPlumeDialog {
-    fn build<Cap: CapSet>(app: &mut bevy_app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_read::<DialogCloseRequested>(app.world_mut());
     }
 }

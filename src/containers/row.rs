@@ -1,7 +1,7 @@
 //! BSN scene function for a horizontal flex container.
-use bevy_scene::{Scene, bsn};
-use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, Node};
+use bevy::scene::{Scene, bsn};
+use bevy::text::FontWeight;
+use bevy::ui::{AlignItems, Display, FlexDirection, Node};
 
 use crate::{
     constants::{fonts, size},

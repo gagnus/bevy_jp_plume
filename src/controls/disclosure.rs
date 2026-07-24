@@ -2,9 +2,9 @@
 use core::f32::consts::FRAC_PI_2;
 
 use accesskit::Role;
-use bevy_a11y::AccessibilityNode;
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::a11y::AccessibilityNode;
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -14,12 +14,12 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{Pickable, PickingSystems};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{AlignItems, Checked, InteractionDisabled, JustifyContent, Node, UiTransform};
-use bevy_ui_widgets::{Checkbox, checkbox_self_update};
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{AlignItems, Checked, InteractionDisabled, JustifyContent, Node, UiTransform};
+use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::{
     constants::{font_awesome, size},
@@ -52,7 +52,7 @@ impl PlumeDisclosure {
             FocusIndicator
             on(checkbox_self_update)
             AccessibilityNode(accesskit::Node::new(Role::DisclosureTriangle))
-            EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::BUTTON_TEXT)
             Children [
                 (
@@ -140,8 +140,8 @@ fn apply(
             tokens::BUTTON_TEXT
         };
         let cursor_shape = match disabled {
-            true => bevy_window::SystemCursorIcon::NotAllowed,
-            false => bevy_window::SystemCursorIcon::Pointer,
+            true => bevy::window::SystemCursorIcon::NotAllowed,
+            false => bevy::window::SystemCursorIcon::Pointer,
         };
         commands.entity(disclosure_ent).insert((
             InheritableThemeTextColor(text_token),
@@ -154,7 +154,7 @@ fn apply(
 pub struct DisclosurePlugin;
 
 impl Plugin for DisclosurePlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             (update_disclosure_styles, update_disclosure_styles_remove)

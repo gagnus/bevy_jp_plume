@@ -1,8 +1,10 @@
 //! BSN scene function for the full-screen root surface.
-use bevy_picking::Pickable;
-use bevy_scene::{Scene, bsn};
-use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, Val, percent};
+use bevy::picking::Pickable;
+use bevy::scene::{Scene, bsn};
+use bevy::text::FontWeight;
+use bevy::ui::{
+    AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, Val, percent,
+};
 
 use crate::{
     constants::{fonts, size},

@@ -1,6 +1,6 @@
 //! Tab container: a strip of tab buttons over a body, one tab visible at a time.
-use bevy_app::{Plugin, PostUpdate, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     event::EntityEvent,
@@ -12,18 +12,18 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
     template::{EntityTemplate, FromTemplate},
 };
-use bevy_input_focus::tab_navigation::TabIndex;
-use bevy_picking::{Pickable, PickingSystems, hover::Hovered};
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy_text::FontWeight;
-use bevy_time::Time;
-use bevy_ui::{
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::text::FontWeight;
+use bevy::time::Time;
+use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val,
     ZIndex, px,
 };
-use bevy_ui_widgets::{Activate, Button};
+use bevy::ui_widgets::{Activate, Button};
 
 use crate::{
     constants::{FaIcon, fonts, size},
@@ -245,7 +245,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
         Hovered
         TabIndex(0)
         FocusIndicator
-        EntityCursor::System(bevy_window::SystemCursorIcon::Pointer)
+        EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         ThemeBackgroundColor(tokens::TAB_BG)
         InheritableThemeTextColor(tokens::TAB_TEXT)
         InheritableFont {
@@ -459,8 +459,8 @@ fn update_tab_styles(
             (false, false) => tokens::TAB_TEXT,
         };
         let cursor = match disabled {
-            true => bevy_window::SystemCursorIcon::NotAllowed,
-            false => bevy_window::SystemCursorIcon::Pointer,
+            true => bevy::window::SystemCursorIcon::NotAllowed,
+            false => bevy::window::SystemCursorIcon::Pointer,
         };
         if background.0 != background_token {
             commands
@@ -555,7 +555,7 @@ fn update_tab_indicator(
 pub struct TabsPlugin;
 
 impl Plugin for TabsPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_observer(tabs_on_set_selected_index)
             .add_systems(
                 PreUpdate,

@@ -1,7 +1,7 @@
 //! Color preview swatch: a themed rounded box filled with the current color.
-use bevy_app::{Plugin, PostUpdate};
-use bevy_color::Color;
-use bevy_ecs::{
+use bevy::app::{Plugin, PostUpdate};
+use bevy::color::Color;
+use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::Children,
@@ -9,16 +9,16 @@ use bevy_ecs::{
     reflect::ReflectComponent,
     system::{Commands, Query},
 };
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_ui::{BackgroundColor, Node, PositionType, Val};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::ui::{BackgroundColor, Node, PositionType, Val};
 
 use crate::{constants::size, theme::ThemeBorderColor, tokens};
 
 /// A color swatch widget.
 ///
 /// This is spawnable by inheriting it as a "scene component"; size and corners can be
-/// overridden by inserting a [`Node`](bevy_ui::Node) beside it.
+/// overridden by inserting a [`Node`](bevy::ui::Node) beside it.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct PlumeColorSwatch;
@@ -71,7 +71,7 @@ fn update_swatch_color(
 pub struct ColorSwatchPlugin;
 
 impl Plugin for ColorSwatchPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(PostUpdate, update_swatch_color);
     }
 }

@@ -1,7 +1,7 @@
 //! A framework for inheritable font styles.
-use bevy_app::{Propagate, PropagateOver};
-use bevy_asset::Handle;
-use bevy_ecs::{
+use bevy::app::{Propagate, PropagateOver};
+use bevy::asset::Handle;
+use bevy::ecs::{
     component::Component,
     lifecycle::Insert,
     observer::On,
@@ -9,8 +9,8 @@ use bevy_ecs::{
     system::{Commands, Query},
     template::FromTemplate,
 };
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_text::{Font, FontSize, FontWeight, TextFont};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::text::{Font, FontSize, FontWeight, TextFont};
 
 use crate::theme::ThemedText;
 

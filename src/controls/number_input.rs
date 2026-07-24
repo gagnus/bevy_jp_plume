@@ -1,6 +1,6 @@
 //! Numeric text field: type a value, commit on Enter or focus loss.
-use bevy_app::{Plugin, PreUpdate};
-use bevy_ecs::{
+use bevy::app::{Plugin, PreUpdate};
+use bevy::ecs::{
     entity::Entity,
     event::EntityEvent,
     hierarchy::{ChildOf, Children},
@@ -10,16 +10,16 @@ use bevy_ecs::{
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, ResMut},
 };
-use bevy_input::{ButtonState, keyboard::KeyCode, keyboard::KeyboardInput};
-use bevy_input_focus::{FocusLost, FocusedInput, InputFocus};
-use bevy_picking::PickingSystems;
-use bevy_reflect::{Reflect, prelude::ReflectDefault};
-use bevy_scene::prelude::*;
-use bevy_text::{
+use bevy::input::{ButtonState, keyboard::KeyCode, keyboard::KeyboardInput};
+use bevy::input_focus::{FocusLost, FocusedInput, InputFocus};
+use bevy::picking::PickingSystems;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::text::{
     EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextFont, TextLayout,
 };
-use bevy_ui::px;
-use bevy_ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
+use bevy::ui::px;
+use bevy::ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
 use crate::{
     constants::fonts,
@@ -281,7 +281,7 @@ fn update_number_input_text(
 pub struct NumberInputPlugin;
 
 impl Plugin for NumberInputPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
             update_number_input_text.in_set(PickingSystems::Last),
