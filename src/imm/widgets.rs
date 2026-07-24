@@ -36,7 +36,10 @@ use crate::{
 
 use super::{
     ImmResponse, PlumeCaps, Ui,
-    caps::{ImmPlumeChecked, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue},
+    caps::{
+        ImmPlumeChecked, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue,
+        PlumeOccurrences,
+    },
     kind,
 };
 
@@ -202,7 +205,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // Identity is the call site, not the text, so a caption whose text changes
         // (e.g. a live value read-out) reconciles its `Text` in place rather than
         // respawning an entity every frame the value moves.
-        let mut entity = self.ch_with_manual_id(loc_id(())).on_spawn_apply_scene({
+        let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene({
             let text = text.to_owned();
             move || caption(text)
         });
@@ -232,8 +235,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn separator(&mut self) {
-        self.ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(separator);
+        self.ch_loc(loc_id(())).on_spawn_apply_scene(separator);
     }
 
     #[track_caller]
@@ -241,7 +243,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // Identity is the call site, not the color: an animating value reconciles its
         // ColorSwatchValue in place rather than respawning the box every change.
         let mut entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || bsn! { @PlumeColorSwatch ColorSwatchValue({color}) });
         struct SwatchColor;
         let lin = color.to_linear();
@@ -275,14 +277,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn space(&mut self, length: Val) {
-        self.ch_with_manual_id(loc_id(format!("{length:?}")))
+        self.ch_loc(loc_id(format!("{length:?}")))
             .on_spawn_apply_scene(move || space(length));
     }
 
     #[track_caller]
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
-        let entity = self.ch_with_manual_id(loc_id(label)).on_spawn_apply_scene(
+        let entity = self.ch_loc(loc_id(label)).on_spawn_apply_scene(
             move || bsn! { @PlumeButton { @caption: bsn! { caption(label_owned) } } },
         );
         respond(entity, false)
@@ -295,7 +297,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // place instead of respawning; see `tool_button`. The icon is the first
         // `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
         let mut entity = self
-            .ch_with_manual_id(loc_id((icon.face(), label)))
+            .ch_loc(loc_id((icon.face(), label)))
             .on_spawn_apply_scene(move || {
                 bsn! { @PlumeButton { @caption: bsn_list! { fa_icon(icon), caption(label_owned) } } }
             });
@@ -316,7 +318,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // face reconciles in place instead of respawning (a visible pop). The face
         // stays in the key because it selects the font, a runtime asset handle.
         let mut entity = self
-            .ch_with_manual_id(loc_id(icon.face()))
+            .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || {
                 bsn! { @PlumeToolButton { @caption: bsn! { fa_icon(icon) } } }
             });
@@ -336,7 +338,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // Keyed on the face (a runtime font handle), not the glyph, so toggling the
         // glyph within a face reconciles in place rather than respawning — as tool_button does.
         let mut entity = self
-            .ch_with_manual_id(loc_id(icon.face()))
+            .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || fa_icon(icon));
         struct IconGlyph;
         if entity.hash_update_typ::<IconGlyph>(Some(imm_id(icon.glyph())))
@@ -371,7 +373,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // Empty caption in the scene; the row's content comes from `f`. Left-aligned
         // so content packs from the leading edge rather than centering like a label.
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(|| {
                 bsn! { @PlumeButton Node { justify_content: JustifyContent::Start } }
             })
@@ -384,7 +386,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let label_owned = label.to_owned();
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(label))
+            .ch_loc(loc_id(label))
             .on_spawn_apply_scene(
                 move || bsn! { @PlumeCheckbox { @caption: bsn! { caption(label_owned) } } },
             )
@@ -396,7 +398,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn disclosure(&mut self, open: &mut bool) -> ImmResponse<'_, 'w, 's> {
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(|| bsn! { @PlumeDisclosure })
             .plume_checked(open, &mut changed);
         respond(entity, changed)
@@ -415,7 +417,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut checked = *value == variant;
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(label))
+            .ch_loc(loc_id(label))
             .on_spawn_apply_scene(
                 move || bsn! { @PlumeRadio { @caption: bsn! { caption(label_owned) } } },
             )
@@ -431,7 +433,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's> {
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(|| bsn! { @PlumeToggleSwitch })
             .plume_checked(value, &mut changed);
         respond(entity, changed)
@@ -446,7 +448,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let (min, max) = (*range.start(), *range.end());
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id((min.to_bits(), max.to_bits())))
+            .ch_loc(loc_id((min.to_bits(), max.to_bits())))
             .on_spawn_apply_scene(move || bsn! { @PlumeSlider { @min: {min}, @max: {max} } })
             .plume_value(value, &mut changed);
         respond(entity, changed)
@@ -457,7 +459,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let initial = *value;
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || bsn! { @PlumeNumberInput { @value: {initial} } })
             .plume_value(value, &mut changed);
         respond(entity, changed)
@@ -468,7 +470,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let initial = text.clone();
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || bsn! { @PlumeTextInput { @value: {initial} } })
             .plume_text(text, &mut changed);
         respond(entity, changed)
@@ -498,7 +500,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // The labels key the widget: the rows are seeded at spawn, so an edited
         // option list has to respawn rather than keep the stale popup.
         let entity = self
-            .ch_with_manual_id(loc_id(&labels))
+            .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
                 bsn! { @PlumeSelect { @options: {list_rows_from_strings(labels, Some(initial))} } }
             })
@@ -553,10 +555,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Row> {
-        let entity = self
-            .ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(row)
-            .add(f);
+        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(row).add(f);
         respond(entity, false)
     }
 
@@ -565,19 +564,13 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Column> {
-        let entity = self
-            .ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(column)
-            .add(f);
+        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(column).add(f);
         respond(entity, false)
     }
 
     #[track_caller]
     fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen> {
-        let entity = self
-            .ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(screen)
-            .add(f);
+        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(screen).add(f);
         respond(entity, false)
     }
 
@@ -589,7 +582,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     ) -> ImmResponse<'_, 'w, 's, kind::Section> {
         let header_owned = header.to_owned();
         let entity = self
-            .ch_with_manual_id(loc_id(header))
+            .ch_loc(loc_id(header))
             .on_spawn_apply_scene(move || {
                 bsn! {
                     section_frame(PlumeSectionProps {
@@ -627,7 +620,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let initial = index;
         let mut changed = false;
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || tabs_frame(initial))
             .plume_select(&mut index, &mut changed);
 
@@ -676,7 +669,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea> {
         let entity = self
-            .ch_with_manual_id(loc_id(()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(scroll_frame)
             .add(move |ui| {
                 // The viewport's entity is known before its spawn command flushes,
@@ -694,8 +687,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn flex_spacer(&mut self) {
-        self.ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(flex_spacer);
+        self.ch_loc(loc_id(())).on_spawn_apply_scene(flex_spacer);
     }
 
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R {
@@ -890,7 +882,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         let (title, icon, layout) = (self.title, self.icon, self.layout);
         let mut entity = self
             .ui
-            .ch_with_manual_id(id)
+            .ch_loc(id)
             .on_spawn_apply_scene(move || imm_dialog_scene(title, icon, layout));
         if entity.close_requested() {
             *self.open = false;
@@ -943,7 +935,7 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
         let layout = self.layout;
         let entity = self
             .ui
-            .ch_with_manual_id(id)
+            .ch_loc(id)
             .on_spawn_apply_scene(move || imm_panel_scene(layout));
         reconcile_frame_body(entity, layout, f)
     }
@@ -1002,10 +994,58 @@ fn reconcile_frame_body<'e, 'w, 's>(
 }
 
 // Combining the caller location with a key means label/options changes respawn the
-// widget instead of leaving stale scene content.
+// widget instead of leaving stale scene content. `#[track_caller]` bubbles the
+// location through the (also `#[track_caller]`) widget methods to the user's call
+// site, so the same widget at two source lines already gets distinct ids; only a
+// repeated call site (e.g. a loop) collides, which [`PlumeChild::ch_loc`] resolves.
 #[track_caller]
 fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
     ImmIdBuilder::Hierarchy(ImmId::new((Location::caller(), key)))
+}
+
+/// Salt folded into a repeated id's suffix; a fixed tag so a disambiguated id can
+/// never coincide with a genuine `(location, key)` base.
+const OCCURRENCE_SALT: u32 = 0x506c_756d; // "Plum"
+
+/// Child creation with plume-side occurrence disambiguation.
+///
+/// Unpatched `bevy_immediate` maps each hierarchy id to exactly one entity, so two
+/// widgets built from the same call site — a helper called in a loop — would land
+/// on the same entity. This threads a per-`(parent, base id)` occurrence counter
+/// (held in [`PlumeOccurrences`]): the first use keeps the plain id (so a widget
+/// that appears once, or a conditional sibling, never shifts the others) and each
+/// repeat takes a distinct suffix. Keeping it here lets plume track upstream
+/// `bevy_immediate` with no `resolve`-time patch.
+trait PlumeChild<'w, 's> {
+    fn ch_loc(&mut self, id: ImmIdBuilder) -> ImmEntity<'_, 'w, 's, PlumeCaps>;
+}
+
+impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
+    fn ch_loc(&mut self, id: ImmIdBuilder) -> ImmEntity<'_, 'w, 's, PlumeCaps> {
+        let ImmIdBuilder::Hierarchy(base) = id else {
+            // Auto/Unique carry their own uniqueness contract; pass them through.
+            return self.ch_with_manual_id(id);
+        };
+        let parent = self.current_imm_id();
+        let occurrence = {
+            let mut table = self
+                .ctx_mut()
+                .cap_resources
+                .resources
+                .get_mut::<PlumeOccurrences>()
+                .expect("PlumeOccurrences is registered by CapabilityPlumeIds");
+            let counter = table.0.entry(parent.with(base)).or_insert(0);
+            let occurrence = *counter;
+            *counter += 1;
+            occurrence
+        };
+        let id = if occurrence == 0 {
+            base
+        } else {
+            base.with((OCCURRENCE_SALT, occurrence))
+        };
+        self.ch_with_manual_id(ImmIdBuilder::Hierarchy(id))
+    }
 }
 
 /// Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
@@ -1097,5 +1137,63 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
             left,
             top,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imm::{ImmPlugin, PlumeRoot};
+    use bevy::MinimalPlugins;
+    use bevy::app::{App, Update};
+    use bevy::ecs::resource::Resource;
+    use bevy::ecs::system::ResMut;
+
+    // Records the sibling entities produced each frame, so the test can check both
+    // within-frame distinctness and across-frame stability.
+    #[derive(Resource, Default)]
+    struct Recorded(Vec<Vec<Entity>>);
+
+    // Three widgets from ONE call site (the loop body) under one parent. With
+    // occurrence disambiguation they map to three distinct, stable entities;
+    // without it they collide onto a single entity once the id->entity mapping is
+    // populated (i.e. from the second frame on).
+    fn three_siblings(mut root: PlumeRoot, mut recorded: ResMut<Recorded>) {
+        let mut frame = Vec::new();
+        root.push_id("sibling-test", |ui| {
+            for _ in 0..3 {
+                frame.push(ui.ch_loc(loc_id(())).entity());
+            }
+        });
+        recorded.0.push(frame);
+    }
+
+    #[test]
+    fn repeated_call_site_gets_distinct_stable_entities() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .add_plugins(ImmPlugin)
+            .init_resource::<Recorded>()
+            .add_systems(Update, three_siblings);
+
+        // Frame 1 spawns fresh; frame 2 resolves against the now-populated mapping,
+        // which is where any id collision surfaces.
+        app.update();
+        app.update();
+
+        let recorded = &app.world().resource::<Recorded>().0;
+        assert_eq!(recorded.len(), 2, "system should have run twice");
+        for (frame, e) in recorded.iter().enumerate() {
+            assert_eq!(e.len(), 3);
+            assert!(
+                e[0] != e[1] && e[1] != e[2] && e[0] != e[2],
+                "frame {frame}: siblings from one call site must be distinct, got {e:?}",
+            );
+        }
+        assert_eq!(
+            recorded[0], recorded[1],
+            "retained entities must be reused across frames — proof the mapping is \
+             populated, so a real collision would surface as a duplicate",
+        );
     }
 }

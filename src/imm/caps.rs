@@ -1,11 +1,13 @@
 //! Plume-owned immediate-mode capabilities: who-wins value flow, select sync,
 //! and dialog close detection.
 use bevy::ecs::hierarchy::Children;
+use bevy::ecs::resource::Resource;
 use bevy::input_focus::InputFocus;
+use bevy::platform::collections::HashMap;
 use bevy::ui::{Checked, Pressed};
 use bevy::ui_widgets::SliderValue;
 use bevy_immediate::{
-    CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImplCap, imm_id,
+    CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImmId, ImplCap, imm_id,
     ui::track_value_change_plugin::{NewValueChange, TrackValueChangePlugin},
 };
 
@@ -281,6 +283,28 @@ where
             });
         }
         self
+    }
+}
+
+/// Per-pass table counting how many times each `(parent, base id)` pair has been
+/// requested, so repeated sibling widgets get distinct ids without the caller
+/// supplying one. This reimplements, on plume's side, the occurrence
+/// disambiguation that would otherwise have to live in `bevy_immediate`'s id
+/// resolver — letting plume track the unmodified upstream crate. Cleared at the
+/// start of every [`PlumeRoot`](crate::imm::PlumeRoot) build (i.e. per system run).
+#[derive(Resource, Default)]
+pub(crate) struct PlumeOccurrences(pub(crate) HashMap<ImmId, u32>);
+
+/// Registers [`PlumeOccurrences`] and the write access the imm layer needs to
+/// auto-disambiguate repeated sibling ids. Carries no widget-side entry point; it
+/// exists purely so the resource is reachable mid-build via `Imm`'s capability
+/// resources. See `ch_loc` in [`crate::imm`]'s `widgets` module.
+pub struct CapabilityPlumeIds;
+
+impl ImmCapability for CapabilityPlumeIds {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        app.init_resource::<PlumeOccurrences>();
+        cap_req.request_resource_write::<PlumeOccurrences>(app.world_mut());
     }
 }
 

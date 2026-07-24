@@ -26,8 +26,8 @@ use bevy_immediate::{
 };
 
 use caps::{
-    CapabilityPlumeChecked, CapabilityPlumeDialog, CapabilityPlumeSelect, CapabilityPlumeText,
-    CapabilityPlumeValue,
+    CapabilityPlumeChecked, CapabilityPlumeDialog, CapabilityPlumeIds, CapabilityPlumeSelect,
+    CapabilityPlumeText, CapabilityPlumeValue, PlumeOccurrences,
 };
 
 /// Capability set powering plume's immediate-mode layer.
@@ -47,6 +47,7 @@ impl_capability_set!(
         CapabilityPlumeSelect,
         CapabilityPlumeText,
         CapabilityPlumeDialog,
+        CapabilityPlumeIds,
     )
 );
 
@@ -161,9 +162,18 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
         let ctx = unsafe {
             <CtxStatic as SystemParam>::get_param(&mut state.ctx, system_meta, world, change_tick)
         }?;
-        Ok(PlumeRoot {
-            imm: ctx.build_immediate_root(("plume_ui_root", state.root_id)),
-        })
+        let mut imm = ctx.build_immediate_root(("plume_ui_root", state.root_id));
+        // Occurrence counts are per pass: this system run starts fresh, so a
+        // widget built at the same call site as last frame keeps its id.
+        if let Ok(mut occurrences) = imm
+            .ctx_mut()
+            .cap_resources
+            .resources
+            .get_mut::<PlumeOccurrences>()
+        {
+            occurrences.0.clear();
+        }
+        Ok(PlumeRoot { imm })
     }
 }
 
