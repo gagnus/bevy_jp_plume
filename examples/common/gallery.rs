@@ -4,6 +4,7 @@
 //! floats its dialogs over — so it registers no hub entry.
 use bevy::prelude::*;
 use bevy_jp_plume::{
+    constants::size,
     controls::ButtonVariant,
     imm::{PlumeImm, PlumeRoot, Ui},
     theme::{ThemeSlot, UiTheme},
@@ -77,9 +78,9 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>, theme: Res<U
     let mut s = state.clone();
     // The three neutral surface shades, read fresh each frame so palette edits land.
     let surfaces = [
-        (ThemeSlot::Neutral0, "Neutral0 — window"),
-        (ThemeSlot::Neutral1, "Neutral1 — section body, dialog"),
-        (ThemeSlot::Neutral2, "Neutral2 — group, section header"),
+        (ThemeSlot::Neutral0, "Neutral0 — Window"),
+        (ThemeSlot::Neutral1, "Neutral1 — Dialog"),
+        (ThemeSlot::Neutral2, "Neutral2 — Section Header"),
     ];
     root.screen(|ui| {
         // Equal spacers above and below centre the grid in the full-height screen column.
@@ -159,5 +160,5 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
         ui.number(&mut state.number).enabled(!disabled);
     })
     .background(bg)
-    .pad(UiRect::all(px(16)));
+    .pad(UiRect::all(size::ROW_HEIGHT));
 }

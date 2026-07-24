@@ -17,7 +17,7 @@ pub mod fonts {
 /// Size constants
 pub mod size {
     use bevy_text::FontSize;
-    use bevy_ui::Val;
+    use bevy_ui::{Val, Val2};
 
     /// Common row size for buttons, sliders, spinners, etc.
     pub const ROW_HEIGHT: Val = Val::Px(24.0);
@@ -34,14 +34,17 @@ pub mod size {
     /// Width and height of a radio button
     pub const RADIO_SIZE: Val = Val::Px(18.0);
 
-    /// Width of a toggle switch
-    pub const TOGGLE_WIDTH: Val = Val::Px(32.0);
-
-    /// Height of a toggle switch
-    pub const TOGGLE_HEIGHT: Val = Val::Px(18.0);
+    /// Size of a toggle switch
+    pub const TOGGLE_SIZE: Val2 = Val2 {
+        x: Val::Px(32.0),
+        y: Val::Px(18.0),
+    };
 
     /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS: Val = Val::Px(4.0);
+    pub const CORNER_RADIUS: Val = Val::Px(6.0);
+
+    /// Standard corner radius for controls and containers
+    pub const CORNER_RADIUS_SMALL: Val = Val::Px(4.0);
 
     /// Increased corner radius for dialogs
     pub const DIALOG_RADIUS: Val = Val::Px(8.0);
@@ -74,15 +77,27 @@ pub mod size {
     /// Gutter reserved beside scrollable content for the scrollbar plus clearance
     pub const SCROLLBAR_GUTTER: Val = Val::Px(12.0);
 
+    /// Default dialog pos
+    pub const DEFAULT_DIALOG_POS: Val2 = Val2 {
+        x: Val::Px(120.0),
+        y: Val::Px(120.0),
+    };
+
+    /// Visible track strip thickness (the full-height node around it is the hit area).
+    pub const SLIDER_TRACK_HEIGHT: Val = Val::Px(4.0);
+
     /// The one font size: every control and container uses this.
     pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
 
-    /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
-    /// so this tracks [`MEDIUM_FONT`].
-    pub const ICON_WIDTH: Val = match MEDIUM_FONT {
+    /// The one font size: every control and container uses this.
+    pub const TEXT_HEIGHT: Val = match MEDIUM_FONT {
         FontSize::Px(font_px) => Val::Px(font_px),
         _ => panic!("MEDIUM_FONT must be Px"),
     };
+
+    /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
+    /// so this tracks [`MEDIUM_FONT`].
+    pub const ICON_WIDTH: Val = TEXT_HEIGHT;
 }
 
 /// The FontAwesome face a glyph is drawn from.

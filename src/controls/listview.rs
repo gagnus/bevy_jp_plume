@@ -21,7 +21,7 @@ use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, template_value
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
-    Overflow, PositionType, Selected, UiRect, px,
+    Overflow, PositionType, Selected, UiRect, Val, px,
 };
 use bevy_ui_widgets::{ActiveDescendant, ControlOrientation, ListBox, ListItem, ScrollArea};
 
@@ -353,10 +353,10 @@ fn update_active_row_outline(
         commands.entity(row_ent).with_child((
             Node {
                 position_type: PositionType::Absolute,
-                left: px(0),
-                right: px(0),
-                top: px(0),
-                bottom: px(0),
+                left: Val::ZERO,
+                right: Val::ZERO,
+                top: Val::ZERO,
+                bottom: Val::ZERO,
                 border: UiRect::all(px(2)),
                 border_radius: BorderRadius::all(size::CORNER_RADIUS),
                 ..Default::default()

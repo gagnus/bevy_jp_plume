@@ -79,8 +79,6 @@ pub mod kind {
     pub struct Row;
     /// `vertical`: children flow top-to-bottom, so its cross axis is horizontal.
     pub struct Column;
-    /// `group`: a themed column, so its padding is not app-settable.
-    pub struct Group;
     /// `screen`.
     pub struct Screen;
     /// `dialog`
@@ -92,7 +90,6 @@ pub mod kind {
     impl Field for Text {}
     impl Container for Row {}
     impl Container for Column {}
-    impl Container for Group {}
     impl Container for Screen {}
     impl Padded for Row {}
     impl Padded for Column {}

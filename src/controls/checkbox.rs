@@ -90,7 +90,7 @@ impl PlumeCheckbox {
                     Node {
                         width: size::CHECKBOX_SIZE,
                         height: size::CHECKBOX_SIZE,
-                        border_radius: size::CORNER_RADIUS,
+                        border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     CheckboxBg
                     // Ring hugs the box, not the label row.
@@ -102,7 +102,7 @@ impl PlumeCheckbox {
                                 width: size::CHECKBOX_SIZE,
                                 height: size::CHECKBOX_SIZE,
                                 border: size::CONTROL_BORDER,
-                                border_radius: size::CORNER_RADIUS,
+                                border_radius: size::CORNER_RADIUS_SMALL,
                             }
                             CheckboxOutline
                             ThemeBorderColor(tokens::CHECKBOX_BORDER)

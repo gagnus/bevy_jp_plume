@@ -19,8 +19,9 @@ use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_v
 use bevy_text::FontWeight;
 use bevy_time::Time;
 use bevy_ui::{
-    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
-    Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, px,
+    AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
+    JustifyContent, Node, Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val,
+    ZIndex, px,
 };
 use bevy_ui_widgets::{Activate, Button};
 
@@ -203,6 +204,7 @@ pub(crate) fn tab_strip() -> impl Scene {
             align_items: AlignItems::Stretch,
             justify_content: JustifyContent::Start,
             min_height: size::HEADER_HEIGHT,
+            padding: UiRect::top(px(4)),
         }
         TabStrip
         ThemeBackgroundColor(tokens::TABS_STRIP_BG)
@@ -210,12 +212,13 @@ pub(crate) fn tab_strip() -> impl Scene {
             (
                 Node {
                     position_type: PositionType::Absolute,
-                    left: px(0),
-                    bottom: px(0),
+                    left: Val::ZERO,
+                    bottom: Val::ZERO,
                     width: {px(INDICATOR_BASE_WIDTH)},
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
                 TabIndicator
+                ZIndex(1)
                 UiTransform::default()
                 Pickable::IGNORE
                 ThemeBackgroundColor(tokens::TAB_INDICATOR)
@@ -235,6 +238,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
             justify_content: JustifyContent::Center,
             column_gap: size::GAP,
             padding: UiRect::horizontal(size::GAP),
+            border_radius: BorderRadius::top(size::CORNER_RADIUS_SMALL),
         }
         Button
         TabButton
@@ -445,6 +449,7 @@ fn update_tab_styles(
 ) {
     for (tab, selected, hovered, disabled, background, text_color) in q_tabs.iter() {
         let background_token = match (disabled, selected, hovered.0) {
+            (_, true, _) => tokens::TAB_BG_SELECTED,
             (false, false, true) => tokens::TAB_BG_HOVER,
             _ => tokens::TAB_BG,
         };

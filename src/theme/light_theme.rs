@@ -23,7 +23,7 @@ pub fn light_palette(hue: f32) -> ThemeEditablePalette {
         text: OklchaArray {
             hue,
             chroma: 0.044,
-            l: [0.1, 0.4],
+            l: [0.15, 0.40],
         },
         contrast: Oklcha::new(1.0, 0.0, 0.0, 1.0),
         axes: default_axis_colors(),

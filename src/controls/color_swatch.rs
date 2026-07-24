@@ -35,7 +35,7 @@ impl PlumeColorSwatch {
             Node {
                 height: size::ROW_HEIGHT,
                 width: size::ROW_HEIGHT,
-                border_radius: size::CORNER_RADIUS,
+                border_radius: size::CORNER_RADIUS_SMALL,
             }
             PlumeColorSwatch
             ColorSwatchValue
@@ -49,7 +49,7 @@ impl PlumeColorSwatch {
                         right: Val::ZERO,
                         bottom: Val::ZERO,
                         border: size::CONTROL_BORDER,
-                        border_radius: size::CORNER_RADIUS,
+                        border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     ThemeBorderColor(tokens::COLOR_SWATCH_BORDER)
                 )

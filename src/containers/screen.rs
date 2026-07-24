@@ -2,7 +2,7 @@
 use bevy_picking::Pickable;
 use bevy_scene::{Scene, bsn};
 use bevy_text::FontWeight;
-use bevy_ui::{AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, percent, px};
+use bevy_ui::{AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, Val, percent};
 
 use crate::{
     constants::{fonts, size},
@@ -23,8 +23,8 @@ pub fn screen() -> impl Scene {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             position_type: PositionType::Absolute,
-            left: px(0),
-            top: px(0),
+            left: Val::ZERO,
+            top: Val::ZERO,
             width: percent(100),
             height: percent(100),
             row_gap: size::GAP,

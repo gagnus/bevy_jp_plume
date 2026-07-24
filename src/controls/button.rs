@@ -17,7 +17,7 @@ use bevy_scene::prelude::*;
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
-    PositionType, Pressed, UiRect, px,
+    PositionType, Pressed, UiRect, Val,
 };
 use bevy_ui_widgets::Button;
 
@@ -130,10 +130,10 @@ impl PlumeButton {
                     // own inset border does.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: px(0),
-                        right: px(0),
-                        top: px(0),
-                        bottom: px(0),
+                        left: Val::ZERO,
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
                         border: size::CONTROL_BORDER,
                         border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
                     }

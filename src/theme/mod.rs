@@ -22,9 +22,11 @@ use bevy_reflect::{Reflect, prelude::ReflectDefault};
 use bevy_text::TextColor;
 use bevy_ui::{
     BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
-    InterpolationColorSpace, LinearGradient, Val, percent, px,
+    InterpolationColorSpace, LinearGradient, Val, percent,
 };
 use smol_str::SmolStr;
+
+use crate::constants::size;
 
 /// A design token for the theme. This serves as the lookup key for the theme properties.
 #[derive(Clone, PartialEq, Eq, Hash, Reflect, Default)]
@@ -201,10 +203,10 @@ fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
 pub fn control_box_shadow() -> BoxShadow {
     BoxShadow::new(
         Srgba::BLACK.with_alpha(0.4).into(),
-        px(1),
-        px(2),
+        size::GAP / 8.0,
+        size::GAP / 4.0,
         Val::ZERO,
-        px(2),
+        size::GAP / 2.0,
     )
 }
 
@@ -401,8 +403,7 @@ pub enum ThemeSlot {
     /// - `TEXT_INPUT_BG`
     Neutral1,
 
-    /// Raised container chrome: section headers and the group box.
-    /// - `GROUP_BG`
+    /// Raised container chrome: section headers.
     /// - `SECTION_HEADER_BG`
     /// - `TAB_BG_HOVER`
     Neutral2,
@@ -858,12 +859,12 @@ static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TABS_STRIP_BG, ThemeSlot::Neutral0),
     (tokens::TABS_BODY_BG, ThemeSlot::Neutral1),
     (tokens::TAB_BG, ThemeSlot::Transparent),
-    (tokens::TAB_BG_HOVER, ThemeSlot::Neutral2),
+    (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral1),
+    (tokens::TAB_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::TAB_TEXT, ThemeSlot::Text1),
     (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
-    (tokens::GROUP_BG, ThemeSlot::Neutral2),
     (tokens::LISTROW_BG, ThemeSlot::Transparent),
     (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::LISTROW_TEXT, ThemeSlot::Text0),

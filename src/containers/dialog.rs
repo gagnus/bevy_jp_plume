@@ -10,7 +10,7 @@ use bevy_scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy_text::FontWeight;
 use bevy_ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
-    Node, PositionType, UiRect, Val, px,
+    Node, PositionType, UiRect, Val,
 };
 use bevy_ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
@@ -49,6 +49,8 @@ pub struct PlumeDialogProps {
     /// `false` omits the whole title bar (with it, the title, ✕ and drag), leaving a
     /// bare floating panel — see the imm `panel`. Also drops the header-height floor.
     pub header: bool,
+    /// Body padding
+    pub body_padding: UiRect,
 }
 
 impl Default for PlumeDialogProps {
@@ -59,11 +61,12 @@ impl Default for PlumeDialogProps {
             width: Val::Auto,
             height: Val::Auto,
             max_height: Val::Auto,
-            left: px(120),
-            top: px(120),
+            left: size::DEFAULT_DIALOG_POS.x,
+            top: size::DEFAULT_DIALOG_POS.y,
             closable: true,
             movable: true,
             header: true,
+            body_padding: UiRect::all(size::PAD),
         }
     }
 }
@@ -88,6 +91,7 @@ impl PlumeDialog {
             closable,
             movable,
             header,
+            body_padding,
         } = props;
         // A bounded dialog scrolls its body; an unbounded one holds the contents
         // directly and spawns no scroll machinery.
@@ -115,23 +119,25 @@ impl PlumeDialog {
             contents
         };
         bsn! {
-            dialog_frame(PlumeDialogProps {
-                title,
+            dialog_frame(DialogChrome {
+                // The public dialog builds its whole body eagerly and hands the
+                // frame a padded `PlumeDialogBody` wrapping it.
+                body: Box::new(bsn_list!((
+                    @PlumeDialogBody { @padding: {body_padding} }
+                    Children [
+                        {body}
+                    ]
+                ))),
+                header: header.then(|| DialogHeader {
+                    title,
+                    closable,
+                    movable,
+                }),
                 width,
                 height,
                 max_height,
                 left,
                 top,
-                closable,
-                movable,
-                header,
-                // Empty for the imm layer, which reconciles the body itself.
-                contents: Box::new(bsn_list!((
-                    @PlumeDialogBody
-                    Children [
-                        {body}
-                    ]
-                ))),
             })
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {
@@ -146,66 +152,101 @@ impl PlumeDialog {
 #[derive(Component)]
 pub(crate) struct DialogCloseRequested;
 
-/// Dialog chrome (frame, title bar, ✕) shared by the public [`PlumeDialog`] and
-/// the imm layer, with no close behavior — callers attach their own `RequestClose`
-/// observer. `props.contents` is inserted as the body slot verbatim (the public
-/// dialog wraps it in a [`PlumeDialogBody`]; the imm layer leaves it empty and
-/// reconciles the body itself).
-pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
-    let PlumeDialogProps {
-        title,
-        contents,
+/// Chrome-level input for [`dialog_frame`], kept distinct from the public
+/// [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,
+/// inserted verbatim — and body padding never reaches the frame (it lives on the
+/// body's [`PlumeDialogBody`]).
+pub(crate) struct DialogChrome {
+    /// Finished body slot, inserted into the frame verbatim. The public dialog hands
+    /// over a padded [`PlumeDialogBody`]; the imm layer hands over an empty slot and
+    /// reconciles the body itself.
+    pub body: Box<dyn SceneList>,
+    /// The title bar, or `None` for a bare floating panel — no ✕, no drag, and no
+    /// header-height floor.
+    pub header: Option<DialogHeader>,
+    /// How wide the frame should be.
+    pub width: Val,
+    /// Fixed outer height, title bar included. `Val::Auto` hugs the content.
+    pub height: Val,
+    /// Ceiling on the outer height. `Val::Auto` for no ceiling.
+    pub max_height: Val,
+    /// Initial left offset (the frame is absolutely positioned).
+    pub left: Val,
+    /// Initial top offset.
+    pub top: Val,
+}
+
+/// Title-bar configuration for a [`DialogChrome`] that has one.
+pub(crate) struct DialogHeader {
+    /// Title content shown in the drag bar (e.g. `bsn! { caption("…") }`).
+    pub title: Box<dyn SceneList>,
+    /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
+    pub closable: bool,
+    /// `false` omits the drag handle, pinning the dialog in place.
+    pub movable: bool,
+}
+
+/// Dialog chrome (frame, optional title bar, ✕) shared by the public [`PlumeDialog`]
+/// and the imm layer, with no close behavior — callers attach their own
+/// `RequestClose` observer.
+pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
+    let DialogChrome {
+        body,
+        header,
         width,
         height,
         max_height,
         left,
         top,
-        closable,
-        movable,
-        header,
-    } = props;
+    } = chrome;
     // The header-height floor only exists to keep a `max_height` from crushing the
     // title bar; a headerless panel has no such reserve.
-    let frame_min_height = if header {
+    let frame_min_height = if header.is_some() {
         size::DIALOG_HEADER_HEIGHT
     } else {
         Val::ZERO
     };
-    let title_bar = header.then(|| {
-        bsn! {
-            // Title bar; dragging it moves the window. Same chrome as the section
-            // header; the dialog is distinguished by its drop shadow, not a
-            // different header.
-            (
-                Node {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::PAD * 2.0),
-                    min_height: size::DIALOG_HEADER_HEIGHT,
-                    column_gap: size::GAP,
-                    border: UiRect::bottom(size::CONTAINER_BORDER),
-                    border_radius: BorderRadius::top(size::DIALOG_RADIUS),
-                }
-                {movable.then(|| bsn!(DialogDragHandle))}
-                InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
-                ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
-                ThemeBorderColor(tokens::DIALOG_BORDER)
-                InheritableFont {
-                    font: fonts::REGULAR,
-                    font_size: size::MEDIUM_FONT,
-                    weight: FontWeight::NORMAL,
-                }
-                Children [
-                    {title},
-                    // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
-                    flex_spacer(),
-                    {closable.then(|| bsn_list!(@PlumeDialogClose))}
-                ]
-            )
-        }
-    });
+    let title_bar = header.map(
+        |DialogHeader {
+             title,
+             closable,
+             movable,
+         }| {
+            bsn! {
+                // Title bar; dragging it moves the window. Same chrome as the section
+                // header; the dialog is distinguished by its drop shadow, not a
+                // different header.
+                (
+                    Node {
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Start,
+                        padding: UiRect::horizontal(size::PAD * 2.0),
+                        min_height: size::DIALOG_HEADER_HEIGHT,
+                        column_gap: size::GAP,
+                        border: UiRect::bottom(size::CONTAINER_BORDER),
+                        border_radius: BorderRadius::top(size::DIALOG_RADIUS),
+                    }
+                    {movable.then(|| bsn!(DialogDragHandle))}
+                    InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
+                    ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
+                    ThemeBorderColor(tokens::DIALOG_BORDER)
+                    InheritableFont {
+                        font: fonts::REGULAR,
+                        font_size: size::MEDIUM_FONT,
+                        weight: FontWeight::NORMAL,
+                    }
+                    Children [
+                        {title},
+                        // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
+                        flex_spacer(),
+                        {closable.then(|| bsn_list!(@PlumeDialogClose))}
+                    ]
+                )
+            }
+        },
+    );
     bsn! {
             Node {
                 display: Display::Flex,
@@ -231,17 +272,17 @@ pub(crate) fn dialog_frame(props: PlumeDialogProps) -> impl Scene {
             InheritableThemeTextColor(tokens::TEXT_DIM)
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
-                px(4),
-                px(8),
-                px(4),
-                px(16),
+                size::GAP / 2.0,
+                size::GAP,
+                size::GAP / 2.0,
+                size::GAP * 2.0,
             )
             LayoutConfig {
                 use_rounding: false,
             }
             Children [
                 {title_bar},
-                {contents}
+                {body}
             ]
     }
 }
@@ -268,25 +309,40 @@ impl PlumeDialogClose {
     }
 }
 
+/// Props used to construct a [`PlumeDialogBody`] scene.
+pub struct PlumeDialogBodyProps {
+    /// Padding inside the body, around the content.
+    pub padding: UiRect,
+}
+
+impl Default for PlumeDialogBodyProps {
+    fn default() -> Self {
+        Self {
+            padding: UiRect::all(size::PAD),
+        }
+    }
+}
+
 /// Central body section for a dialog
 #[derive(SceneComponent, Default, Clone, Reflect)]
+#[scene(PlumeDialogBodyProps)]
 #[reflect(Component, Clone, Default)]
 pub struct PlumeDialogBody;
 
 impl PlumeDialogBody {
     /// Scene function for dialog body.
-    pub fn scene() -> impl Scene {
+    pub fn scene(props: PlumeDialogBodyProps) -> impl Scene {
         bsn! {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
                 row_gap: size::GAP,
-                padding: size::PAD,
+                padding: {props.padding},
                 // Shrinking below the content size lets a bounded dialog scroll
                 // instead of pushing content out the bottom. Inert while `Auto`.
                 flex_grow: 1.0,
-                min_height: px(0),
+                min_height: Val::ZERO,
             }
             InheritableFont {
                 font: fonts::REGULAR,

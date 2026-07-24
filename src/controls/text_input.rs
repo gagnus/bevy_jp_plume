@@ -25,7 +25,7 @@ use bevy_text::{
 };
 use bevy_ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
-    px, widget::Text,
+    widget::Text,
 };
 
 use crate::{
@@ -124,13 +124,13 @@ pub(crate) fn text_input_frame() -> impl Scene {
         Node {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
-            padding: UiRect::horizontal(TEXT_INPUT_PAD_X),
+            padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, Val::Px(1.0), Val::ZERO),
             border: size::CONTAINER_BORDER,
             border_radius: size::CORNER_RADIUS,
-            min_width: px(40.0),
+            min_width: {(size::TEXT_HEIGHT * 2.0).try_add(size::PAD * 2.0).expect("Add Val")},
         }
         // An empty field measures nothing, so `width: auto` would collapse it.
-        DefaultWidth(px(120.0))
+        DefaultWidth({(size::TEXT_HEIGHT * 8.0).try_add(size::PAD * 2.0).expect("Add Val")})
         PlumeTextInput
         // Ring around the frame while the inner field holds focus.
         FocusWithinIndicator

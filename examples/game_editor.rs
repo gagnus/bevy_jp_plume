@@ -348,7 +348,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
     })
     .background(bg)
-    .pad(UiRect::all(px(4)));
+    .pad(UiRect::all(size::GAP / 2.0));
 }
 
 fn left_panel(ui: &mut Ui, state: &mut Editor) {
@@ -370,7 +370,6 @@ fn left_panel(ui: &mut Ui, state: &mut Editor) {
 /// One tree row, then its children when the row is expanded. `selected` is shared
 /// down the recursion so any row can become the selection.
 fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize) {
-    const INDENT: f32 = 14.0;
     let has_children = !node.children.is_empty();
     let is_selected = *selected == node.id;
 
@@ -380,7 +379,7 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
     let clicked = ui
         .button_container(|ui| {
             if depth > 0 {
-                ui.space(px(depth as f32 * INDENT));
+                ui.space(size::TEXT_HEIGHT * (depth as f32));
             }
             // A twisty on branches; leaves reserve its width so labels line up.
             if has_children {

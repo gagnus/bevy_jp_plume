@@ -25,9 +25,6 @@ use bevy_jp_plume::{
 #[path = "common/mod.rs"]
 mod common;
 
-/// Width shared by the tab container and the footer under it.
-const PANEL_WIDTH: Val = Val::Px(420.0);
-
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
@@ -54,7 +51,7 @@ fn root() -> impl Scene {
             caption("Retained tabs — bodies spawned once, shown by name."),
             (
                 column()
-                Node { width: PANEL_WIDTH }
+                Node { width: px(420) }
                 Children [
                     settings_tabs(),
                     separator(),

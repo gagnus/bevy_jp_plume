@@ -44,9 +44,6 @@ use crate::{
     utils::anim::AnimState,
 };
 
-/// Visible track strip thickness (the full-height node around it is the hit area).
-const TRACK_HEIGHT: Val = Val::Px(4.0);
-
 /// Thumb scale while grabbed: the knob grows this much on press for grab feedback.
 const THUMB_GRABBED_SCALE: f32 = 1.15;
 
@@ -114,11 +111,11 @@ impl PlumeSlider {
                     // Inset half a knob each end so the thumb's sweep, not the bare
                     // track, spans the full width; grown so the inset is subtracted.
                     Node {
-                        height: {TRACK_HEIGHT},
+                        height: size::SLIDER_TRACK_HEIGHT,
                         width: {Val::ZERO},
                         flex_grow: 1.0,
                         margin: {UiRect::horizontal(size::KNOB_SIZE / 2.0)},
-                        border_radius: {TRACK_HEIGHT / 2.0},
+                        border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
                     // Bar/track drawn as a gradient, seeded from the theme so the

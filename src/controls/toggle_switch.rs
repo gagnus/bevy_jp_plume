@@ -49,12 +49,12 @@ impl PlumeToggleSwitch {
             // The border lives on a separate SwitchOutline overlay so the fill
             // gradient and the ring antialias cleanly (matches the checkbox split).
             Node {
-                width: size::TOGGLE_WIDTH,
-                height: size::TOGGLE_HEIGHT,
+                width: {size::TOGGLE_SIZE.x},
+                height: {size::TOGGLE_SIZE.y},
                 margin: {UiRect::vertical(
-                    size::ROW_HEIGHT.try_sub(size::TOGGLE_HEIGHT).unwrap() / 2.0,
+                    size::ROW_HEIGHT.try_sub(size::TOGGLE_SIZE.y).unwrap() / 2.0,
                 )},
-                border_radius: {size::TOGGLE_HEIGHT / 2.0},
+                border_radius: {size::TOGGLE_SIZE.y / 2.0},
             }
             Checkbox
             PlumeToggleSwitch
@@ -75,7 +75,7 @@ impl PlumeToggleSwitch {
                         width: percent(100),
                         height: percent(100),
                         border: size::CONTROL_BORDER,
-                        border_radius: {size::TOGGLE_HEIGHT / 2.0},
+                        border_radius: {size::TOGGLE_SIZE.y / 2.0},
                     }
                     ToggleSwitchOutline
                     ThemeBorderColor(tokens::SWITCH_BORDER)

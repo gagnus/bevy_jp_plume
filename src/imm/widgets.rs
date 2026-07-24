@@ -16,13 +16,13 @@ use bevy_immediate::{
     },
 };
 use bevy_scene::{Scene, bsn, bsn_list, on};
-use bevy_ui::{JustifyContent, Node, Val, px, widget::Text};
+use bevy_ui::{JustifyContent, Node, UiRect, Val, widget::Text};
 use bevy_ui_widgets::RequestClose;
 
 use crate::{
-    constants::FaIcon,
+    constants::{FaIcon, size},
     containers::{
-        DialogCloseRequested, PlumeDialogBody, PlumeDialogProps, PlumeGroup, PlumeSectionProps,
+        DialogChrome, DialogCloseRequested, DialogHeader, PlumeDialogBody, PlumeSectionProps,
         column, dialog_frame, flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar,
         section_body, section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
     },
@@ -152,10 +152,6 @@ pub trait PlumeImm<'w, 's> {
     /// standard font and text color, so bare text works at root scope. It
     /// overlays the scene behind it and lets picks fall through empty areas.
     fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen>;
-
-    /// Filled box visually grouping related controls; children stretch to its
-    /// width (a themed [`Self::vertical`]).
-    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Group>;
 
     /// Tab container: a header strip over a body showing one tab at a time.
     /// `f` declares the tabs on the [`ImmTabs`] collector; only the selected tab's
@@ -525,10 +521,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 width: Val::Auto,
                 height: Val::Auto,
                 max_height: Val::Auto,
-                left: px(120),
-                top: px(120),
+                left: size::DEFAULT_DIALOG_POS.x,
+                top: size::DEFAULT_DIALOG_POS.y,
                 closable: true,
                 movable: true,
+                body_padding: size::PAD.into(),
             },
         }
     }
@@ -542,10 +539,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 width: Val::Auto,
                 height: Val::Auto,
                 max_height: Val::Auto,
-                left: px(120),
-                top: px(120),
+                left: size::DEFAULT_DIALOG_POS.x,
+                top: size::DEFAULT_DIALOG_POS.y,
                 closable: false,
                 movable: false,
+                body_padding: size::PAD.into(),
             },
         }
     }
@@ -579,15 +577,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_with_manual_id(loc_id(()))
             .on_spawn_apply_scene(screen)
-            .add(f);
-        respond(entity, false)
-    }
-
-    #[track_caller]
-    fn group(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Group> {
-        let entity = self
-            .ch_with_manual_id(loc_id(()))
-            .on_spawn_apply_scene(|| bsn! { @PlumeGroup })
             .add(f);
         respond(entity, false)
     }
@@ -822,6 +811,7 @@ struct DialogLayout {
     top: Val,
     closable: bool,
     movable: bool,
+    body_padding: UiRect,
 }
 
 impl DialogLayout {
@@ -878,6 +868,12 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     /// `false` omits the drag handle, pinning the dialog in place.
     pub fn movable(mut self, movable: bool) -> Self {
         self.layout.movable = movable;
+        self
+    }
+
+    /// Set body padding.
+    pub fn pad(mut self, pad: UiRect) -> Self {
+        self.layout.body_padding = pad;
         self
     }
 
@@ -981,7 +977,7 @@ fn reconcile_frame_body<'e, 'w, 's>(
     let entity = entity.add(move |ui| {
         let body = ui
             .ch_id("dialog_body")
-            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
+            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody { @padding: {layout.body_padding} } });
         if !scrolls {
             body.add(f);
             return;
@@ -1056,19 +1052,23 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
         top,
         closable,
         movable,
+        // Body padding lives on the reconciled `PlumeDialogBody`, not the frame.
+        body_padding: _,
     } = layout;
     bsn! {
-        // Empty contents: the imm layer reconciles the body itself.
-        dialog_frame(PlumeDialogProps {
-            title: Box::new(bsn_list![ {icon.map(|icon| bsn! { fa_icon(icon) })}, caption(title)]),
+        // Empty body: the imm layer reconciles the body itself.
+        dialog_frame(DialogChrome {
+            body: Box::new(bsn_list!()),
+            header: Some(DialogHeader {
+                title: Box::new(bsn_list![ {icon.map(|icon| bsn! { fa_icon(icon) })}, caption(title)]),
+                closable,
+                movable,
+            }),
             width,
             height,
             max_height,
             left,
             top,
-            closable,
-            movable,
-            ..Default::default()
         })
         on(|close: On<RequestClose>, mut commands: Commands| {
             commands.entity(close.event_target()).insert(DialogCloseRequested);
@@ -1085,19 +1085,17 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
         top,
         ..
     } = layout;
-    // Headerless: no title bar, so no close button or drag handle either — and no
-    // `RequestClose` observer, since a panel has no ✕.
+    // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
+    // and there is no `RequestClose` observer, since a panel has no ✕.
     bsn! {
-        dialog_frame(PlumeDialogProps {
-            header: false,
-            closable: false,
-            movable: false,
+        dialog_frame(DialogChrome {
+            body: Box::new(bsn_list!()),
+            header: None,
             width,
             height,
             max_height,
             left,
             top,
-            ..Default::default()
         })
     }
 }

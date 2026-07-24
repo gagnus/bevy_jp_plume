@@ -2,7 +2,6 @@
 mod column;
 mod dialog;
 mod flex_spacer;
-mod group;
 mod row;
 mod screen;
 mod scroll_area;
@@ -14,7 +13,6 @@ mod tabs;
 pub use column::*;
 pub use dialog::*;
 pub use flex_spacer::*;
-pub use group::*;
 pub use row::*;
 pub use screen::*;
 pub(crate) use scroll_area::*;

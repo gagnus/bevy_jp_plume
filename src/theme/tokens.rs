@@ -290,6 +290,8 @@ pub const TABS_STRIP_BG: ThemeToken = ThemeToken::new_static("plume.tabs.strip.b
 pub const TABS_BODY_BG: ThemeToken = ThemeToken::new_static("plume.tabs.body.bg");
 /// Tab background
 pub const TAB_BG: ThemeToken = ThemeToken::new_static("plume.tab.bg");
+/// Tab background (selected)
+pub const TAB_BG_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.bg.selected");
 /// Tab background (hovered)
 pub const TAB_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.tab.bg.hover");
 /// Tab text color
@@ -300,11 +302,6 @@ pub const TAB_TEXT_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.text
 pub const TAB_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.tab.text.disabled");
 /// Underline marking the selected tab
 pub const TAB_INDICATOR: ThemeToken = ThemeToken::new_static("plume.tab.indicator");
-
-// Group
-
-/// Group background
-pub const GROUP_BG: ThemeToken = ThemeToken::new_static("plume.group.bg");
 
 // Listview
 

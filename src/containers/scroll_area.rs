@@ -3,7 +3,7 @@
 //! imm `scroll_area` widget.
 use bevy_ecs::{entity::Entity, template::EntityTemplate};
 use bevy_scene::{Scene, bsn};
-use bevy_ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val, px};
+use bevy_ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val};
 use bevy_ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::{
@@ -21,7 +21,7 @@ pub(crate) fn scroll_frame() -> impl Scene {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             flex_grow: 1.0,
-            min_height: px(0),
+            min_height: Val::ZERO,
         }
         ScrollbarGutter(size::SCROLLBAR_GUTTER)
     }
@@ -37,7 +37,7 @@ pub(crate) fn scroll_viewport() -> impl Scene {
             align_items: AlignItems::Stretch,
             row_gap: size::GAP,
             flex_grow: 1.0,
-            min_height: px(0),
+            min_height: Val::ZERO,
             overflow: Overflow::scroll_y(),
         }
         ScrollArea

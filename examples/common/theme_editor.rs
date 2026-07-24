@@ -2,7 +2,7 @@
 //! to a palette field; edits bake into the live `UiTheme` every frame the palette moves.
 use bevy::prelude::*;
 use bevy_jp_plume::{
-    constants::font_awesome,
+    constants::{font_awesome, size},
     controls::ButtonVariant,
     dark_theme::default_dark_palette,
     imm::{PlumeImm, PlumeRoot, Ui},
@@ -14,11 +14,6 @@ use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::log_on_change;
 
 const TITLE: &str = "Theme Editor";
-
-/// Width of the label gutter every ramp row aligns to.
-const GUTTER: f32 = 64.0;
-/// Side of the lightness-stop swatch, and of the gap that keeps swatchless rows aligned.
-const SWATCH: f32 = 16.0;
 
 #[derive(Resource, Clone, Debug, PartialEq)]
 pub struct ThemeEditor {
@@ -104,7 +99,7 @@ fn theme_editor_dialog(
                     ramp_rows(ui, &mut s.palette.text, 0.2);
                     param_row(
                         ui,
-                        "Disabled \u{3b1}",
+                        "Disable \u{3b1}",
                         &mut s.palette.disabled_text_alpha_modifier,
                         0.0..=1.0,
                         3,
@@ -162,14 +157,19 @@ fn param_row(
     suffix: Option<&str>,
     swatch: Option<Color>,
 ) {
+    let gutter_width = size::TEXT_HEIGHT * 3.5;
+
     ui.horizontal(|ui| {
-        ui.caption(label)
-            .width(px(GUTTER + if swatch.is_none() { SWATCH } else { 0.0 }));
+        ui.caption(label).width(if swatch.is_none() {
+            gutter_width.try_add(size::TEXT_HEIGHT).expect("Add Val")
+        } else {
+            gutter_width
+        });
         match swatch {
             Some(color) => {
-                ui.color_swatch(color).square(px(SWATCH));
+                ui.color_swatch(color).square(size::TEXT_HEIGHT);
             }
-            None => ui.space(px(0)), // keeps the child/gap count
+            None => ui.space(Val::ZERO), // keeps the child/gap count
         }
         ui.slider(value, range.clone()).grow().precision(precision);
         let number = ui.number(value).range(range).precision(precision);
