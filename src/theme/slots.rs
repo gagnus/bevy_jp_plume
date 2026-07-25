@@ -72,7 +72,7 @@ pub enum ThemeSlot {
     /// - `BUTTON_OUTLINE_BG_HOVER`
     /// - `BUTTON_OUTLINE_BORDER_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
-    /// - `LISTROW_BG_HOVER`
+    /// - `OPTION_BG_HOVER`
     /// - `SCROLLBAR_THUMB_HOVER`
     Neutral5,
 
@@ -87,7 +87,7 @@ pub enum ThemeSlot {
     /// Bright on-surface text and the unchecked switch knob.
     /// - `BUTTON_TEXT`
     /// - `DIALOG_HEADER_TEXT`
-    /// - `LISTROW_TEXT`
+    /// - `OPTION_TEXT`
     /// - `SECTION_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
     /// - `TAB_TEXT_SELECTED`
@@ -108,7 +108,7 @@ pub enum ThemeSlot {
     /// Disabled bright text.
     /// - `BUTTON_PRIMARY_TEXT_DISABLED`
     /// - `BUTTON_TEXT_DISABLED`
-    /// - `LISTROW_TEXT_DISABLED`
+    /// - `OPTION_TEXT_DISABLED`
     TextDisabled0,
 
     /// Disabled body text.
@@ -175,7 +175,7 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_BG`
     /// - `CHECKBOX_BG_CHECKED_DISABLED`
     /// - `CHECKBOX_BG_DISABLED`
-    /// - `LISTROW_BG`
+    /// - `OPTION_BG`
     /// - `RADIO_BG`
     /// - `RADIO_BG_CHECKED_DISABLED`
     /// - `RADIO_BG_DISABLED`
@@ -368,10 +368,10 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
-    (tokens::LISTROW_BG, ThemeSlot::Transparent),
-    (tokens::LISTROW_BG_HOVER, ThemeSlot::Neutral5),
-    (tokens::LISTROW_TEXT, ThemeSlot::Text0),
-    (tokens::LISTROW_TEXT_DISABLED, ThemeSlot::TextDisabled0),
+    (tokens::OPTION_BG, ThemeSlot::Transparent),
+    (tokens::OPTION_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::OPTION_TEXT, ThemeSlot::Text0),
+    (tokens::OPTION_TEXT_DISABLED, ThemeSlot::TextDisabled0),
     (tokens::DIALOG_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_BORDER, ThemeSlot::Neutral4),
     (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral1),

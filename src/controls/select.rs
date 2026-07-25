@@ -23,9 +23,12 @@ use bevy::ui_widgets::{
     ListBox, ReselectListRow, SetSelected, ValueChange, listbox_update_selection,
 };
 
-use super::listview::{ListRowCheck, ListRowIndex, PlumeListRow, PlumeListView};
-use super::menu::{PlumeMenu, PlumeMenuButton, PlumeMenuPopup};
+use super::listview::{
+    PlumeSelectOption, PlumeSelectOptions, SelectOptionCheck, SelectOptionIndex,
+};
+use super::menu::{PlumeMenu, PlumeSelectButton, PlumeSelectPopup};
 use crate::constants::size;
+use crate::containers::popup_socket;
 use crate::display::caption;
 use crate::rounded_corners::RoundedCorners;
 
@@ -90,7 +93,7 @@ impl PlumeSelect {
             PlumeSelect
             Children [
                 (
-                    @PlumeMenuButton {
+                    @PlumeSelectButton {
                         @caption: bsn! { caption("") SelectCaption },
                         @corners: {props.corners},
                     }
@@ -99,18 +102,23 @@ impl PlumeSelect {
                     }
                 ),
                 (
-                    @PlumeMenuPopup
+                    popup_socket()
                     Children [
                         (
-                            @PlumeListView {
-                                @rows: {props.options}
-                            }
-                            on(listbox_update_selection)
-                            on(re_emit_listbox_value)
-                            on(close_popup_on_reselect)
-                            Node {
-                                max_height: {max_height},
-                            }
+                            @PlumeSelectPopup
+                            Children [
+                                (
+                                    @PlumeSelectOptions {
+                                        @options: {props.options}
+                                    }
+                                    on(listbox_update_selection)
+                                    on(re_emit_listbox_value)
+                                    on(close_popup_on_reselect)
+                                    Node {
+                                        max_height: {max_height},
+                                    }
+                                )
+                            ]
                         )
                     ]
                 )
@@ -129,7 +137,7 @@ pub(crate) fn set_select_max_visible(world: &mut World, select_ent: Entity, max_
         let Ok(entity_ref) = world.get_entity(ent) else {
             continue;
         };
-        if ent != select_ent && entity_ref.contains::<PlumeListView>() {
+        if ent != select_ent && entity_ref.contains::<PlumeSelectOptions>() {
             if let Some(mut node) = world.get_mut::<Node>(ent) {
                 node.max_height = max_height;
             }
@@ -144,7 +152,7 @@ pub(crate) fn set_select_max_visible(world: &mut World, select_ent: Entity, max_
 // Event is sent on the PlumeListView
 fn close_popup_on_reselect(
     ev: On<ReselectListRow>,
-    q_popup: Query<(), With<PlumeMenuPopup>>,
+    q_popup: Query<(), With<PlumeSelectPopup>>,
     q_parents: Query<&ChildOf>,
     mut commands: Commands,
 ) {
@@ -165,7 +173,7 @@ fn re_emit_listbox_value(
     ev: On<ValueChange<Entity>>,
     q_select: Query<(), With<PlumeSelect>>,
     q_parents: Query<&ChildOf>,
-    q_popup: Query<(), With<PlumeMenuPopup>>,
+    q_popup: Query<(), With<PlumeSelectPopup>>,
     mut commands: Commands,
 ) {
     let mut select_ent = None;
@@ -194,7 +202,10 @@ fn re_emit_listbox_value(
 }
 
 fn sync_selected_index(
-    q_newly_selected: Query<(Entity, &ListRowIndex), (Added<Selected>, With<PlumeListRow>)>,
+    q_newly_selected: Query<
+        (Entity, &SelectOptionIndex),
+        (Added<Selected>, With<PlumeSelectOption>),
+    >,
     q_parents: Query<&ChildOf>,
     q_select: Query<(), With<PlumeSelect>>,
     mut commands: Commands,
@@ -213,7 +224,7 @@ fn select_on_set_selected_index(
     ev: On<SetSelectedIndex>,
     q_select: Query<(), With<PlumeSelect>>,
     q_children: Query<&Children>,
-    q_rows: Query<&ListRowIndex, With<PlumeListRow>>,
+    q_rows: Query<&SelectOptionIndex, With<PlumeSelectOption>>,
     mut commands: Commands,
 ) {
     if !q_select.contains(ev.entity) {
@@ -252,10 +263,10 @@ fn select_on_set_selected(
 }
 
 fn sync_caption(
-    q_newly_selected: Query<Entity, (Added<Selected>, With<PlumeListRow>)>,
+    q_newly_selected: Query<Entity, (Added<Selected>, With<PlumeSelectOption>)>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
-    q_text: Query<&Text, (Without<SelectCaption>, Without<ListRowCheck>)>,
+    q_text: Query<&Text, (Without<SelectCaption>, Without<SelectOptionCheck>)>,
     q_select: Query<(), With<PlumeSelect>>,
     mut q_caption: Query<&mut Text, With<SelectCaption>>,
 ) {
@@ -287,9 +298,9 @@ fn sync_caption(
 }
 
 fn focus_select_popup(
-    q_popups: Query<(Entity, &Visibility), (With<PlumeMenuPopup>, Changed<Visibility>)>,
+    q_popups: Query<(Entity, &Visibility), (With<PlumeSelectPopup>, Changed<Visibility>)>,
     q_select: Query<(), With<PlumeSelect>>,
-    q_button: Query<(), With<PlumeMenuButton>>,
+    q_button: Query<(), With<PlumeSelectButton>>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
     mut focus: ResMut<InputFocus>,
@@ -329,8 +340,8 @@ fn sync_select_disabled(
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     q_select: Query<(), With<PlumeSelect>>,
     q_children: Query<&Children>,
-    q_button: Query<(), With<PlumeMenuButton>>,
-    q_popup: Query<(), With<PlumeMenuPopup>>,
+    q_button: Query<(), With<PlumeSelectButton>>,
+    q_popup: Query<(), With<PlumeSelectPopup>>,
     mut commands: Commands,
 ) {
     for select_ent in q_newly_disabled.iter() {
@@ -356,7 +367,7 @@ fn sync_select_disabled(
 fn sync_select_width(
     q_selects: Query<(Entity, &ComputedNode), With<PlumeSelect>>,
     q_children: Query<&Children>,
-    q_popup: Query<(), With<PlumeMenuPopup>>,
+    q_popup: Query<(), With<PlumeSelectPopup>>,
     mut q_node: Query<&mut Node>,
 ) {
     for (select_ent, computed) in q_selects.iter() {
@@ -383,12 +394,12 @@ fn sync_select_width(
 fn sync_select_button_width(
     q_selects: Query<Entity, With<PlumeSelect>>,
     q_children: Query<&Children>,
-    q_rows: Query<(&Node, &Children), With<PlumeListRow>>,
-    q_buttons: Query<&Node, With<PlumeMenuButton>>,
+    q_rows: Query<(&Node, &Children), With<PlumeSelectOption>>,
+    q_buttons: Query<&Node, With<PlumeSelectButton>>,
     q_captions: Query<&Node, With<SelectCaption>>,
     q_listboxes: Query<&Node, With<ListBox>>,
-    q_popups: Query<&Node, With<PlumeMenuPopup>>,
-    q_check: Query<(), With<ListRowCheck>>,
+    q_popups: Query<&Node, With<PlumeSelectPopup>>,
+    q_check: Query<(), With<SelectOptionCheck>>,
     q_nodes: Query<&Node>,
     q_computed: Query<&ComputedNode>,
     mut commands: Commands,

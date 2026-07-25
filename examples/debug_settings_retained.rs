@@ -8,7 +8,7 @@ use bevy_jp_plume::{
     containers::{PlumeDialog, PlumeSection, column, flex_spacer, row, separator},
     controls::{
         ButtonVariant, PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider,
-        PlumeToggleSwitch, list_rows_from_strings,
+        PlumeToggleSwitch, options_from_strings,
     },
     display::{caption, caption_small_caps, fa_icon},
     theme::ThemeBackgroundColor,
@@ -174,7 +174,7 @@ fn debug_column() -> impl Scene {
 
 /// A labelled row whose control is a [`PlumeSelect`] over `options`, first one selected.
 fn select_row(label: &str, options: impl IntoIterator<Item: AsRef<str>>) -> impl Scene {
-    let options = list_rows_from_strings(options, Some(0));
+    let options = options_from_strings(options, Some(0));
     bsn! {
         row()
         Children [

@@ -388,13 +388,13 @@ pub const TAB_INDICATOR: ThemeToken = ThemeToken::new_static("plume.tab.indicato
 // Listview
 
 /// Listview row background
-pub const LISTROW_BG: ThemeToken = ThemeToken::new_static("plume.listrow.bg");
+pub const OPTION_BG: ThemeToken = ThemeToken::new_static("plume.option.bg");
 /// Listview row background (hovered)
-pub const LISTROW_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.listrow.bg.hover");
+pub const OPTION_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.option.bg.hover");
 /// Listview row text
-pub const LISTROW_TEXT: ThemeToken = ThemeToken::new_static("plume.listrow.text");
+pub const OPTION_TEXT: ThemeToken = ThemeToken::new_static("plume.option.text");
 /// Listview row text (disabled)
-pub const LISTROW_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.listrow.text.disabled");
+pub const OPTION_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.option.text.disabled");
 
 // Modal Dialog
 

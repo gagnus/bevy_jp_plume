@@ -1,4 +1,4 @@
-//! Internal scrolling list view and its selectable rows.
+//! Internal scrolling list view for options.
 use accesskit::Role;
 use bevy::a11y::AccessibilityNode;
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
@@ -35,29 +35,30 @@ use crate::{
     tokens,
 };
 
+// TODO:SELECT this is only used by select and doesn't seem to have anything targeting it much?
 /// A container that displays a scrolling list of items
 #[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(PlumeListViewProps)]
+#[scene(PlumeSelectOptionsProps)]
 #[reflect(Component, Clone, Default)]
-pub struct PlumeListView;
+pub struct PlumeSelectOptions;
 
 /// Props used to construct a [`PlumeListView`] scene.
-pub struct PlumeListViewProps {
+pub struct PlumeSelectOptionsProps {
     /// The list of items to be displayed in the list view.
-    pub rows: Box<dyn SceneList>,
+    pub options: Box<dyn SceneList>,
 }
 
-impl Default for PlumeListViewProps {
+impl Default for PlumeSelectOptionsProps {
     fn default() -> Self {
         Self {
-            rows: Box::new(bsn_list!()),
+            options: Box::new(bsn_list!()),
         }
     }
 }
 
-impl PlumeListView {
+impl PlumeSelectOptions {
     /// Scene function for list view.
-    pub fn scene(props: PlumeListViewProps) -> impl Scene {
+    pub fn scene(props: PlumeSelectOptionsProps) -> impl Scene {
         bsn! {
             Node {
                 display: Display::Flex,
@@ -83,7 +84,7 @@ impl PlumeListView {
                     }
                     ScrollArea
                     Children [
-                        {props.rows}
+                        {props.options}
                     ]
                 ),
 
@@ -106,9 +107,9 @@ impl PlumeListView {
 /// A selectable row in a list of items
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct PlumeListRow;
+pub struct PlumeSelectOption;
 
-impl PlumeListRow {
+impl PlumeSelectOption {
     /// Scene function for list row.
     pub fn scene() -> impl Scene {
         bsn! {
@@ -123,8 +124,8 @@ impl PlumeListRow {
                 padding: UiRect::horizontal(size::GAP),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
-            InheritableThemeTextColor(tokens::LISTROW_TEXT)
-            ThemeBackgroundColor(tokens::LISTROW_BG)
+            InheritableThemeTextColor(tokens::OPTION_TEXT)
+            ThemeBackgroundColor(tokens::OPTION_BG)
             InheritableFont {
                 font: fonts::REGULAR,
                 font_size: size::MEDIUM_FONT,
@@ -138,7 +139,7 @@ impl PlumeListRow {
                 Node {
                     width: size::ICON_WIDTH
                 }
-                ListRowCheck
+                SelectOptionCheck
                 Visibility::Hidden
             )]
         }
@@ -151,11 +152,11 @@ impl PlumeListRow {
 /// of strings was selected
 #[derive(Component, Default, Clone, Copy, Reflect)]
 #[reflect(Component, Default)]
-pub struct ListRowIndex(pub usize);
+pub struct SelectOptionIndex(pub usize);
 
 /// Convert an iterator of strings into `PlumeListRow` scenes with `OptionIndex`
 /// on each one containing its index, optionally mark one selected
-pub fn list_rows_from_strings(
+pub fn options_from_strings(
     options: impl IntoIterator<Item: AsRef<str>>,
     selected: Option<usize>,
 ) -> Box<dyn SceneList> {
@@ -166,8 +167,8 @@ pub fn list_rows_from_strings(
             .map(|(i, label)| {
                 let label: String = label.as_ref().into();
                 bsn! {
-                    @PlumeListRow
-                    ListRowIndex(i)
+                    @PlumeSelectOption
+                    SelectOptionIndex(i)
                     {selected.is_some_and(|selected| selected == i).then(|| bsn! { Selected })}
                     Children [ caption(label) ]
                 }
@@ -179,10 +180,10 @@ pub fn list_rows_from_strings(
 /// Marker for the selected-row tick.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub struct ListRowCheck;
+pub struct SelectOptionCheck;
 
-fn update_listrow_styles(
-    q_listrows: Query<
+fn update_option_styles(
+    q_options: Query<
         (
             Entity,
             Has<InteractionDisabled>,
@@ -192,7 +193,7 @@ fn update_listrow_styles(
             &InheritableThemeTextColor,
         ),
         (
-            With<PlumeListRow>,
+            With<PlumeSelectOption>,
             Or<(
                 Changed<Hovered>,
                 Added<Selected>,
@@ -201,15 +202,15 @@ fn update_listrow_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_check: Query<(), With<ListRowCheck>>,
+    q_check: Query<(), With<SelectOptionCheck>>,
     mut commands: Commands,
 ) {
-    for (listrow_ent, disabled, selected, hovered, bg_color, font_color) in q_listrows.iter() {
+    for (option_ent, disabled, selected, hovered, bg_color, font_color) in q_options.iter() {
         let check_ent = q_children
-            .iter_descendants(listrow_ent)
+            .iter_descendants(option_ent)
             .find(|en| q_check.contains(*en));
-        set_listrow_styles(
-            listrow_ent,
+        set_option_styles(
+            option_ent,
             check_ent,
             disabled,
             selected,
@@ -221,8 +222,8 @@ fn update_listrow_styles(
     }
 }
 
-fn update_listrow_styles_remove(
-    q_listrows: Query<
+fn update_option_styles_remove(
+    q_options: Query<
         (
             Entity,
             Has<InteractionDisabled>,
@@ -231,10 +232,10 @@ fn update_listrow_styles_remove(
             &ThemeBackgroundColor,
             &InheritableThemeTextColor,
         ),
-        With<PlumeListRow>,
+        With<PlumeSelectOption>,
     >,
     q_children: Query<&Children>,
-    q_check: Query<(), With<ListRowCheck>>,
+    q_check: Query<(), With<SelectOptionCheck>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_selected: RemovedComponents<Selected>,
     mut commands: Commands,
@@ -243,14 +244,14 @@ fn update_listrow_styles_remove(
         .read()
         .chain(removed_selected.read())
         .for_each(|ent| {
-            if let Ok((listrow_ent, disabled, selected, hovered, bg_color, font_color)) =
-                q_listrows.get(ent)
+            if let Ok((option_ent, disabled, selected, hovered, bg_color, font_color)) =
+                q_options.get(ent)
             {
                 let check_ent = q_children
-                    .iter_descendants(listrow_ent)
+                    .iter_descendants(option_ent)
                     .find(|en| q_check.contains(*en));
-                set_listrow_styles(
-                    listrow_ent,
+                set_option_styles(
+                    option_ent,
                     check_ent,
                     disabled,
                     selected,
@@ -263,8 +264,8 @@ fn update_listrow_styles_remove(
         });
 }
 
-fn set_listrow_styles(
-    listrow_ent: Entity,
+fn set_option_styles(
+    option_ent: Entity,
     check_ent: Option<Entity>,
     disabled: bool,
     selected: bool,
@@ -275,13 +276,13 @@ fn set_listrow_styles(
 ) {
     // Background shows hover only; selection is the tick.
     let outline_bg_token = match (disabled, hovered) {
-        (false, true) => tokens::LISTROW_BG_HOVER,
-        _ => tokens::LISTROW_BG,
+        (false, true) => tokens::OPTION_BG_HOVER,
+        _ => tokens::OPTION_BG,
     };
 
     let font_color_token = match disabled {
-        true => tokens::LISTROW_TEXT_DISABLED,
-        false => tokens::LISTROW_TEXT,
+        true => tokens::OPTION_TEXT_DISABLED,
+        false => tokens::OPTION_TEXT,
     };
 
     let cursor_shape = match disabled {
@@ -291,13 +292,13 @@ fn set_listrow_styles(
 
     if bg_color.0 != outline_bg_token {
         commands
-            .entity(listrow_ent)
+            .entity(option_ent)
             .insert(ThemeBackgroundColor(outline_bg_token));
     }
 
     if font_color.0 != font_color_token {
         commands
-            .entity(listrow_ent)
+            .entity(option_ent)
             .insert(InheritableThemeTextColor(font_color_token));
     }
 
@@ -309,7 +310,7 @@ fn set_listrow_styles(
     }
 
     commands
-        .entity(listrow_ent)
+        .entity(option_ent)
         .insert(EntityCursor::System(cursor_shape));
 }
 
@@ -367,14 +368,15 @@ fn update_active_row_outline(
     }
 }
 
+// TODO:SELECT - doesn't need a separate plugin when combined...
 /// Plugin which registers the systems for updating the listrow styles.
-pub struct ListViewPlugin;
+pub struct SelectOptionsPlugin;
 
-impl Plugin for ListViewPlugin {
+impl Plugin for SelectOptionsPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
-            (update_listrow_styles, update_listrow_styles_remove).in_set(PickingSystems::Last),
+            (update_option_styles, update_option_styles_remove).in_set(PickingSystems::Last),
         );
         app.add_systems(PostUpdate, update_active_row_outline);
     }

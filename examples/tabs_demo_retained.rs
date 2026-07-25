@@ -15,7 +15,7 @@ use bevy_jp_plume::{
     controls::{
         ButtonVariant, ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
         PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, list_rows_from_strings,
+        PlumeTextInput, PlumeToggleSwitch, options_from_strings,
     },
     display::{caption, fa_icon},
     theme::ThemeBackgroundColor,
@@ -121,7 +121,7 @@ fn settings_tabs() -> impl Scene {
                                 field_label("Player color"),
                                 (
                                     @PlumeSelect {
-                                        @options: {list_rows_from_strings(
+                                        @options: {options_from_strings(
                                             ["Crimson", "Teal", "Amber"],
                                             Some(0),
                                         )},
@@ -162,7 +162,7 @@ fn settings_tabs() -> impl Scene {
                                 field_label("Quality"),
                                 (
                                     @PlumeSelect {
-                                        @options: {list_rows_from_strings(
+                                        @options: {options_from_strings(
                                             ["Low", "Medium", "High"],
                                             Some(1),
                                         )},

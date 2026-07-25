@@ -25,7 +25,7 @@ pub use color_picker::*;
 pub use color_swatch::*;
 pub use default_width::DefaultWidth;
 pub use disclosure::*;
-pub use listview::{ListRowIndex, PlumeListRow, list_rows_from_strings};
+pub use listview::{PlumeSelectOption, SelectOptionIndex, options_from_strings};
 pub use number_input::*;
 pub use radio::*;
 pub use scrollbar::*;
@@ -38,7 +38,7 @@ pub use xy_pad::*;
 // Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
 pub use bevy::text::EditableTextFilter;
 
-use listview::ListViewPlugin;
+use listview::SelectOptionsPlugin;
 
 use bevy::app::Plugin;
 use default_width::DefaultWidthPlugin;
@@ -57,7 +57,7 @@ impl Plugin for ControlsPlugin {
             ColorSwatchPlugin,
             DefaultWidthPlugin,
             DisclosurePlugin,
-            ListViewPlugin,
+            SelectOptionsPlugin,
         ));
         app.add_plugins((
             NumberInputPlugin,

@@ -29,7 +29,7 @@ use crate::{
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
         PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, list_rows_from_strings,
+        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, options_from_strings,
     },
     display::{caption, caption_small_caps, fa_icon},
 };
@@ -531,12 +531,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let initial = index;
         let labels: Vec<String> = options.iter().map(|option| option.label.clone()).collect();
         let mut changed = false;
-        // The labels key the widget: the rows are seeded at spawn, so an edited
+        // The labels key the widget: the options are seeded at spawn, so an edited
         // option list has to respawn rather than keep the stale popup.
         let entity = self
             .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeSelect { @options: {list_rows_from_strings(labels, Some(initial))} } }
+                bsn! { @PlumeSelect { @options: {options_from_strings(labels, Some(initial))} } }
             })
             .plume_select(&mut index, &mut changed);
         if changed && let Some(option) = options.into_iter().nth(index) {

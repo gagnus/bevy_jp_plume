@@ -4,7 +4,7 @@ use bevy::color::Oklcha;
 
 /// Default plume dark palette editable inputs
 pub fn default_dark_palette() -> ThemeEditablePalette {
-    dark_palette(120.0, false)
+    dark_palette(120.0, true)
 }
 
 /// Plume dark palette editable inputs with given hue

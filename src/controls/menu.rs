@@ -31,6 +31,7 @@ use crate::{
 };
 use bevy::input_focus::{FocusCause, InputFocus, tab_navigation::NavAction};
 
+// TODO:SELECT - do we need this, PlumeMenuButton could just be a button???
 /// Top-level menu container. This wraps the menu button and provides an anchor for the popover.
 ///
 /// This is spawnable by inheriting it as a "scene component".
@@ -55,21 +56,19 @@ impl PlumeMenu {
 fn on_menu_event(
     mut ev: On<MenuEvent>,
     q_menu_children: Query<&Children>,
-    q_popovers: Query<&mut Visibility, With<PlumeMenuPopup>>,
-    q_buttons: Query<(), With<PlumeMenuButton>>,
+    q_popovers: Query<&mut Visibility, With<PlumeSelectPopup>>,
+    q_buttons: Query<(), With<PlumeSelectButton>>,
     mut commands: Commands,
     mut focus: ResMut<InputFocus>,
 ) {
+    // The popup sits under a `popup_socket` wrapper, so these scan descendants.
     match ev.event().action {
         MenuAction::Open(nav) => {
-            let Ok(children) = q_menu_children.get(ev.source) else {
-                return;
-            };
             ev.propagate(false);
-            for child in children.iter() {
-                if q_popovers.contains(*child) {
+            for descendant in q_menu_children.iter_descendants(ev.source) {
+                if q_popovers.contains(descendant) {
                     commands
-                        .entity(*child)
+                        .entity(descendant)
                         .try_insert((Visibility::Visible, MenuFocusState::Opening(nav)));
                     return;
                 }
@@ -77,16 +76,13 @@ fn on_menu_event(
             warn!("Menu popup not found");
         }
         MenuAction::Toggle => {
-            let Ok(children) = q_menu_children.get(ev.source) else {
-                return;
-            };
-            for child in children.iter() {
-                if let Ok(visibility) = q_popovers.get(*child) {
+            for descendant in q_menu_children.iter_descendants(ev.source) {
+                if let Ok(visibility) = q_popovers.get(descendant) {
                     ev.propagate(false);
                     if visibility == Visibility::Visible {
-                        commands.entity(*child).try_insert(Visibility::Hidden);
+                        commands.entity(descendant).try_insert(Visibility::Hidden);
                     } else {
-                        commands.entity(*child).try_insert((
+                        commands.entity(descendant).try_insert((
                             Visibility::Visible,
                             MenuFocusState::Opening(NavAction::First),
                         ));
@@ -97,24 +93,18 @@ fn on_menu_event(
             warn!("Menu popup not found");
         }
         MenuAction::CloseAll => {
-            let Ok(children) = q_menu_children.get(ev.source) else {
-                return;
-            };
-            for child in children.iter() {
-                if q_popovers.contains(*child) {
+            for descendant in q_menu_children.iter_descendants(ev.source) {
+                if q_popovers.contains(descendant) {
                     ev.propagate(false);
-                    commands.entity(*child).try_insert(Visibility::Hidden);
+                    commands.entity(descendant).try_insert(Visibility::Hidden);
                 }
             }
         }
         MenuAction::FocusRoot => {
-            let Ok(children) = q_menu_children.get(ev.source) else {
-                return;
-            };
-            for child in children.iter() {
-                if q_buttons.contains(*child) {
+            for descendant in q_menu_children.iter_descendants(ev.source) {
+                if q_buttons.contains(descendant) {
                     ev.propagate(false);
-                    focus.set(*child, FocusCause::Navigated);
+                    focus.set(descendant, FocusCause::Navigated);
                     break;
                 }
             }
@@ -122,17 +112,19 @@ fn on_menu_event(
     }
 }
 
+// TODO:SELECT this can move in to select but to be honest might not need to be a class, ie if its
+// just a button we could inline the bsn inside PlumeSelect, the props are only used one way
 /// A menu button widget. This produces a button that has a dropdown arrow.
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional [`PlumeMenuButtonProps`].
 #[derive(SceneComponent, Default, Clone)]
-#[scene(PlumeMenuButtonProps)]
+#[scene(PlumeSelectButtonProps)]
 #[derive(Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct PlumeMenuButton;
+pub struct PlumeSelectButton;
 
 /// Props used to construct a [`PlumeMenuButton`] scene.
-pub struct PlumeMenuButtonProps {
+pub struct PlumeSelectButtonProps {
     /// Label for this menu button
     pub caption: Box<dyn SceneList>,
     /// Rounded corners options
@@ -141,7 +133,7 @@ pub struct PlumeMenuButtonProps {
     pub arrow: bool,
 }
 
-impl Default for PlumeMenuButtonProps {
+impl Default for PlumeSelectButtonProps {
     fn default() -> Self {
         Self {
             caption: Box::new(bsn_list!()),
@@ -150,8 +142,8 @@ impl Default for PlumeMenuButtonProps {
         }
     }
 }
-impl PlumeMenuButton {
-    fn scene(props: PlumeMenuButtonProps) -> impl Scene {
+impl PlumeSelectButton {
+    fn scene(props: PlumeSelectButtonProps) -> impl Scene {
         bsn! {
             @PlumeButton {
                 @caption: {props.caption},
@@ -160,7 +152,7 @@ impl PlumeMenuButton {
             }
             ActivateOnPress
             MenuButton
-            PlumeMenuButton
+            PlumeSelectButton
             Children [
                 {
                     props.arrow.then(|| bsn_list!(
@@ -175,12 +167,15 @@ impl PlumeMenuButton {
     }
 }
 
+// TODO:SELECT this can move in to select or possibly be inlined in PlumeSelect, could
+// we combine this in to a single new popup with the one from the color edit? Although
+// one issue with that is that one has different close criteria?
 /// A menu popup widget.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
-pub struct PlumeMenuPopup;
+pub struct PlumeSelectPopup;
 
-impl PlumeMenuPopup {
+impl PlumeSelectPopup {
     fn scene() -> impl Scene {
         bsn! {
             Node {
@@ -193,7 +188,7 @@ impl PlumeMenuPopup {
                 padding: UiRect::axes(Val::ZERO, size::GAP_TIGHT),
                 border_radius: size::CORNER_RADIUS,
             }
-            PlumeMenuPopup
+            PlumeSelectPopup
             MenuPopup
             Visibility::Hidden
             ThemeBackgroundColor(tokens::MENU_BG)

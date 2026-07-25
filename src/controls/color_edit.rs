@@ -33,7 +33,7 @@ use bevy::ui::{
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 
 use crate::constants::{font_awesome, fonts, size};
-use crate::containers::row;
+use crate::containers::{popup_socket, row};
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
 use crate::display::{caption_small_caps, fa_icon};
@@ -114,52 +114,55 @@ impl PlumeColorEdit {
                 // The picker popup: absolutely positioned by `Popover` relative to
                 // this control, above everything, hidden until the swatch is clicked.
                 (
-                    Node {
-                        position_type: PositionType::Absolute,
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Column,
-                        border: size::CONTAINER_BORDER,
-                        padding: size::GAP_TIGHT,
-                        border_radius: size::CORNER_RADIUS,
-                    }
-                    ColorEditPopup
-                    Visibility::Hidden
-                    ThemeBackgroundColor(tokens::MENU_BG)
-                    ThemeBorderColor(tokens::MENU_BORDER)
-                    template_value(control_box_shadow())
-                    TabGroup::new(0)
-                    GlobalZIndex(100)
-                    template_value(picker_popover())
-                    // Drag any non-control part of the panel to move it. Inner controls
-                    // consume their own drags, so only background drags reach this.
-                    on(on_popup_drag)
-                    OverrideClip
-                    InheritableThemeTextColor(tokens::TEXT_DIM)
-                    InheritableFont {
-                        font: fonts::REGULAR,
-                        font_size: size::MEDIUM_FONT,
-                        weight: FontWeight::NORMAL,
-                    }
-                    Children [
-                        (
-                            row() Node { padding: {UiRect::new(size::PAD, size::PAD, Val::ZERO, size::PAD)} } Children [
-                                (
-                                    fa_icon(font_awesome::solid::PALETTE)
-                                ),
-                                (
-                                    caption_small_caps("Color Edit")
-                                    Node { width: px(100) }
-                                    ThemeTextColor(tokens::TEXT_MAIN)
-                                )
-                            ]
-                        ),
-                        (
-                            @PlumeColorPicker {
-                                @initial_color: {props.initial_color},
-                            }
-                            ColorEditPicker
-                        )
-                    ]
+                    popup_socket()
+                    Children [(
+                        Node {
+                            position_type: PositionType::Absolute,
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            border: size::CONTAINER_BORDER,
+                            padding: size::GAP_TIGHT,
+                            border_radius: size::CORNER_RADIUS,
+                        }
+                        ColorEditPopup
+                        Visibility::Hidden
+                        ThemeBackgroundColor(tokens::MENU_BG)
+                        ThemeBorderColor(tokens::MENU_BORDER)
+                        template_value(control_box_shadow())
+                        TabGroup::new(0)
+                        GlobalZIndex(100)
+                        template_value(picker_popover())
+                        // Drag any non-control part of the panel to move it. Inner controls
+                        // consume their own drags, so only background drags reach this.
+                        on(on_popup_drag)
+                        OverrideClip
+                        InheritableThemeTextColor(tokens::TEXT_DIM)
+                        InheritableFont {
+                            font: fonts::REGULAR,
+                            font_size: size::MEDIUM_FONT,
+                            weight: FontWeight::NORMAL,
+                        }
+                        Children [
+                            (
+                                row() Node { padding: {UiRect::new(size::PAD, size::PAD, Val::ZERO, size::PAD)} } Children [
+                                    (
+                                        fa_icon(font_awesome::solid::PALETTE)
+                                    ),
+                                    (
+                                        caption_small_caps("Color Edit")
+                                        Node { width: px(100) }
+                                        ThemeTextColor(tokens::TEXT_MAIN)
+                                    )
+                                ]
+                            ),
+                            (
+                                @PlumeColorPicker {
+                                    @initial_color: {props.initial_color},
+                                }
+                                ColorEditPicker
+                            )
+                        ]
+                    )]
                 )
             ]
         }
