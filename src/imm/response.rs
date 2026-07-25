@@ -39,10 +39,11 @@ pub mod kind {
     pub trait Numeric {}
     /// Kinds built on the text-input frame: number input, text edit.
     pub trait Field {}
-    /// Kinds that lay out children on a flex axis: row, column, group, screen.
+    /// Kinds that lay out direct children on a flex axis: row, column.
+    /// Excludes frames with nested bodies (section, dialog).
     pub trait Container {}
     /// Kinds whose padding is layout rather than theming, so an app may set it:
-    /// row, column, screen. Excludes the themed containers (group, section).
+    /// Excludes the themed containers (section, dialog).
     pub trait Padded {}
     /// Kinds an app may give a height: they either centre their content (button,
     /// swatch) or hold whatever size they are handed (tabs, scroll area). Excludes
@@ -421,7 +422,7 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     }
 }
 
-/// Builders shared by the container kinds (row, column).
+/// Builders shared by the container kinds (row, column, screen).
 impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
     /// Place every child on the container's cross axis — `Start` means top on a
     /// [`Row`](kind::Row), left on a [`Column`](kind::Column).
@@ -432,19 +433,31 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         struct AlignItemsKey;
         self.set_node::<AlignItemsKey, _>(align, |node, align| node.align_items = align)
     }
+
+    /// Set the gap between children, overriding the container's default. Both
+    /// `row_gap` and `column_gap` are set; plume containers are single-axis and
+    /// don't wrap, so only the main-axis gap has any effect.
+    pub fn gap(self, gap: Val) -> Self {
+        struct GapKey;
+        self.set_node::<GapKey, _>(gap, |node, gap| {
+            node.row_gap = gap;
+            node.column_gap = gap;
+        })
+    }
 }
 
 /// Builders for containers whose padding is layout, not theming.
 impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
     /// Set the container's padding; `UiRect::ZERO` for a flush, full-bleed
     /// surface such as a menu bar.
-    pub fn pad(self, padding: UiRect) -> Self {
+    pub fn pad<T: Into<UiRect> + core::fmt::Debug + Send + 'static>(self, padding: T) -> Self {
         struct PadKey;
+        let padding = padding.into();
         self.set_node::<PadKey, _>(padding, |node, padding| node.padding = padding)
     }
 
     /// Paint the container's background; a plain row, column or screen has no
-    /// fill of its own, unlike a group or section.
+    /// fill of its own, unlike a section.
     pub fn background(mut self, color: Color) -> Self {
         struct BackgroundKey;
         if self.key_changed::<BackgroundKey>(format!("{color:?}")) {

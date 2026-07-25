@@ -1,6 +1,5 @@
 //! Internal menu container, button, and popup used by the select control.
 use bevy::camera::visibility::Visibility;
-use bevy::color::{Alpha, Srgba};
 use bevy::ecs::{
     hierarchy::Children,
     observer::On,
@@ -13,14 +12,15 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignItems, BoxShadow, Display, FlexDirection, GlobalZIndex, JustifyContent, Node,
-    OverrideClip, PositionType, UiRect, Val, px,
+    AlignItems, Display, FlexDirection, GlobalZIndex, JustifyContent, Node, OverrideClip,
+    PositionType, UiRect, Val,
 };
 use bevy::ui_widgets::{
     ActivateOnPress, MenuAction, MenuButton, MenuEvent, MenuFocusState, MenuPopup,
     popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
 };
 
+use crate::theme::control_box_shadow;
 use crate::{
     constants::{font_awesome, size},
     controls::{ButtonVariant, PlumeButton},
@@ -198,13 +198,7 @@ impl PlumeMenuPopup {
             Visibility::Hidden
             ThemeBackgroundColor(tokens::MENU_BG)
             ThemeBorderColor(tokens::MENU_BORDER)
-            BoxShadow::new(
-                Srgba::BLACK.with_alpha(0.9).into(),
-                Val::ZERO,
-                Val::ZERO,
-                px(1),
-                px(4),
-            )
+            template_value(control_box_shadow())
             GlobalZIndex(100)
             Popover {
                 positions: vec![

@@ -26,8 +26,8 @@ use bevy_immediate::{
 };
 
 use caps::{
-    CapabilityPlumeChecked, CapabilityPlumeDialog, CapabilityPlumeIds, CapabilityPlumeSelect,
-    CapabilityPlumeText, CapabilityPlumeValue, PlumeOccurrences,
+    CapabilityPlumeChecked, CapabilityPlumeColor, CapabilityPlumeDialog, CapabilityPlumeIds,
+    CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeValue, PlumeOccurrences,
 };
 
 /// Capability set powering plume's immediate-mode layer.
@@ -46,6 +46,7 @@ impl_capability_set!(
         CapabilityPlumeChecked,
         CapabilityPlumeSelect,
         CapabilityPlumeText,
+        CapabilityPlumeColor,
         CapabilityPlumeDialog,
         CapabilityPlumeIds,
     )

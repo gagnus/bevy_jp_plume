@@ -107,17 +107,17 @@ impl PlumeSection {
             collapsible,
         } = props;
         bsn! {
-            section_frame(PlumeSectionProps {
+            section_frame(
                 header,
                 collapsible,
                 // Empty for the imm layer, which reconciles the body itself.
-                contents: Box::new(bsn_list!((
+                bsn_list!((
                     section_body()
                     Children [
                         {contents}
                     ]
-                ))),
-            })
+                )),
+            )
         }
     }
 }
@@ -126,7 +126,11 @@ impl PlumeSection {
 /// public [`PlumeSection`] and the imm layer. `props.contents` is inserted as the
 /// body slot verbatim (the public section wraps it in a [`section_body`]; the imm
 /// layer leaves it empty and reconciles the body itself).
-pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
+pub(crate) fn section_frame(
+    header: impl SceneList,
+    collapsible: bool,
+    body: impl SceneList,
+) -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
@@ -135,7 +139,7 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
             border_radius: size::CORNER_RADIUS,
         }
         SectionRoot
-        template_value(SectionCollapsible(props.collapsible))
+        template_value(SectionCollapsible(collapsible))
         ThemeBackgroundColor(tokens::SECTION_BODY_BG)
         Children [
             (
@@ -161,11 +165,11 @@ pub(crate) fn section_frame(props: PlumeSectionProps) -> impl Scene {
                 }
                 on(toggle_section_collapse)
                 Children [
-                    {props.collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron template_value(AnimState::rotation(0.0, -FRAC_PI_2)) UiTransform::default()) })},
-                    {props.header}
+                    {collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron template_value(AnimState::rotation(0.0, -FRAC_PI_2)) UiTransform::default()) })},
+                    {header}
                 ]
             ),
-            {props.contents}
+            {body}
         ]
     }
 }

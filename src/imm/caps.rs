@@ -1,5 +1,6 @@
 //! Plume-owned immediate-mode capabilities: who-wins value flow, select sync,
 //! and dialog close detection.
+use bevy::color::Color;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::resource::Resource;
 use bevy::input_focus::InputFocus;
@@ -13,7 +14,9 @@ use bevy_immediate::{
 
 use crate::{
     containers::DialogCloseRequested,
-    controls::{SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue},
+    controls::{
+        ColorPickerValue, SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue,
+    },
 };
 
 /// Synchronises an app `f32` with a control's [`SliderValue`] (slider, number input).
@@ -281,6 +284,76 @@ where
                 entity: input_entity,
                 text: new_text,
             });
+        }
+        self
+    }
+}
+
+/// Synchronises an app [`Color`] with a colour picker's [`ColorPickerValue`].
+///
+/// The picker self-updates its value as the user drags, so this mirrors the
+/// xy/select/text pattern: a widget value that moved since the last sync is the
+/// user's edit and wins; otherwise the app value is pushed to the widget.
+///
+/// Everything is keyed on the colour's linear-RGBA bits, not `Color` equality —
+/// the widget stores its value as `Color::Hsva` while an app may hand in any
+/// variant, and cross-variant `PartialEq` would report equal colours as different
+/// and fight forever.
+pub struct CapabilityPlumeColor;
+
+impl ImmCapability for CapabilityPlumeColor {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        cap_req.request_component_read::<ColorPickerValue>(app.world_mut());
+    }
+}
+
+/// Widget-side entry point for [`CapabilityPlumeColor`].
+pub trait ImmPlumeColor {
+    /// Two-way sync between `value` and the picker's [`ColorPickerValue`];
+    /// sets `changed` when a user edit landed in `value`.
+    fn plume_color(self, value: &mut Color, changed: &mut bool) -> Self;
+}
+
+// Hash-memory key for the last widget colour the imm layer synced against.
+struct ColorSyncKey;
+
+// `Color` isn't `Hash`, so key it on its linear-RGBA component bit patterns — a
+// canonical space so any two variants of the same colour compare equal.
+fn color_bits(color: Color) -> (u32, u32, u32, u32) {
+    let linear = color.to_linear();
+    (
+        linear.red.to_bits(),
+        linear.green.to_bits(),
+        linear.blue.to_bits(),
+        linear.alpha.to_bits(),
+    )
+}
+
+impl<Cap> ImmPlumeColor for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeColor>,
+{
+    fn plume_color(mut self, value: &mut Color, changed: &mut bool) -> Self {
+        let widget_value = match self.cap_get_component::<ColorPickerValue>() {
+            Ok(Some(picker)) => picker.0,
+            _ => {
+                // Not spawned/settled yet; the scene seeds the initial colour.
+                self.hash_set_typ::<ColorSyncKey>(imm_id(color_bits(*value)));
+                return self;
+            }
+        };
+
+        if self.hash_get_typ::<ColorSyncKey>() != Some(imm_id(color_bits(widget_value))) {
+            // Value moved since last sync: the user's edit wins.
+            if color_bits(widget_value) != color_bits(*value) {
+                *value = widget_value;
+                *changed = true;
+            }
+            self.hash_set_typ::<ColorSyncKey>(imm_id(color_bits(*value)));
+        } else if color_bits(*value) != color_bits(widget_value) {
+            // Hash deliberately left at the widget's value: re-push until it lands
+            // rather than reading the stale widget back.
+            self.entity_commands().insert(ColorPickerValue(*value));
         }
         self
     }

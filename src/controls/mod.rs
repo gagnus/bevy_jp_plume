@@ -2,6 +2,8 @@
 
 mod button;
 mod checkbox;
+mod color_edit;
+mod color_picker;
 mod color_swatch;
 mod default_width;
 mod disclosure;
@@ -14,9 +16,12 @@ mod select;
 mod slider;
 mod text_input;
 mod toggle_switch;
+mod xy_pad;
 
 pub use button::*;
 pub use checkbox::*;
+pub use color_edit::*;
+pub use color_picker::*;
 pub use color_swatch::*;
 pub use default_width::DefaultWidth;
 pub use disclosure::*;
@@ -28,6 +33,7 @@ pub use select::*;
 pub use slider::*;
 pub use text_input::*;
 pub use toggle_switch::*;
+pub use xy_pad::*;
 
 // Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
 pub use bevy::text::EditableTextFilter;
@@ -42,13 +48,18 @@ pub struct ControlsPlugin;
 
 impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut bevy::app::App) {
+        // Split into two tuples: `add_plugins` accepts tuples up to arity 15.
         app.add_plugins((
             ButtonPlugin,
             CheckboxPlugin,
+            ColorEditPlugin,
+            ColorPickerPlugin,
             ColorSwatchPlugin,
             DefaultWidthPlugin,
             DisclosurePlugin,
             ListViewPlugin,
+        ));
+        app.add_plugins((
             NumberInputPlugin,
             RadioPlugin,
             ScrollbarPlugin,
@@ -56,6 +67,7 @@ impl Plugin for ControlsPlugin {
             SliderPlugin,
             TextInputPlugin,
             ToggleSwitchPlugin,
+            XyPadPlugin,
         ));
     }
 }

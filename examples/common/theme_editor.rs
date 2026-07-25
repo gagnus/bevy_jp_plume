@@ -88,6 +88,14 @@ fn theme_editor_dialog(
                 {
                     s.palette = default_light_palette();
                 }
+                if ui
+                    .button("Random")
+                    .variant(ButtonVariant::Outline)
+                    .grow()
+                    .clicked
+                {
+                    s.palette = ThemeEditablePalette::random();
+                }
             });
 
             ui.scroll_area(|ui| {

@@ -35,6 +35,7 @@ bevy_immediate = { path = "../3rdParty/bevy_immediate", default-features = false
 
 # other
 accesskit = "0.24"
+rand = "0.10.2"
 
 [dev-dependencies]
 bevy = { path = "../3rdParty/bevy", features = ["bevy_ui_widgets", "png"] }

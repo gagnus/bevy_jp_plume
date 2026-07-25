@@ -12,6 +12,7 @@ use bevy_jp_plume::{PlumePlugins, light_theme, theme::UiTheme};
 use crate::common::gallery::GalleryPlugin;
 
 pub mod audio_settings;
+pub mod color_picker;
 pub mod debug_hub;
 pub mod debug_settings;
 pub mod gallery;

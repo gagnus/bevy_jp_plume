@@ -1,0 +1,526 @@
+//! HSV colour picker: a saturation/value plane, a hue bar and a preview swatch,
+//! composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated as one
+//! retained control. Reports its colour in [`ColorPickerValue`] and self-updates
+//! it as the user drags, so it works dropped straight into a scene; watch
+//! `Changed<ColorPickerValue>` to react.
+//!
+//! Internally the working colour is kept as a private `ColorPickerHsv` so hue
+//! survives at the grey/black axes — converting through RGB every frame would lose
+//! it there. [`ColorPickerValue`] is the public `Color` mirror; writing it (from an
+//! app or the imm layer) is folded back into the HSV truth with the hue preserved.
+use core::f32::consts::PI;
+
+use bevy::app::{Plugin, PostUpdate};
+use bevy::color::{Color, Hsva, Srgba};
+use bevy::ecs::{
+    component::Component,
+    entity::Entity,
+    hierarchy::{ChildOf, Children},
+    query::{Changed, With},
+    reflect::ReflectComponent,
+    schedule::IntoScheduleConfigs,
+    system::{Commands, Query},
+};
+use bevy::math::Vec2;
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
+use bevy::text::FontWeight;
+use bevy::ui::{
+    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
+    InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent, px,
+};
+use bevy::ui_widgets::SliderValue;
+
+use crate::constants::{fonts, size};
+use crate::containers::space;
+use crate::controls::{
+    ColorSwatchValue, PlumeColorSwatch, PlumeNumberInput, PlumeXyPad, XyPadLock, XyPadValue,
+};
+use crate::display::caption;
+use crate::font_styles::InheritableFont;
+use crate::theme::InheritableThemeTextColor;
+use crate::tokens;
+
+// The SV plane's side and the hue bar's dimensions. The bar shares the plane's
+// height so the two line up.
+const PLANE_SIZE: f32 = 220.0;
+const HUE_BAR_WIDTH: f32 = 20.0;
+
+#[derive(Default, Clone)]
+pub struct PlumeColorPickerProps {
+    pub initial_color: Color,
+}
+
+/// A composed HSV colour picker. Spawnable as a scene component; it lays out its
+/// own SV plane, hue bar and swatch.
+///
+/// Reports [`ColorPickerValue`] and self-updates it as the user drags.
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+#[scene(PlumeColorPickerProps)]
+#[require(ColorPickerHsv, ColorPickerValue)]
+pub struct PlumeColorPicker;
+
+/// The picker's current colour — the public read/write surface. Setting it (from
+/// an app or the imm layer) retargets the picker; the change is folded into the
+/// working HSV truth with the hue preserved.
+#[derive(Component, Clone, Copy, Reflect, Default)]
+#[reflect(Component, Clone, Default)]
+pub struct ColorPickerValue(pub Color);
+
+/// The picker's working colour, kept as `Hsva` so hue survives at the grey and
+/// black axes. This is the single source of truth the views are driven from; the
+/// public [`ColorPickerValue`] is derived from it. Crate-internal — apps and the
+/// imm layer see only the `Color` mirror.
+#[derive(Component, Clone, Copy, Reflect, Default)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct ColorPickerHsv(pub(crate) Hsva);
+
+/// Marks the saturation/value plane child.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerSv;
+
+/// Marks the hue bar child.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerHue;
+
+/// Marks the preview swatch child.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerSwatch;
+
+/// Which colour component a numeric field edits.
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Reflect)]
+enum Channel {
+    /// sRGB red.
+    #[default]
+    R,
+    /// sRGB green.
+    G,
+    /// sRGB blue.
+    B,
+    /// Hue, degrees.
+    H,
+    /// Saturation.
+    S,
+    /// Value / brightness.
+    V,
+}
+
+/// Marks a numeric field and names the colour component it edits.
+#[derive(Component, Default, Clone, Copy, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerChannel(Channel);
+
+// One labelled numeric field: a fixed-width caption and a number input carrying
+// the channel marker. The value is seeded by the sync system on spawn.
+fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32) -> impl Scene {
+    let suffix = matches!(channel, Channel::H).then(|| "\u{b0}".to_string());
+    bsn! {
+        Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::ZERO,
+        }
+        InheritableThemeTextColor(tokens::TEXT_DIM)
+        InheritableFont {
+            font: fonts::REGULAR,
+            font_size: size::MEDIUM_FONT,
+            weight: FontWeight::NORMAL,
+        }
+        Children [
+            (
+                space(size::GAP_TIGHT)
+            )
+            (
+                caption(label)
+                Node { width: {size::TEXT_HEIGHT}, flex_shrink: 0.0 }
+            ),
+            (
+                @PlumeNumberInput {
+                    @precision: {precision},
+                    @min: {0.0_f32},
+                    @max: {max},
+                    @suffix: {suffix},
+                }
+                Node { flex_grow: 1.0 }
+                ColorPickerChannel({channel})
+            ),
+        ]
+    }
+}
+
+impl PlumeColorPicker {
+    fn scene(props: PlumeColorPickerProps) -> impl Scene {
+        bsn! {
+            Node {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                column_gap: size::GAP,
+                align_items: AlignItems::Start,
+            }
+            PlumeColorPicker
+            template_value(ColorPickerHsv(props.initial_color.into()))
+            template_value(ColorPickerValue(props.initial_color))
+            Children [
+                // Saturation (x) / value (y). The plane's hue-tinted gradient is
+                // driven by the sync system, since it tracks the hue bar.
+                (
+                    @PlumeXyPad
+                    Node { width: px(PLANE_SIZE), height: px(PLANE_SIZE) }
+                    ColorPickerSv
+                ),
+                // Hue bar: a pad locked to x, so it only moves along the hue axis.
+                (
+                    @PlumeXyPad {
+                        @reticle_size: Val2::new(px(24.0), px(12.0))
+                    }
+                    Node { width: px(HUE_BAR_WIDTH), height: px(PLANE_SIZE) }
+                    XyPadLock { x: {Some(0.5)}, y: {None} }
+                    BackgroundGradient({hue_gradient()})
+                    ColorPickerHue
+                ),
+                // Preview swatch over the numeric fields; the swatch grows to fill
+                // the spare height so the R/G/B/H/S/V rows sit at the bottom.
+                (
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        align_self: AlignSelf::Stretch,
+                        row_gap: {size::GAP_TIGHT / 2.0},
+                        flex_grow: 1.0,
+                    }
+                    Children [
+                        (
+                            @PlumeColorSwatch
+                            Node { width: percent(100), flex_grow: 1.0 }
+                            ColorPickerSwatch
+                        ),
+                        // sRGB channels, then a gap, then the HSV channels.
+                        (channel_row("R", Channel::R, 3, 1.0)),
+                        (channel_row("G", Channel::G, 3, 1.0)),
+                        (channel_row("B", Channel::B, 3, 1.0)),
+                        (Node { height: px(2.0) }),
+                        (channel_row("H", Channel::H, 0, 360.0)),
+                        (channel_row("S", Channel::S, 3, 1.0)),
+                        (channel_row("V", Channel::V, 3, 1.0)),
+                    ]
+                ),
+            ]
+        }
+    }
+}
+
+// Below this the two representations are treated as agreeing: a field push whose
+// value is this close to what the HSV implies is our own echo, not a user edit.
+const CHANNEL_EPS: f32 = 1.0e-6;
+
+// The marked view children of one picker, gathered in a single descendant walk.
+struct PickerViews {
+    sv: Option<Entity>,
+    hue: Option<Entity>,
+    swatch: Option<Entity>,
+    channels: Vec<(Entity, Channel)>,
+}
+
+// Push the working HSV out to every view (plane, hue bar, swatch, numeric fields)
+// and the public `Color` mirror, whenever the working colour changes.
+fn sync_hsv_to_views(
+    mut q_picker: Query<(Entity, &ColorPickerHsv, &mut ColorPickerValue), Changed<ColorPickerHsv>>,
+    q_children: Query<&Children>,
+    q_sv: Query<(), With<ColorPickerSv>>,
+    q_hue: Query<(), With<ColorPickerHue>>,
+    q_swatch: Query<(), With<ColorPickerSwatch>>,
+    q_channel: Query<&ColorPickerChannel>,
+    mut q_xy: Query<&mut XyPadValue>,
+    mut q_swatch_val: Query<&mut ColorSwatchValue>,
+    q_slider: Query<&SliderValue>,
+    mut commands: Commands,
+) {
+    for (root, hsv, mut value) in q_picker.iter_mut() {
+        println!("color changed, pushing out");
+        let hsva = hsv.0;
+        let col = Color::from(hsva);
+        let srgb = Srgba::from(col);
+        if value.0 != col {
+            value.0 = col;
+        }
+
+        let views = collect_views(root, &q_children, &q_sv, &q_hue, &q_swatch, &q_channel);
+
+        if let Some(sv) = views.sv {
+            set_xy(&mut q_xy, sv, Vec2::new(hsva.saturation, 1.0 - hsva.value));
+            // The plane's white→hue tint follows the hue bar.
+            commands
+                .entity(sv)
+                .insert(BackgroundGradient(sv_gradient(hsva.hue)));
+        }
+        if let Some(hue) = views.hue {
+            set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
+        }
+        if let Some(swatch) = views.swatch
+            && let Ok(mut swatch_val) = q_swatch_val.get_mut(swatch)
+            && swatch_val.0 != col
+        {
+            swatch_val.0 = col;
+        }
+        for (field, channel) in views.channels {
+            let target = channel_value(hsva, srgb, channel);
+            // `SliderValue` is immutable, so a change is a re-insert; only push when
+            // the field actually disagrees, so unedited fields stay quiet.
+            let current = q_slider.get(field).map_or(f32::NAN, |slider| slider.0);
+            if (current - target).abs() > CHANNEL_EPS {
+                commands.entity(field).insert(SliderValue(target));
+            }
+        }
+    }
+}
+
+// Only write the pad value when it actually moved, so a programmatic push doesn't
+// re-trigger the view→model fold with a value it already agrees with.
+fn set_xy(q_xy: &mut Query<&mut XyPadValue>, pad: Entity, target: Vec2) {
+    if let Ok(mut value) = q_xy.get_mut(pad)
+        && value.0 != target
+    {
+        value.0 = target;
+    }
+}
+
+// Walk a picker's descendants for its marked view children in one pass.
+fn collect_views(
+    root: Entity,
+    q_children: &Query<&Children>,
+    q_sv: &Query<(), With<ColorPickerSv>>,
+    q_hue: &Query<(), With<ColorPickerHue>>,
+    q_swatch: &Query<(), With<ColorPickerSwatch>>,
+    q_channel: &Query<&ColorPickerChannel>,
+) -> PickerViews {
+    let mut views = PickerViews {
+        sv: None,
+        hue: None,
+        swatch: None,
+        channels: Vec::new(),
+    };
+    let mut stack = vec![root];
+    while let Some(entity) = stack.pop() {
+        if entity != root {
+            if q_sv.contains(entity) {
+                views.sv = Some(entity);
+            } else if q_hue.contains(entity) {
+                views.hue = Some(entity);
+            } else if q_swatch.contains(entity) {
+                views.swatch = Some(entity);
+            } else if let Ok(channel) = q_channel.get(entity) {
+                views.channels.push((entity, channel.0));
+            }
+        }
+        if let Ok(children) = q_children.get(entity) {
+            stack.extend(children.iter().copied());
+        }
+    }
+    views
+}
+
+// The value a given channel's field should show for the current colour.
+fn channel_value(hsva: Hsva, srgb: Srgba, channel: Channel) -> f32 {
+    match channel {
+        Channel::R => srgb.red,
+        Channel::G => srgb.green,
+        Channel::B => srgb.blue,
+        Channel::H => hsva.hue,
+        Channel::S => hsva.saturation,
+        Channel::V => hsva.value,
+    }
+}
+
+// Fold a plane or hue-bar drag back into the working HSV. Both pads are direct
+// children of the picker root, so `ChildOf` points straight at it.
+fn fold_pad_edits(
+    q_sv: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerSv>)>,
+    q_hue: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerHue>)>,
+    mut q_hsv: Query<&mut ColorPickerHsv>,
+) {
+    for (value, parent) in q_sv.iter() {
+        if let Ok(mut hsv) = q_hsv.get_mut(parent.parent()) {
+            let (saturation, brightness) = (value.0.x, 1.0 - value.0.y);
+            if hsv.0.saturation != saturation || hsv.0.value != brightness {
+                println!("setting sv! {} {}", saturation, brightness);
+                hsv.0.saturation = saturation;
+                hsv.0.value = brightness;
+            }
+        }
+    }
+    for (value, parent) in q_hue.iter() {
+        if let Ok(mut hsv) = q_hsv.get_mut(parent.parent()) {
+            let hue = (value.0.y * 360.0).clamp(0.0, 360.0);
+            if hsv.0.hue != hue {
+                println!("setting hue! {}", hue);
+                hsv.0.hue = hue;
+            }
+        }
+    }
+}
+
+// Fold a committed numeric-field edit back into the working HSV. Our own pushes
+// from `sync_hsv_to_views` also mark `SliderValue` changed, so a field whose value
+// still agrees with the HSV is skipped as an echo; only a genuine user edit folds.
+fn fold_channel_edits(
+    q_changed: Query<(Entity, &SliderValue, &ColorPickerChannel), Changed<SliderValue>>,
+    q_childof: Query<&ChildOf>,
+    q_is_picker: Query<(), With<PlumeColorPicker>>,
+    mut q_hsv: Query<&mut ColorPickerHsv>,
+) {
+    for (field, slider, channel) in q_changed.iter() {
+        let Some(root) = find_picker_root(field, &q_childof, &q_is_picker) else {
+            continue;
+        };
+        let Ok(mut hsv) = q_hsv.get_mut(root) else {
+            continue;
+        };
+        let hsva = hsv.0;
+        let srgb = Srgba::from(Color::from(hsva));
+        if (slider.0 - channel_value(hsva, srgb, channel.0)).abs() <= CHANNEL_EPS {
+            continue;
+        }
+        let folded = fold_channel(hsva, channel.0, slider.0);
+        if folded != hsva {
+            println!("setting here! {:?} {:?}", folded, hsva);
+            hsv.0 = folded;
+        }
+    }
+}
+
+// Walk up from a numeric field to the picker root it belongs to.
+fn find_picker_root(
+    mut entity: Entity,
+    q_childof: &Query<&ChildOf>,
+    q_is_picker: &Query<(), With<PlumeColorPicker>>,
+) -> Option<Entity> {
+    loop {
+        if q_is_picker.contains(entity) {
+            return Some(entity);
+        }
+        entity = q_childof.get(entity).ok()?.parent();
+    }
+}
+
+// Apply one channel's edited value to the HSV. RGB edits go through sRGB with the
+// hue preserved (so dialing a channel to grey/black doesn't fling the hue to red);
+// HSV edits set their component directly.
+fn fold_channel(hsva: Hsva, channel: Channel, value: f32) -> Hsva {
+    match channel {
+        Channel::R | Channel::G | Channel::B => {
+            let mut srgb = Srgba::from(Color::from(hsva));
+            match channel {
+                Channel::R => srgb.red = value,
+                Channel::G => srgb.green = value,
+                Channel::B => srgb.blue = value,
+                _ => unreachable!("outer match restricts this to the RGB channels"),
+            }
+            hsva_from_srgb_preserving(srgb, hsva)
+        }
+        Channel::H => Hsva {
+            hue: value.clamp(0.0, 360.0),
+            ..hsva
+        },
+        Channel::S => Hsva {
+            saturation: value.clamp(0.0, 1.0),
+            ..hsva
+        },
+        Channel::V => Hsva {
+            value: value.clamp(0.0, 1.0),
+            ..hsva
+        },
+    }
+}
+
+// Fold an external `Color` write (app- or imm-driven) into the working HSV. A
+// write that merely echoes the current HSV — as the sync above produces — leaves
+// `Color::from(hsv)` unchanged, so this ignores it and no loop forms.
+fn fold_external_value(
+    mut q_picker: Query<(&ColorPickerValue, &mut ColorPickerHsv), Changed<ColorPickerValue>>,
+) {
+    for (value, mut hsv) in q_picker.iter_mut() {
+        if value.0 != Color::from(hsv.0) {
+            hsv.0 = hsva_from_srgb_preserving(Srgba::from(value.0), hsv.0);
+        }
+    }
+}
+
+/// Fold an edited sRGB colour back into HSV, holding onto the hue (and, at black,
+/// the saturation) that RGB can no longer distinguish. HSV is the retained truth
+/// precisely so the SV plane and hue bar keep their position across the grey and
+/// black axes — where RGB alone would lose the hue and jump them back to red.
+pub(crate) fn hsva_from_srgb_preserving(srgb: Srgba, prev: Hsva) -> Hsva {
+    let mut hsva = Hsva::from(Color::from(srgb));
+    // Grey (saturation 0): hue is undefined, so keep the previous one.
+    if hsva.saturation <= f32::EPSILON {
+        hsva.hue = prev.hue;
+    }
+    // Black (value 0): saturation is undefined too, so keep both.
+    if hsva.value <= f32::EPSILON {
+        hsva.saturation = prev.saturation;
+        hsva.hue = prev.hue;
+    }
+    hsva
+}
+
+// The saturation/value plane for a fixed `hue`: white→hue across x, with a
+// transparent→black layer down y composited over it. Pure gradients, no shader.
+fn sv_gradient(hue: f32) -> Vec<Gradient> {
+    let pure_hue = Color::from(Hsva::new(hue, 1.0, 1.0, 1.0));
+    vec![
+        // Horizontal: white (left) → pure hue (right). 90° = left→right.
+        Gradient::Linear(LinearGradient {
+            angle: PI * 0.5,
+            stops: vec![
+                ColorStop::new(Color::WHITE, percent(0.0)),
+                ColorStop::new(pure_hue, percent(100.0)),
+            ],
+            color_space: InterpolationColorSpace::Srgba,
+        }),
+        // Vertical: transparent (top) → black (bottom). 180° = top→bottom.
+        Gradient::Linear(LinearGradient {
+            angle: PI,
+            stops: vec![
+                ColorStop::new(Color::NONE, percent(0.0)),
+                ColorStop::new(Color::BLACK, percent(100.0)),
+            ],
+            color_space: InterpolationColorSpace::Srgba,
+        }),
+    ]
+}
+
+// The vertical hue strip: the spectral wheel from top (hue 0) to bottom (hue 360).
+fn hue_gradient() -> Vec<Gradient> {
+    let stops = (0..=6)
+        .map(|i| {
+            let hue = i as f32 * 60.0;
+            ColorStop::new(Color::hsl(hue, 1.0, 0.5), percent(i as f32 / 6.0 * 100.0))
+        })
+        .collect();
+    vec![Gradient::Linear(LinearGradient {
+        angle: PI, // top→bottom
+        stops,
+        color_space: InterpolationColorSpace::Srgba,
+    })]
+}
+
+/// Registers the colour-picker sync systems.
+pub struct ColorPickerPlugin;
+
+impl Plugin for ColorPickerPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_systems(
+            PostUpdate,
+            (
+                sync_hsv_to_views,
+                fold_external_value,
+                fold_pad_edits,
+                fold_channel_edits,
+            )
+                .chain(),
+        );
+    }
+}

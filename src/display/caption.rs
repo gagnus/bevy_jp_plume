@@ -6,7 +6,7 @@ use bevy::ui::widget::Text;
 
 use crate::{
     constants::{FaIcon, fonts, size},
-    theme::{ThemeTextColor, ThemeToken, ThemedText},
+    theme::{ThemeTextColor, ThemedText, tokens::ThemeToken},
 };
 
 /// A caption within, say, a button using inherited color.

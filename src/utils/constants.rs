@@ -58,14 +58,14 @@ pub mod size {
     /// Border width of containers (dialog, section header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(1.0);
 
-    /// Tight vertical gap for dense section interiors (section, group, radio group)
+    /// Tight vertical gap for dense section interiors (section, radio group)
     pub const GAP_TIGHT: Val = Val::Px(4.0);
 
     /// Standard gap: every horizontal gap (rows, caption slots) and page-level
     /// column gap; also buttons' and list rows' horizontal padding
     pub const GAP: Val = Val::Px(8.0);
 
-    /// Container body padding (dialog, group, section)
+    /// Container body padding (dialog, section)
     pub const PAD: Val = Val::Px(6.0);
 
     /// Knob diameter (slider thumb, toggle knob)

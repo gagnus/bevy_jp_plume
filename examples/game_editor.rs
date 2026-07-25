@@ -5,7 +5,7 @@ use bevy_jp_plume::{
     constants::{font_awesome::solid as fa, size},
     controls::ButtonVariant,
     imm::{PlumeImm, PlumeRoot, Ui},
-    theme::{ThemeSlot, UiTheme},
+    theme::{UiTheme, slots::ThemeSlot},
     tokens,
 };
 
@@ -348,7 +348,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
     })
     .background(bg)
-    .pad(UiRect::all(size::GAP / 2.0));
+    .pad(size::GAP / 2.0);
 }
 
 fn left_panel(ui: &mut Ui, state: &mut Editor) {

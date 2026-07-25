@@ -4,7 +4,89 @@
 //! similar in concept to a CSS variable. Each token names one visual aspect of a widget
 //! (background, border, ...) and maps to a [`ThemeSlot`](crate::theme::ThemeSlot) for its color.
 
-use crate::theme::ThemeToken;
+use bevy::reflect::Reflect;
+use smol_str::SmolStr;
+
+/// A design token for the theme. This serves as the lookup key for the theme properties.
+#[derive(Clone, PartialEq, Eq, Hash, Reflect, Default)]
+pub struct ThemeToken(SmolStr);
+
+impl ThemeToken {
+    /// Construct a new [`ThemeToken`] from a [`SmolStr`].
+    pub const fn new(text: SmolStr) -> Self {
+        Self(text)
+    }
+
+    /// Construct a new [`ThemeToken`] from a static string.
+    pub const fn new_static(text: &'static str) -> Self {
+        Self(SmolStr::new_static(text))
+    }
+}
+
+impl core::fmt::Display for ThemeToken {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl core::fmt::Debug for ThemeToken {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "ThemeToken({:?})", self.0)
+    }
+}
+
+/// One token per pointer-interaction state; see [`InteractionTokens::pick`].
+#[derive(Clone, Reflect)]
+pub struct InteractionTokens {
+    /// Rest state.
+    pub base: ThemeToken,
+    /// Pointer over the control.
+    pub hover: ThemeToken,
+    /// Pointer pressed on the control.
+    pub pressed: ThemeToken,
+    /// Interaction disabled.
+    pub disabled: ThemeToken,
+}
+
+impl InteractionTokens {
+    /// Token for the given interaction state (disabled > pressed > hover > base).
+    pub fn pick(&self, disabled: bool, pressed: bool, hovered: bool) -> ThemeToken {
+        if disabled {
+            self.disabled.clone()
+        } else if pressed {
+            self.pressed.clone()
+        } else if hovered {
+            self.hover.clone()
+        } else {
+            self.base.clone()
+        }
+    }
+}
+
+/// Four tokens keyed by `(checked, disabled)`; see [`CheckedTokens::pick`].
+#[derive(Clone, Reflect)]
+pub struct CheckedTokens {
+    /// Unchecked, enabled.
+    pub base: ThemeToken,
+    /// Checked, enabled.
+    pub checked: ThemeToken,
+    /// Unchecked, disabled.
+    pub disabled: ThemeToken,
+    /// Checked and disabled.
+    pub checked_disabled: ThemeToken,
+}
+
+impl CheckedTokens {
+    /// Token for the given `(checked, disabled)` state.
+    pub fn pick(&self, checked: bool, disabled: bool) -> ThemeToken {
+        match (checked, disabled) {
+            (true, true) => self.checked_disabled.clone(),
+            (true, false) => self.checked.clone(),
+            (false, true) => self.disabled.clone(),
+            (false, false) => self.base.clone(),
+        }
+    }
+}
 
 /// Window background
 pub const WINDOW_BG: ThemeToken = ThemeToken::new_static("plume.window.bg");
@@ -339,7 +421,7 @@ pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("plume.focus-ring");
 /// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick) and
 /// [`CheckedTokens::pick`](crate::theme::CheckedTokens::pick).
 pub mod sets {
-    use crate::theme::{CheckedTokens, InteractionTokens};
+    use super::{CheckedTokens, InteractionTokens};
 
     /// Regular button background
     pub const BUTTON_BG: InteractionTokens = InteractionTokens {

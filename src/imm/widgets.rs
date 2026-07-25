@@ -22,14 +22,14 @@ use bevy_immediate::{
 use crate::{
     constants::{FaIcon, size},
     containers::{
-        DialogChrome, DialogCloseRequested, DialogHeader, PlumeDialogBody, PlumeSectionProps,
-        column, dialog_frame, flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar,
-        section_body, section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
+        DialogChrome, DialogCloseRequested, DialogHeader, PlumeDialogBody, column, dialog_frame,
+        flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar, section_body,
+        section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
     },
     controls::{
-        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch, PlumeDisclosure,
-        PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch,
-        PlumeToolButton, list_rows_from_strings,
+        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
+        PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
+        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, list_rows_from_strings,
     },
     display::{caption, caption_small_caps, fa_icon},
 };
@@ -37,8 +37,8 @@ use crate::{
 use super::{
     ImmResponse, PlumeCaps, Ui,
     caps::{
-        ImmPlumeChecked, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue,
-        PlumeOccurrences,
+        ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText,
+        ImmPlumeValue, PlumeOccurrences,
     },
     kind,
 };
@@ -59,6 +59,16 @@ pub trait PlumeImm<'w, 's> {
     /// `color`. Defaults to a [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT)
     /// square; chain `.square()`/`.width()`/`.height()` to resize.
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
+
+    /// Interactive HSV colour picker: a saturation/value plane, a hue bar and a
+    /// preview swatch. Two-way bound to `color`; `.changed` on the response fires
+    /// when the user drags to a new colour. The layout is fixed by the control.
+    fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
+
+    /// Editable colour swatch: a swatch that opens a colour-picker popup on click,
+    /// dismissed by clicking outside. Two-way bound to `color`; `.changed` fires
+    /// when the user edits it.
+    fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
     /// Fixed gap along the container's main axis — `length` of width in a
     /// [`Self::horizontal`], of height in a [`Self::vertical`]. For a gap that
@@ -273,6 +283,30 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             e: entity,
             kind: PhantomData,
         }
+    }
+
+    #[track_caller]
+    fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
+        // Identity is the call site: the picker retains its working HSV, so the
+        // scene seeds the colour once and the capability syncs it thereafter.
+        let initial = *color;
+        let mut changed = false;
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(move || bsn! { @PlumeColorPicker { @initial_color: {initial} }})
+            .plume_color(color, &mut changed);
+        respond(entity, changed)
+    }
+
+    #[track_caller]
+    fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
+        let initial = *color;
+        let mut changed = false;
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(move || bsn! { @PlumeColorEdit { @initial_color: {initial} }})
+            .plume_color(color, &mut changed);
+        respond(entity, changed)
     }
 
     #[track_caller]
@@ -585,10 +619,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_loc(loc_id(header))
             .on_spawn_apply_scene(move || {
                 bsn! {
-                    section_frame(PlumeSectionProps {
-                        header: Box::new(bsn_list!(caption_small_caps(header_owned))),
-                        ..Default::default()
-                    })
+                    section_frame(
+                        bsn_list!(caption_small_caps(header_owned)),
+                        true,
+                        bsn_list!()
+                    )
                 }
             })
             .add(|ui| {

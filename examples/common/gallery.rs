@@ -7,7 +7,7 @@ use bevy_jp_plume::{
     constants::size,
     controls::ButtonVariant,
     imm::{PlumeImm, PlumeRoot, Ui},
-    theme::{ThemeSlot, UiTheme},
+    theme::{UiTheme, slots::ThemeSlot},
 };
 
 use super::log_on_change;
@@ -160,5 +160,5 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
         ui.number(&mut state.number).enabled(!disabled);
     })
     .background(bg)
-    .pad(UiRect::all(size::ROW_HEIGHT));
+    .pad(size::ROW_HEIGHT);
 }
