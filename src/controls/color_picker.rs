@@ -240,7 +240,7 @@ fn sync_color_to_views(
         if let Some(hue) = views.hue {
             set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
         }
-        
+
         // swatch
         if let Some(swatch) = views.swatch
             && let Ok(mut swatch_val) = q_swatch_val.get_mut(swatch)
@@ -372,33 +372,33 @@ fn fold_channel_edits(
             continue;
         }
 
-        // we push out the color in the color space 
+        // we push out the color in the color space
         // that was changed
         match channel.0 {
             Channel::R => {
                 srgba.red = slider.0;
                 color.0 = srgba.into();
-            },
+            }
             Channel::G => {
                 srgba.green = slider.0;
                 color.0 = srgba.into();
-            },
+            }
             Channel::B => {
                 srgba.blue = slider.0;
                 color.0 = srgba.into();
-            },
+            }
             Channel::H => {
                 hsva.hue = slider.0;
                 color.0 = hsva.into();
-            },
+            }
             Channel::S => {
                 hsva.saturation = slider.0;
                 color.0 = hsva.into();
-            },
+            }
             Channel::V => {
                 hsva.value = slider.0;
                 color.0 = hsva.into();
-            },
+            }
         }
     }
 }
@@ -465,12 +465,7 @@ impl Plugin for ColorPickerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PostUpdate,
-            (
-                sync_color_to_views,
-                fold_pad_edits,
-                fold_channel_edits,
-            )
-                .chain(),
+            (sync_color_to_views, fold_pad_edits, fold_channel_edits).chain(),
         );
     }
 }

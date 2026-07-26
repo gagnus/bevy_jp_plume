@@ -175,14 +175,7 @@ fn sync_edit_from_picker(
         {
             root_value.0 = value.0;
         }
-        set_swatch(
-            root,
-            value.0,
-            &q_children,
-            &q_swatch_marker,
-            &mut q_swatch,
-            true,
-        );
+        set_swatch(root, value.0, &q_children, &q_swatch_marker, &mut q_swatch);
     }
 }
 
@@ -206,14 +199,7 @@ fn sync_edit_to_picker(
         {
             picker_value.0 = value.0;
         }
-        set_swatch(
-            root,
-            value.0,
-            &q_children,
-            &q_swatch_marker,
-            &mut q_swatch,
-            false,
-        );
+        set_swatch(root, value.0, &q_children, &q_swatch_marker, &mut q_swatch);
     }
 }
 
@@ -224,20 +210,11 @@ fn set_swatch(
     q_children: &Query<&Children>,
     q_swatch_marker: &Query<(), With<ColorEditSwatch>>,
     q_swatch: &mut Query<&mut ColorSwatchValue>,
-    sync_edit_from_picker: bool,
 ) {
     if let Some(swatch) = descendant(root, q_children, q_swatch_marker)
         && let Ok(mut value) = q_swatch.get_mut(swatch)
         && !colors_close(value.0, color)
     {
-        println!(
-            "set_swatch {color:?} {}",
-            if sync_edit_from_picker {
-                "sync_edit_from_picker"
-            } else {
-                "sync_edit_to_picker"
-            }
-        );
         value.0 = color;
     }
 }
