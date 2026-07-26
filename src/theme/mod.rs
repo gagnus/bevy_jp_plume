@@ -4,6 +4,7 @@ use bevy::app::{
     PropagateStop,
 };
 use bevy::color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
+use bevy::ecs::query::Or;
 use bevy::ecs::{
     change_detection::DetectChanges,
     component::Component,
@@ -84,6 +85,15 @@ impl UiTheme {
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
 pub struct ThemeBackgroundColor(pub ThemeToken);
+
+/// Component which causes the background color of an entity to be set based on a theme slot.
+/// Internal use `ThemeBackgroundColor` instead, external prefer this, this takes priority over `ThemeBackgroundColor`.
+#[derive(Component, Clone, Default)]
+#[require(BackgroundColor)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+pub struct ThemeBackgroundSlot(pub ThemeSlot);
 
 /// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
 pub const GRADIENT_AMOUNT: f32 = 0.05;
@@ -191,7 +201,14 @@ pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
 }
 
 fn update_theme(
-    mut q_background: Query<(&mut BackgroundColor, &ThemeBackgroundColor)>,
+    mut q_background: Query<
+        (
+            &mut BackgroundColor,
+            Option<&ThemeBackgroundColor>,
+            Option<&ThemeBackgroundSlot>,
+        ),
+        Or<(With<ThemeBackgroundColor>, With<ThemeBackgroundSlot>)>,
+    >,
     mut q_gradient: Query<(&mut BackgroundGradient, &ThemeBackgroundGradient)>,
     mut q_border: Query<(&mut BorderColor, &ThemeBorderColor)>,
     mut q_text_color: Query<(&mut TextColor, &ThemeTextColor)>,
@@ -200,8 +217,12 @@ fn update_theme(
     mut commands: Commands,
 ) {
     if theme.is_changed() {
-        for (mut bg, theme_bg) in q_background.iter_mut() {
-            bg.0 = theme.color(&theme_bg.0);
+        for (mut bg, theme_bg_token, theme_bg_slot) in q_background.iter_mut() {
+            if let Some(theme_bg_slot) = theme_bg_slot {
+                bg.0 = theme.palette[theme_bg_slot.0];
+            } else if let Some(theme_bg_token) = theme_bg_token {
+                bg.0 = theme.color(&theme_bg_token.0);
+            }
         }
 
         for (mut gradient, theme_grad) in q_gradient.iter_mut() {
@@ -224,7 +245,7 @@ fn update_theme(
     }
 }
 
-fn on_changed_background(
+fn on_changed_background_token(
     insert: On<Insert, ThemeBackgroundColor>,
     mut q_background: Query<
         (&mut BackgroundColor, &ThemeBackgroundColor),
@@ -234,6 +255,19 @@ fn on_changed_background(
 ) {
     if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
         bg.0 = theme.color(&theme_bg.0);
+    }
+}
+
+fn on_changed_background_slot(
+    insert: On<Insert, ThemeBackgroundSlot>,
+    mut q_background: Query<
+        (&mut BackgroundColor, &ThemeBackgroundSlot),
+        Changed<ThemeBackgroundSlot>,
+    >,
+    theme: Res<UiTheme>,
+) {
+    if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
+        bg.0 = theme.palette[theme_bg.0];
     }
 }
 
@@ -295,7 +329,8 @@ impl Plugin for ThemePlugin {
         app.init_resource::<UiTheme>()
             .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
             .add_systems(PostUpdate, update_theme)
-            .add_observer(on_changed_background)
+            .add_observer(on_changed_background_token)
+            .add_observer(on_changed_background_slot)
             .add_observer(on_changed_gradient)
             .add_observer(on_changed_border)
             .add_observer(on_changed_font_color)

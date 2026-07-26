@@ -6,6 +6,7 @@ use core::ops::RangeInclusive;
 
 use bevy::app::PropagateOver;
 use bevy::color::Color;
+use bevy::ecs::hierarchy::Children;
 use bevy::ecs::{
     entity::Entity,
     hierarchy::ChildOf,
@@ -19,16 +20,16 @@ use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 
 use super::PlumeCaps;
+use crate::controls::ButtonOutline;
 use crate::{
     constants::{fonts, size},
+    containers::{SectionCollapsed, SectionCollapsible},
     controls::{
         ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
         text_input_suffix,
     },
-};
-use crate::{
-    containers::{SectionCollapsed, SectionCollapsible},
-    theme::{Flat, Inert},
+    rounded_corners::RoundedCorners,
+    theme::{Flat, Inert, ThemeBackgroundSlot, slots::ThemeSlot},
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -176,6 +177,14 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         })
     }
 
+    /// Fill the remaining space like [`Self::grow`], but from the content size
+    /// rather than zero — so a container that hugs its children still reserves
+    /// room for this one.
+    pub fn grow_from_content(self) -> Self {
+        struct GrowFromContentKey;
+        self.set_node::<GrowFromContentKey, _>(true, |node, _| node.flex_grow = 1.0)
+    }
+
     /// Place this one child on its container's cross axis, overriding the
     /// container's `align_items`.
     ///
@@ -265,6 +274,42 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
             self.e.entity_commands().insert(Inert);
         }
         self
+    }
+
+    /// Which corners the button rounds (fill and border alike).
+    /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
+    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+        struct CornersKey;
+        if self.key_changed::<CornersKey>(format!("{corners:?}")) {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    Self::set_button_corners(&mut entity, corners);
+                });
+        }
+        self
+    }
+
+    // Re-round a spawned button: the fill's radius lives on the button node, the
+    // border's on its [`ButtonOutline`] overlay, and both have to agree.
+    fn set_button_corners(button: &mut EntityWorldMut, corners: RoundedCorners) {
+        let radius = corners.to_border_radius(size::CORNER_RADIUS);
+        if let Some(mut node) = button.get_mut::<Node>() {
+            node.border_radius = radius;
+        }
+        let children: Vec<Entity> = button
+            .get::<Children>()
+            .map(|children| children.iter().copied().collect())
+            .unwrap_or_default();
+        button.world_scope(|world| {
+            for child in children {
+                if world.get::<ButtonOutline>(child).is_some()
+                    && let Some(mut node) = world.get_mut::<Node>(child)
+                {
+                    node.border_radius = radius;
+                }
+            }
+        });
     }
 
     /// Set checked on a button also marked as checkable
@@ -489,6 +534,15 @@ impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
         struct BackgroundKey;
         if self.key_changed::<BackgroundKey>(format!("{color:?}")) {
             self.e.entity_commands().insert(BackgroundColor(color));
+        }
+        self
+    }
+
+    /// Paint the container's background from a theme slot.
+    pub fn background_slot(mut self, slot: ThemeSlot) -> Self {
+        struct BackgroundSlotKey;
+        if self.key_changed::<BackgroundSlotKey>(&slot) {
+            self.e.entity_commands().insert(ThemeBackgroundSlot(slot));
         }
         self
     }

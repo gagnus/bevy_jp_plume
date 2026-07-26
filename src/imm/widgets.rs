@@ -568,8 +568,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 width: Val::Auto,
                 height: Val::Auto,
                 max_height: Val::Auto,
-                left: size::DEFAULT_DIALOG_POS.x,
-                top: size::DEFAULT_DIALOG_POS.y,
+                inset: UiRect {
+                    left: size::DEFAULT_DIALOG_POS.x,
+                    top: size::DEFAULT_DIALOG_POS.y,
+                    ..UiRect::AUTO
+                },
                 closable: true,
                 movable: true,
                 body_padding: size::PAD.into(),
@@ -598,8 +601,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 width: Val::Auto,
                 height: Val::Auto,
                 max_height: Val::Auto,
-                left: size::DEFAULT_DIALOG_POS.x,
-                top: size::DEFAULT_DIALOG_POS.y,
+                inset: UiRect {
+                    left: size::DEFAULT_DIALOG_POS.x,
+                    top: size::DEFAULT_DIALOG_POS.y,
+                    ..UiRect::AUTO
+                },
                 closable: false,
                 movable: false,
                 body_padding: size::PAD.into(),
@@ -878,8 +884,7 @@ struct DialogLayout {
     width: Val,
     height: Val,
     max_height: Val,
-    left: Val,
-    top: Val,
+    inset: UiRect,
     closable: bool,
     movable: bool,
     body_padding: UiRect,
@@ -919,8 +924,17 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     /// Initial position (default `120, 120`). Spawn-time only — once open, the
     /// user's dragging owns the position.
     pub fn at(mut self, left: Val, top: Val) -> Self {
-        self.layout.left = left;
-        self.layout.top = top;
+        self.layout.inset = UiRect {
+            left,
+            top,
+            ..UiRect::AUTO
+        };
+        self
+    }
+
+    /// Initial position from corner, `x` and `y` in from its two edges.
+    pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
+        self.layout.inset = corner.inset(x, y);
         self
     }
 
@@ -972,6 +986,48 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     }
 }
 
+/// Viewport corner a panel pins to, via [`ImmPanel::at_corner`].
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Corner {
+    #[default]
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
+impl Corner {
+    /// On the viewport's right edge, so a panel pinned here grows leftwards and
+    /// the control nearest the corner is the last one added to its row.
+    pub fn is_right(self) -> bool {
+        matches!(self, Self::TopRight | Self::BottomRight)
+    }
+
+    /// On the viewport's bottom edge, so a panel pinned here grows upwards.
+    pub fn is_bottom(self) -> bool {
+        matches!(self, Self::BottomLeft | Self::BottomRight)
+    }
+
+    fn inset(self, x: Val, y: Val) -> UiRect {
+        let (left, right) = if self.is_right() {
+            (Val::Auto, x)
+        } else {
+            (x, Val::Auto)
+        };
+        let (top, bottom) = if self.is_bottom() {
+            (Val::Auto, y)
+        } else {
+            (y, Val::Auto)
+        };
+        UiRect {
+            left,
+            right,
+            top,
+            bottom,
+        }
+    }
+}
+
 /// Deferred panel configuration returned by [`PlumeImm::panel`]; the panel only
 /// exists once [`Self::show`] runs.
 #[must_use = "a panel does nothing until .show(|ui| …) builds it"]
@@ -1003,8 +1059,17 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
 
     /// Position (the panel is absolutely positioned). Spawn-time only.
     pub fn at(mut self, left: Val, top: Val) -> Self {
-        self.layout.left = left;
-        self.layout.top = top;
+        self.layout.inset = UiRect {
+            left,
+            top,
+            ..UiRect::AUTO
+        };
+        self
+    }
+
+    /// Pin the panel to a viewport corner, `x` and `y` in from its two edges.
+    pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
+        self.layout.inset = corner.inset(x, y);
         self
     }
 
@@ -1257,8 +1322,7 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
         width,
         height,
         max_height,
-        left,
-        top,
+        inset,
         closable,
         movable,
         // Body padding lives on the reconciled `PlumeDialogBody`, not the frame.
@@ -1276,8 +1340,7 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
             width,
             height,
             max_height,
-            left,
-            top,
+            inset,
         })
         on(|close: On<RequestClose>, mut commands: Commands| {
             commands.entity(close.event_target()).insert(CloseRequested);
@@ -1290,8 +1353,7 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
         width,
         height,
         max_height,
-        left,
-        top,
+        inset,
         ..
     } = layout;
     // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
@@ -1303,8 +1365,7 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
             width,
             height,
             max_height,
-            left,
-            top,
+            inset,
         })
     }
 }

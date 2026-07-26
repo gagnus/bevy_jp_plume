@@ -136,8 +136,11 @@ impl PlumeDialog {
                 width,
                 height,
                 max_height,
-                left,
-                top,
+                inset: UiRect {
+                    left,
+                    top,
+                    ..UiRect::AUTO
+                },
             })
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {
@@ -170,10 +173,9 @@ pub(crate) struct DialogChrome {
     pub height: Val,
     /// Ceiling on the outer height. `Val::Auto` for no ceiling.
     pub max_height: Val,
-    /// Initial left offset (the frame is absolutely positioned).
-    pub left: Val,
-    /// Initial top offset.
-    pub top: Val,
+    /// Initial offsets from each viewport edge (the frame is absolutely
+    /// positioned); an `Auto` side is unanchored, so the opposite one places it.
+    pub inset: UiRect,
 }
 
 /// Title-bar configuration for a [`DialogChrome`] that has one.
@@ -196,8 +198,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
         width,
         height,
         max_height,
-        left,
-        top,
+        inset,
     } = chrome;
     // The header-height floor only exists to keep a `max_height` from crushing the
     // title bar; a headerless panel has no such reserve.
@@ -253,8 +254,10 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
                 position_type: PositionType::Absolute,
-                left: {left},
-                top: {top},
+                left: {inset.left},
+                top: {inset.top},
+                right: {inset.right},
+                bottom: {inset.bottom},
                 border_radius: size::DIALOG_RADIUS,
                 border: UiRect::all(size::CONTAINER_BORDER),
                 width: {width},

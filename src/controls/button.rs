@@ -151,7 +151,7 @@ impl PlumeButton {
 /// [`ButtonVariant::Outline`] paints it, so a runtime variant swap needs no respawn.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct ButtonOutline;
+pub(crate) struct ButtonOutline;
 
 /// A smaller button for embedding in panel headers, spawnable as a scene
 /// component with optional [`PlumeButtonProps`]. Emits [`bevy::ui_widgets::Activate`].
