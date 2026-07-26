@@ -143,7 +143,7 @@ fn debug_settings_dialog(
                 }
                 let anchor = reset.entity;
                 let (mut do_reset, mut keep) = (false, false);
-                ui.popup(&mut reset_confirm_open).under(anchor).movable(true).show(|ui| {
+                ui.popup(&mut reset_confirm_open).under(anchor).show(|ui| {
                     ui.caption("Reset all settings to defaults?");
                     ui.horizontal(|ui| {
                         do_reset = ui.button("Reset").primary().clicked;
