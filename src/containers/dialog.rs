@@ -147,10 +147,10 @@ impl PlumeDialog {
     }
 }
 
-/// Set on the dialog root when a close is requested; the imm layer's dialogs
-/// carry an observer that inserts this instead of despawning.
+// Set on a dialog or popup root when a close is requested; the surface's owner
+// (the imm layer, or a control's observer) closes it rather than the requester.
 #[derive(Component)]
-pub(crate) struct DialogCloseRequested;
+pub(crate) struct CloseRequested;
 
 /// Chrome-level input for [`dialog_frame`], kept distinct from the public
 /// [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,

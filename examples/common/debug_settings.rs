@@ -104,6 +104,7 @@ fn debug_settings_dialog(
     mut root: PlumeRoot,
     mut registry: ResMut<DebugDialogRegistry>,
     mut settings: ResMut<DebugSettings>,
+    mut reset_confirm_open: Local<bool>,
 ) {
     // Build against a clone and write back with `set_if_neq`, so the resource only
     // registers as changed when a control actually changed it.
@@ -132,12 +133,28 @@ fn debug_settings_dialog(
             ui.separator();
 
             ui.horizontal(|ui| {
-                if ui
+                // Reset asks first, via a popup anchored to the button: outside
+                // clicks dismiss it, the two buttons close it in code.
+                let reset = ui
                     .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
-                    .variant(ButtonVariant::Outline)
-                    .clicked
-                {
+                    .variant(ButtonVariant::Outline);
+                if reset.clicked {
+                    *reset_confirm_open = !*reset_confirm_open;
+                }
+                let anchor = reset.entity;
+                let (mut do_reset, mut keep) = (false, false);
+                ui.popup(&mut reset_confirm_open).under(anchor).movable(true).show(|ui| {
+                    ui.caption("Reset all settings to defaults?");
+                    ui.horizontal(|ui| {
+                        do_reset = ui.button("Reset").primary().clicked;
+                        keep = ui.button("Keep").variant(ButtonVariant::Outline).clicked;
+                    });
+                });
+                if do_reset {
                     s = DebugSettings::default();
+                }
+                if do_reset || keep {
+                    *reset_confirm_open = false;
                 }
                 ui.flex_spacer();
                 ui.button("Cancel").variant(ButtonVariant::Outline);

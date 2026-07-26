@@ -1,38 +1,55 @@
-//! Dropdown select control built on an internal menu popup and list view.
-use bevy::app::{Plugin, Update};
+//! Dropdown select control over string options: a button plus a popup listbox
+//! that only exists while open.
+use accesskit::Role;
+use bevy::a11y::AccessibilityNode;
+use bevy::app::{Plugin, PostUpdate, PreUpdate, Update};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::{
+    change_detection::DetectChanges,
     component::Component,
     entity::Entity,
     event::EntityEvent,
     hierarchy::{ChildOf, Children},
+    lifecycle::RemovedComponents,
     observer::On,
-    query::{Added, Changed, With, Without},
+    query::{Added, Changed, Has, Or, With, Without},
     reflect::ReflectComponent,
-    system::{Commands, Query, ResMut},
+    schedule::IntoScheduleConfigs as _,
+    system::{Commands, Query, Res, ResMut},
     world::World,
 };
-use bevy::input_focus::{FocusCause, InputFocus};
+use bevy::input_focus::{
+    FocusCause, InputFocus, InputFocusVisible,
+    tab_navigation::{NavAction, TabIndex},
+};
+use bevy::log::warn;
+use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
+use bevy::text::{FontWeight, TextFont};
 use bevy::ui::{
-    ComputedNode, InteractionDisabled, Node, PositionType, Selected, Val, px, widget::Text,
+    AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
+    JustifyContent, Node, Overflow, PositionType, Selected, UiRect, Val, px, widget::Text,
 };
 use bevy::ui_widgets::{
-    ListBox, ReselectListRow, SetSelected, ValueChange, listbox_update_selection,
+    ActivateOnPress, ActiveDescendant, ControlOrientation, ListBox, ListItem, MenuAction,
+    MenuButton, MenuEvent, MenuFocusState, ReselectListRow, ScrollArea, ValueChange,
+    listbox_update_selection,
 };
 
-use super::listview::{
-    PlumeSelectOption, PlumeSelectOptions, SelectOptionCheck, SelectOptionIndex,
+use crate::constants::{font_awesome, fonts, size};
+use crate::containers::{
+    PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup, popup_socket,
 };
-use super::menu::{PlumeMenu, PlumeSelectButton, PlumeSelectPopup};
-use crate::constants::size;
-use crate::containers::popup_socket;
-use crate::display::caption;
+use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter};
+use crate::cursor::EntityCursor;
+use crate::display::{caption, fa_icon};
+use crate::font_styles::InheritableFont;
 use crate::rounded_corners::RoundedCorners;
+use crate::theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor};
+use crate::tokens;
 
-/// Select control which spawns a menu popup with a list of string options
+/// Select control: a dropdown button over string options.
 /// # Emitted events
 /// * [`ValueChange<Entity>`](bevy::ui_widgets::ValueChange) when the selected option is changed.
 #[derive(SceneComponent, Default, Clone)]
@@ -41,14 +58,13 @@ use crate::rounded_corners::RoundedCorners;
 #[reflect(Component, Default, Clone)]
 pub struct PlumeSelect;
 
-/// The selected option's [`ListRowIndex`](super::listview::ListRowIndex), maintained
-/// on the [`PlumeSelect`] root whenever a row's selection settles.
+/// The selected option's index, held on the [`PlumeSelect`] root.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 #[reflect(Component)]
 pub struct SelectedIndex(pub usize);
 
-/// Programmatically select an option by index; the row's `Selected` state, the
-/// caption, and [`SelectedIndex`] all follow. No-op if the index has no row.
+/// Programmatically select an option by index; the caption, [`SelectedIndex`],
+/// and any open popup all follow. No-op if there is no such option.
 #[derive(EntityEvent, Reflect)]
 pub struct SetSelectedIndex {
     /// The [`PlumeSelect`] root.
@@ -62,10 +78,28 @@ pub struct SetSelectedIndex {
 #[reflect(Component, Default)]
 struct SelectCaption;
 
+// Marker for the select's dropdown button (hosts the headless `MenuButton`).
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+struct PlumeSelectButton;
+
+// The option labels, in popup order; the popup rows are rebuilt from these on
+// every open.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct SelectOptions(Vec<String>);
+
+// Row cap before the popup scrolls; applied at popup spawn.
+#[derive(Component, Default, Clone, Copy, Reflect)]
+#[reflect(Component, Default)]
+struct SelectMaxVisible(usize);
+
 /// Props for the control
 pub struct PlumeSelectProps {
-    /// String options
-    pub options: Box<dyn SceneList>,
+    /// Option labels, in popup order.
+    pub options: Vec<String>,
+    /// Index of the initially selected option.
+    pub selected: usize,
     /// Corner roundedness
     pub corners: RoundedCorners,
     /// Maximum visible options before it scrolls
@@ -75,51 +109,89 @@ pub struct PlumeSelectProps {
 impl Default for PlumeSelectProps {
     fn default() -> Self {
         Self {
-            options: Box::new(bsn_list!()),
+            options: Vec::new(),
+            selected: 0,
             corners: Default::default(),
             max_visible: 8,
         }
     }
 }
 
-// Implements as a [`PlumeMenu`] under the hood with a row per option
+/// Collect option labels for [`PlumeSelectProps`]'s `options`.
+pub fn select_options(options: impl IntoIterator<Item: AsRef<str>>) -> Vec<String> {
+    options
+        .into_iter()
+        .map(|label| label.as_ref().into())
+        .collect()
+}
+
 impl PlumeSelect {
     fn scene(props: PlumeSelectProps) -> impl Scene {
+        let initial_caption = props
+            .options
+            .get(props.selected)
+            .cloned()
+            .unwrap_or_default();
+        let ghost_rows: Vec<_> = props
+            .options
+            .iter()
+            .map(|label| option_row(label.clone()))
+            .collect();
+        let options = props.options;
+        let selected = props.selected;
         let max_visible = props.max_visible.max(1);
-        let max_height = size::ROW_HEIGHT * max_visible as f32;
 
         bsn! {
-            @PlumeMenu
+            Node {
+                height: size::ROW_HEIGHT,
+                justify_content: JustifyContent::Stretch,
+                align_items: AlignItems::Stretch,
+            }
             PlumeSelect
+            template_value(SelectOptions(options))
+            template_value(SelectedIndex(selected))
+            template_value(SelectMaxVisible(max_visible))
+            on(on_menu_event)
             Children [
                 (
-                    @PlumeSelectButton {
-                        @caption: bsn! { caption("") SelectCaption },
+                    @PlumeButton {
+                        @caption: bsn! { caption(initial_caption) SelectCaption },
+                        @variant: ButtonVariant::Normal,
                         @corners: {props.corners},
                     }
+                    ActivateOnPress
+                    MenuButton
+                    PlumeSelectButton
                     Node {
                         flex_grow: 1.0,
                     }
+                    Children [
+                        (
+                            Node {
+                                flex_grow: 1.0,
+                            }
+                        ),
+                        fa_icon(font_awesome::solid::ANGLE_DOWN),
+                    ]
                 ),
                 (
                     popup_socket()
+                ),
+                // Ghost rows in a zero-size clipped overlay: laid out (so the labels
+                // get real text measurement) without occupying space or taking picks;
+                // despawned once `measure_select_width` has sized the button.
+                (
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: Val::ZERO,
+                        height: Val::ZERO,
+                        overflow: Overflow::clip(),
+                    }
+                    Pickable::IGNORE
+                    Visibility::Hidden
+                    SelectMeasure
                     Children [
-                        (
-                            @PlumeSelectPopup
-                            Children [
-                                (
-                                    @PlumeSelectOptions {
-                                        @options: {props.options}
-                                    }
-                                    on(listbox_update_selection)
-                                    on(re_emit_listbox_value)
-                                    on(close_popup_on_reselect)
-                                    Node {
-                                        max_height: {max_height},
-                                    }
-                                )
-                            ]
-                        )
+                        {ghost_rows}
                     ]
                 )
             ]
@@ -127,53 +199,380 @@ impl PlumeSelect {
     }
 }
 
-/// Rewrite the popup's row cap post-spawn ([`PlumeSelectProps`]'s `max_visible`
-/// covers spawn time): finds the list view under `select_ent` and re-derives its
-/// `max_height`.
-pub(crate) fn set_select_max_visible(world: &mut World, select_ent: Entity, max_visible: usize) {
-    let max_height = size::ROW_HEIGHT * max_visible.max(1) as f32;
-    let mut stack = vec![select_ent];
-    while let Some(ent) = stack.pop() {
-        let Ok(entity_ref) = world.get_entity(ent) else {
-            continue;
-        };
-        if ent != select_ent && entity_ref.contains::<PlumeSelectOptions>() {
-            if let Some(mut node) = world.get_mut::<Node>(ent) {
-                node.max_height = max_height;
-            }
-            return;
-        }
-        if let Some(children) = entity_ref.get::<Children>() {
-            stack.extend(children.iter().copied());
+// A single option row: check-tick gutter plus the label.
+fn option_row(label: String) -> impl Scene {
+    bsn! {
+        @PlumeSelectOption
+        Children [ caption(label) ]
+    }
+}
+
+// Popup rows for `options`, indexed, with the current pick marked.
+fn option_rows(options: &[String], selected: usize) -> Box<dyn SceneList> {
+    Box::new(
+        options
+            .iter()
+            .enumerate()
+            .map(|(index, label)| {
+                let label = label.clone();
+                bsn! {
+                    option_row(label)
+                    SelectOptionIndex(index)
+                    {(index == selected).then(|| bsn!(Selected))}
+                }
+            })
+            .collect::<Vec<_>>(),
+    )
+}
+
+// Scrolling listbox holding the popup's option rows.
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[scene(PlumeSelectOptionsProps)]
+#[reflect(Component, Clone, Default)]
+struct PlumeSelectOptions;
+
+// Props used to construct a [`PlumeSelectOptions`] scene.
+struct PlumeSelectOptionsProps {
+    // The list of option rows to display.
+    options: Box<dyn SceneList>,
+}
+
+impl Default for PlumeSelectOptionsProps {
+    fn default() -> Self {
+        Self {
+            options: Box::new(bsn_list!()),
         }
     }
 }
 
-// Event is sent on the PlumeListView
+impl PlumeSelectOptions {
+    fn scene(props: PlumeSelectOptionsProps) -> impl Scene {
+        bsn! {
+            Node {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Stretch,
+                justify_content: JustifyContent::Start,
+            }
+            template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::PAD).unwrap()))
+            ListBox
+            // Focusable for arrow-key selection.
+            TabIndex(0)
+            AccessibilityNode(accesskit::Node::new(Role::ListBox))
+            Children [
+                (
+                    #inner
+                    Node {
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Stretch,
+                        justify_content: JustifyContent::Start,
+                        overflow: Overflow::scroll_y(),
+                    }
+                    ScrollArea
+                    Children [
+                        {props.options}
+                    ]
+                ),
+
+                @PlumeScrollbar {
+                    @target: #inner,
+                    @orientation: {ControlOrientation::Vertical}
+                }
+                Node {
+                    position_type: PositionType::Absolute,
+                    right: size::PAD,
+                    top: px(2),
+                    bottom: px(2),
+                    width: size::SCROLLBAR_WIDTH,
+                }
+            ]
+        }
+    }
+}
+
+// A selectable row in the popup's list of options.
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct PlumeSelectOption;
+
+impl PlumeSelectOption {
+    fn scene() -> impl Scene {
+        bsn! {
+            Node {
+                min_height: size::ROW_HEIGHT,
+                min_width: size::ROW_HEIGHT,
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Start,
+                align_items: AlignItems::Center,
+                column_gap: size::GAP,
+                padding: UiRect::horizontal(size::GAP),
+            }
+            AccessibilityNode(accesskit::Node::new(Role::ListItem))
+            InheritableThemeTextColor(tokens::OPTION_TEXT)
+            ThemeBackgroundColor(tokens::OPTION_BG)
+            InheritableFont {
+                font: fonts::REGULAR,
+                font_size: size::MEDIUM_FONT,
+                weight: FontWeight::NORMAL,
+            }
+            Hovered
+            ListItem
+            Children [(
+                // Hidden ticks still occupy layout, so every label shares the gutter.
+                fa_icon(font_awesome::solid::CHECK)
+                Node {
+                    width: size::ICON_WIDTH
+                }
+                SelectOptionCheck
+                Visibility::Hidden
+            )]
+        }
+    }
+}
+
+// Index of an option row among its select's options.
+#[derive(Component, Default, Clone, Copy, Reflect)]
+#[reflect(Component, Default)]
+struct SelectOptionIndex(usize);
+
+// Marker for the selected-row tick.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct SelectOptionCheck;
+
+// Marker for the popup ([`PlumePopup`] chrome + [`MenuFocusState`]); its
+// existence is the select's open state.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+struct PlumeSelectPopup;
+
+// Marker for the ghost-row overlay awaiting measurement.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct SelectMeasure;
+
+// Change the row cap ([`PlumeSelectProps`]'s `max_visible` covers spawn time);
+// an already-open popup keeps its cap until reopened.
+pub(crate) fn set_select_max_visible(world: &mut World, select_ent: Entity, max_visible: usize) {
+    if let Ok(mut entity) = world.get_entity_mut(select_ent)
+        && let Some(mut cap) = entity.get_mut::<SelectMaxVisible>()
+    {
+        cap.0 = max_visible.max(1);
+    }
+}
+
+// Spawn the popup (chrome + option rows) into the select's socket.
+fn open_select_popup(
+    select_ent: Entity,
+    nav: NavAction,
+    q_children: &Query<&Children>,
+    q_socket: &Query<(), With<PopupSocket>>,
+    q_select: &Query<
+        (
+            &SelectOptions,
+            &SelectedIndex,
+            &SelectMaxVisible,
+            &ComputedNode,
+        ),
+        With<PlumeSelect>,
+    >,
+    commands: &mut Commands,
+) {
+    let Ok((options, selected, max_visible, computed)) = q_select.get(select_ent) else {
+        return;
+    };
+    let Some(socket) = q_children
+        .iter_descendants(select_ent)
+        .find(|descendant| q_socket.contains(*descendant))
+    else {
+        warn!("Select popup socket not found");
+        return;
+    };
+    let rows = option_rows(&options.0, selected.0);
+    let max_height = size::ROW_HEIGHT * max_visible.0.max(1) as f32;
+    // Seeded here so the popup opens at the select's width; `sync_select_width`
+    // tracks later resizes.
+    let min_width = px((computed.size().x * computed.inverse_scale_factor()).round());
+    commands
+        .spawn_scene(bsn! {
+            @PlumePopup {
+                @placement: {PopupPlacement::Below(socket)},
+                @dismiss: PopupDismiss::FocusOut,
+                @padding: {UiRect::axes(Val::ZERO, size::GAP_TIGHT)},
+                @contents: bsn_list!((
+                    @PlumeSelectOptions {
+                        @options: {rows}
+                    }
+                    on(listbox_update_selection)
+                    on(re_emit_listbox_value)
+                    on(close_popup_on_reselect)
+                    Node {
+                        max_height: {max_height},
+                    }
+                )),
+            }
+            PlumeSelectPopup
+            template_value(MenuFocusState::Opening(nav))
+            Node {
+                min_width: {min_width},
+            }
+        })
+        .insert(ChildOf(socket));
+}
+
+// Despawn `popup`, returning focus to the select's button when focus was inside
+// the select (e.g. on the popup's listbox).
+fn close_select_popup(
+    popup: Entity,
+    q_parents: &Query<&ChildOf>,
+    q_children: &Query<&Children>,
+    q_is_select: &Query<(), With<PlumeSelect>>,
+    q_button: &Query<(), With<PlumeSelectButton>>,
+    focus: &mut InputFocus,
+    commands: &mut Commands,
+) {
+    if let Some(select_ent) = q_parents
+        .iter_ancestors(popup)
+        .find(|ancestor| q_is_select.contains(*ancestor))
+    {
+        let focus_in_select = focus.get().is_some_and(|focused| {
+            focused == select_ent || q_parents.iter_ancestors(focused).any(|a| a == select_ent)
+        });
+        if focus_in_select
+            && let Some(button) = q_children
+                .iter_descendants(select_ent)
+                .find(|descendant| q_button.contains(*descendant))
+        {
+            focus.set(button, FocusCause::Navigated);
+        }
+    }
+    close_popup(commands, popup);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn on_menu_event(
+    mut ev: On<MenuEvent>,
+    q_children: Query<&Children>,
+    q_parents: Query<&ChildOf>,
+    q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_socket: Query<(), With<PopupSocket>>,
+    q_buttons: Query<(), With<PlumeSelectButton>>,
+    q_is_select: Query<(), With<PlumeSelect>>,
+    q_select: Query<
+        (
+            &SelectOptions,
+            &SelectedIndex,
+            &SelectMaxVisible,
+            &ComputedNode,
+        ),
+        With<PlumeSelect>,
+    >,
+    mut commands: Commands,
+    mut focus: ResMut<InputFocus>,
+) {
+    let popup = q_children
+        .iter_descendants(ev.source)
+        .find(|descendant| q_popup.contains(*descendant));
+    match ev.event().action {
+        MenuAction::Open(nav) => {
+            ev.propagate(false);
+            if popup.is_none() {
+                open_select_popup(
+                    ev.source,
+                    nav,
+                    &q_children,
+                    &q_socket,
+                    &q_select,
+                    &mut commands,
+                );
+            }
+        }
+        MenuAction::Toggle => {
+            ev.propagate(false);
+            match popup {
+                Some(popup) => close_select_popup(
+                    popup,
+                    &q_parents,
+                    &q_children,
+                    &q_is_select,
+                    &q_buttons,
+                    &mut focus,
+                    &mut commands,
+                ),
+                None => open_select_popup(
+                    ev.source,
+                    NavAction::First,
+                    &q_children,
+                    &q_socket,
+                    &q_select,
+                    &mut commands,
+                ),
+            }
+        }
+        MenuAction::CloseAll => {
+            if let Some(popup) = popup {
+                ev.propagate(false);
+                close_select_popup(
+                    popup,
+                    &q_parents,
+                    &q_children,
+                    &q_is_select,
+                    &q_buttons,
+                    &mut focus,
+                    &mut commands,
+                );
+            }
+        }
+        MenuAction::FocusRoot => {
+            for descendant in q_children.iter_descendants(ev.source) {
+                if q_buttons.contains(descendant) {
+                    ev.propagate(false);
+                    focus.set(descendant, FocusCause::Navigated);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Event is sent on the options listbox.
 fn close_popup_on_reselect(
     ev: On<ReselectListRow>,
     q_popup: Query<(), With<PlumeSelectPopup>>,
     q_parents: Query<&ChildOf>,
+    q_children: Query<&Children>,
+    q_is_select: Query<(), With<PlumeSelect>>,
+    q_button: Query<(), With<PlumeSelectButton>>,
+    mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
-    let mut popup_ent = None;
-    for ancestor in q_parents.iter_ancestors(ev.event_target()) {
-        if q_popup.contains(ancestor) {
-            popup_ent = Some(ancestor);
-            break;
-        }
-    }
-
-    if let Some(popup_ent) = popup_ent {
-        commands.entity(popup_ent).insert(Visibility::Hidden);
+    if let Some(popup) = q_parents
+        .iter_ancestors(ev.event_target())
+        .find(|ancestor| q_popup.contains(*ancestor))
+    {
+        close_select_popup(
+            popup,
+            &q_parents,
+            &q_children,
+            &q_is_select,
+            &q_button,
+            &mut focus,
+            &mut commands,
+        );
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn re_emit_listbox_value(
     ev: On<ValueChange<Entity>>,
     q_select: Query<(), With<PlumeSelect>>,
     q_parents: Query<&ChildOf>,
+    q_children: Query<&Children>,
     q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_button: Query<(), With<PlumeSelectButton>>,
+    mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
     let mut select_ent = None;
@@ -197,7 +596,15 @@ fn re_emit_listbox_value(
     };
 
     if let Some(popup_ent) = popup_ent {
-        commands.entity(popup_ent).insert(Visibility::Hidden);
+        close_select_popup(
+            popup_ent,
+            &q_parents,
+            &q_children,
+            &q_select,
+            &q_button,
+            &mut focus,
+            &mut commands,
+        );
     }
 }
 
@@ -207,89 +614,53 @@ fn sync_selected_index(
         (Added<Selected>, With<PlumeSelectOption>),
     >,
     q_parents: Query<&ChildOf>,
-    q_select: Query<(), With<PlumeSelect>>,
-    mut commands: Commands,
+    mut q_select: Query<&mut SelectedIndex, With<PlumeSelect>>,
 ) {
     for (row, row_index) in q_newly_selected.iter() {
-        if let Some(select) = q_parents
+        let Some(select_ent) = q_parents
             .iter_ancestors(row)
             .find(|ancestor| q_select.contains(*ancestor))
+        else {
+            continue;
+        };
+        if let Ok(mut index) = q_select.get_mut(select_ent)
+            && index.0 != row_index.0
         {
-            commands.entity(select).insert(SelectedIndex(row_index.0));
+            index.0 = row_index.0;
         }
     }
 }
 
 fn select_on_set_selected_index(
     ev: On<SetSelectedIndex>,
-    q_select: Query<(), With<PlumeSelect>>,
-    q_children: Query<&Children>,
-    q_rows: Query<&SelectOptionIndex, With<PlumeSelectOption>>,
-    mut commands: Commands,
+    mut q_select: Query<(&SelectOptions, &mut SelectedIndex), With<PlumeSelect>>,
 ) {
-    if !q_select.contains(ev.entity) {
+    let Ok((options, mut index)) = q_select.get_mut(ev.entity) else {
         return;
-    }
-    if let Some(row) = q_children
-        .iter_descendants(ev.entity)
-        .find(|descendant| q_rows.get(*descendant).is_ok_and(|row| row.0 == ev.index))
-    {
-        commands.trigger(SetSelected {
-            entity: ev.entity,
-            row,
-        });
+    };
+    if ev.index < options.0.len() && index.0 != ev.index {
+        index.0 = ev.index;
     }
 }
 
-fn select_on_set_selected(
-    ev: On<SetSelected>,
-    q_select: Query<(), With<PlumeSelect>>,
-    q_listbox: Query<(), With<ListBox>>,
-    q_children: Query<&Children>,
-    mut commands: Commands,
-) {
-    if !q_select.contains(ev.entity) {
-        return;
-    }
-    if let Some(listbox) = q_children
-        .iter_descendants(ev.entity)
-        .find(|descendant| q_listbox.contains(*descendant))
-    {
-        commands.trigger(SetSelected {
-            entity: listbox,
-            row: ev.row,
-        });
-    }
-}
-
+// The button caption always shows the selected option's label.
 fn sync_caption(
-    q_newly_selected: Query<Entity, (Added<Selected>, With<PlumeSelectOption>)>,
-    q_parents: Query<&ChildOf>,
+    q_selects: Query<
+        (Entity, &SelectedIndex, &SelectOptions),
+        (
+            With<PlumeSelect>,
+            Or<(Changed<SelectedIndex>, Changed<SelectOptions>)>,
+        ),
+    >,
     q_children: Query<&Children>,
-    q_text: Query<&Text, (Without<SelectCaption>, Without<SelectOptionCheck>)>,
-    q_select: Query<(), With<PlumeSelect>>,
     mut q_caption: Query<&mut Text, With<SelectCaption>>,
 ) {
-    for row in q_newly_selected.iter() {
-        let Some(text) = q_children
-            .iter_descendants(row)
-            .find_map(|descendant| q_text.get(descendant).ok())
-            .map(|text| text.0.clone())
-        else {
-            continue;
-        };
-
-        let Some(select_ent) = q_parents
-            .iter_ancestors(row)
-            .find(|&ancestor| q_select.contains(ancestor))
-        else {
-            continue;
-        };
-
+    for (select_ent, index, options) in q_selects.iter() {
+        let label = options.0.get(index.0).cloned().unwrap_or_default();
         for descendant in q_children.iter_descendants(select_ent) {
             if let Ok(mut caption) = q_caption.get_mut(descendant) {
-                if caption.0 != text {
-                    caption.0 = text.clone();
+                if caption.0 != label {
+                    caption.0 = label;
                 }
                 break;
             }
@@ -297,37 +668,27 @@ fn sync_caption(
     }
 }
 
-fn focus_select_popup(
-    q_popups: Query<(Entity, &Visibility), (With<PlumeSelectPopup>, Changed<Visibility>)>,
-    q_select: Query<(), With<PlumeSelect>>,
-    q_button: Query<(), With<PlumeSelectButton>>,
-    q_parents: Query<&ChildOf>,
+// An open popup's `Selected` row follows the root's `SelectedIndex` (covers
+// programmatic writes; row clicks already set both).
+fn sync_rows_from_index(
+    q_changed: Query<(Entity, &SelectedIndex), (With<PlumeSelect>, Changed<SelectedIndex>)>,
     q_children: Query<&Children>,
-    mut focus: ResMut<InputFocus>,
+    q_rows: Query<(&SelectOptionIndex, Has<Selected>), With<PlumeSelectOption>>,
+    mut commands: Commands,
 ) {
-    for (popup, visibility) in q_popups.iter() {
-        let mut select_ent = None;
-        for ancestor in q_parents.iter_ancestors(popup) {
-            if q_select.contains(ancestor) {
-                select_ent = Some(ancestor);
-                break;
-            }
-        }
-        let Some(select_ent) = select_ent else {
-            continue;
-        };
-
-        if *visibility != Visibility::Visible {
-            let focus_in_select = focus.get().is_some_and(|focused| {
-                focused == select_ent || q_parents.iter_ancestors(focused).any(|a| a == select_ent)
-            });
-            if focus_in_select {
-                for descendant in q_children.iter_descendants(select_ent) {
-                    if q_button.contains(descendant) {
-                        focus.set(descendant, FocusCause::Navigated);
-                        break;
-                    }
+    for (select_ent, index) in q_changed.iter() {
+        for descendant in q_children.iter_descendants(select_ent) {
+            let Ok((row_index, selected)) = q_rows.get(descendant) else {
+                continue;
+            };
+            match (row_index.0 == index.0, selected) {
+                (true, false) => {
+                    commands.entity(descendant).insert(Selected);
                 }
+                (false, true) => {
+                    commands.entity(descendant).remove::<Selected>();
+                }
+                _ => {}
             }
         }
     }
@@ -335,13 +696,16 @@ fn focus_select_popup(
 
 // The headless `MenuButton` checks `InteractionDisabled` on itself, so the marker on the
 // select root must be mirrored onto the internal menu button (which also restyles it).
+#[allow(clippy::too_many_arguments)]
 fn sync_select_disabled(
     q_newly_disabled: Query<Entity, (With<PlumeSelect>, Added<InteractionDisabled>)>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
-    q_select: Query<(), With<PlumeSelect>>,
+    q_is_select: Query<(), With<PlumeSelect>>,
     q_children: Query<&Children>,
+    q_parents: Query<&ChildOf>,
     q_button: Query<(), With<PlumeSelectButton>>,
     q_popup: Query<(), With<PlumeSelectPopup>>,
+    mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
     for select_ent in q_newly_disabled.iter() {
@@ -349,12 +713,20 @@ fn sync_select_disabled(
             if q_button.contains(descendant) {
                 commands.entity(descendant).insert(InteractionDisabled);
             } else if q_popup.contains(descendant) {
-                commands.entity(descendant).insert(Visibility::Hidden);
+                close_select_popup(
+                    descendant,
+                    &q_parents,
+                    &q_children,
+                    &q_is_select,
+                    &q_button,
+                    &mut focus,
+                    &mut commands,
+                );
             }
         }
     }
     removed_disabled.read().for_each(|ent| {
-        if q_select.contains(ent) {
+        if q_is_select.contains(ent) {
             for descendant in q_children.iter_descendants(ent) {
                 if q_button.contains(descendant) {
                     commands.entity(descendant).remove::<InteractionDisabled>();
@@ -364,6 +736,7 @@ fn sync_select_disabled(
     });
 }
 
+// Keep an open popup at least as wide as its select.
 fn sync_select_width(
     q_selects: Query<(Entity, &ComputedNode), With<PlumeSelect>>,
     q_children: Query<&Children>,
@@ -389,19 +762,16 @@ fn sync_select_width(
     }
 }
 
-// Match the button's width to the popup and pin the caption to the widest option, so
-// picking never resizes the control. Stretched rows re-sum their width from children.
-fn sync_select_button_width(
-    q_selects: Query<Entity, With<PlumeSelect>>,
+// Size the button (and pin the caption) to the widest option from the measured
+// ghost rows, so picking never resizes the control; the ghosts then despawn.
+fn measure_select_width(
+    q_measures: Query<(Entity, &ChildOf), With<SelectMeasure>>,
     q_children: Query<&Children>,
-    q_rows: Query<(&Node, &Children), With<PlumeSelectOption>>,
-    q_buttons: Query<&Node, With<PlumeSelectButton>>,
-    q_captions: Query<&Node, With<SelectCaption>>,
-    q_listboxes: Query<&Node, With<ListBox>>,
-    q_popups: Query<&Node, With<PlumeSelectPopup>>,
-    q_check: Query<(), With<SelectOptionCheck>>,
-    q_nodes: Query<&Node>,
+    q_labels: Query<(&Text, Option<&TextFont>), Without<SelectOptionCheck>>,
+    q_button: Query<(), With<PlumeSelectButton>>,
+    q_caption: Query<(), With<SelectCaption>>,
     q_computed: Query<&ComputedNode>,
+    mut q_nodes: Query<&mut Node>,
     mut commands: Commands,
 ) {
     fn val_px(val: Val) -> f32 {
@@ -414,72 +784,246 @@ fn sync_select_button_width(
         q_computed
             .get(entity)
             .map(|computed| computed.size().x * computed.inverse_scale_factor())
-            .ok()
+            .unwrap_or(0.0)
     };
-    for select_ent in q_selects.iter() {
-        let mut widest_row = 0.0f32;
-        let mut widest_option = 0.0f32;
-        let mut popup_chrome = 0.0f32;
-        for descendant in q_children.iter_descendants(select_ent) {
-            if let Ok(popup_node) = q_popups.get(descendant) {
-                popup_chrome += val_px(popup_node.border.left)
-                    + val_px(popup_node.border.right)
-                    + val_px(popup_node.padding.left)
-                    + val_px(popup_node.padding.right);
-            }
-            if let Ok(listbox_node) = q_listboxes.get(descendant) {
-                popup_chrome += val_px(listbox_node.padding.right);
-            }
-            let Ok((row_node, row_children)) = q_rows.get(descendant) else {
+    'measures: for (measure_ent, child_of) in q_measures.iter() {
+        let rows = q_children.get(measure_ent).ok();
+        let (mut widest_row, mut widest_label) = (0.0f32, 0.0f32);
+        for row in rows.iter().flat_map(|rows| rows.iter()) {
+            let Some((label_ent, text, text_font)) =
+                q_children.get(*row).ok().and_then(|row_children| {
+                    row_children.iter().find_map(|child| {
+                        q_labels
+                            .get(*child)
+                            .ok()
+                            .map(|(text, font)| (*child, text, font))
+                    })
+                })
+            else {
                 continue;
             };
-            let gap = val_px(row_node.column_gap);
-            // The check tick stays in the popup, so it counts toward the row but not the caption.
-            let (mut row_width, mut option_width) = (0.0f32, 0.0f32);
-            for &child in row_children.iter() {
-                // The absolute active-row outline follows the row's width, so summing
-                // it into that width feeds back into unbounded growth.
-                if q_nodes
-                    .get(child)
-                    .is_ok_and(|node| node.position_type == PositionType::Absolute)
+            if text.0.is_empty() {
+                continue;
+            }
+            // Unmeasured until the row font has propagated (a default-font width
+            // would bake in the wrong size) and the glyphs have a real layout.
+            if text_font.is_none_or(|font| font.font_size != size::MEDIUM_FONT) {
+                continue 'measures;
+            }
+            let label_width = width_of(label_ent);
+            if label_width <= 0.0 {
+                continue 'measures;
+            }
+            widest_label = widest_label.max(label_width);
+            widest_row = widest_row.max(width_of(*row));
+        }
+        if widest_row > 0.0 {
+            // The popup doesn't exist to measure, so its horizontal chrome is
+            // reconstructed: border both sides plus the options' scrollbar gutter.
+            let chrome = 2.0 * val_px(size::CONTAINER_BORDER)
+                + val_px(size::SCROLLBAR_GUTTER)
+                + val_px(size::PAD);
+            let button_target = px((widest_row + chrome).ceil());
+            let caption_target = px(widest_label.ceil());
+            for descendant in q_children.iter_descendants(child_of.parent()) {
+                if q_button.contains(descendant) {
+                    if let Ok(mut node) = q_nodes.get_mut(descendant) {
+                        node.width = button_target;
+                    }
+                } else if q_caption.contains(descendant)
+                    && let Ok(mut node) = q_nodes.get_mut(descendant)
                 {
-                    continue;
-                }
-                let Some(width) = width_of(child) else {
-                    continue;
-                };
-                row_width += width + if row_width > 0.0 { gap } else { 0.0 };
-                if !q_check.contains(child) {
-                    option_width += width + if option_width > 0.0 { gap } else { 0.0 };
+                    node.width = caption_target;
                 }
             }
-            if row_width > 0.0 {
-                let padding = val_px(row_node.padding.left) + val_px(row_node.padding.right);
-                widest_row = widest_row.max(row_width + padding);
-                widest_option = widest_option.max(option_width);
-            }
         }
-        if widest_row <= 0.0 {
-            continue;
-        }
-        let button_target = px((widest_row + popup_chrome).ceil());
-        let caption_target = px(widest_option.ceil());
-        for descendant in q_children.iter_descendants(select_ent) {
-            if let Ok(button_node) = q_buttons.get(descendant)
-                && button_node.width != button_target
+        commands.entity(measure_ent).despawn();
+    }
+}
+
+fn update_option_styles(
+    q_options: Query<
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            Has<Selected>,
+            &Hovered,
+            &ThemeBackgroundColor,
+            &InheritableThemeTextColor,
+        ),
+        (
+            With<PlumeSelectOption>,
+            Or<(
+                Changed<Hovered>,
+                Added<Selected>,
+                Added<InteractionDisabled>,
+            )>,
+        ),
+    >,
+    q_children: Query<&Children>,
+    q_check: Query<(), With<SelectOptionCheck>>,
+    mut commands: Commands,
+) {
+    for (option_ent, disabled, selected, hovered, bg_color, font_color) in q_options.iter() {
+        let check_ent = q_children
+            .iter_descendants(option_ent)
+            .find(|en| q_check.contains(*en));
+        set_option_styles(
+            option_ent,
+            check_ent,
+            disabled,
+            selected,
+            hovered.0,
+            bg_color,
+            font_color,
+            &mut commands,
+        );
+    }
+}
+
+fn update_option_styles_remove(
+    q_options: Query<
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            Has<Selected>,
+            &Hovered,
+            &ThemeBackgroundColor,
+            &InheritableThemeTextColor,
+        ),
+        With<PlumeSelectOption>,
+    >,
+    q_children: Query<&Children>,
+    q_check: Query<(), With<SelectOptionCheck>>,
+    mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    mut removed_selected: RemovedComponents<Selected>,
+    mut commands: Commands,
+) {
+    removed_disabled
+        .read()
+        .chain(removed_selected.read())
+        .for_each(|ent| {
+            if let Ok((option_ent, disabled, selected, hovered, bg_color, font_color)) =
+                q_options.get(ent)
             {
-                let mut node = button_node.clone();
-                node.width = button_target;
-                commands.entity(descendant).insert(node);
+                let check_ent = q_children
+                    .iter_descendants(option_ent)
+                    .find(|en| q_check.contains(*en));
+                set_option_styles(
+                    option_ent,
+                    check_ent,
+                    disabled,
+                    selected,
+                    hovered.0,
+                    bg_color,
+                    font_color,
+                    &mut commands,
+                );
             }
-            if let Ok(caption_node) = q_captions.get(descendant)
-                && caption_node.width != caption_target
-            {
-                let mut node = caption_node.clone();
-                node.width = caption_target;
-                commands.entity(descendant).insert(node);
-            }
+        });
+}
+
+fn set_option_styles(
+    option_ent: Entity,
+    check_ent: Option<Entity>,
+    disabled: bool,
+    selected: bool,
+    hovered: bool,
+    bg_color: &ThemeBackgroundColor,
+    font_color: &InheritableThemeTextColor,
+    commands: &mut Commands,
+) {
+    // Background shows hover only; selection is the tick.
+    let outline_bg_token = match (disabled, hovered) {
+        (false, true) => tokens::OPTION_BG_HOVER,
+        _ => tokens::OPTION_BG,
+    };
+
+    let font_color_token = match disabled {
+        true => tokens::OPTION_TEXT_DISABLED,
+        false => tokens::OPTION_TEXT,
+    };
+
+    let cursor_shape = match disabled {
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
+    };
+
+    if bg_color.0 != outline_bg_token {
+        commands
+            .entity(option_ent)
+            .insert(ThemeBackgroundColor(outline_bg_token));
+    }
+
+    if font_color.0 != font_color_token {
+        commands
+            .entity(option_ent)
+            .insert(InheritableThemeTextColor(font_color_token));
+    }
+
+    if let Some(check_ent) = check_ent {
+        commands.entity(check_ent).insert(match selected {
+            true => Visibility::Inherited,
+            false => Visibility::Hidden,
+        });
+    }
+
+    commands
+        .entity(option_ent)
+        .insert(EntityCursor::System(cursor_shape));
+}
+
+// Marker for the keyboard-navigation highlight on a listbox's active row.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ActiveRowOutline;
+
+// Outline the focused listbox's `ActiveDescendant` row (the arrow-key cursor,
+// distinct from the `Selected` row's tick) while keyboard focus is visible.
+fn update_active_row_outline(
+    focus: Res<InputFocus>,
+    focus_visible: Res<InputFocusVisible>,
+    q_active_changed: Query<(), (With<ListBox>, Changed<ActiveDescendant>)>,
+    q_listbox: Query<&ActiveDescendant, With<ListBox>>,
+    q_row_outline: Query<(Entity, &ChildOf), With<ActiveRowOutline>>,
+    mut commands: Commands,
+) {
+    if !focus.is_changed() && !focus_visible.is_changed() && q_active_changed.is_empty() {
+        return;
+    }
+
+    let active_row = focus
+        .get()
+        .filter(|_| focus_visible.0)
+        .and_then(|focused| q_listbox.get(focused).ok())
+        .and_then(|active_descendant| active_descendant.0);
+
+    let mut needs_spawn = active_row.is_some();
+    for (outline_ent, child_of) in q_row_outline.iter() {
+        if Some(child_of.parent()) == active_row {
+            needs_spawn = false;
+        } else {
+            commands.entity(outline_ent).despawn();
         }
+    }
+
+    if let Some(row_ent) = active_row
+        && needs_spawn
+    {
+        commands.entity(row_ent).with_child((
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::ZERO,
+                right: Val::ZERO,
+                top: Val::ZERO,
+                bottom: Val::ZERO,
+                border: UiRect::all(px(2)),
+                border_radius: BorderRadius::all(size::CORNER_RADIUS),
+                ..Default::default()
+            },
+            ThemeBorderColor(tokens::FOCUS_RING),
+            ActiveRowOutline,
+        ));
     }
 }
 
@@ -489,17 +1033,21 @@ pub struct SelectPlugin;
 impl Plugin for SelectPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
+            PreUpdate,
+            (update_option_styles, update_option_styles_remove).in_set(PickingSystems::Last),
+        )
+        .add_systems(
             Update,
             (
                 sync_caption,
                 sync_selected_index,
-                focus_select_popup,
+                sync_rows_from_index,
                 sync_select_width,
-                sync_select_button_width,
+                measure_select_width,
                 sync_select_disabled,
             ),
         )
-        .add_observer(select_on_set_selected)
+        .add_systems(PostUpdate, update_active_row_outline)
         .add_observer(select_on_set_selected_index);
     }
 }

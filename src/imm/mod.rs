@@ -6,7 +6,7 @@ mod response;
 mod widgets;
 
 pub use response::{ImmResponse, kind};
-pub use widgets::{ImmDialog, ImmPanel, ImmSelect, ImmTab, ImmTabs, PlumeImm};
+pub use widgets::{ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm};
 
 use core::sync::atomic::{AtomicU64, Ordering};
 

@@ -13,7 +13,7 @@ use bevy_immediate::{
 };
 
 use crate::{
-    containers::DialogCloseRequested,
+    containers::CloseRequested,
     controls::{
         ColorPickerValue, SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue,
     },
@@ -386,7 +386,7 @@ pub struct CapabilityPlumeDialog;
 
 impl ImmCapability for CapabilityPlumeDialog {
     fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
-        cap_req.request_component_read::<DialogCloseRequested>(app.world_mut());
+        cap_req.request_component_read::<CloseRequested>(app.world_mut());
     }
 }
 
@@ -401,6 +401,6 @@ where
     Cap: ImplCap<CapabilityPlumeDialog>,
 {
     fn close_requested(&self) -> bool {
-        self.cap_entity_contains::<DialogCloseRequested>()
+        self.cap_entity_contains::<CloseRequested>()
     }
 }

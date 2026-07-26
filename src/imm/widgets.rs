@@ -8,7 +8,7 @@ use bevy::ecs::{
     entity::Entity, event::EntityEvent, hierarchy::Children, observer::On, system::Commands,
     world::EntityWorldMut,
 };
-use bevy::scene::{Scene, bsn, bsn_list, on};
+use bevy::scene::{Scene, bsn, bsn_list, on, template_value};
 use bevy::ui::{JustifyContent, Node, UiRect, Val, widget::Text};
 use bevy::ui_widgets::RequestClose;
 use bevy_immediate::{
@@ -22,14 +22,15 @@ use bevy_immediate::{
 use crate::{
     constants::{FaIcon, size},
     containers::{
-        DialogChrome, DialogCloseRequested, DialogHeader, PlumeDialogBody, column, dialog_frame,
-        flex_spacer, row, screen, scroll_frame, scroll_viewport, scrollbar, section_body,
-        section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
+        CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
+        PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket, row, screen,
+        scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
+        tab_body, tab_button, tab_strip, tabs_frame,
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
         PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, options_from_strings,
+        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
     },
     display::{caption, caption_small_caps, fa_icon},
 };
@@ -147,6 +148,12 @@ pub trait PlumeImm<'w, 's> {
     /// title, ✕ or drag). Positioned chrome only; the caller controls whether it's
     /// drawn. Floats above a [`Self::screen`] like a dialog does.
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
+
+    /// Popup: centered in the window, or floated by an earlier widget via
+    /// [`ImmPopup::under`]/[`ImmPopup::beside`]. Build the body with
+    /// [`ImmPopup::show`]; while `*open` the popup exists, and a click outside
+    /// (or Escape) writes back through `open` (unless disabled).
+    fn popup<'a>(&'a mut self, open: &'a mut bool) -> ImmPopup<'a, 'w, 's>;
 
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
@@ -532,11 +539,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let labels: Vec<String> = options.iter().map(|option| option.label.clone()).collect();
         let mut changed = false;
         // The labels key the widget: the options are seeded at spawn, so an edited
-        // option list has to respawn rather than keep the stale popup.
+        // option list has to respawn rather than keep stale rows.
         let entity = self
             .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeSelect { @options: {options_from_strings(labels, Some(initial))} } }
+                bsn! { @PlumeSelect { @options: {labels}, @selected: {initial} } }
             })
             .plume_select(&mut index, &mut changed);
         if changed && let Some(option) = options.into_iter().nth(index) {
@@ -563,6 +570,18 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 movable: true,
                 body_padding: size::PAD.into(),
             },
+        }
+    }
+
+    #[track_caller]
+    fn popup<'a>(&'a mut self, open: &'a mut bool) -> ImmPopup<'a, 'w, 's> {
+        ImmPopup {
+            ui: self,
+            caller: Location::caller(),
+            open,
+            placement: PopupPlacement::Center,
+            movable: false,
+            close_on_click_outside: true,
         }
     }
 
@@ -976,6 +995,96 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
     }
 }
 
+/// Deferred popup configuration returned by [`PlumeImm::popup`]; the popup
+/// only exists once [`Self::show`] runs while `*open`.
+#[must_use = "a popup does nothing until .show(|ui| …) builds it"]
+pub struct ImmPopup<'a, 'w, 's> {
+    ui: &'a mut Ui<'w, 's>,
+    caller: &'static Location<'static>,
+    open: &'a mut bool,
+    placement: PopupPlacement,
+    movable: bool,
+    close_on_click_outside: bool,
+}
+
+impl<'w, 's> ImmPopup<'_, 'w, 's> {
+    /// Open below `anchor` (an earlier widget's [`ImmResponse`] `entity`),
+    /// start-aligned, flipping above when out of room.
+    pub fn under(mut self, anchor: Entity) -> Self {
+        self.placement = PopupPlacement::Below(anchor);
+        self
+    }
+
+    /// Open beside `anchor` (an earlier widget's [`ImmResponse`] `entity`),
+    /// centered, trying right, left, above, below in that order.
+    pub fn beside(mut self, anchor: Entity) -> Self {
+        self.placement = PopupPlacement::Beside(anchor);
+        self
+    }
+
+    /// Let background drags move the popup; a reopen re-anchors it.
+    pub fn movable(mut self, movable: bool) -> Self {
+        self.movable = movable;
+        self
+    }
+
+    /// `false` keeps the popup open through outside clicks, leaving `open` as the
+    /// only way to close it (default true).
+    pub fn close_on_click_outside(mut self, close: bool) -> Self {
+        self.close_on_click_outside = close;
+        self
+    }
+
+    /// Build the popup and its body. While `*open` the popup exists and `f` fills
+    /// it; an outside click (when enabled) writes back through `open`.
+    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) {
+        if !*self.open {
+            return;
+        }
+        let id = ImmIdBuilder::Hierarchy(ImmId::new(self.caller));
+        let (placement, movable) = (self.placement, self.movable);
+        let dismiss = match self.close_on_click_outside {
+            true => PopupDismiss::OutsideClick,
+            false => PopupDismiss::Explicit,
+        };
+        let mut closed = false;
+        self.ui
+            .ch_loc(id)
+            .on_spawn_apply_scene(popup_socket)
+            .add(|ui| {
+                let mut popup = ui
+                    .ch_id("popup")
+                    .on_spawn_apply_scene(move || imm_popup_scene(placement, dismiss, movable));
+                if popup.close_requested() {
+                    closed = true;
+                    popup.entity_commands().despawn();
+                } else {
+                    popup.add(f);
+                }
+            });
+        if closed {
+            *self.open = false;
+        }
+    }
+}
+
+fn imm_popup_scene(placement: PopupPlacement, dismiss: PopupDismiss, movable: bool) -> impl Scene {
+    // An anchored popup scopes its outside-press dismissal to the anchor; an
+    // anchorless one only to itself.
+    let scope = match placement {
+        PopupPlacement::Below(anchor) | PopupPlacement::Beside(anchor) => Some(anchor),
+        PopupPlacement::Center => None,
+    };
+    bsn! {
+        @PlumePopup {
+            @placement: {placement},
+            @dismiss: {dismiss},
+            @movable: {movable},
+        }
+        template_value(DismissScope(scope))
+    }
+}
+
 /// Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
 /// content in the scrolling machinery when a height knob bounds it. Position is not
 /// re-applied — the user's dragging owns it after spawn.
@@ -1146,7 +1255,7 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
             top,
         })
         on(|close: On<RequestClose>, mut commands: Commands| {
-            commands.entity(close.event_target()).insert(DialogCloseRequested);
+            commands.entity(close.event_target()).insert(CloseRequested);
         })
     }
 }
