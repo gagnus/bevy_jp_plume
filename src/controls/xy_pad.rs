@@ -2,7 +2,7 @@
 //! [`Vec2`] in `0..=1` per axis (`x` left→right, `y` top→bottom). Background is
 //! caller-owned — drop a [`BackgroundColor`](bevy::ui::BackgroundColor) or
 //! [`BackgroundGradient`](bevy::ui::BackgroundGradient) on it — so the same pad
-//! backs a saturation/value colour plane or any other two-axis picker.
+//! backs a saturation/value color plane or any other two-axis picker.
 use bevy::app::{Plugin, PostUpdate};
 use bevy::ecs::{
     component::Component,

@@ -1,8 +1,8 @@
-//! Editable colour swatch: a swatch that opens a [`PlumeColorPicker`] in a
+//! Editable color swatch: a swatch that opens a [`PlumeColorPicker`] in a
 //! movable [`PlumePopup`], dismissed by pressing outside the control.
 //!
-//! Its colour is the public [`ColorPickerValue`] on the root, mirrored to and from
-//! the inner picker, so the existing colour capability drives it through the imm
+//! Its color is the public [`ColorPickerValue`] on the root, mirrored to and from
+//! the inner picker, so the existing color capability drives it through the imm
 //! layer with no extra work.
 use bevy::app::{Plugin, PostUpdate};
 use bevy::color::Color;
@@ -33,7 +33,7 @@ use crate::theme::ThemeTextColor;
 use crate::tokens;
 use crate::utils::hierarchy::{descendant, nearest_with};
 
-// Two colours this close (per linear channel) are treated as equal, so a mirror
+// Two colors this close (per linear channel) are treated as equal, so a mirror
 // push that merely echoes the current value doesn't ping-pong across the pair.
 const EPS: f32 = 1.0e-6;
 
@@ -42,8 +42,8 @@ pub struct PlumeColorEditProps {
     pub initial_color: Color,
 }
 
-/// An editable colour swatch: click to open a colour-picker popup. Spawnable as a
-/// scene component; reports its colour in [`ColorPickerValue`] on the root.
+/// An editable color swatch: click to open a color-picker popup. Spawnable as a
+/// scene component; reports its color in [`ColorPickerValue`] on the root.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeColorEditProps)]
 #[reflect(Component, Clone, Default)]
@@ -91,7 +91,7 @@ impl PlumeColorEdit {
 }
 
 // A press on the swatch toggles its popup: despawn if open, else spawn a fresh
-// picker (movable, dismissed by pressing outside) seeded with the current colour.
+// picker (movable, dismissed by pressing outside) seeded with the current color.
 #[allow(clippy::too_many_arguments)]
 fn on_swatch_click(
     mut click: On<Pointer<Press>>,
@@ -152,7 +152,7 @@ fn on_swatch_click(
         .insert(ChildOf(socket));
 }
 
-// User edits inside the popup: carry the picker's colour up to the public value on
+// User edits inside the popup: carry the picker's color up to the public value on
 // the root and onto the closed-control swatch.
 fn sync_edit_from_picker(
     q_picker: Query<
@@ -243,7 +243,7 @@ fn set_swatch(
 }
 
 // Equal to within `EPS` per linear channel, so any two `Color` variants of the same
-// colour compare equal and mirror pushes don't churn on representation.
+// color compare equal and mirror pushes don't churn on representation.
 fn colors_close(a: Color, b: Color) -> bool {
     let (a, b) = (a.to_linear(), b.to_linear());
     (a.red - b.red).abs() <= EPS
@@ -263,7 +263,7 @@ fn on_popup_close_requested(
     }
 }
 
-/// Registers the colour-edit open observer and value-mirror systems.
+/// Registers the color-edit open observer and value-mirror systems.
 pub struct ColorEditPlugin;
 
 impl Plugin for ColorEditPlugin {

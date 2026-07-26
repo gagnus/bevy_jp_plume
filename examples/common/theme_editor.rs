@@ -127,7 +127,7 @@ fn theme_editor_dialog(
 
 /// Hue, chroma, then one lightness row per stop. `chroma_max` keeps neutral/text
 /// ramps near-grey while the accent ramp reaches full saturation. Each lightness row
-/// previews its stop colour; hue/chroma rows reserve the same slot so sliders line up.
+/// previews its stop color; hue/chroma rows reserve the same slot so sliders line up.
 fn ramp_rows<const N: usize>(ui: &mut Ui, ramp: &mut OklchaArray<N>, chroma_max: f32) {
     param_row(
         ui,
@@ -154,7 +154,7 @@ fn ramp_rows<const N: usize>(ui: &mut Ui, ramp: &mut OklchaArray<N>, chroma_max:
     }
 }
 
-/// A colour swatch (or a reserved gap), a label, a slider and a number input, all bound
+/// A color swatch (or a reserved gap), a label, a slider and a number input, all bound
 /// to one palette scalar.
 fn param_row(
     ui: &mut Ui,

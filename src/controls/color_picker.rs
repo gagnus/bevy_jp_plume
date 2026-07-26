@@ -1,13 +1,8 @@
-//! HSV colour picker: a saturation/value plane, a hue bar and a preview swatch,
+//! HSV color picker: a saturation/value plane, a hue bar and a preview swatch,
 //! composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated as one
-//! retained control. Reports its colour in [`ColorPickerValue`] and self-updates
+//! retained control. Reports its color in [`ColorPickerValue`] and self-updates
 //! it as the user drags, so it works dropped straight into a scene; watch
 //! `Changed<ColorPickerValue>` to react.
-//!
-//! Internally the working colour is kept as a private `ColorPickerHsv` so hue
-//! survives at the grey/black axes — converting through RGB every frame would lose
-//! it there. [`ColorPickerValue`] is the public `Color` mirror; writing it (from an
-//! app or the imm layer) is folded back into the HSV truth with the hue preserved.
 use core::f32::consts::PI;
 
 use bevy::app::{Plugin, PostUpdate};
@@ -51,30 +46,22 @@ pub struct PlumeColorPickerProps {
     pub initial_color: Color,
 }
 
-/// A composed HSV colour picker. Spawnable as a scene component; it lays out its
+/// A composed HSV color picker. Spawnable as a scene component; it lays out its
 /// own SV plane, hue bar and swatch.
 ///
 /// Reports [`ColorPickerValue`] and self-updates it as the user drags.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[scene(PlumeColorPickerProps)]
-#[require(ColorPickerHsv, ColorPickerValue)]
+#[require(ColorPickerValue)]
 pub struct PlumeColorPicker;
 
-/// The picker's current colour — the public read/write surface. Setting it (from
+/// The picker's current color — the public read/write surface. Setting it (from
 /// an app or the imm layer) retargets the picker; the change is folded into the
 /// working HSV truth with the hue preserved.
 #[derive(Component, Clone, Copy, Reflect, Default)]
 #[reflect(Component, Clone, Default)]
 pub struct ColorPickerValue(pub Color);
-
-/// The picker's working colour, kept as `Hsva` so hue survives at the grey and
-/// black axes. This is the single source of truth the views are driven from; the
-/// public [`ColorPickerValue`] is derived from it. Crate-internal — apps and the
-/// imm layer see only the `Color` mirror.
-#[derive(Component, Clone, Copy, Reflect, Default)]
-#[reflect(Component, Clone, Default)]
-pub(crate) struct ColorPickerHsv(pub(crate) Hsva);
 
 /// Marks the saturation/value plane child.
 #[derive(Component, Default, Clone, Reflect)]
@@ -91,7 +78,7 @@ struct ColorPickerHue;
 #[reflect(Component, Clone, Default)]
 struct ColorPickerSwatch;
 
-/// Which colour component a numeric field edits.
+/// Which color component a numeric field edits.
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Reflect)]
 enum Channel {
     /// sRGB red.
@@ -109,7 +96,7 @@ enum Channel {
     V,
 }
 
-/// Marks a numeric field and names the colour component it edits.
+/// Marks a numeric field and names the color component it edits.
 #[derive(Component, Default, Clone, Copy, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorPickerChannel(Channel);
@@ -162,7 +149,6 @@ impl PlumeColorPicker {
                 align_items: AlignItems::Start,
             }
             PlumeColorPicker
-            template_value(ColorPickerHsv(props.initial_color.into()))
             template_value(ColorPickerValue(props.initial_color))
             Children [
                 // Saturation (x) / value (y). The plane's hue-tinted gradient is
@@ -212,10 +198,6 @@ impl PlumeColorPicker {
     }
 }
 
-// Below this the two representations are treated as agreeing: a field push whose
-// value is this close to what the HSV implies is our own echo, not a user edit.
-const CHANNEL_EPS: f32 = 1.0e-6;
-
 // The marked view children of one picker, gathered in a single descendant walk.
 struct PickerViews {
     sv: Option<Entity>,
@@ -224,10 +206,14 @@ struct PickerViews {
     channels: Vec<(Entity, Channel)>,
 }
 
+// Below this the two representations are treated as agreeing: a field push whose
+// value is this close to what the HSV implies is our own echo, not a user edit.
+const CHANNEL_EPS: f32 = 1.0e-6;
+
 // Push the working HSV out to every view (plane, hue bar, swatch, numeric fields)
-// and the public `Color` mirror, whenever the working colour changes.
-fn sync_hsv_to_views(
-    mut q_picker: Query<(Entity, &ColorPickerHsv, &mut ColorPickerValue), Changed<ColorPickerHsv>>,
+// and the public `Color` mirror, whenever the working color changes.
+fn sync_color_to_views(
+    q_picker: Query<(Entity, &ColorPickerValue), Changed<ColorPickerValue>>,
     q_children: Query<&Children>,
     q_sv: Query<(), With<ColorPickerSv>>,
     q_hue: Query<(), With<ColorPickerHue>>,
@@ -238,17 +224,12 @@ fn sync_hsv_to_views(
     q_slider: Query<&SliderValue>,
     mut commands: Commands,
 ) {
-    for (root, hsv, mut value) in q_picker.iter_mut() {
-        println!("color changed, pushing out");
-        let hsva = hsv.0;
-        let col = Color::from(hsva);
-        let srgb = Srgba::from(col);
-        if value.0 != col {
-            value.0 = col;
-        }
-
+    for (root, color) in q_picker.iter() {
+        // we push out in the color space the color is in
+        let (hsva, srgba): (Hsva, Srgba) = (color.0.into(), color.0.into());
         let views = collect_views(root, &q_children, &q_sv, &q_hue, &q_swatch, &q_channel);
 
+        // hsv zone
         if let Some(sv) = views.sv {
             set_xy(&mut q_xy, sv, Vec2::new(hsva.saturation, 1.0 - hsva.value));
             // The plane's white→hue tint follows the hue bar.
@@ -259,14 +240,18 @@ fn sync_hsv_to_views(
         if let Some(hue) = views.hue {
             set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
         }
+        
+        // swatch
         if let Some(swatch) = views.swatch
             && let Ok(mut swatch_val) = q_swatch_val.get_mut(swatch)
-            && swatch_val.0 != col
+            && swatch_val.0 != color.0
         {
-            swatch_val.0 = col;
+            swatch_val.0 = color.0;
         }
+
+        // channels
         for (field, channel) in views.channels {
-            let target = channel_value(hsva, srgb, channel);
+            let target = channel_value(hsva, srgba, channel);
             // `SliderValue` is immutable, so a change is a re-insert; only push when
             // the field actually disagrees, so unedited fields stay quiet.
             let current = q_slider.get(field).map_or(f32::NAN, |slider| slider.0);
@@ -322,7 +307,7 @@ fn collect_views(
     views
 }
 
-// The value a given channel's field should show for the current colour.
+// The value a given channel's field should show for the current color.
 fn channel_value(hsva: Hsva, srgb: Srgba, channel: Channel) -> f32 {
     match channel {
         Channel::R => srgb.red,
@@ -339,24 +324,26 @@ fn channel_value(hsva: Hsva, srgb: Srgba, channel: Channel) -> f32 {
 fn fold_pad_edits(
     q_sv: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerSv>)>,
     q_hue: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerHue>)>,
-    mut q_hsv: Query<&mut ColorPickerHsv>,
+    mut q_color: Query<&mut ColorPickerValue>,
 ) {
-    for (value, parent) in q_sv.iter() {
-        if let Ok(mut hsv) = q_hsv.get_mut(parent.parent()) {
-            let (saturation, brightness) = (value.0.x, 1.0 - value.0.y);
-            if hsv.0.saturation != saturation || hsv.0.value != brightness {
-                println!("setting sv! {} {}", saturation, brightness);
-                hsv.0.saturation = saturation;
-                hsv.0.value = brightness;
+    for (pad_value, parent) in q_sv.iter() {
+        if let Ok(mut color) = q_color.get_mut(parent.parent()) {
+            let mut hsva: Hsva = color.0.into();
+            let (saturation, value) = (pad_value.0.x, 1.0 - pad_value.0.y);
+            if hsva.saturation != saturation || hsva.value != value {
+                hsva.saturation = saturation;
+                hsva.value = value;
+                color.0 = hsva.into();
             }
         }
     }
     for (value, parent) in q_hue.iter() {
-        if let Ok(mut hsv) = q_hsv.get_mut(parent.parent()) {
+        if let Ok(mut color) = q_color.get_mut(parent.parent()) {
+            let mut hsva: Hsva = color.0.into();
             let hue = (value.0.y * 360.0).clamp(0.0, 360.0);
-            if hsv.0.hue != hue {
-                println!("setting hue! {}", hue);
-                hsv.0.hue = hue;
+            if hsva.hue != hue {
+                hsva.hue = hue;
+                color.0 = hsva.into();
             }
         }
     }
@@ -369,24 +356,49 @@ fn fold_channel_edits(
     q_changed: Query<(Entity, &SliderValue, &ColorPickerChannel), Changed<SliderValue>>,
     q_childof: Query<&ChildOf>,
     q_is_picker: Query<(), With<PlumeColorPicker>>,
-    mut q_hsv: Query<&mut ColorPickerHsv>,
+    mut q_color: Query<&mut ColorPickerValue>,
 ) {
     for (field, slider, channel) in q_changed.iter() {
         let Some(root) = find_picker_root(field, &q_childof, &q_is_picker) else {
             continue;
         };
-        let Ok(mut hsv) = q_hsv.get_mut(root) else {
+        let Ok(mut color) = q_color.get_mut(root) else {
             continue;
         };
-        let hsva = hsv.0;
-        let srgb = Srgba::from(Color::from(hsva));
-        if (slider.0 - channel_value(hsva, srgb, channel.0)).abs() <= CHANNEL_EPS {
+
+        let (mut hsva, mut srgba) = (color.0.into(), color.0.into());
+
+        if (slider.0 - channel_value(hsva, srgba, channel.0)).abs() <= CHANNEL_EPS {
             continue;
         }
-        let folded = fold_channel(hsva, channel.0, slider.0);
-        if folded != hsva {
-            println!("setting here! {:?} {:?}", folded, hsva);
-            hsv.0 = folded;
+
+        // we push out the color in the color space 
+        // that was changed
+        match channel.0 {
+            Channel::R => {
+                srgba.red = slider.0;
+                color.0 = srgba.into();
+            },
+            Channel::G => {
+                srgba.green = slider.0;
+                color.0 = srgba.into();
+            },
+            Channel::B => {
+                srgba.blue = slider.0;
+                color.0 = srgba.into();
+            },
+            Channel::H => {
+                hsva.hue = slider.0;
+                color.0 = hsva.into();
+            },
+            Channel::S => {
+                hsva.saturation = slider.0;
+                color.0 = hsva.into();
+            },
+            Channel::V => {
+                hsva.value = slider.0;
+                color.0 = hsva.into();
+            },
         }
     }
 }
@@ -403,67 +415,6 @@ fn find_picker_root(
         }
         entity = q_childof.get(entity).ok()?.parent();
     }
-}
-
-// Apply one channel's edited value to the HSV. RGB edits go through sRGB with the
-// hue preserved (so dialing a channel to grey/black doesn't fling the hue to red);
-// HSV edits set their component directly.
-fn fold_channel(hsva: Hsva, channel: Channel, value: f32) -> Hsva {
-    match channel {
-        Channel::R | Channel::G | Channel::B => {
-            let mut srgb = Srgba::from(Color::from(hsva));
-            match channel {
-                Channel::R => srgb.red = value,
-                Channel::G => srgb.green = value,
-                Channel::B => srgb.blue = value,
-                _ => unreachable!("outer match restricts this to the RGB channels"),
-            }
-            hsva_from_srgb_preserving(srgb, hsva)
-        }
-        Channel::H => Hsva {
-            hue: value.clamp(0.0, 360.0),
-            ..hsva
-        },
-        Channel::S => Hsva {
-            saturation: value.clamp(0.0, 1.0),
-            ..hsva
-        },
-        Channel::V => Hsva {
-            value: value.clamp(0.0, 1.0),
-            ..hsva
-        },
-    }
-}
-
-// Fold an external `Color` write (app- or imm-driven) into the working HSV. A
-// write that merely echoes the current HSV — as the sync above produces — leaves
-// `Color::from(hsv)` unchanged, so this ignores it and no loop forms.
-fn fold_external_value(
-    mut q_picker: Query<(&ColorPickerValue, &mut ColorPickerHsv), Changed<ColorPickerValue>>,
-) {
-    for (value, mut hsv) in q_picker.iter_mut() {
-        if value.0 != Color::from(hsv.0) {
-            hsv.0 = hsva_from_srgb_preserving(Srgba::from(value.0), hsv.0);
-        }
-    }
-}
-
-/// Fold an edited sRGB colour back into HSV, holding onto the hue (and, at black,
-/// the saturation) that RGB can no longer distinguish. HSV is the retained truth
-/// precisely so the SV plane and hue bar keep their position across the grey and
-/// black axes — where RGB alone would lose the hue and jump them back to red.
-pub(crate) fn hsva_from_srgb_preserving(srgb: Srgba, prev: Hsva) -> Hsva {
-    let mut hsva = Hsva::from(Color::from(srgb));
-    // Grey (saturation 0): hue is undefined, so keep the previous one.
-    if hsva.saturation <= f32::EPSILON {
-        hsva.hue = prev.hue;
-    }
-    // Black (value 0): saturation is undefined too, so keep both.
-    if hsva.value <= f32::EPSILON {
-        hsva.saturation = prev.saturation;
-        hsva.hue = prev.hue;
-    }
-    hsva
 }
 
 // The saturation/value plane for a fixed `hue`: white→hue across x, with a
@@ -507,7 +458,7 @@ fn hue_gradient() -> Vec<Gradient> {
     })]
 }
 
-/// Registers the colour-picker sync systems.
+/// Registers the color-picker sync systems.
 pub struct ColorPickerPlugin;
 
 impl Plugin for ColorPickerPlugin {
@@ -515,8 +466,7 @@ impl Plugin for ColorPickerPlugin {
         app.add_systems(
             PostUpdate,
             (
-                sync_hsv_to_views,
-                fold_external_value,
+                sync_color_to_views,
                 fold_pad_edits,
                 fold_channel_edits,
             )

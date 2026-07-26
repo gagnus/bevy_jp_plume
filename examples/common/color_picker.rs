@@ -1,4 +1,4 @@
-//! Colour-picker demo: the retained `PlumeColorPicker` control driven through the
+//! Color-picker demo: the retained `PlumeColorPicker` control driven through the
 //! immediate-mode `ui.color_picker(&mut Color)` wrapper. The picker keeps its own
 //! HSV working-truth, so the app only holds a plain `Color`.
 use bevy::color::Color;
@@ -7,7 +7,7 @@ use bevy_jp_plume::imm::{PlumeImm, PlumeRoot};
 
 use super::log_on_change;
 
-/// The demo's colour, round-tripped through the picker each frame.
+/// The demo's color, round-tripped through the picker each frame.
 #[derive(Resource, Debug, Clone, Copy)]
 pub struct ColorPickerState {
     color: Color,
@@ -21,7 +21,7 @@ impl Default for ColorPickerState {
     }
 }
 
-/// Adds the inline colour-picker demo.
+/// Adds the inline color-picker demo.
 pub struct ColorPickerPlugin;
 
 impl Plugin for ColorPickerPlugin {

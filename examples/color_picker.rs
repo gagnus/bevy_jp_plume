@@ -1,5 +1,5 @@
-//! The colour-picker body on its own — a thin mount of `common::color_picker`,
-//! shown inline so the layout and colour round-trip can be tuned before it moves
+//! The color-picker body on its own — a thin mount of `common::color_picker`,
+//! shown inline so the layout and colur round-trip can be tuned before it moves
 //! into a popover.
 #[path = "common/mod.rs"]
 mod common;

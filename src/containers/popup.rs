@@ -87,7 +87,7 @@ pub(crate) enum PopupDismiss {
     Explicit,
 }
 
-// The floating popup panel shared by select and colour edit: themed chrome,
+// The floating popup panel shared by select and color edit: themed chrome,
 // `Popover` auto-placement, and the configured dismiss/move behaviour. Spawned
 // into a [`popup_socket`] on open and despawned on close — existing is open.
 #[derive(SceneComponent, Default, Clone, Reflect)]
@@ -263,7 +263,7 @@ fn despawn_closing_popups(q_closing: Query<Entity, With<ClosingPopup>>, mut comm
 }
 
 // A press anywhere outside an open popup's anchor control requests its close
-// (hidden at once; the owner — colour edit's observer or the imm layer — closes
+// (hidden at once; the owner — color edit's observer or the imm layer — closes
 // it). The scope is the socket's parent, so presses on the anchor (e.g. the
 // swatch) stay toggle-only.
 fn on_dismiss_outside_press(

@@ -289,15 +289,15 @@ where
     }
 }
 
-/// Synchronises an app [`Color`] with a colour picker's [`ColorPickerValue`].
+/// Synchronises an app [`Color`] with a color picker's [`ColorPickerValue`].
 ///
 /// The picker self-updates its value as the user drags, so this mirrors the
 /// xy/select/text pattern: a widget value that moved since the last sync is the
 /// user's edit and wins; otherwise the app value is pushed to the widget.
 ///
-/// Everything is keyed on the colour's linear-RGBA bits, not `Color` equality —
+/// Everything is keyed on the color's linear-RGBA bits, not `Color` equality —
 /// the widget stores its value as `Color::Hsva` while an app may hand in any
-/// variant, and cross-variant `PartialEq` would report equal colours as different
+/// variant, and cross-variant `PartialEq` would report equal colors as different
 /// and fight forever.
 pub struct CapabilityPlumeColor;
 
@@ -314,11 +314,11 @@ pub trait ImmPlumeColor {
     fn plume_color(self, value: &mut Color, changed: &mut bool) -> Self;
 }
 
-// Hash-memory key for the last widget colour the imm layer synced against.
+// Hash-memory key for the last widget color the imm layer synced against.
 struct ColorSyncKey;
 
 // `Color` isn't `Hash`, so key it on its linear-RGBA component bit patterns — a
-// canonical space so any two variants of the same colour compare equal.
+// canonical space so any two variants of the same color compare equal.
 fn color_bits(color: Color) -> (u32, u32, u32, u32) {
     let linear = color.to_linear();
     (
@@ -337,7 +337,7 @@ where
         let widget_value = match self.cap_get_component::<ColorPickerValue>() {
             Ok(Some(picker)) => picker.0,
             _ => {
-                // Not spawned/settled yet; the scene seeds the initial colour.
+                // Not spawned/settled yet; the scene seeds the initial color.
                 self.hash_set_typ::<ColorSyncKey>(imm_id(color_bits(*value)));
                 return self;
             }

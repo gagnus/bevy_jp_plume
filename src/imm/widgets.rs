@@ -61,12 +61,12 @@ pub trait PlumeImm<'w, 's> {
     /// square; chain `.square()`/`.width()`/`.height()` to resize.
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
 
-    /// Interactive HSV colour picker: a saturation/value plane, a hue bar and a
+    /// Interactive HSV color picker: a saturation/value plane, a hue bar and a
     /// preview swatch. Two-way bound to `color`; `.changed` on the response fires
-    /// when the user drags to a new colour. The layout is fixed by the control.
+    /// when the user drags to a new color. The layout is fixed by the control.
     fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
-    /// Editable colour swatch: a swatch that opens a colour-picker popup on click,
+    /// Editable color swatch: a swatch that opens a color-picker popup on click,
     /// dismissed by clicking outside. Two-way bound to `color`; `.changed` fires
     /// when the user edits it.
     fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
@@ -295,7 +295,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
         // Identity is the call site: the picker retains its working HSV, so the
-        // scene seeds the colour once and the capability syncs it thereafter.
+        // scene seeds the color once and the capability syncs it thereafter.
         let initial = *color;
         let mut changed = false;
         let entity = self
