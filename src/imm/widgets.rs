@@ -536,10 +536,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .position(|option| option.key == *selected)
             .unwrap_or(0);
         let initial = index;
-        let labels: Vec<String> = options.iter().map(|option| option.label.clone()).collect();
+        let labels: Vec<(String, bool)> = options
+            .iter()
+            .map(|option| (option.label.clone(), option.enabled))
+            .collect();
         let mut changed = false;
         // The labels key the widget: the options are seeded at spawn, so an edited
-        // option list has to respawn rather than keep stale rows.
+        // option list — a renamed label or a flipped `enabled` — has to respawn
+        // rather than keep stale rows.
         let entity = self
             .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
@@ -760,15 +764,36 @@ pub struct ImmSelect<T> {
 struct SelectOption<T> {
     key: T,
     label: String,
+    enabled: bool,
 }
 
 impl<T> ImmSelect<T> {
     /// Declare an option standing for `key`, labeled `label`.
-    pub fn option(&mut self, key: T, label: &str) {
+    pub fn option(&mut self, key: T, label: &str) -> ImmSelectOption<'_, T> {
         self.options.push(SelectOption {
             key,
             label: label.to_owned(),
+            enabled: true,
         });
+        ImmSelectOption {
+            option: self
+                .options
+                .last_mut()
+                .expect("the option was just pushed onto options"),
+        }
+    }
+}
+
+/// Handle to a just-declared option, for its per-option settings.
+pub struct ImmSelectOption<'a, T> {
+    option: &'a mut SelectOption<T>,
+}
+
+impl<T> ImmSelectOption<'_, T> {
+    /// Grey the option out and refuse picks on it.
+    pub fn enabled(self, enabled: bool) -> Self {
+        self.option.enabled = enabled;
+        self
     }
 }
 

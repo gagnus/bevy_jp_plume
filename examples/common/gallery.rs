@@ -151,8 +151,9 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
             select.option(SelectChoice::Alpha, "Alpha");
             select.option(SelectChoice::Beta, "Beta");
             select.option(SelectChoice::Gamma, "Gamma");
-            select.option(SelectChoice::Delta, "Delta");
+            select.option(SelectChoice::Delta, "Delta").enabled(false);
         })
+        .max_visible(3)
         .enabled(!disabled);
         ui.text_edit(&mut state.text)
             .placeholder("Type here")

@@ -117,7 +117,7 @@ fn player_profile_dialog(
                     ui.select(&mut s.class, |select| {
                         select.option(Class::Warrior, "Warrior");
                         select.option(Class::Mage, "Mage");
-                        select.option(Class::Rogue, "Rogue");
+                        select.option(Class::Rogue, "Rogue").enabled(false);
                     })
                     .grow();
                 });

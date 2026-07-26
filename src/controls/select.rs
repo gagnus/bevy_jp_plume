@@ -87,7 +87,7 @@ struct PlumeSelectButton;
 // every open.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
-struct SelectOptions(Vec<String>);
+struct SelectOptions(Vec<(String, bool)>);
 
 // Row cap before the popup scrolls; applied at popup spawn.
 #[derive(Component, Default, Clone, Copy, Reflect)]
@@ -96,8 +96,9 @@ struct SelectMaxVisible(usize);
 
 /// Props for the control
 pub struct PlumeSelectProps {
-    /// Option labels, in popup order.
-    pub options: Vec<String>,
+    /// Option labels in popup order, each with whether it can be picked. A
+    /// disabled option still shows, greyed and inert.
+    pub options: Vec<(String, bool)>,
     /// Index of the initially selected option.
     pub selected: usize,
     /// Corner roundedness
@@ -117,11 +118,11 @@ impl Default for PlumeSelectProps {
     }
 }
 
-/// Collect option labels for [`PlumeSelectProps`]'s `options`.
-pub fn select_options(options: impl IntoIterator<Item: AsRef<str>>) -> Vec<String> {
+/// Collect option labels for [`PlumeSelectProps`]'s `options`, all enabled.
+pub fn select_options(options: impl IntoIterator<Item: AsRef<str>>) -> Vec<(String, bool)> {
     options
         .into_iter()
-        .map(|label| label.as_ref().into())
+        .map(|label| (label.as_ref().into(), true))
         .collect()
 }
 
@@ -130,12 +131,12 @@ impl PlumeSelect {
         let initial_caption = props
             .options
             .get(props.selected)
-            .cloned()
+            .map(|(label, _)| label.clone())
             .unwrap_or_default();
         let ghost_rows: Vec<_> = props
             .options
             .iter()
-            .map(|label| option_row(label.clone()))
+            .map(|(label, _)| option_row(label.clone()))
             .collect();
         let options = props.options;
         let selected = props.selected;
@@ -199,7 +200,8 @@ impl PlumeSelect {
     }
 }
 
-// A single option row: check-tick gutter plus the label.
+// A single option row: check-tick gutter plus the label. `InteractionDisabled`
+// is what `set_option_styles` greys and what makes the row refuse picks.
 fn option_row(label: String) -> impl Scene {
     bsn! {
         @PlumeSelectOption
@@ -208,16 +210,18 @@ fn option_row(label: String) -> impl Scene {
 }
 
 // Popup rows for `options`, indexed, with the current pick marked.
-fn option_rows(options: &[String], selected: usize) -> Box<dyn SceneList> {
+fn option_rows(options: &[(String, bool)], selected: usize) -> Box<dyn SceneList> {
     Box::new(
         options
             .iter()
             .enumerate()
-            .map(|(index, label)| {
+            .map(|(index, (label, enabled))| {
                 let label = label.clone();
+                let disabled = !*enabled;
                 bsn! {
                     option_row(label)
                     SelectOptionIndex(index)
+                    {disabled.then(|| bsn!(InteractionDisabled))}
                     {(index == selected).then(|| bsn!(Selected))}
                 }
             })
@@ -656,7 +660,11 @@ fn sync_caption(
     mut q_caption: Query<&mut Text, With<SelectCaption>>,
 ) {
     for (select_ent, index, options) in q_selects.iter() {
-        let label = options.0.get(index.0).cloned().unwrap_or_default();
+        let label = options
+            .0
+            .get(index.0)
+            .map(|(label, _)| label.clone())
+            .unwrap_or_default();
         for descendant in q_children.iter_descendants(select_ent) {
             if let Ok(mut caption) = q_caption.get_mut(descendant) {
                 if caption.0 != label {

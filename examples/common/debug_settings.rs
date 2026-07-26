@@ -177,7 +177,7 @@ fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
             select.option(ViewMode::Albedo, "Albedo");
             select.option(ViewMode::Normals, "Normals");
             select.option(ViewMode::Depth, "Depth");
-            select.option(ViewMode::Overdraw, "Overdraw");
+            select.option(ViewMode::Overdraw, "Overdraw").enabled(false);
         });
         slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 0.1, 2, None);
     });

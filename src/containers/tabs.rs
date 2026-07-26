@@ -187,6 +187,9 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
             border_radius: size::CORNER_RADIUS,
             // Clipped so the square-cornered strip doesn't spill past the rounded frame.
             overflow: Overflow::clip(),
+            // A clipping frame has to be able to shrink below its content, or a
+            // bounded container can never size it and its body just clips away.
+            min_height: Val::ZERO,
         }
         TabsRoot
         template_value(SelectedIndex(selected))
@@ -279,6 +282,11 @@ pub fn tab_body() -> impl Scene {
             align_items: AlignItems::Stretch,
             row_gap: size::GAP_TIGHT,
             padding: size::PAD,
+            // Fills the height the strip leaves when the container is bounded
+            // (no-op when it hugs its content), and `min_height` lets a
+            // `scroll_area` inside shrink below its content instead of clipping.
+            flex_grow: 1.0,
+            min_height: Val::ZERO,
         }
         InheritableThemeTextColor(tokens::TEXT_DIM)
         InheritableFont {

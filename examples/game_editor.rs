@@ -518,7 +518,9 @@ fn inspector(ui: &mut Ui, state: &mut Editor) {
                 select.option(ColliderKind::None, "None");
                 select.option(ColliderKind::Box, "Box");
                 select.option(ColliderKind::Sphere, "Sphere");
-                select.option(ColliderKind::Trimesh, "Trimesh");
+                select
+                    .option(ColliderKind::Trimesh, "Trimesh")
+                    .enabled(false);
             })
             .grow();
         });

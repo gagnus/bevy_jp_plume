@@ -11,6 +11,7 @@ use bevy::ecs::{
     hierarchy::ChildOf,
     world::{EntityWorldMut, World},
 };
+use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
 use bevy::ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
@@ -99,6 +100,8 @@ pub mod kind {
     impl Heightable for Swatch {}
     impl Heightable for Tabs {}
     impl Heightable for ScrollArea {}
+    impl Heightable for Row {}
+    impl Heightable for Column {}
     impl Sizable for Button {}
     impl Sizable for Swatch {}
 }
@@ -198,6 +201,16 @@ impl<K: kind::Heightable> ImmResponse<'_, '_, '_, K> {
     pub fn height(self, height: Val) -> Self {
         struct HeightKey;
         self.set_node::<HeightKey, _>(height, |node, height| node.height = height)
+    }
+
+    /// Containers default to `Val::ZERO`, the flex default (`auto`) resolves to
+    /// the content size, which stops any nested scrolling region working.
+    /// Set a floor here for chrome that has to keep its size.
+    pub fn min_height(self, min_height: Val) -> Self {
+        struct MinHeightKey;
+        self.set_node::<MinHeightKey, _>(min_height, |node, min_height| {
+            node.min_height = min_height
+        })
     }
 }
 
@@ -432,6 +445,20 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
     pub fn align_items(self, align: AlignItems) -> Self {
         struct AlignItemsKey;
         self.set_node::<AlignItemsKey, _>(align, |node, align| node.align_items = align)
+    }
+
+    /// Let pointer events fall through to whatever is behind.
+    pub fn pickable(mut self, pickable: bool) -> Self {
+        struct PickableKey;
+        if self.key_changed::<PickableKey>(pickable) {
+            let component = if pickable {
+                Pickable::default()
+            } else {
+                Pickable::IGNORE
+            };
+            self.e.entity_commands().insert(component);
+        }
+        self
     }
 
     /// Set the gap between children, overriding the container's default. Both

@@ -1,7 +1,7 @@
 //! BSN scene function for a horizontal flex container.
 use bevy::scene::{Scene, bsn};
 use bevy::text::FontWeight;
-use bevy::ui::{AlignItems, Display, FlexDirection, Node};
+use bevy::ui::{AlignItems, Display, FlexDirection, Node, Val};
 
 use crate::{
     constants::{fonts, size},
@@ -19,6 +19,11 @@ pub fn row() -> impl Scene {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
             column_gap: size::GAP,
+            // Flex defaults `min_height` to the content size, which stops any
+            // nested scrolling region from bounding — a scroll area only engages
+            // once every container between it and the fixed height can shrink.
+            // Floor a container that must not be crushed with `.min_height()`.
+            min_height: Val::ZERO,
         }
         InheritableThemeTextColor(tokens::TEXT_DIM)
         InheritableFont {
