@@ -471,6 +471,9 @@ pub fn default_axis_colors() -> [Oklcha; 3] {
 }
 
 pub mod dark_theme;
+mod editor;
 pub mod light_theme;
 pub mod slots;
 pub mod tokens;
+
+pub use editor::theme_editor;

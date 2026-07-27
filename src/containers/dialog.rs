@@ -16,7 +16,7 @@ use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, R
 
 use crate::{
     constants::{font_awesome, fonts, size},
-    containers::{flex_spacer, scroll_frame, scroll_viewport, scrollbar_node},
+    containers::{flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node},
     controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton},
     display::fa_icon,
     font_styles::InheritableFont,
@@ -103,7 +103,12 @@ impl PlumeDialog {
                         #inner
                         scroll_viewport()
                         Children [
-                            {contents}
+                            (
+                                scroll_content()
+                                Children [
+                                    {contents}
+                                ]
+                            )
                         ]
                     ),
                     (

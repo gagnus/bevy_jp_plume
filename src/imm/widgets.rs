@@ -24,8 +24,8 @@ use crate::{
     containers::{
         CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
         PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket, row, screen,
-        scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
-        tab_body, tab_button, tab_strip, tabs_frame,
+        scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body, section_frame,
+        separator, space, tab_body, tab_button, tab_strip, tabs_frame,
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -741,7 +741,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 let viewport = ui
                     .ch_id("scroll_area")
                     .on_spawn_apply_scene(scroll_viewport)
-                    .add(f)
+                    .add(move |ui| {
+                        ui.ch_id("scroll_content")
+                            .on_spawn_apply_scene(scroll_content)
+                            .add(f);
+                    })
                     .entity();
                 ui.ch_id("scrollbar")
                     .on_spawn_apply_scene(move || scrollbar(viewport));
@@ -1217,7 +1221,11 @@ fn reconcile_frame_body<'e, 'w, 's>(
                     let viewport = ui
                         .ch_id("scroll_area")
                         .on_spawn_apply_scene(scroll_viewport)
-                        .add(f)
+                        .add(move |ui| {
+                            ui.ch_id("scroll_content")
+                                .on_spawn_apply_scene(scroll_content)
+                                .add(f);
+                        })
                         .entity();
                     ui.ch_id("scrollbar")
                         .on_spawn_apply_scene(move || scrollbar(viewport));

@@ -27,20 +27,36 @@ pub(crate) fn scroll_frame() -> impl Scene {
     }
 }
 
-// The scrolling viewport itself: content lands here. Vertical only — a scroll area
-// is never allowed to scroll sideways.
+// The scrolling viewport itself. Vertical only — a scroll area is never allowed to
+// scroll sideways. Content goes in the [`scroll_content`] child, not here.
 pub(crate) fn scroll_viewport() -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            row_gap: size::GAP,
             flex_grow: 1.0,
             min_height: Val::ZERO,
             overflow: Overflow::scroll_y(),
         }
         ScrollArea
+    }
+}
+
+// Content column inside a [`scroll_viewport`]. Flex shrinks items to fit their
+// container even when it scrolls, and `row()`/`column()` floor `min_height` at zero,
+// so without a `flex_shrink: 0` wrapper to absorb that pressure every row the caller
+// writes gets crushed — centered content spilling out of the clip — instead of
+// overflowing into the scroll.
+pub(crate) fn scroll_content() -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: size::GAP,
+            flex_shrink: 0.0,
+        }
     }
 }
 
