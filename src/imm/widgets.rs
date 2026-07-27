@@ -881,27 +881,6 @@ pub struct ImmDialog<'a, 'w, 's> {
     layout: DialogLayout,
 }
 
-/// The dialog's frame-level props, split out so they travel to the scene as one
-/// value instead of eight positional arguments.
-#[derive(Clone, Copy)]
-struct DialogLayout {
-    width: Val,
-    height: Val,
-    max_height: Val,
-    inset: UiRect,
-    closable: bool,
-    movable: bool,
-    body_padding: UiRect,
-}
-
-impl DialogLayout {
-    /// Whether the body needs the scrolling machinery: either height knob bounds
-    /// the dialog, so its content can no longer be assumed to fit.
-    fn scrolls(&self) -> bool {
-        self.height != Val::Auto || self.max_height != Val::Auto
-    }
-}
-
 impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     /// Fix the dialog's width (default `Val::Auto` hugs the content). Rows that
     /// distribute space (`.grow()`, `flex_spacer`) need one to resolve against.
@@ -987,6 +966,27 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
             return None;
         }
         Some(reconcile_frame_body(entity, layout, f))
+    }
+}
+
+/// The dialog's frame-level props, split out so they travel to the scene as one
+/// value instead of eight positional arguments.
+#[derive(Clone, Copy)]
+struct DialogLayout {
+    width: Val,
+    height: Val,
+    max_height: Val,
+    inset: UiRect,
+    closable: bool,
+    movable: bool,
+    body_padding: UiRect,
+}
+
+impl DialogLayout {
+    /// Whether the body needs the scrolling machinery: either height knob bounds
+    /// the dialog, so its content can no longer be assumed to fit.
+    fn scrolls(&self) -> bool {
+        self.height != Val::Auto || self.max_height != Val::Auto
     }
 }
 
@@ -1339,6 +1339,7 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
     bsn! {
         // Empty body: the imm layer reconciles the body itself.
         dialog_frame(DialogChrome {
+            name: format!("PlumeDialog({title})").into(),
             body: Box::new(bsn_list!()),
             header: Some(DialogHeader {
                 title: Box::new(bsn_list![ {icon.map(|icon| bsn! { fa_icon(icon) })}, caption(title)]),
@@ -1368,6 +1369,7 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
     // and there is no `RequestClose` observer, since a panel has no ✕.
     bsn! {
         dialog_frame(DialogChrome {
+            name: "PlumePanel".into(),
             body: Box::new(bsn_list!()),
             header: None,
             width,

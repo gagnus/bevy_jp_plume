@@ -186,6 +186,10 @@ pub(crate) fn section_body() -> impl Scene {
             padding: size::PAD,
         }
         SectionBody
+        // Both, not just the font: `section_frame` carries neither, so it has no
+        // `ThemedText` to relay an inherited color through, and bare text in the
+        // body would fall back to bevy's default white.
+        InheritableThemeTextColor(tokens::TEXT_DIM)
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,

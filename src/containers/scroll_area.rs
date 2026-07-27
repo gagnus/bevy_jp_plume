@@ -3,12 +3,16 @@
 //! imm `scroll_area` widget.
 use bevy::ecs::{entity::Entity, template::EntityTemplate};
 use bevy::scene::{Scene, bsn};
+use bevy::text::FontWeight;
 use bevy::ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val};
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::{
-    constants::size,
+    constants::{fonts, size},
     controls::{PlumeScrollbar, ScrollbarGutter},
+    font_styles::InheritableFont,
+    theme::InheritableThemeTextColor,
+    tokens,
 };
 
 // Bounded frame holding the scrolling viewport and its scrollbar. Distinct from a
@@ -56,6 +60,15 @@ pub(crate) fn scroll_content() -> impl Scene {
             align_items: AlignItems::Stretch,
             row_gap: size::GAP,
             flex_shrink: 0.0,
+        }
+        // Text style is relayed only by containers carrying `ThemedText`, which the
+        // frame and viewport don't — so bare text in a scroll area would fall back
+        // to the engine default. Establish it here, as `column` does.
+        InheritableThemeTextColor(tokens::TEXT_DIM)
+        InheritableFont {
+            font: fonts::REGULAR,
+            font_size: size::MEDIUM_FONT,
+            weight: FontWeight::NORMAL,
         }
     }
 }

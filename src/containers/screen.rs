@@ -1,4 +1,5 @@
 //! BSN scene function for the full-screen root surface.
+use bevy::ecs::name::Name;
 use bevy::picking::Pickable;
 use bevy::scene::{Scene, bsn};
 use bevy::text::FontWeight;
@@ -20,6 +21,7 @@ use crate::{
 /// behind it; children keep their own picking.
 pub fn screen() -> impl Scene {
     bsn! {
+        Name("PlumeScreen")
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,

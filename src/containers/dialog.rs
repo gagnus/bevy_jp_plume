@@ -1,12 +1,13 @@
 //! Movable floating dialog with a draggable title bar and close button.
 use bevy::color::{Alpha, Srgba};
+use bevy::ecs::name::Name;
 use bevy::ecs::{
     component::Component, event::EntityEvent, hierarchy::Children, observer::On,
     reflect::ReflectComponent, system::Commands,
 };
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
@@ -125,6 +126,7 @@ impl PlumeDialog {
         };
         bsn! {
             dialog_frame(DialogChrome {
+                name: "PlumeDialog".into(),
                 // The public dialog builds its whole body eagerly and hands the
                 // frame a padded `PlumeDialogBody` wrapping it.
                 body: Box::new(bsn_list!((
@@ -165,6 +167,8 @@ pub(crate) struct CloseRequested;
 /// inserted verbatim — and body padding never reaches the frame (it lives on the
 /// body's [`PlumeDialogBody`]).
 pub(crate) struct DialogChrome {
+    /// Debug name to give the entity
+    pub name: Name,
     /// Finished body slot, inserted into the frame verbatim. The public dialog hands
     /// over a padded [`PlumeDialogBody`]; the imm layer hands over an empty slot and
     /// reconciles the body itself.
@@ -198,6 +202,7 @@ pub(crate) struct DialogHeader {
 /// `RequestClose` observer.
 pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
     let DialogChrome {
+        name,
         body,
         header,
         width,
@@ -254,6 +259,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
         },
     );
     bsn! {
+            template_value(name)
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,

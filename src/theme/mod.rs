@@ -151,6 +151,15 @@ pub fn control_box_shadow() -> BoxShadow {
 #[reflect(Component, Clone)]
 pub struct ThemeBorderColor(pub ThemeToken);
 
+/// Component which causes the border color of an entity to be set based on a theme slot.
+/// Internal use `ThemeBorderColor` instead, external prefer this, this takes priority over `ThemeBorderColor`.
+#[derive(Component, Clone, Default)]
+#[require(BorderColor)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+pub struct ThemeBorderSlot(pub ThemeSlot);
+
 /// Component which causes the inherited text color of an entity to be set based on a theme color.
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
@@ -210,7 +219,14 @@ fn update_theme(
         Or<(With<ThemeBackgroundColor>, With<ThemeBackgroundSlot>)>,
     >,
     mut q_gradient: Query<(&mut BackgroundGradient, &ThemeBackgroundGradient)>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderColor)>,
+    mut q_border: Query<
+        (
+            &mut BorderColor,
+            Option<&ThemeBorderColor>,
+            Option<&ThemeBorderSlot>,
+        ),
+        Or<(With<ThemeBorderColor>, With<ThemeBorderSlot>)>,
+    >,
     mut q_text_color: Query<(&mut TextColor, &ThemeTextColor)>,
     q_inherit: Query<(Entity, &InheritableThemeTextColor)>,
     theme: Res<UiTheme>,
@@ -229,8 +245,12 @@ fn update_theme(
             *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
         }
 
-        for (mut border, theme_border) in q_border.iter_mut() {
-            border.set_all(theme.color(&theme_border.0));
+        for (mut border, theme_border_token, theme_border_slot) in q_border.iter_mut() {
+            if let Some(theme_border_slot) = theme_border_slot {
+                border.set_all(theme.palette[theme_border_slot.0]);
+            } else if let Some(theme_border_token) = theme_border_token {
+                border.set_all(theme.color(&theme_border_token.0));
+            }
         }
 
         for (mut text_color, theme_text_color) in q_text_color.iter_mut() {
@@ -294,6 +314,16 @@ fn on_changed_border(
     }
 }
 
+fn on_changed_border_slot(
+    insert: On<Insert, ThemeBorderSlot>,
+    mut q_border: Query<(&mut BorderColor, &ThemeBorderSlot), Changed<ThemeBorderSlot>>,
+    theme: Res<UiTheme>,
+) {
+    if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
+        border.set_all(theme.palette[theme_border.0]);
+    }
+}
+
 fn on_changed_text_color(
     insert: On<Insert, ThemeTextColor>,
     mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
@@ -333,6 +363,7 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_background_slot)
             .add_observer(on_changed_gradient)
             .add_observer(on_changed_border)
+            .add_observer(on_changed_border_slot)
             .add_observer(on_changed_font_color)
             .add_observer(on_changed_text_color)
             .add_observer(on_themed_text_inserted::<TextColor>);

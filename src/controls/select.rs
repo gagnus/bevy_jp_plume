@@ -26,7 +26,7 @@ use bevy::log::warn;
 use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::{FontWeight, TextFont};
+use bevy::text::{FontWeight, LineBreak, TextFont, TextLayout};
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, Val, px, widget::Text,
@@ -156,7 +156,15 @@ impl PlumeSelect {
             Children [
                 (
                     @PlumeButton {
-                        @caption: bsn! { caption(initial_caption) SelectCaption },
+                        // The caption is pinned to the measured widest label, so a
+                        // label with a space in it would wrap on a sub-pixel shortfall.
+                        @caption: bsn! {
+                            caption(initial_caption)
+                            SelectCaption
+                            TextLayout {
+                                linebreak: LineBreak::NoWrap,
+                            }
+                        },
                         @variant: ButtonVariant::Normal,
                         @corners: {props.corners},
                     }

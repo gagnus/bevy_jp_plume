@@ -14,8 +14,13 @@ use bevy::ecs::{
 };
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
-use bevy::ui::{AlignItems, AlignSelf, BackgroundColor, Checkable, Checked, Node, UiRect, Val};
+use bevy::text::{
+    FontFeatureTag, FontFeatures, FontSourceTemplate, LineBreak, TextFont, TextLayout,
+};
+use bevy::ui::{
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
+    UiRect, Val,
+};
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 
@@ -29,7 +34,9 @@ use crate::{
         text_input_suffix,
     },
     rounded_corners::RoundedCorners,
-    theme::{Flat, Inert, ThemeBackgroundSlot, slots::ThemeSlot},
+    theme::{
+        Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, control_box_shadow, slots::ThemeSlot,
+    },
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -231,6 +238,29 @@ impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Caption> {
+    /// Keep the text on one line however long it runs, and let it be narrower than
+    /// that line — so a bounded container cuts it off instead of the text wrapping
+    /// and growing the row.
+    ///
+    /// Bevy takes a node's clip rect from its parent, never its own `overflow`, so
+    /// this only bites when an ancestor clips: pair it with
+    /// [`clip`](Self::clip) on the container. Unpaired, the text simply
+    /// overflows in one line.
+    pub fn no_wrap(mut self) -> Self {
+        struct NoWrapKey;
+        if self.key_changed::<NoWrapKey>(()) {
+            self.e.entity_commands().apply_scene(bsn! {
+                TextLayout {
+                    linebreak: LineBreak::NoWrap,
+                }
+            });
+        }
+        // Flex resolves `min_width: auto` to the content size, which for unwrapped
+        // text is the whole string — the row would grow rather than clip.
+        struct NoWrapMinKey;
+        self.set_node::<NoWrapMinKey, _>((), |node, ()| node.min_width = Val::ZERO)
+    }
+
     /// Set caption to be small caps
     pub fn small_caps(mut self) -> Self {
         struct SmallCapsKey;
@@ -492,6 +522,14 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         self.set_node::<AlignItemsKey, _>(align, |node, align| node.align_items = align)
     }
 
+    /// Cut off anything a child draws outside this container, rather than letting
+    /// it spill. What gives [`no_wrap`](Self::no_wrap) captions their boundary,
+    /// since bevy clips a node by its parent's `overflow`, not its own.
+    pub fn clip(self) -> Self {
+        struct ClipKey;
+        self.set_node::<ClipKey, _>((), |node, ()| node.overflow = Overflow::clip())
+    }
+
     /// Let pointer events fall through to whatever is behind.
     pub fn pickable(mut self, pickable: bool) -> Self {
         struct PickableKey;
@@ -543,6 +581,58 @@ impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
         struct BackgroundSlotKey;
         if self.key_changed::<BackgroundSlotKey>(&slot) {
             self.e.entity_commands().insert(ThemeBackgroundSlot(slot));
+        }
+        self
+    }
+
+    /// Draw a border of `width` in `color` around the container. Width and color
+    /// travel together because either alone paints nothing.
+    pub fn border(mut self, width: impl Into<UiRect>, color: Color) -> Self {
+        let width = width.into();
+        struct BorderKey;
+        if self.key_changed::<BorderKey>(format!("{width:?}{color:?}")) {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.border = width;
+                    }
+                    entity.insert(BorderColor::all(color));
+                });
+        }
+        self
+    }
+
+    /// Draw a border of `width` in a theme slot's color.
+    pub fn border_slot(mut self, width: impl Into<UiRect>, slot: ThemeSlot) -> Self {
+        let width = width.into();
+        struct BorderSlotKey;
+        if self.key_changed::<BorderSlotKey>((format!("{width:?}"), &slot)) {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.border = width;
+                    }
+                    entity.insert(ThemeBorderSlot(slot));
+                });
+        }
+        self
+    }
+
+    /// Round the container's corners; the background and border follow it.
+    pub fn corners(self, corners: RoundedCorners) -> Self {
+        struct CornersKey;
+        self.set_node::<CornersKey, _>(corners, |node, corners| {
+            node.border_radius = corners.to_border_radius(size::CORNER_RADIUS);
+        })
+    }
+
+    /// Lift the container off its surface with the standard themed control shadow.
+    pub fn shadow(mut self) -> Self {
+        struct ShadowKey;
+        if self.key_changed::<ShadowKey>(true) {
+            self.e.entity_commands().insert(control_box_shadow());
         }
         self
     }
