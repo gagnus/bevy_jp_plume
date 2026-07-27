@@ -192,6 +192,24 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self.set_node::<GrowFromContentKey, _>(true, |node, _| node.flex_grow = 1.0)
     }
 
+    /// Keep this widget's size however tight the container gets, so the squeeze
+    /// falls on a sibling instead — for chrome that must stay usable.
+    ///
+    /// A [`grow`](Self::grow) sibling can't take it: growing zeroes `flex_basis`,
+    /// and flex shrinks in proportion to it. Give instead with
+    /// [`grow_from_content`](Self::grow_from_content) + [`min_width`](Self::min_width).
+    pub fn no_shrink(self) -> Self {
+        struct NoShrinkKey;
+        self.set_node::<NoShrinkKey, _>(true, |node, _| node.flex_shrink = 0.0)
+    }
+
+    /// Override the control's minimum width. `Val::ZERO` lets a container shrink
+    /// below its content — what makes [`clip`](Self::clip) actually clip.
+    pub fn min_width(self, min_width: Val) -> Self {
+        struct MinWidthKey;
+        self.set_node::<MinWidthKey, _>(min_width, |node, min_width| node.min_width = min_width)
+    }
+
     /// Place this one child on its container's cross axis, overriding the
     /// container's `align_items`.
     ///

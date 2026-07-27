@@ -1,10 +1,22 @@
 //! Generic vertical scroll region: a gutter-reserving frame, its scrolling
 //! viewport, and the scrollbar that drives it. Shared by the dialog body and the
 //! imm `scroll_area` widget.
-use bevy::ecs::{entity::Entity, template::EntityTemplate};
+use bevy::app::{App, Plugin, PostUpdate};
+use bevy::ecs::{
+    entity::Entity,
+    query::With,
+    schedule::IntoScheduleConfigs,
+    system::{Local, Query},
+    template::EntityTemplate,
+};
+use bevy::log::warn_once;
+use bevy::math::Rect;
 use bevy::scene::{Scene, bsn};
 use bevy::text::FontWeight;
-use bevy::ui::{AlignItems, Display, FlexDirection, Node, Overflow, PositionType, Val};
+use bevy::ui::{
+    AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, PositionType,
+    UiGlobalTransform, UiSystems, Val,
+};
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::{
@@ -70,6 +82,56 @@ pub(crate) fn scroll_content() -> impl Scene {
             font_size: size::MEDIUM_FONT,
             weight: FontWeight::NORMAL,
         }
+    }
+}
+
+/// Installs the check for a scroll region that was never given a height to
+/// scroll within.
+pub struct ScrollAreaPlugin;
+
+impl Plugin for ScrollAreaPlugin {
+    fn build(&self, app: &mut App) {
+        // `PostLayout` is where `CalculatedClip` is written.
+        app.add_systems(
+            PostUpdate,
+            warn_unbounded_scroll_area.after(UiSystems::PostLayout),
+        );
+    }
+}
+
+// Layout rounds, so a rect flush with its clip must not read as past it.
+const CLIP_EPSILON: f32 = 0.5;
+
+// An unbounded scroll region is as tall as its content, so it never scrolls and an
+// ancestor cuts it off instead — which looks correct from inside the region.
+fn warn_unbounded_scroll_area(
+    query_areas: Query<
+        (&ComputedNode, &UiGlobalTransform, Option<&CalculatedClip>),
+        With<ScrollArea>,
+    >,
+    mut suspect_last_frame: Local<bool>,
+) {
+    let clipped_without_scrolling = query_areas.iter().any(|(node, transform, clip)| {
+        // Overflowing its viewport means it is scrolling, which is the point.
+        if node.content_size.y > node.size.y + CLIP_EPSILON {
+            return false;
+        }
+        let Some(clip) = clip else {
+            return false;
+        };
+        let rect = Rect::from_center_size(transform.translation, node.size);
+        rect.max.y > clip.clip.max.y + CLIP_EPSILON || rect.min.y < clip.clip.min.y - CLIP_EPSILON
+    });
+
+    // Layout settles over a frame or two, so a single-frame reading proves nothing.
+    let confirmed = clipped_without_scrolling && *suspect_last_frame;
+    *suspect_last_frame = clipped_without_scrolling;
+    if confirmed {
+        warn_once!(
+            "A scroll area is clipped but not scrolling — its content is cut off and no \
+             scrollbar reaches it. Every container between it and a fixed height needs \
+             `min_height: Val::ZERO` to shrink."
+        );
     }
 }
 

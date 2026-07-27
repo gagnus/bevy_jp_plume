@@ -1,7 +1,7 @@
 //! A framework for theming.
 use bevy::app::{
     App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
-    PropagateStop,
+    PropagateSet, PropagateStop,
 };
 use bevy::color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
 use bevy::ecs::query::Or;
@@ -15,7 +15,8 @@ use bevy::ecs::{
     query::{Changed, With, Without},
     reflect::{ReflectComponent, ReflectResource},
     resource::Resource,
-    system::{Commands, Query, Res},
+    schedule::IntoScheduleConfigs,
+    system::{Commands, Local, Query, Res},
 };
 use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
@@ -350,6 +351,33 @@ fn on_changed_font_color(
     }
 }
 
+// Internal frames may break the propagation chain; only text that ends up with no
+// color at all is a bug, so that is what this watches for.
+fn warn_unstyled_themed_text(
+    q_unstyled: Query<
+        (),
+        (
+            With<ThemedText>,
+            Without<Inherited<TextColor>>,
+            Without<ThemeTextColor>,
+            Without<InheritableThemeTextColor>,
+        ),
+    >,
+    mut suspect_last_frame: Local<bool>,
+) {
+    // Propagation lands the frame after an entity is parented, so text unresolved
+    // this frame may still be in flight.
+    let unstyled = !q_unstyled.is_empty();
+    let confirmed = unstyled && *suspect_last_frame;
+    *suspect_last_frame = unstyled;
+    if confirmed {
+        warn_once!(
+            "Themed text resolved no color and falls back to white. A container an app fills \
+             with text must establish the style, as `row`/`column`/`scroll_content` do."
+        );
+    }
+}
+
 /// Installs the [`UiTheme`] resource, the theme refresh system, the themed
 /// text-color propagation, and the token-change observers.
 pub struct ThemePlugin;
@@ -359,6 +387,11 @@ impl Plugin for ThemePlugin {
         app.init_resource::<UiTheme>()
             .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
             .add_systems(PostUpdate, update_theme)
+            // After propagation, so text parented this frame has had its chance.
+            .add_systems(
+                PostUpdate,
+                warn_unstyled_themed_text.after(PropagateSet::<TextColor>::default()),
+            )
             .add_observer(on_changed_background_token)
             .add_observer(on_changed_background_slot)
             .add_observer(on_changed_gradient)
