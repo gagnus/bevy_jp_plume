@@ -3,6 +3,7 @@
 //! exposes them.
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
+use core::panic::Location;
 
 use bevy::app::PropagateOver;
 use bevy::color::Color;
@@ -26,6 +27,7 @@ use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled}
 
 use super::PlumeCaps;
 use crate::controls::ButtonOutline;
+use crate::imm::ImmPopup;
 use crate::{
     constants::{fonts, size},
     containers::{SectionCollapsed, SectionCollapsible},
@@ -128,6 +130,24 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
     pub(crate) will_be_spawned: bool,
     pub(crate) e: ImmEntity<'r, 'w, 's, PlumeCaps>,
     pub(crate) kind: PhantomData<K>,
+}
+
+/// Anchoring, available on every kind.
+impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
+    /// Popup floating under this widget (or [`ImmPopup::beside`] it), filled by
+    /// [`ImmPopup::show`]. While `*open` the popup exists; a click outside (or
+    /// Escape) writes back through `open`.
+    #[track_caller]
+    pub fn popup<'a>(self, open: &'a mut bool) -> ImmPopup<'r, 'a, 'w, 's, K> {
+        ImmPopup {
+            anchor: self,
+            caller: Location::caller(),
+            open,
+            placement: Default::default(),
+            movable: false,
+            close_on_click_outside: true,
+        }
+    }
 }
 
 /// Universal builders, available on every kind.

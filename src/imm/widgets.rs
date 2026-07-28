@@ -149,12 +149,6 @@ pub trait PlumeImm<'w, 's> {
     /// drawn. Floats above a [`Self::screen`] like a dialog does.
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
 
-    /// Popup: centered in the window, or floated by an earlier widget via
-    /// [`ImmPopup::under`]/[`ImmPopup::beside`]. Build the body with
-    /// [`ImmPopup::show`]; while `*open` the popup exists, and a click outside
-    /// (or Escape) writes back through `open` (unless disabled).
-    fn popup<'a>(&'a mut self, open: &'a mut bool) -> ImmPopup<'a, 'w, 's>;
-
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
     /// The response chains `.grow()`/`.width()` to size the row itself.
@@ -577,18 +571,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 movable: true,
                 body_padding: size::PAD.into(),
             },
-        }
-    }
-
-    #[track_caller]
-    fn popup<'a>(&'a mut self, open: &'a mut bool) -> ImmPopup<'a, 'w, 's> {
-        ImmPopup {
-            ui: self,
-            caller: Location::caller(),
-            open,
-            placement: PopupPlacement::default(),
-            movable: false,
-            close_on_click_outside: true,
         }
     }
 
@@ -1089,27 +1071,21 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
     }
 }
 
-/// Deferred popup configuration returned by [`PlumeImm::popup`]; the popup
+/// Deferred popup configuration returned by [`ImmResponse::popup`]; the popup
 /// only exists once [`Self::show`] runs while `*open`.
 #[must_use = "a popup does nothing until .show(|ui| …) builds it"]
-pub struct ImmPopup<'a, 'w, 's> {
-    ui: &'a mut Ui<'w, 's>,
-    caller: &'static Location<'static>,
-    open: &'a mut bool,
-    placement: PopupPlacement,
-    movable: bool,
-    close_on_click_outside: bool,
+pub struct ImmPopup<'r, 'a, 'w, 's, K> {
+    pub(crate) anchor: ImmResponse<'r, 'w, 's, K>,
+    pub(crate) caller: &'static Location<'static>,
+    pub(crate) open: &'a mut bool,
+    pub(crate) placement: PopupPlacement,
+    pub(crate) movable: bool,
+    pub(crate) close_on_click_outside: bool,
 }
 
-impl<'w, 's> ImmPopup<'_, 'w, 's> {
-    /// Open below the anchor, start-aligned, flipping above when out of room.
-    pub fn under(mut self) -> Self {
-        self.placement = PopupPlacement::Below;
-        self
-    }
-
+impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
     /// Open beside the anchor, centered, trying right, left, above, below in
-    /// that order.
+    /// that order. Default is to popup under.
     pub fn beside(mut self) -> Self {
         self.placement = PopupPlacement::Beside;
         self
@@ -1128,37 +1104,61 @@ impl<'w, 's> ImmPopup<'_, 'w, 's> {
         self
     }
 
-    /// Build the popup and its body over `anchor` (an earlier widget's
-    /// [`ImmResponse`] `entity`); an outside click writes back through `open`.
-    pub fn show(self, anchor: Entity, f: impl FnOnce(&mut Ui<'w, 's>)) {
-        if !*self.open {
-            return;
+    /// Toggle `open` when the anchor is clicked. Safe as a toggle because the anchor
+    /// is exempt from outside-press dismissal, so its click only lands here.
+    pub fn toggle_on_click(self) -> Self {
+        if self.anchor.clicked {
+            *self.open = !*self.open;
         }
-        let id = ImmIdBuilder::Hierarchy(ImmId::new(self.caller));
-        let (placement, movable) = (self.placement, self.movable);
-        let dismiss = match self.close_on_click_outside {
+        self
+    }
+
+    /// Build the popup and its body; an outside click writes back through `open`.
+    /// Returns the anchor's response, so further builders can chain off it.
+    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'r, 'w, 's, K> {
+        let Self {
+            mut anchor,
+            caller,
+            open,
+            placement,
+            movable,
+            close_on_click_outside,
+        } = self;
+        if !*open {
+            return anchor;
+        }
+        let dismiss = match close_on_click_outside {
             true => PopupDismiss::OutsideClick,
             false => PopupDismiss::Explicit,
         };
+        let anchor_entity = anchor.entity;
         let mut closed = false;
-        self.ui
-            .ch_loc(id)
-            .on_spawn_apply_scene(popup_socket)
-            .on_spawn_insert(move || PopupAnchor(anchor))
-            .add(|ui| {
-                let mut popup = ui.ch_id("popup").on_spawn_apply_scene(move || {
-                    imm_popup_scene(anchor, placement, dismiss, movable)
+        // Unrooted, so the popup is a UI root rather than a descendant of the
+        // anchor: picking bubbles up the hierarchy and `Hovered` is set on every
+        // ancestor of the hit, so a popup inside its anchor would re-fire the
+        // anchor's clicks and hold it highlighted. The socket carries the anchor
+        // as [`PopupAnchor`] instead — it has no parent to fall back on. Ids stay
+        // unique per anchor, since the scope hangs off the anchor's own id.
+        anchor.e = anchor.e.unrooted(caller, |ui| {
+            ui.ch_id("socket")
+                .on_spawn_apply_scene(popup_socket)
+                .on_spawn_insert(move || PopupAnchor(anchor_entity))
+                .add(|ui| {
+                    let mut popup = ui.ch_id("popup").on_spawn_apply_scene(move || {
+                        imm_popup_scene(anchor_entity, placement, dismiss, movable)
+                    });
+                    if popup.close_requested() {
+                        closed = true;
+                        popup.entity_commands().despawn();
+                    } else {
+                        popup.add(f);
+                    }
                 });
-                if popup.close_requested() {
-                    closed = true;
-                    popup.entity_commands().despawn();
-                } else {
-                    popup.add(f);
-                }
-            });
+        });
         if closed {
-            *self.open = false;
+            *open = false;
         }
+        anchor
     }
 }
 

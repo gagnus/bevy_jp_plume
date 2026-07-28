@@ -65,12 +65,16 @@ pub(crate) fn popup_socket() -> impl Scene {
 // so the anchor's global rect goes straight in. It trails the anchor by a frame:
 // the rect is the one the last layout produced.
 fn track_popup_anchors(
-    mut q_sockets: Query<(&mut Node, Option<&PopupAnchor>, &ChildOf), With<PopupSocket>>,
+    mut q_sockets: Query<(&mut Node, Option<&PopupAnchor>, Option<&ChildOf>), With<PopupSocket>>,
     q_rects: Query<(&ComputedNode, &UiGlobalTransform)>,
 ) {
     for (mut node, anchor, socket_parent) in q_sockets.iter_mut() {
-        let anchor = anchor.map_or(socket_parent.parent(), |anchor| anchor.0);
-        let Ok((rect, transform)) = q_rects.get(anchor) else {
+        // An imm socket is parentless and always carries its anchor; a retained
+        // one sits inside the control it anchors to.
+        let anchor = anchor
+            .map(|anchor| anchor.0)
+            .or_else(|| socket_parent.map(ChildOf::parent));
+        let Some((rect, transform)) = anchor.and_then(|anchor| q_rects.get(anchor).ok()) else {
             continue;
         };
         let size = rect.size() * rect.inverse_scale_factor;

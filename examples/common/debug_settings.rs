@@ -135,17 +135,12 @@ fn debug_settings_dialog(
             ui.horizontal(|ui| {
                 // Reset asks first, via a popup anchored to the button: outside
                 // clicks dismiss it, the two buttons close it in code.
-                let reset = ui
-                    .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
-                    .variant(ButtonVariant::Outline);
-                if reset.clicked {
-                    *reset_confirm_open = !*reset_confirm_open;
-                }
-                let anchor = reset.entity;
                 let (mut do_reset, mut keep) = (false, false);
-                ui.popup(&mut reset_confirm_open)
-                    .under()
-                    .show(anchor, |ui| {
+                ui.icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
+                    .variant(ButtonVariant::Outline)
+                    .popup(&mut reset_confirm_open)
+                    .toggle_on_click()
+                    .show(|ui| {
                         ui.caption("Reset all settings to defaults?").no_wrap();
                         ui.horizontal(|ui| {
                             do_reset = ui.button("Reset").primary().clicked;
