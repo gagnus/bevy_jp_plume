@@ -43,7 +43,7 @@ use crate::{
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
 /// response typed to its kind, so kind-specific builders are compile-checked
-/// (`ui.button(…).step(…)` doesn't exist). [`Any`] is the default for widgets
+/// (`ui.button(…).step(…)` doesn't exist). [`kind::Any`] is the default for widgets
 /// with only the universal builders.
 pub mod kind {
     /// Kinds whose value is a stepped/rounded number: slider, number input.

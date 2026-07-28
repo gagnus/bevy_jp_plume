@@ -1,4 +1,4 @@
-//! Immediate-mode API: write plain systems taking [`PlumeUi`] and call widgets on
+//! Immediate-mode API: write plain systems taking [`Ui`] and call widgets on
 //! it (`if ui.slider(&mut v, 0.0..=1.0).changed { … }`); a reconciler maps the
 //! calls onto retained plume scenes.
 mod caps;

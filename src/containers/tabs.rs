@@ -45,7 +45,7 @@ const INDICATOR_BASE_WIDTH: f32 = 100.0;
 /// Each tab names the body entity it shows, so the two lists are linked by name
 /// rather than by position:
 ///
-/// ```ignore
+/// ```text
 /// bsn! {
 ///     @PlumeTabs {
 ///         @header: {Box::new(bsn_list![

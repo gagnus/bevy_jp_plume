@@ -418,8 +418,7 @@ pub const SEPARATOR: ThemeToken = ThemeToken::new_static("plume.separator");
 pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("plume.focus-ring");
 
 /// State groups over the constants above, for
-/// [`InteractionTokens::pick`](crate::theme::InteractionTokens::pick) and
-/// [`CheckedTokens::pick`](crate::theme::CheckedTokens::pick).
+/// [`InteractionTokens::pick`] and [`CheckedTokens::pick`].
 pub mod sets {
     use super::{CheckedTokens, InteractionTokens};
 

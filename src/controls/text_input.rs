@@ -45,7 +45,7 @@ const TEXT_INPUT_PAD_X: Val = match size::GAP.try_sub(size::CONTAINER_BORDER) {
 };
 
 /// A single-line text input: a themed frame (background, border, focus ring, sizing) wrapping an
-/// inner editable [`TextInputField`] and an optional suffix label.
+/// inner editable field and an optional suffix label.
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional [`PlumeTextInputProps`].
 #[derive(SceneComponent, Default, Clone)]

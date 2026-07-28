@@ -44,8 +44,8 @@ use super::{
     kind,
 };
 
-/// Widget calls for immediate-mode systems. Implemented by [`Ui`] (and therefore
-/// available on [`super::PlumeUi`]); import it wherever imm systems are written.
+/// Widget calls for immediate-mode systems. Implemented by [`Ui`]; import it
+/// wherever imm systems are written.
 pub trait PlumeImm<'w, 's> {
     /// Themed text in the current container's font and color. The response's
     /// `clicked`/`changed` are always false (text has no activation behavior);

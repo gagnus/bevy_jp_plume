@@ -166,7 +166,7 @@ pub enum ThemeSlot {
     /// Blue axis (reserved for axis-colored widgets).
     ZAxis,
 
-    /// Always [`Color::NONE`]; for tokens that paint nothing.
+    /// Always [`Color::NONE`](bevy::color::Color::NONE); for tokens that paint nothing.
     /// - `BUTTON_BORDER_NONE`
     /// - `BUTTON_OUTLINE_BG`
     /// - `BUTTON_OUTLINE_BG_DISABLED`
@@ -191,7 +191,7 @@ pub enum ThemeSlot {
 }
 
 impl ThemeSlot {
-    /// Every slot, in discriminant order (matches [`ThemeResolvedPalette`] storage).
+    /// Every slot, in discriminant order (matches [`super::ThemeResolvedPalette`] storage).
     pub const ALL: [ThemeSlot; 21] = [
         ThemeSlot::Neutral0,
         ThemeSlot::Neutral1,
@@ -216,7 +216,7 @@ impl ThemeSlot {
         ThemeSlot::Transparent,
     ];
 
-    /// Number of slots — the backing size of [`ThemeResolvedPalette`].
+    /// Number of slots — the backing size of [`super::ThemeResolvedPalette`].
     pub const COUNT: usize = Self::ALL.len();
 
     /// Human-readable name, for editor UI / pickers.
