@@ -410,7 +410,7 @@ fn open_select_popup(
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
-                @placement: {PopupPlacement::Below(socket)},
+                @placement: {PopupPlacement::Below},
                 @dismiss: PopupDismiss::FocusOut,
                 @padding: {UiRect::axes(Val::ZERO, size::GAP_TIGHT)},
                 @contents: bsn_list!((

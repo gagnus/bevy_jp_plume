@@ -123,7 +123,7 @@ fn on_swatch_click(
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
-                @placement: {PopupPlacement::Beside(socket)},
+                @placement: {PopupPlacement::Beside},
                 @dismiss: PopupDismiss::OutsideClick,
                 @movable: true,
                 @contents: bsn_list!(

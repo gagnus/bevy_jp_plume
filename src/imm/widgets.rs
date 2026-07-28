@@ -23,9 +23,9 @@ use crate::{
     constants::{FaIcon, size},
     containers::{
         CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-        PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket, row, screen,
-        scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body, section_frame,
-        separator, space, tab_body, tab_button, tab_strip, tabs_frame,
+        PopupAnchor, PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket,
+        row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body,
+        section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -586,7 +586,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             ui: self,
             caller: Location::caller(),
             open,
-            placement: PopupPlacement::Center,
+            placement: PopupPlacement::default(),
             movable: false,
             close_on_click_outside: true,
         }
@@ -1102,17 +1102,16 @@ pub struct ImmPopup<'a, 'w, 's> {
 }
 
 impl<'w, 's> ImmPopup<'_, 'w, 's> {
-    /// Open below `anchor` (an earlier widget's [`ImmResponse`] `entity`),
-    /// start-aligned, flipping above when out of room.
-    pub fn under(mut self, anchor: Entity) -> Self {
-        self.placement = PopupPlacement::Below(anchor);
+    /// Open below the anchor, start-aligned, flipping above when out of room.
+    pub fn under(mut self) -> Self {
+        self.placement = PopupPlacement::Below;
         self
     }
 
-    /// Open beside `anchor` (an earlier widget's [`ImmResponse`] `entity`),
-    /// centered, trying right, left, above, below in that order.
-    pub fn beside(mut self, anchor: Entity) -> Self {
-        self.placement = PopupPlacement::Beside(anchor);
+    /// Open beside the anchor, centered, trying right, left, above, below in
+    /// that order.
+    pub fn beside(mut self) -> Self {
+        self.placement = PopupPlacement::Beside;
         self
     }
 
@@ -1129,9 +1128,9 @@ impl<'w, 's> ImmPopup<'_, 'w, 's> {
         self
     }
 
-    /// Build the popup and its body. While `*open` the popup exists and `f` fills
-    /// it; an outside click (when enabled) writes back through `open`.
-    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) {
+    /// Build the popup and its body over `anchor` (an earlier widget's
+    /// [`ImmResponse`] `entity`); an outside click writes back through `open`.
+    pub fn show(self, anchor: Entity, f: impl FnOnce(&mut Ui<'w, 's>)) {
         if !*self.open {
             return;
         }
@@ -1145,10 +1144,11 @@ impl<'w, 's> ImmPopup<'_, 'w, 's> {
         self.ui
             .ch_loc(id)
             .on_spawn_apply_scene(popup_socket)
+            .on_spawn_insert(move || PopupAnchor(anchor))
             .add(|ui| {
-                let mut popup = ui
-                    .ch_id("popup")
-                    .on_spawn_apply_scene(move || imm_popup_scene(placement, dismiss, movable));
+                let mut popup = ui.ch_id("popup").on_spawn_apply_scene(move || {
+                    imm_popup_scene(anchor, placement, dismiss, movable)
+                });
                 if popup.close_requested() {
                     closed = true;
                     popup.entity_commands().despawn();
@@ -1162,20 +1162,19 @@ impl<'w, 's> ImmPopup<'_, 'w, 's> {
     }
 }
 
-fn imm_popup_scene(placement: PopupPlacement, dismiss: PopupDismiss, movable: bool) -> impl Scene {
-    // An anchored popup scopes its outside-press dismissal to the anchor; an
-    // anchorless one only to itself.
-    let scope = match placement {
-        PopupPlacement::Below(anchor) | PopupPlacement::Beside(anchor) => Some(anchor),
-        PopupPlacement::Center => None,
-    };
+fn imm_popup_scene(
+    anchor: Entity,
+    placement: PopupPlacement,
+    dismiss: PopupDismiss,
+    movable: bool,
+) -> impl Scene {
     bsn! {
         @PlumePopup {
             @placement: {placement},
             @dismiss: {dismiss},
             @movable: {movable},
         }
-        template_value(DismissScope(scope))
+        template_value(DismissScope(anchor))
     }
 }
 

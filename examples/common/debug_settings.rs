@@ -143,13 +143,15 @@ fn debug_settings_dialog(
                 }
                 let anchor = reset.entity;
                 let (mut do_reset, mut keep) = (false, false);
-                ui.popup(&mut reset_confirm_open).under(anchor).show(|ui| {
-                    ui.caption("Reset all settings to defaults?");
-                    ui.horizontal(|ui| {
-                        do_reset = ui.button("Reset").primary().clicked;
-                        keep = ui.button("Keep").variant(ButtonVariant::Outline).clicked;
+                ui.popup(&mut reset_confirm_open)
+                    .under()
+                    .show(anchor, |ui| {
+                        ui.caption("Reset all settings to defaults?").no_wrap();
+                        ui.horizontal(|ui| {
+                            do_reset = ui.button("Reset").primary().clicked;
+                            keep = ui.button("Keep").variant(ButtonVariant::Outline).clicked;
+                        });
                     });
-                });
                 if do_reset {
                     s = DebugSettings::default();
                 }

@@ -1,6 +1,6 @@
 //! Shared popup panel: the floating chrome a control anchors over the UI,
 //! plus the socket that mounts it without disturbing ancestor layout.
-use bevy::app::{Last, Plugin, Update};
+use bevy::app::{Last, Plugin, PostUpdate, Update};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::{
     component::Component,
@@ -9,6 +9,7 @@ use bevy::ecs::{
     observer::On,
     query::{Has, With},
     reflect::ReflectComponent,
+    schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res},
 };
 use bevy::input::{ButtonInput, keyboard::KeyCode};
@@ -21,8 +22,8 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::text::FontWeight;
 use bevy::ui::{
-    AlignItems, Display, FlexDirection, GlobalZIndex, JustifyContent, Node, Overflow, OverrideClip,
-    PositionType, UiRect, UiTransform, Val, Val2,
+    AlignItems, ComputedNode, Display, FixedNode, FlexDirection, GlobalZIndex, JustifyContent,
+    Node, OverrideClip, PositionType, UiGlobalTransform, UiRect, UiSystems, UiTransform, Val, Val2,
 };
 use bevy::ui_widgets::{
     MenuPopup,
@@ -43,35 +44,55 @@ use crate::utils::hierarchy::nearest_with;
 #[reflect(Component, Default)]
 pub(crate) struct PopupSocket;
 
-// Mount point for a control's popup: overlays the control exactly, so a popup
-// spawned into it `Popover`-anchors to the same rect. Clipped because taffy
-// counts absolute children in `content_size` — an unclipped open popup would
-// inflate every ancestor scroll range (it escapes visually via `OverrideClip`).
+// The rect a socket overlays, when it is not the socket's own parent.
+#[derive(Component, Clone, Copy)]
+pub(crate) struct PopupAnchor(pub Entity);
+
+// Mount point for a control's popup: overlays the anchor exactly, so a popup
+// spawned into it `Popover`-anchors to the same rect. `FixedNode` makes it a
+// layout root — it neither inherits ancestor layout and clipping nor, as an
+// absolute child would, inflates their `content_size` and scroll range.
 pub(crate) fn popup_socket() -> impl Scene {
     bsn! {
-        Node {
-            position_type: PositionType::Absolute,
-            left: Val::ZERO,
-            right: Val::ZERO,
-            top: Val::ZERO,
-            bottom: Val::ZERO,
-            overflow: Overflow::clip(),
-        }
+        Node { position_type: PositionType::Absolute }
+        FixedNode
         Pickable::IGNORE
         PopupSocket
     }
 }
 
-// Where a popup opens: anchored to an entity, or centered without one.
+// Holds every socket over its anchor. A `FixedNode`'s inset is viewport-relative,
+// so the anchor's global rect goes straight in. It trails the anchor by a frame:
+// the rect is the one the last layout produced.
+fn track_popup_anchors(
+    mut q_sockets: Query<(&mut Node, Option<&PopupAnchor>, &ChildOf), With<PopupSocket>>,
+    q_rects: Query<(&ComputedNode, &UiGlobalTransform)>,
+) {
+    for (mut node, anchor, socket_parent) in q_sockets.iter_mut() {
+        let anchor = anchor.map_or(socket_parent.parent(), |anchor| anchor.0);
+        let Ok((rect, transform)) = q_rects.get(anchor) else {
+            continue;
+        };
+        let size = rect.size() * rect.inverse_scale_factor;
+        let top_left = transform.translation * rect.inverse_scale_factor - 0.5 * size;
+        let (left, top) = (Val::Px(top_left.x), Val::Px(top_left.y));
+        let (width, height) = (Val::Px(size.x), Val::Px(size.y));
+        // Read through the immutable deref first: writing unconditionally would
+        // dirty layout every frame.
+        if (node.left, node.top, node.width, node.height) != (left, top, width, height) {
+            (node.left, node.top, node.width, node.height) = (left, top, width, height);
+        }
+    }
+}
+
+// Where a popup opens relative to its anchor.
 #[derive(Default, Clone, Copy, PartialEq)]
 pub(crate) enum PopupPlacement {
-    // Below the entity, start-aligned; flips above when out of room.
-    Below(Entity),
-    // Beside the entity, center-aligned; tries right, left, above, below.
-    Beside(Entity),
-    // No anchor: centered in the window.
+    // Below the anchor, start-aligned; flips above when out of room.
     #[default]
-    Center,
+    Below,
+    // Beside the anchor, center-aligned; tries right, left, above, below.
+    Beside,
 }
 
 // What requests a popup's close besides code.
@@ -99,7 +120,7 @@ pub(crate) struct PlumePopup;
 pub(crate) struct PlumePopupProps {
     // Body content of the popup.
     pub contents: Box<dyn SceneList>,
-    // Where the popup opens relative to its anchor.
+    // Where the popup opens relative to its socket.
     pub placement: PopupPlacement,
     // What closes the popup besides code.
     pub dismiss: PopupDismiss,
@@ -121,11 +142,10 @@ impl Default for PlumePopupProps {
     }
 }
 
-// Outside-press dismissal scope for an imm popup: presses on `Some(anchor)` (or
-// only inside the popup itself, for `None`) don't dismiss. Retained popups omit
-// this and scope to the socket's parent — their control root.
+// Outside-press dismissal scope for an imm popup: presses on the anchor don't
+// dismiss. Retained popups omit this and scope to their control root instead.
 #[derive(Component, Clone, Copy)]
-pub(crate) struct DismissScope(pub Option<Entity>);
+pub(crate) struct DismissScope(pub Entity);
 
 // Marker for popups dismissed by a press outside their anchor control.
 #[derive(Component, Default, Clone, Reflect)]
@@ -172,43 +192,35 @@ impl PlumePopup {
     }
 }
 
-// Auto-placement candidates for a [`PopupPlacement`].
+// Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
+// measures them against the popup's parent — the socket, i.e. the anchor rect.
 fn popover_for(placement: PopupPlacement) -> Popover {
-    let popover = |positions, anchor| Popover {
+    let popover = |positions| Popover {
         positions,
         window_margin: 10.0,
-        anchor,
     };
     match placement {
-        PopupPlacement::Below(anchor) => {
+        PopupPlacement::Below => {
             let below = |side| PopoverPlacement {
                 side,
                 align: PopoverAlign::Start,
                 gap: 2.0,
             };
-            popover(
-                vec![below(PopoverSide::Bottom), below(PopoverSide::Top)],
-                Some(anchor),
-            )
+            popover(vec![below(PopoverSide::Bottom), below(PopoverSide::Top)])
         }
-        PopupPlacement::Beside(anchor) => {
+        PopupPlacement::Beside => {
             let beside = |side| PopoverPlacement {
                 side,
                 align: PopoverAlign::Center,
                 gap: 8.0,
             };
-            popover(
-                vec![
-                    beside(PopoverSide::Right),
-                    beside(PopoverSide::Left),
-                    beside(PopoverSide::Top),
-                    beside(PopoverSide::Bottom),
-                ],
-                Some(anchor),
-            )
+            popover(vec![
+                beside(PopoverSide::Right),
+                beside(PopoverSide::Left),
+                beside(PopoverSide::Top),
+                beside(PopoverSide::Bottom),
+            ])
         }
-        // An empty position list centers the popover in the window.
-        PopupPlacement::Center => popover(Vec::new(), None),
     }
 }
 
@@ -280,15 +292,15 @@ fn on_dismiss_outside_press(
     }
     for (popup, dismiss_scope) in q_popups.iter() {
         let scope = match dismiss_scope {
-            Some(scope) => scope.0,
+            Some(scope) => Some(scope.0),
             None => q_childof
                 .get(popup)
                 .ok()
                 .and_then(|socket| q_childof.get(socket.parent()).ok())
                 .map(|control| control.parent()),
         };
-        // Inside = on the anchor scope or in the popup itself (an anchored popup
-        // is not a descendant of its scope, so the popup needs its own check).
+        // Inside = on the anchor scope or in the popup itself (an imm popup is
+        // not a descendant of its anchor, so it needs its own check).
         let inside = scope.into_iter().chain([popup]).any(|root| {
             click.entity == root
                 || q_childof
@@ -322,13 +334,17 @@ fn close_popups_on_escape(
     }
 }
 
-// Registers popup dismissal (outside press, Escape) and the end-of-frame despawn.
+// Registers socket anchor tracking, popup dismissal (outside press, Escape) and
+// the end-of-frame despawn.
 pub(crate) struct PopupPlugin;
 
 impl Plugin for PopupPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_observer(on_dismiss_outside_press)
             .add_systems(Update, close_popups_on_escape)
+            // Ahead of layout, so `Popover` places the popup against a socket
+            // this frame's layout has already moved onto the anchor.
+            .add_systems(PostUpdate, track_popup_anchors.in_set(UiSystems::Prepare))
             .add_systems(Last, despawn_closing_popups);
     }
 }
