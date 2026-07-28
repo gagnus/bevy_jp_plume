@@ -92,7 +92,8 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>, theme: Res<U
         })
         .align_items(AlignItems::Stretch);
         ui.flex_spacer();
-    });
+    })
+    .background(theme.palette[ThemeSlot::Neutral0]);
     state.set_if_neq(s);
 }
 

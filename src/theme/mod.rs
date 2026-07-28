@@ -41,13 +41,23 @@ pub struct UiTheme {
     pub tokens: HashMap<ThemeToken, ThemeSlot>,
     /// The resolved color of every slot.
     pub palette: ThemeResolvedPalette,
+    /// Stored in case an editor wants to see values
+    /// used to generate the resolved palette...
+    pub generated_from: ThemeEditablePalette,
 }
 
 impl Default for UiTheme {
     fn default() -> Self {
+        dark_theme::default_dark_palette().into()
+    }
+}
+
+impl From<ThemeEditablePalette> for UiTheme {
+    fn from(value: ThemeEditablePalette) -> Self {
         Self {
             tokens: slots::DEFAULT_TOKEN_SLOTS.iter().cloned().collect(),
-            palette: dark_theme::default_dark_palette().resolve(),
+            palette: value.resolve(),
+            generated_from: value,
         }
     }
 }
@@ -415,7 +425,7 @@ impl core::ops::Index<ThemeSlot> for ThemeResolvedPalette {
 }
 
 /// Represents a set of [`Oklcha`] colors which have same hue and chroma but different lightnesses
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Reflect)]
 pub struct OklchaArray<const N: usize> {
     /// Hue of the colors
     pub hue: f32,
@@ -436,7 +446,7 @@ impl<const N: usize> OklchaArray<N> {
 
 /// The theme's parametric palette.
 /// Call [`Self::resolve`] to bake it into a [`ThemeResolvedPalette`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Reflect)]
 pub struct ThemeEditablePalette {
     /// Neutral ramp; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
     pub neutrals: OklchaArray<7>,

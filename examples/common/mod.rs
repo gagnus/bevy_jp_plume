@@ -75,9 +75,7 @@ pub fn apply_args(app: &mut App, default_gallery: bool) {
     }
 
     if args.light {
-        let mut theme = UiTheme::default();
-        theme.set_palette(&light_theme::default_light_palette());
-        app.insert_resource(theme);
+        app.insert_resource(UiTheme::from(light_theme::default_light_palette()));
     }
 
     if let Some(path) = args.screenshot {
