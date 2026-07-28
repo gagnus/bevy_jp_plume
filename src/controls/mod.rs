@@ -16,30 +16,51 @@ mod text_input;
 mod toggle_switch;
 mod xy_pad;
 
-pub use button::*;
-pub use checkbox::*;
-pub use color_edit::*;
-pub use color_picker::*;
-pub use color_swatch::*;
+pub use button::{ButtonVariant, PlumeButton, PlumeButtonProps, PlumeToolButton};
+pub use checkbox::{PlumeCheckbox, PlumeCheckboxProps};
+pub use color_edit::{PlumeColorEdit, PlumeColorEditProps};
+pub use color_picker::{ColorPickerValue, PlumeColorPicker, PlumeColorPickerProps};
+pub use color_swatch::{ColorSwatchValue, PlumeColorSwatch};
 pub use default_width::DefaultWidth;
-pub use disclosure::*;
-pub use number_input::*;
-pub use radio::*;
-pub use scrollbar::*;
-pub use select::*;
-pub use slider::*;
-pub use text_input::*;
-pub use toggle_switch::*;
-pub use xy_pad::*;
+pub use disclosure::PlumeDisclosure;
+pub use number_input::{PlumeNumberInput, PlumeNumberInputProps};
+pub use radio::{PlumeRadio, PlumeRadioGroup, PlumeRadioProps};
+pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter};
+pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, SetSelectedIndex, select_options};
+pub use slider::{PlumeSlider, PlumeSliderProps};
+pub use text_input::{PlumeTextInput, PlumeTextInputProps, SetTextInputValue, TextInputValue};
+pub use toggle_switch::PlumeToggleSwitch;
+pub use xy_pad::{PlumeXyPad, PlumeXyPadProps, XyPadDragging, XyPadLock, XyPadValue};
+
+pub(crate) use button::ButtonOutline;
+pub(crate) use select::set_select_max_visible;
+pub(crate) use text_input::{
+    TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_placeholder,
+    text_input_suffix,
+};
 
 // Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
 pub use bevy::text::EditableTextFilter;
 
 use bevy::app::Plugin;
+use button::ButtonPlugin;
+use checkbox::CheckboxPlugin;
+use color_edit::ColorEditPlugin;
+use color_picker::ColorPickerPlugin;
+use color_swatch::ColorSwatchPlugin;
 use default_width::DefaultWidthPlugin;
+use disclosure::DisclosurePlugin;
+use number_input::NumberInputPlugin;
+use radio::RadioPlugin;
+use scrollbar::ScrollbarPlugin;
+use select::SelectPlugin;
+use slider::SliderPlugin;
+use text_input::TextInputPlugin;
+use toggle_switch::ToggleSwitchPlugin;
+use xy_pad::XyPadPlugin;
 
 /// Plugin which registers all controls.
-pub struct ControlsPlugin;
+pub(crate) struct ControlsPlugin;
 
 impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut bevy::app::App) {

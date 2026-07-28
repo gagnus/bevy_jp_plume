@@ -1,12 +1,7 @@
 //! Demonstrates `ui.tabs`: a value-keyed tab container whose strip animates an
 //! accent underline to the selected tab, showing one tab's body at a time.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    PlumePlugins,
-    constants::font_awesome,
-    controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot},
-};
+use bevy_jp_plume::prelude::*;
 
 #[path = "common/mod.rs"]
 mod common;

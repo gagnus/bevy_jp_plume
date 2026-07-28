@@ -1,11 +1,8 @@
 //! Debug-menu dialog as a self-contained feature plugin: two panes of rendering /
 //! physics / diagnostics / cheats controls, backed by one resource.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    constants::font_awesome,
-    controls::ButtonVariant,
-    imm::{ImmSelect, PlumeImm, PlumeRoot, Ui},
-};
+use bevy_jp_plume::imm::ImmSelect;
+use bevy_jp_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::log_on_change;

@@ -7,7 +7,8 @@
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use bevy_jp_plume::{PlumePlugins, light_theme, theme::UiTheme};
+use bevy_jp_plume::prelude::*;
+use bevy_jp_plume::theme::palettes;
 
 use crate::common::gallery::GalleryPlugin;
 
@@ -75,7 +76,7 @@ pub fn apply_args(app: &mut App, default_gallery: bool) {
     }
 
     if args.light {
-        app.insert_resource(UiTheme::from(light_theme::default_light_palette()));
+        app.insert_resource(UiTheme::from(palettes::default_light_palette()));
     }
 
     if let Some(path) = args.screenshot {

@@ -418,7 +418,7 @@ fn set_button_styles(
 }
 
 /// Plugin which registers the systems for updating the button styles.
-pub struct ButtonPlugin;
+pub(crate) struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut bevy::app::App) {

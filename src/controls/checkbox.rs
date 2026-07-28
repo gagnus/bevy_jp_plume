@@ -381,7 +381,7 @@ fn set_checkbox_styles(
 }
 
 /// Plugin which registers the systems for updating the checkbox styles.
-pub struct CheckboxPlugin;
+pub(crate) struct CheckboxPlugin;
 
 impl Plugin for CheckboxPlugin {
     fn build(&self, app: &mut bevy::app::App) {

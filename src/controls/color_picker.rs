@@ -41,8 +41,10 @@ use crate::tokens;
 const PLANE_SIZE: f32 = 220.0;
 const HUE_BAR_WIDTH: f32 = 20.0;
 
+/// Scene props for [`PlumeColorPicker`].
 #[derive(Default, Clone)]
 pub struct PlumeColorPickerProps {
+    /// Color the picker starts on before the user drags it.
     pub initial_color: Color,
 }
 
@@ -459,7 +461,7 @@ fn hue_gradient() -> Vec<Gradient> {
 }
 
 /// Registers the color-picker sync systems.
-pub struct ColorPickerPlugin;
+pub(crate) struct ColorPickerPlugin;
 
 impl Plugin for ColorPickerPlugin {
     fn build(&self, app: &mut bevy::app::App) {

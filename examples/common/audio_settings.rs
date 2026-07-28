@@ -1,8 +1,7 @@
 //! Audio-settings dialog as a self-contained feature plugin: registers its resource,
 //! its dialog (with the hub), and its live change log.
 use bevy::prelude::*;
-use bevy_jp_plume::constants::font_awesome;
-use bevy_jp_plume::imm::{PlumeImm, PlumeRoot};
+use bevy_jp_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::log_on_change;

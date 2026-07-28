@@ -37,8 +37,10 @@ use crate::utils::hierarchy::{descendant, nearest_with};
 // push that merely echoes the current value doesn't ping-pong across the pair.
 const EPS: f32 = 1.0e-6;
 
+/// Scene props for [`PlumeColorEdit`].
 #[derive(Default, Clone)]
 pub struct PlumeColorEditProps {
+    /// Color the swatch shows before the user edits it.
     pub initial_color: Color,
 }
 
@@ -241,7 +243,7 @@ fn on_popup_close_requested(
 }
 
 /// Registers the color-edit open observer and value-mirror systems.
-pub struct ColorEditPlugin;
+pub(crate) struct ColorEditPlugin;
 
 impl Plugin for ColorEditPlugin {
     fn build(&self, app: &mut bevy::app::App) {

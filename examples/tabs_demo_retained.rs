@@ -1,25 +1,14 @@
 //! Retained (bsn!) twin of the `tabs_demo` example: tabs and bodies spawned once
 //! as one scene and linked by name (`@target: #video`). Every body's widgets stay
 //! alive while hidden, so their state survives switching away and back.
-use bevy::{
-    prelude::*,
-    ui::{Checked, InteractionDisabled, Selected},
-    ui_widgets::SliderValue,
-};
-use bevy_jp_plume::{
-    PlumePlugins, TabGroup,
-    constants::font_awesome,
-    containers::{
-        PlumeTab, PlumeTabs, column, flex_spacer, row, screen, separator, space, tab_body,
-    },
-    controls::{
-        ButtonVariant, ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
-        PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, select_options,
-    },
-    display::{caption, fa_icon},
-    theme::ThemeBackgroundColor,
-    tokens,
+use bevy::prelude::*;
+use bevy_jp_plume::prelude::*;
+use bevy_jp_plume::retained::{
+    Checked, ColorSwatchValue, InteractionDisabled, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
+    PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeSelect, PlumeSlider,
+    PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, Selected, SliderValue,
+    ThemeBackgroundColor, caption, column, fa_icon, flex_spacer, row, screen, select_options,
+    separator, space, tab_body, tokens,
 };
 
 #[path = "common/mod.rs"]
@@ -46,7 +35,6 @@ fn root() -> impl Scene {
         ThemeBackgroundColor(tokens::WINDOW_BG)
         // Tabs are tabbable, so they need a traversal scope; a dialog would bring
         // its own, but this screen-level container has to declare one.
-        TabGroup::default()
         Children [
             caption("Retained tabs — bodies spawned once, shown by name."),
             (

@@ -5,6 +5,7 @@ mod caps;
 mod response;
 mod widgets;
 
+pub use crate::utils::numeric::Numeric;
 pub use response::{ImmResponse, kind};
 pub use widgets::{Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm};
 
@@ -18,43 +19,116 @@ use bevy::ecs::{
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
 use bevy_immediate::{
-    BevyImmediatePlugin, Imm, ImmCtx, ImplCapsEmpty, impl_capability_set,
-    ui::{
-        activated::CapabilityUiActivated, base::CapabilityUiBase, disabled::CapabilityUiDisabled,
-        interaction::CapabilityUiInteraction, layout_order::CapabilityUiLayoutOrder,
-    },
+    BevyImmediatePlugin, Imm, ImmCtx, ImmEntity, ImmId, ImmIdBuilder, ImmScopeGuard,
 };
 
-use caps::{
-    CapabilityPlumeChecked, CapabilityPlumeColor, CapabilityPlumeDialog, CapabilityPlumeIds,
-    CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeValue, PlumeOccurrences,
-};
+use caps::PlumeOccurrences;
 
 /// Capability set powering plume's immediate-mode layer.
+#[doc(hidden)]
 pub struct PlumeCaps;
 
-impl_capability_set!(
-    PlumeCaps,
-    ImplPlumeCaps > ImplCapsEmpty,
-    (
-        CapabilityUiBase,
-        CapabilityUiLayoutOrder,
-        CapabilityUiInteraction,
-        CapabilityUiActivated,
-        CapabilityUiDisabled,
-        CapabilityPlumeValue,
-        CapabilityPlumeChecked,
-        CapabilityPlumeSelect,
-        CapabilityPlumeText,
-        CapabilityPlumeColor,
-        CapabilityPlumeDialog,
-        CapabilityPlumeIds,
-    )
-);
+// `impl_capability_set!` emits a bare `pub trait`, which no attribute can reach;
+// a private module keeps it unnameable. Trait impls are not module-scoped, so
+// `PlumeCaps`' capabilities still apply crate-wide.
+mod cap_set {
+    use bevy_immediate::{
+        ImplCapsEmpty, impl_capability_set,
+        ui::{
+            activated::CapabilityUiActivated, base::CapabilityUiBase,
+            disabled::CapabilityUiDisabled, interaction::CapabilityUiInteraction,
+            layout_order::CapabilityUiLayoutOrder,
+        },
+    };
+
+    use super::PlumeCaps;
+    use super::caps::{
+        CapabilityPlumeChecked, CapabilityPlumeColor, CapabilityPlumeDialog, CapabilityPlumeIds,
+        CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeValue,
+    };
+
+    impl_capability_set!(
+        PlumeCaps,
+        ImplPlumeCaps > ImplCapsEmpty,
+        (
+            CapabilityUiBase,
+            CapabilityUiLayoutOrder,
+            CapabilityUiInteraction,
+            CapabilityUiActivated,
+            CapabilityUiDisabled,
+            CapabilityPlumeValue,
+            CapabilityPlumeChecked,
+            CapabilityPlumeSelect,
+            CapabilityPlumeText,
+            CapabilityPlumeColor,
+            CapabilityPlumeDialog,
+            CapabilityPlumeIds,
+        )
+    );
+}
 
 /// The immediate-mode context handed to container closures; all widget calls
 /// live in [`PlumeImm`].
-pub type Ui<'w, 's> = Imm<'w, 's, PlumeCaps>;
+///
+/// Wraps the reconciler rather than aliasing it, so the vendored `bevy_immediate`
+/// stays a private dependency and its API is not part of plume's.
+#[repr(transparent)]
+pub struct Ui<'w, 's>(pub(crate) Imm<'w, 's, PlumeCaps>);
+
+impl<'w, 's> Ui<'w, 's> {
+    // The reconciler hands closures a `&mut Imm`; `repr(transparent)` makes the
+    // reference cast to the wrapper layout-identical, which is the only reason
+    // container bodies can take a `&mut Ui`.
+    pub(crate) fn wrap_mut<'a>(imm: &'a mut Imm<'w, 's, PlumeCaps>) -> &'a mut Self {
+        // SAFETY: `Ui` is `repr(transparent)` over exactly this type.
+        unsafe { &mut *(imm as *mut Imm<'w, 's, PlumeCaps> as *mut Self) }
+    }
+
+    // The slice of the reconciler plume's own widgets build on. Forwarded rather
+    // than exposed, so none of it reaches an app.
+    pub(crate) fn ch_id<T: core::hash::Hash>(&mut self, id: T) -> ImmEntity<'_, 'w, 's, PlumeCaps> {
+        self.0.ch_id(id)
+    }
+
+    pub(crate) fn ch_with_manual_id(
+        &mut self,
+        id: ImmIdBuilder,
+    ) -> ImmEntity<'_, 'w, 's, PlumeCaps> {
+        self.0.ch_with_manual_id(id)
+    }
+
+    pub(crate) fn current_imm_id(&self) -> ImmId {
+        self.0.current_imm_id()
+    }
+
+    pub(crate) fn ctx_mut(&mut self) -> &mut ImmCtx<'w, 's, PlumeCaps> {
+        self.0.ctx_mut()
+    }
+
+    pub(crate) fn with_add_id_pref(
+        &mut self,
+        id: impl core::hash::Hash,
+    ) -> ImmScopeGuard<'_, 'w, 's, PlumeCaps> {
+        self.0.with_add_id_pref(id)
+    }
+}
+
+// Container bodies take a `&mut Ui`; the reconciler's own `add` hands out a
+// `&mut Imm`.
+pub(crate) trait ImmEntityExt<'w, 's> {
+    fn add_ui(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self;
+    fn unrooted_ui<T: core::hash::Hash>(self, id: T, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self;
+}
+
+impl<'r, 'w, 's> ImmEntityExt<'w, 's> for ImmEntity<'r, 'w, 's, PlumeCaps> {
+    fn add_ui(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+        self.add(|imm| f(Ui::wrap_mut(imm)))
+    }
+
+    fn unrooted_ui<T: core::hash::Hash>(self, id: T, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+        self.unrooted(id, |imm| f(Ui::wrap_mut(imm)))
+    }
+}
 
 /// System param for immediate-mode UI: open a top-level surface —
 /// [`screen`](Self::screen) or [`dialog`](Self::dialog) — to get the [`Ui`] that
@@ -108,6 +182,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
 type CtxStatic = ImmCtx<'static, 'static, PlumeCaps>;
 
 /// State for [`PlumeRoot`]: the inner context state plus a unique per-system root id.
+#[doc(hidden)]
 pub struct PlumeRootState {
     ctx: <CtxStatic as SystemParam>::State,
     root_id: u64,
@@ -174,7 +249,7 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
         {
             occurrences.0.clear();
         }
-        Ok(PlumeRoot { imm })
+        Ok(PlumeRoot { imm: Ui(imm) })
     }
 }
 

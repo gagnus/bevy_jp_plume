@@ -1,19 +1,14 @@
 //! A framework for theming.
 use bevy::app::{
-    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
-    PropagateSet, PropagateStop,
+    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateSet,
 };
-use bevy::color::{Alpha, Color, Luminance, Oklcha, Srgba, palettes};
+use bevy::color::{Alpha, Color, Oklcha};
 use bevy::ecs::query::Or;
 use bevy::ecs::{
     change_detection::DetectChanges,
-    component::Component,
     entity::Entity,
-    hierarchy::ChildOf,
-    lifecycle::Insert,
-    observer::On,
-    query::{Changed, With, Without},
-    reflect::{ReflectComponent, ReflectResource},
+    query::{With, Without},
+    reflect::ReflectResource,
     resource::Resource,
     schedule::IntoScheduleConfigs,
     system::{Commands, Local, Query, Res},
@@ -22,28 +17,19 @@ use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::text::TextColor;
-use bevy::ui::{
-    BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
-    InterpolationColorSpace, LinearGradient, Val, percent,
-};
+use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
 use smol_str::SmolStr;
 
-use crate::constants::size;
 use crate::tokens::ThemeToken;
-use slots::ThemeSlot;
 
 /// The currently selected user interface theme. Overwriting this resource changes the theme.
 #[derive(Resource, Reflect, Debug)]
 #[reflect(Resource, Default, Debug)]
 pub struct UiTheme {
-    /// Which palette slot each design token draws from.
-    pub tokens: HashMap<ThemeToken, ThemeSlot>,
-    /// The resolved color of every slot.
-    pub palette: ThemeResolvedPalette,
-    /// Stored in case an editor wants to see values
-    /// used to generate the resolved palette...
-    pub generated_from: ThemeEditablePalette,
+    tokens: HashMap<ThemeToken, ThemeSlot>,
+    resolved: ThemeResolvedPalette,
+    editable: ThemeEditablePalette,
 }
 
 impl Default for UiTheme {
@@ -56,23 +42,33 @@ impl From<ThemeEditablePalette> for UiTheme {
     fn from(value: ThemeEditablePalette) -> Self {
         Self {
             tokens: slots::DEFAULT_TOKEN_SLOTS.iter().cloned().collect(),
-            palette: value.resolve(),
-            generated_from: value,
+            resolved: value.resolve(),
+            editable: value,
         }
     }
 }
 
 impl UiTheme {
+    /// The resolved color of a palette slot — how an app reads a theme color.
+    pub fn palette(&self, slot: ThemeSlot) -> Color {
+        self.resolved[slot]
+    }
+
+    /// The parametric palette this theme was generated from, for an editor to show.
+    pub fn editable(&self) -> &ThemeEditablePalette {
+        &self.editable
+    }
+
     /// Lookup a color by design token. If the theme does not have an entry for that token,
     /// logs a warning and returns an error color.
     pub fn color(&self, token: &ThemeToken) -> Color {
-        let color = self.tokens.get(token).map(|slot| self.palette[*slot]);
+        let color = self.tokens.get(token).map(|slot| self.resolved[*slot]);
         match color {
             Some(c) => c,
             None => {
                 warn_once!("Theme color {} not found.", token);
                 // Return a bright obnoxious color to make the error obvious.
-                palettes::basic::FUCHSIA.into()
+                bevy::color::palettes::basic::FUCHSIA.into()
             }
         }
     }
@@ -85,138 +81,8 @@ impl UiTheme {
 
     /// Re-resolve every slot color from an editable palette.
     pub fn set_palette(&mut self, palette: &ThemeEditablePalette) {
-        self.palette = palette.resolve();
-    }
-}
-
-/// Component which causes the background color of an entity to be set based on a theme color.
-#[derive(Component, Clone, Default)]
-#[require(BackgroundColor)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub struct ThemeBackgroundColor(pub ThemeToken);
-
-/// Component which causes the background color of an entity to be set based on a theme slot.
-/// Internal use `ThemeBackgroundColor` instead, external prefer this, this takes priority over `ThemeBackgroundColor`.
-#[derive(Component, Clone, Default)]
-#[require(BackgroundColor)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub struct ThemeBackgroundSlot(pub ThemeSlot);
-
-/// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
-pub const GRADIENT_AMOUNT: f32 = 0.05;
-
-/// Opt-in marker: the entity's themed fills render flat (gradient amount 0).
-/// Honored by the gradient-drawn elements (button, checkbox, radio, toggle,
-/// slider thumb, section header); everything else ignores it.
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct Flat;
-
-/// Opt-in marker: the entity does not repond to hover and pressed. Currently only
-/// respected by `PlumeButton`. Implied by [`bevy::ui::Checkable`].
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct Inert;
-
-/// Component which fills an entity's background with a gentle top-to-bottom gradient derived
-/// from a theme color.
-#[derive(Component, Clone, Default)]
-#[require(BackgroundGradient)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub struct ThemeBackgroundGradient(pub ThemeToken, pub f32);
-
-/// Build the vertical gradient a [`ThemeBackgroundGradient`] resolves to.
-fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
-    BackgroundGradient(vec![Gradient::Linear(LinearGradient {
-        angle: LinearGradient::TO_BOTTOM,
-        stops: vec![
-            ColorStop::new(base.lighter(amount), percent(0)),
-            ColorStop::new(base.darker(amount), percent(100)),
-        ],
-        color_space: InterpolationColorSpace::LinearRgba,
-    })])
-}
-
-pub fn control_box_shadow() -> BoxShadow {
-    BoxShadow::new(
-        Srgba::BLACK.with_alpha(0.4).into(),
-        size::GAP / 8.0,
-        size::GAP / 4.0,
-        Val::ZERO,
-        size::GAP / 2.0,
-    )
-}
-
-/// Component which causes the border color of an entity to be set based on a theme color.
-/// Only supports setting all borders to the same color.
-#[derive(Component, Clone, Default)]
-#[require(BorderColor)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub struct ThemeBorderColor(pub ThemeToken);
-
-/// Component which causes the border color of an entity to be set based on a theme slot.
-/// Internal use `ThemeBorderColor` instead, external prefer this, this takes priority over `ThemeBorderColor`.
-#[derive(Component, Clone, Default)]
-#[require(BorderColor)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub struct ThemeBorderSlot(pub ThemeSlot);
-
-/// Component which causes the inherited text color of an entity to be set based on a theme color.
-#[derive(Component, Clone, Default)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
-pub struct InheritableThemeTextColor(pub ThemeToken);
-
-/// Component which causes the color of a text span to be set based on a theme color. Unlike
-/// [`InheritableThemeTextColor`], this can work when set directly on the text span entity, and is
-/// not inherited.
-// TODO: This is necessary because an entity with Propagate doesn't update itself, only its
-// descendants.
-#[derive(Component, Clone, Default)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
-pub struct ThemeTextColor(pub ThemeToken);
-
-/// A marker component that is used to indicate that the text entity wants to opt-in to using
-/// inherited text styles.
-#[derive(Component, Reflect, Default, Clone)]
-#[reflect(Component)]
-pub struct ThemedText;
-
-/// Finish propagating `C` to a child that gained [`ThemedText`] after it was
-/// parented.
-///
-/// Propagation copies `Inherited<C>` onto a new child when its `ChildOf` lands, but
-/// only onto children already matching the `With<ThemedText>` filter. The imm
-/// reconciler parents an entity before its scene applies the marker, so that copy is
-/// missed and the text keeps the engine default font/color; this repeats it from the
-/// other side. Entities whose parent's `Inherited<C>` is itself new are covered by
-/// the ordinary downward pass.
-pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
-    insert: On<Insert, ThemedText>,
-    q_unresolved: Query<&ChildOf, (Without<Propagate<C>>, Without<Inherited<C>>)>,
-    q_inherited: Query<&Inherited<C>, Without<PropagateStop<C>>>,
-    mut commands: Commands,
-) {
-    let Ok(child_of) = q_unresolved.get(insert.entity) else {
-        return;
-    };
-    if let Ok(inherited) = q_inherited.get(child_of.parent()) {
-        commands.entity(insert.entity).insert(inherited.clone());
+        self.resolved = palette.resolve();
+        self.editable = palette.clone();
     }
 }
 
@@ -246,7 +112,7 @@ fn update_theme(
     if theme.is_changed() {
         for (mut bg, theme_bg_token, theme_bg_slot) in q_background.iter_mut() {
             if let Some(theme_bg_slot) = theme_bg_slot {
-                bg.0 = theme.palette[theme_bg_slot.0];
+                bg.0 = theme.palette(theme_bg_slot.0);
             } else if let Some(theme_bg_token) = theme_bg_token {
                 bg.0 = theme.color(&theme_bg_token.0);
             }
@@ -258,7 +124,7 @@ fn update_theme(
 
         for (mut border, theme_border_token, theme_border_slot) in q_border.iter_mut() {
             if let Some(theme_border_slot) = theme_border_slot {
-                border.set_all(theme.palette[theme_border_slot.0]);
+                border.set_all(theme.palette(theme_border_slot.0));
             } else if let Some(theme_border_token) = theme_border_token {
                 border.set_all(theme.color(&theme_border_token.0));
             }
@@ -273,91 +139,6 @@ fn update_theme(
                 .entity(entity)
                 .insert(Propagate(TextColor(theme.color(&inherit.0))));
         }
-    }
-}
-
-fn on_changed_background_token(
-    insert: On<Insert, ThemeBackgroundColor>,
-    mut q_background: Query<
-        (&mut BackgroundColor, &ThemeBackgroundColor),
-        Changed<ThemeBackgroundColor>,
-    >,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
-        bg.0 = theme.color(&theme_bg.0);
-    }
-}
-
-fn on_changed_background_slot(
-    insert: On<Insert, ThemeBackgroundSlot>,
-    mut q_background: Query<
-        (&mut BackgroundColor, &ThemeBackgroundSlot),
-        Changed<ThemeBackgroundSlot>,
-    >,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
-        bg.0 = theme.palette[theme_bg.0];
-    }
-}
-
-fn on_changed_gradient(
-    insert: On<Insert, ThemeBackgroundGradient>,
-    mut q_gradient: Query<
-        (&mut BackgroundGradient, &ThemeBackgroundGradient),
-        Changed<ThemeBackgroundGradient>,
-    >,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut gradient, theme_grad)) = q_gradient.get_mut(insert.entity) {
-        *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
-    }
-}
-
-fn on_changed_border(
-    insert: On<Insert, ThemeBorderColor>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderColor), Changed<ThemeBorderColor>>,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.color(&theme_border.0));
-    }
-}
-
-fn on_changed_border_slot(
-    insert: On<Insert, ThemeBorderSlot>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderSlot), Changed<ThemeBorderSlot>>,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.palette[theme_border.0]);
-    }
-}
-
-fn on_changed_text_color(
-    insert: On<Insert, ThemeTextColor>,
-    mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
-        text_color.0 = theme.color(&theme_text_color.0);
-    }
-}
-
-/// An observer which looks for changes to the [`InheritableThemeTextColor`] component on an entity,
-/// and propagates downward the text color to all participating text entities.
-fn on_changed_font_color(
-    insert: On<Insert, InheritableThemeTextColor>,
-    font_color: Query<&InheritableThemeTextColor>,
-    theme: Res<UiTheme>,
-    mut commands: Commands,
-) {
-    if let Ok(token) = font_color.get(insert.entity) {
-        let color = theme.color(&token.0);
-        commands
-            .entity(insert.entity)
-            .insert(Propagate(TextColor(color)));
     }
 }
 
@@ -390,7 +171,7 @@ fn warn_unstyled_themed_text(
 
 /// Installs the [`UiTheme`] resource, the theme refresh system, the themed
 /// text-color propagation, and the token-change observers.
-pub struct ThemePlugin;
+pub(crate) struct ThemePlugin;
 
 impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
@@ -413,9 +194,9 @@ impl Plugin for ThemePlugin {
     }
 }
 
-/// Fully-resolved colors: one [`Color`] per [`ThemeSlot`], built by [`ThemeEditablePalette::resolve`].
+// One `Color` per `ThemeSlot`, baked from a `ThemeEditablePalette`.
 #[derive(Clone, Debug, Default, Reflect)]
-pub struct ThemeResolvedPalette([Color; ThemeSlot::COUNT]);
+pub(crate) struct ThemeResolvedPalette([Color; ThemeSlot::COUNT]);
 
 impl core::ops::Index<ThemeSlot> for ThemeResolvedPalette {
     type Output = Color;
@@ -445,7 +226,6 @@ impl<const N: usize> OklchaArray<N> {
 }
 
 /// The theme's parametric palette.
-/// Call [`Self::resolve`] to bake it into a [`ThemeResolvedPalette`].
 #[derive(Clone, Debug, PartialEq, Reflect)]
 pub struct ThemeEditablePalette {
     /// Neutral ramp; forms [`ThemeSlot::Neutral0`]..=[`ThemeSlot::Neutral6`].
@@ -470,6 +250,7 @@ pub struct ThemeEditablePalette {
 }
 
 impl ThemeEditablePalette {
+    /// A palette on a random hue, usually dark and sometimes complementary-neutral.
     pub fn random() -> Self {
         let hue = rand::rng().random_range(0.0..360.0);
         let complementary_neutral = rand::rng().random_bool(0.5);
@@ -481,11 +262,11 @@ impl ThemeEditablePalette {
         }
     }
 
-    /// Bake the parametric palette into one resolved color per [`ThemeSlot`].
-    ///
-    /// The `copy_from_slice` blocks below rely on each ramp's variants being
-    /// contiguous and in order within [`ThemeSlot`] (Neutral0..=Neutral6, etc.).
-    pub fn resolve(&self) -> ThemeResolvedPalette {
+    // Bake the parametric palette into one resolved color per `ThemeSlot`.
+    //
+    // The `copy_from_slice` blocks below rely on each ramp's variants being
+    // contiguous and in order within `ThemeSlot` (Neutral0..=Neutral6, etc.).
+    pub(crate) fn resolve(&self) -> ThemeResolvedPalette {
         let neutral = self.neutrals.to_array();
         let accent = self.accent.to_array();
         let text = self.text.to_array();
@@ -505,12 +286,15 @@ impl ThemeEditablePalette {
         ThemeResolvedPalette(c)
     }
 
+    /// Neutral ramp stop `index`.
     pub fn neutral(&self, index: usize) -> Color {
         self.neutrals.to_color(index)
     }
+    /// Accent ramp stop `index`.
     pub fn accent(&self, index: usize) -> Color {
         self.accent.to_color(index)
     }
+    /// Text ramp stop `index`.
     pub fn text(&self, index: usize) -> Color {
         self.text.to_color(index)
     }
@@ -519,6 +303,7 @@ impl ThemeEditablePalette {
         self.text(index)
             .with_alpha(self.disabled_text_alpha_modifier)
     }
+    /// Axis color `index`, in X, Y, Z order.
     pub fn axis(&self, index: usize) -> Color {
         self.axes[index].into()
     }
@@ -544,10 +329,22 @@ pub fn default_axis_colors() -> [Oklcha; 3] {
     ]
 }
 
-pub mod dark_theme;
+pub(crate) mod components;
+
+mod dark_theme;
 mod editor;
-pub mod light_theme;
-pub mod slots;
-pub mod tokens;
+mod light_theme;
+mod slots;
+
+pub(crate) mod tokens;
 
 pub use editor::theme_editor;
+pub use slots::ThemeSlot;
+
+pub(crate) use components::*;
+
+/// The built-in parametric palettes, ready to hand to [`UiTheme::from`].
+pub mod palettes {
+    pub use super::dark_theme::{dark_palette, default_dark_palette};
+    pub use super::light_theme::{default_light_palette, light_palette};
+}

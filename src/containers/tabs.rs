@@ -560,7 +560,7 @@ fn update_tab_indicator(
 }
 
 /// Plugin which registers the tab selection, styling and indicator systems.
-pub struct TabsPlugin;
+pub(crate) struct TabsPlugin;
 
 impl Plugin for TabsPlugin {
     fn build(&self, app: &mut bevy::app::App) {

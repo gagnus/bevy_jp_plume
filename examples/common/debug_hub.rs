@@ -6,11 +6,7 @@ use std::collections::BTreeMap;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::ScheduleSystem;
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    constants::{FaIcon, font_awesome},
-    controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot},
-};
+use bevy_jp_plume::prelude::*;
 
 /// Open/closed state for every registered dialog, keyed by title.
 #[derive(Resource, Default)]

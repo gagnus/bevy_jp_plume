@@ -117,7 +117,7 @@ pub(crate) fn update_cursor(
 }
 
 /// Plugin that supports automatically changing the cursor based on the hovered entity.
-pub struct CursorIconPlugin;
+pub(crate) struct CursorIconPlugin;
 
 impl Plugin for CursorIconPlugin {
     fn build(&self, app: &mut App) {

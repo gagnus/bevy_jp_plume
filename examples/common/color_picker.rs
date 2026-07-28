@@ -3,7 +3,7 @@
 //! HSV working-truth, so the app only holds a plain `Color`.
 use bevy::color::Color;
 use bevy::prelude::*;
-use bevy_jp_plume::imm::{PlumeImm, PlumeRoot};
+use bevy_jp_plume::prelude::*;
 
 use super::log_on_change;
 

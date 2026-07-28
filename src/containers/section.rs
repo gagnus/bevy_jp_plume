@@ -325,7 +325,7 @@ fn update_section_header_style(
 }
 
 /// Plugin which registers the section collapse systems.
-pub struct SectionPlugin;
+pub(crate) struct SectionPlugin;
 
 impl Plugin for SectionPlugin {
     fn build(&self, app: &mut bevy::app::App) {

@@ -1,18 +1,12 @@
 //! Retained (bsn!) twin of the `debug_settings` example: the same debug panel built
 //! from Plume's retained components. Nothing here is wired to anything — it audits
 //! how the default-styled components read as a realistic composition.
-use bevy::{prelude::*, ui::Checked, ui_widgets::SliderValue};
-use bevy_jp_plume::{
-    PlumePlugins,
-    constants::font_awesome,
-    containers::{PlumeDialog, PlumeSection, column, flex_spacer, row, separator},
-    controls::{
-        ButtonVariant, PlumeButton, PlumeCheckbox, PlumeNumberInput, PlumeSelect, PlumeSlider,
-        PlumeToggleSwitch, select_options,
-    },
-    display::{caption, caption_small_caps, fa_icon},
-    theme::ThemeBackgroundColor,
-    tokens,
+use bevy::prelude::*;
+use bevy_jp_plume::prelude::*;
+use bevy_jp_plume::retained::{
+    Checked, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeNumberInput, PlumeSection, PlumeSelect,
+    PlumeSlider, PlumeToggleSwitch, SliderValue, ThemeBackgroundColor, caption, caption_small_caps,
+    column, fa_icon, flex_spacer, row, select_options, separator, tokens,
 };
 
 #[path = "common/mod.rs"]

@@ -278,7 +278,7 @@ fn update_number_input_text(
 }
 
 /// Plugin which keeps the number input's text in sync with its value.
-pub struct NumberInputPlugin;
+pub(crate) struct NumberInputPlugin;
 
 impl Plugin for NumberInputPlugin {
     fn build(&self, app: &mut bevy::app::App) {

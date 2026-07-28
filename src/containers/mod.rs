@@ -11,14 +11,20 @@ mod separator;
 mod space;
 mod tabs;
 
-pub use column::*;
-pub use dialog::*;
-pub use flex_spacer::*;
+pub use column::column;
+pub use dialog::{
+    PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
+};
+pub use flex_spacer::flex_spacer;
+pub use row::row;
+pub use screen::screen;
+pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
+pub use separator::separator;
+pub use space::space;
+pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body};
+
+pub(crate) use dialog::{CloseRequested, DialogChrome, DialogHeader, dialog_frame};
 pub(crate) use popup::*;
-pub use row::*;
-pub use screen::*;
 pub(crate) use scroll_area::*;
-pub use section::*;
-pub use separator::*;
-pub use space::*;
-pub use tabs::*;
+pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
+pub(crate) use tabs::{TabsPlugin, tab_button, tab_strip, tabs_frame};

@@ -44,5 +44,3 @@ argh = "0.1.13"
 [features]
 default = []
 custom_cursor = ["bevy/custom_cursor"]
-webgl = []
-webgpu = []

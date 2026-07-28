@@ -37,7 +37,7 @@ use crate::{
 };
 
 use super::{
-    ImmResponse, PlumeCaps, Ui,
+    ImmEntityExt, ImmResponse, PlumeCaps, Ui,
     caps::{
         ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText,
         ImmPlumeValue, PlumeOccurrences,
@@ -416,7 +416,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(|| {
                 bsn! { @PlumeButton Node { justify_content: JustifyContent::Start } }
             })
-            .add(f);
+            .add_ui(f);
         respond(entity, false)
     }
 
@@ -628,7 +628,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Row> {
-        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(row).add(f);
+        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(row).add_ui(f);
         respond(entity, false)
     }
 
@@ -637,13 +637,19 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Column> {
-        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(column).add(f);
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(column)
+            .add_ui(f);
         respond(entity, false)
     }
 
     #[track_caller]
     fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen> {
-        let entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(screen).add(f);
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(screen)
+            .add_ui(f);
         respond(entity, false)
     }
 
@@ -665,10 +671,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                     )
                 }
             })
-            .add(|ui| {
+            .add_ui(|ui| {
                 ui.ch_id("section_body")
                     .on_spawn_apply_scene(section_body)
-                    .add(f);
+                    .add_ui(f);
             });
         respond(entity, false)
     }
@@ -717,10 +723,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             }
         }
 
-        let entity = entity.add(move |ui| {
+        let entity = entity.add_ui(move |ui| {
             ui.ch_id("tab_strip")
                 .on_spawn_apply_scene(tab_strip)
-                .add(move |ui| {
+                .add_ui(move |ui| {
                     for (slot, (label, icon, enabled)) in strip_items.into_iter().enumerate() {
                         // The label and glyph key the tab: a renamed tab respawns
                         // rather than keeping the old caption at the same slot.
@@ -731,7 +737,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 });
             let body = ui.ch_id("tab_body").on_spawn_apply_scene(tab_body);
             if let Some(selected_body) = selected_body {
-                body.add(selected_body);
+                body.add_ui(selected_body);
             }
         });
         respond(entity, changed)
@@ -745,16 +751,16 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(scroll_frame)
-            .add(move |ui| {
+            .add_ui(move |ui| {
                 // The viewport's entity is known before its spawn command flushes,
                 // so the scrollbar can point at the viewport it drives.
                 let viewport = ui
                     .ch_id("scroll_area")
                     .on_spawn_apply_scene(scroll_viewport)
-                    .add(move |ui| {
+                    .add_ui(move |ui| {
                         ui.ch_id("scroll_content")
                             .on_spawn_apply_scene(scroll_content)
-                            .add(f);
+                            .add_ui(f);
                     })
                     .entity();
                 ui.ch_id("scrollbar")
@@ -770,7 +776,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R {
         let mut scope = self.with_add_id_pref(id);
-        f(&mut scope)
+        f(Ui::wrap_mut(&mut scope))
     }
 }
 
@@ -1003,10 +1009,14 @@ impl DialogLayout {
 /// Viewport corner a panel pins to, via [`ImmPanel::at_corner`].
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Corner {
+    /// Top-left.
     #[default]
     TopLeft,
+    /// Top-right.
     TopRight,
+    /// Bottom-left.
     BottomLeft,
+    /// Bottom-right.
     BottomRight,
 }
 
@@ -1167,11 +1177,11 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
         // anchor's clicks and hold it highlighted. The socket carries the anchor
         // as [`PopupAnchor`] instead — it has no parent to fall back on. Ids stay
         // unique per anchor, since the scope hangs off the anchor's own id.
-        anchor.e = anchor.e.unrooted(caller, |ui| {
+        anchor.e = anchor.e.unrooted_ui(caller, |ui| {
             ui.ch_id("socket")
                 .on_spawn_apply_scene(popup_socket)
                 .on_spawn_insert(move || PopupAnchor(anchor_entity))
-                .add(|ui| {
+                .add_ui(|ui| {
                     let mut popup = ui.ch_id("popup").on_spawn_apply_scene(move || {
                         imm_popup_scene(anchor_entity, placement, dismiss, movable)
                     });
@@ -1179,7 +1189,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
                         closed = true;
                         popup.entity_commands().despawn();
                     } else {
-                        popup.add(f);
+                        popup.add_ui(f);
                     }
                 });
         });
@@ -1231,27 +1241,27 @@ fn reconcile_frame_body<'e, 'w, 's>(
             });
     }
     let scrolls = layout.scrolls();
-    let entity = entity.add(move |ui| {
+    let entity = entity.add_ui(move |ui| {
         let body = ui
             .ch_id("dialog_body")
             .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody { @padding: {layout.body_padding} } });
         if !scrolls {
-            body.add(f);
+            body.add_ui(f);
             return;
         }
-        body.add(move |ui| {
+        body.add_ui(move |ui| {
             ui.ch_id("scroll_frame")
                 .on_spawn_apply_scene(scroll_frame)
-                .add(move |ui| {
+                .add_ui(move |ui| {
                     // The scroll area's entity is known before its spawn command
                     // flushes, so the scrollbar can point at the viewport it drives.
                     let viewport = ui
                         .ch_id("scroll_area")
                         .on_spawn_apply_scene(scroll_viewport)
-                        .add(move |ui| {
+                        .add_ui(move |ui| {
                             ui.ch_id("scroll_content")
                                 .on_spawn_apply_scene(scroll_content)
-                                .add(f);
+                                .add_ui(f);
                         })
                         .entity();
                     ui.ch_id("scrollbar")

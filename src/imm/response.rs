@@ -37,9 +37,7 @@ use crate::{
         text_input_suffix,
     },
     rounded_corners::RoundedCorners,
-    theme::{
-        Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, control_box_shadow, slots::ThemeSlot,
-    },
+    theme::{Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, ThemeSlot, control_box_shadow},
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a

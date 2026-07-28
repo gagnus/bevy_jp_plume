@@ -5,6 +5,7 @@
 
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
+#![warn(missing_docs)]
 
 extern crate alloc;
 
@@ -18,27 +19,31 @@ use bevy::ui::UiSystems;
 
 use crate::{
     controls::ControlsPlugin,
-    cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
     theme::{ThemePlugin, ThemedText, on_themed_text_inserted},
-    utils::anim::UiAnimPlugin,
+    utils::{
+        anim::UiAnimPlugin,
+        cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
+    },
 };
 
-pub mod containers;
-pub mod controls;
-pub mod display;
+// Short crate-internal paths for the modules the public surface re-exports
+// piecemeal through `style`, `retained` and `theme`.
+pub(crate) use theme::tokens;
+pub(crate) use utils::{constants, cursor, focus, font_styles, rounded_corners};
+
+mod containers;
+mod controls;
+mod display;
+mod utils;
+
 pub mod imm;
+pub mod prelude;
+pub mod retained;
+pub mod style;
 pub mod theme;
-pub mod utils;
-
-pub use theme::{dark_theme, light_theme, tokens};
-pub use utils::{constants, cursor, focus, font_styles, numeric, rounded_corners};
-
-// Marks a tree as a Tab-traversal scope; `PlumeDialog` carries one, app-built
-// root panels add their own. Re-exported so apps stay on the plume surface.
-pub use bevy::input_focus::tab_navigation::TabGroup;
 
 /// Plugin which installs observers and systems for plume themes, cursors, and all controls.
-pub struct PlumeCorePlugin;
+pub(crate) struct PlumeCorePlugin;
 
 impl Plugin for PlumeCorePlugin {
     fn build(&self, app: &mut bevy::app::App) {

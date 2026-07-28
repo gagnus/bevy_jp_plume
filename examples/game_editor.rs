@@ -1,13 +1,6 @@
 //! A full-screen "mock" game editor built entirely from plume primitives.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    PlumePlugins,
-    constants::{font_awesome::solid as fa, size},
-    controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot, Ui},
-    theme::{UiTheme, slots::ThemeSlot},
-    tokens,
-};
+use bevy_jp_plume::prelude::*;
 
 #[path = "common/mod.rs"]
 mod common;
@@ -67,13 +60,13 @@ enum ColliderKind {
 struct SceneNode {
     id: u32,
     label: String,
-    icon: bevy_jp_plume::constants::FaIcon,
+    icon: FaIcon,
     visible: bool,
     expanded: bool,
     children: Vec<SceneNode>,
 }
 
-fn leaf(id: u32, label: &str, icon: bevy_jp_plume::constants::FaIcon, visible: bool) -> SceneNode {
+fn leaf(id: u32, label: &str, icon: FaIcon, visible: bool) -> SceneNode {
     SceneNode {
         id,
         label: label.to_owned(),
@@ -87,7 +80,7 @@ fn leaf(id: u32, label: &str, icon: bevy_jp_plume::constants::FaIcon, visible: b
 fn branch(
     id: u32,
     label: &str,
-    icon: bevy_jp_plume::constants::FaIcon,
+    icon: FaIcon,
     expanded: bool,
     children: Vec<SceneNode>,
 ) -> SceneNode {
@@ -161,28 +154,28 @@ fn sample_tree() -> Vec<SceneNode> {
         branch(
             1,
             "The Sunless Keep",
-            fa::DUNGEON,
+            font_awesome::solid::DUNGEON,
             true,
             vec![
                 branch(
                     2,
                     "Entrance Hall",
-                    fa::ARCHWAY,
+                    font_awesome::solid::ARCHWAY,
                     true,
                     vec![
-                        leaf(3, "Torch Sconce", fa::LIGHTBULB, true),
-                        leaf(4, "Oak Door", fa::DOOR_CLOSED, true),
-                        leaf(5, "Cobweb", fa::CUBE, false),
+                        leaf(3, "Torch Sconce", font_awesome::solid::LIGHTBULB, true),
+                        leaf(4, "Oak Door", font_awesome::solid::DOOR_CLOSED, true),
+                        leaf(5, "Cobweb", font_awesome::solid::CUBE, false),
                     ],
                 ),
                 branch(
                     6,
                     "Crypt Level",
-                    fa::LAYER_GROUP,
+                    font_awesome::solid::LAYER_GROUP,
                     false,
                     vec![
-                        leaf(7, "Sarcophagus", fa::CUBE, true),
-                        leaf(8, "Cursed Altar", fa::CUBE, true),
+                        leaf(7, "Sarcophagus", font_awesome::solid::CUBE, true),
+                        leaf(8, "Cursed Altar", font_awesome::solid::CUBE, true),
                     ],
                 ),
             ],
@@ -190,21 +183,21 @@ fn sample_tree() -> Vec<SceneNode> {
         branch(
             9,
             "Encounters",
-            fa::DRAGON,
+            font_awesome::solid::DRAGON,
             true,
             vec![
-                leaf(10, "Wandering Wraith", fa::GHOST, true),
-                leaf(11, "Gravekeeper", fa::SKULL, true),
+                leaf(10, "Wandering Wraith", font_awesome::solid::GHOST, true),
+                leaf(11, "Gravekeeper", font_awesome::solid::SKULL, true),
             ],
         ),
         branch(
             12,
             "Lighting",
-            fa::LIGHTBULB,
+            font_awesome::solid::LIGHTBULB,
             false,
             vec![
-                leaf(13, "Sun", fa::LIGHTBULB, true),
-                leaf(14, "Torch Flicker", fa::LIGHTBULB, true),
+                leaf(13, "Sun", font_awesome::solid::LIGHTBULB, true),
+                leaf(14, "Torch Flicker", font_awesome::solid::LIGHTBULB, true),
             ],
         ),
     ]
@@ -242,7 +235,7 @@ fn editor_ui(
         toolbar(
             ui,
             &mut state,
-            theme.palette[ThemeSlot::Neutral1],
+            theme.palette(ThemeSlot::Neutral1),
             &mut theme_editor_open,
         );
         // The split fills all the height the toolbar leaves; its children stretch
@@ -255,10 +248,7 @@ fn editor_ui(
         .grow()
         .align_items(AlignItems::Stretch);
     })
-    // `screen` is transparent by design (it floats over a 3D scene); this editor has
-    // nothing behind it, so fill it with the theme's window background instead of
-    // letting the bare camera clear color show through the gaps between panels.
-    .background(theme.color(&tokens::WINDOW_BG))
+    .background_slot(ThemeSlot::Neutral0)
     .pad(UiRect::ZERO);
     editor.set_if_neq(state);
     if theme_editor_open != registry.is_open(THEME_EDITOR_TITLE) {
@@ -269,24 +259,27 @@ fn editor_ui(
 fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut bool) {
     ui.horizontal(|ui| {
         // File.
-        ui.tool_button(fa::FILE);
-        ui.tool_button(fa::FOLDER_OPEN);
-        ui.tool_button(fa::FLOPPY_DISK);
+        ui.tool_button(font_awesome::solid::FILE);
+        ui.tool_button(font_awesome::solid::FOLDER_OPEN);
+        ui.tool_button(font_awesome::solid::FLOPPY_DISK);
         ui.separator();
 
         // Undo / redo / clipboard.
-        ui.tool_button(fa::ARROW_ROTATE_LEFT);
-        ui.tool_button(fa::ARROW_ROTATE_RIGHT);
-        ui.tool_button(fa::PASTE);
-        ui.tool_button(fa::TRASH);
+        ui.tool_button(font_awesome::solid::ARROW_ROTATE_LEFT);
+        ui.tool_button(font_awesome::solid::ARROW_ROTATE_RIGHT);
+        ui.tool_button(font_awesome::solid::PASTE);
+        ui.tool_button(font_awesome::solid::TRASH);
         ui.separator();
 
         // Manipulation tools — a radio group of pressed-in icon buttons.
         for (tool, icon) in [
-            (Tool::Select, fa::ARROW_POINTER),
-            (Tool::Move, fa::ARROWS_UP_DOWN_LEFT_RIGHT),
-            (Tool::Rotate, fa::ROTATE),
-            (Tool::Scale, fa::UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER),
+            (Tool::Select, font_awesome::solid::ARROW_POINTER),
+            (Tool::Move, font_awesome::solid::ARROWS_UP_DOWN_LEFT_RIGHT),
+            (Tool::Rotate, font_awesome::solid::ROTATE),
+            (
+                Tool::Scale,
+                font_awesome::solid::UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER,
+            ),
         ] {
             if ui
                 .tool_button(icon)
@@ -302,7 +295,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
 
         // Snapping toggles.
         if ui
-            .tool_button(fa::MAGNET)
+            .tool_button(font_awesome::solid::MAGNET)
             .checkable()
             .flat()
             .checked(state.snap_to_grid)
@@ -311,7 +304,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             state.snap_to_grid = !state.snap_to_grid;
         }
         if ui
-            .tool_button(fa::BORDER_ALL)
+            .tool_button(font_awesome::solid::BORDER_ALL)
             .checkable()
             .flat()
             .checked(state.show_grid)
@@ -323,7 +316,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         // Playback lives at the trailing edge.
         ui.flex_spacer();
         if ui
-            .tool_button(fa::PLAY)
+            .tool_button(font_awesome::solid::PLAY)
             .checkable()
             .flat()
             .checked(state.playing)
@@ -331,15 +324,15 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         {
             state.playing = true;
         }
-        ui.tool_button(fa::PAUSE);
-        if ui.tool_button(fa::STOP).clicked {
+        ui.tool_button(font_awesome::solid::PAUSE);
+        if ui.tool_button(font_awesome::solid::STOP).clicked {
             state.playing = false;
         }
 
         // Cheeky: pop plume's own theme editor so the whole UI can be repainted live.
         ui.separator();
         if ui
-            .tool_button(fa::PALETTE)
+            .tool_button(font_awesome::solid::PALETTE)
             .checkable()
             .checked(*theme_editor_open)
             .clicked
@@ -358,11 +351,11 @@ fn left_panel(ui: &mut Ui, state: &mut Editor) {
                 ui.push_id(i, |ui| tree_row(ui, node, &mut state.selected, 0));
             }
         })
-        .icon(fa::SITEMAP);
+        .icon(font_awesome::solid::SITEMAP);
         tabs.tab(LeftTab::Prefabs, "Prefabs", |ui| {
             ui.caption("Prefab palette — drag a prefab into the scene.");
         })
-        .icon(fa::CUBES);
+        .icon(font_awesome::solid::CUBES);
     })
     .width(px(280));
 }
@@ -391,7 +384,11 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
             ui.caption(&node.label);
             ui.flex_spacer();
             if ui
-                .tool_button(if node.visible { fa::EYE } else { fa::EYE_SLASH })
+                .tool_button(if node.visible {
+                    font_awesome::solid::EYE
+                } else {
+                    font_awesome::solid::EYE_SLASH
+                })
                 .variant(ButtonVariant::Plain)
                 .clicked
             {
@@ -440,12 +437,12 @@ fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
                 ui.caption(line);
             }
         })
-        .icon(fa::LIST);
+        .icon(font_awesome::solid::LIST);
         tabs.tab(BottomTab::Assets, "Assets", |ui| {
             // No asset-grid control yet — describe what would live here.
             ui.caption("Asset browser — imported meshes, textures and materials appear here.");
         })
-        .icon(fa::FOLDER_OPEN);
+        .icon(font_awesome::solid::FOLDER_OPEN);
     })
     .height(px(180));
 }
@@ -458,11 +455,11 @@ fn right_panel(ui: &mut Ui, state: &mut Editor) {
         tabs.tab(RightTab::Properties, "Properties", |ui| {
             inspector(ui, state);
         })
-        .icon(fa::SLIDERS);
+        .icon(font_awesome::solid::SLIDERS);
         tabs.tab(RightTab::Add, "Add", |ui| {
             ui.caption("Component browser — pick a component to add to the entity.");
         })
-        .icon(fa::PLUS);
+        .icon(font_awesome::solid::PLUS);
     })
     .width(px(320));
     state.right_tab = right_tab;

@@ -7,11 +7,7 @@
 //! expand/checked state lives on the nodes themselves in one resource; the recursion
 //! keys each node with `push_id` so identity follows the data, not call order.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    constants::{font_awesome, size},
-    controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot, Ui},
-};
+use bevy_jp_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 

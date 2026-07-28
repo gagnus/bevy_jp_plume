@@ -1,5 +1,6 @@
 //! BSN scene function for the full-screen root surface.
 use bevy::ecs::name::Name;
+use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
 use bevy::scene::{Scene, bsn};
 use bevy::text::FontWeight;
@@ -17,11 +18,16 @@ use crate::{
 /// Transparent, padded column filling the viewport, establishing the standard
 /// [`InheritableFont`] and text color so bare text works at root scope.
 ///
+/// Carries a [`TabGroup`], so every control inside is Tab-reachable without the
+/// app adding one — the same scope [`PlumeDialog`](crate::retained::PlumeDialog)
+/// provides.
+///
 /// [`Pickable::IGNORE`], so empty areas don't swallow picks meant for the scene
 /// behind it; children keep their own picking.
 pub fn screen() -> impl Scene {
     bsn! {
         Name("PlumeScreen")
+        TabGroup::new(0)
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,

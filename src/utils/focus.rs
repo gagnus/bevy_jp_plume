@@ -103,7 +103,7 @@ fn sync_disabled_tab_index(
 }
 
 /// Plugin which registers the focus outline and Tab-order systems.
-pub struct FocusPlugin;
+pub(crate) struct FocusPlugin;
 
 impl Plugin for FocusPlugin {
     fn build(&self, app: &mut bevy::app::App) {

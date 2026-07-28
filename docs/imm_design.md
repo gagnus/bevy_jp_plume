@@ -115,7 +115,6 @@ system, pass 1 isn't done. Exact method names may still shift during implementat
 doesn't.
 
 ```rust
-use bevy_jp_plume::imm::PlumeUi;
 
 #[derive(Resource)]
 struct AudioSettings {

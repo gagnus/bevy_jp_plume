@@ -151,7 +151,7 @@ fn apply(
 }
 
 /// Plugin which registers the systems for updating the disclosure styles.
-pub struct DisclosurePlugin;
+pub(crate) struct DisclosurePlugin;
 
 impl Plugin for DisclosurePlugin {
     fn build(&self, app: &mut bevy::app::App) {

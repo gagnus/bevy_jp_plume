@@ -461,7 +461,7 @@ fn grab_thumb_on_press(
 }
 
 /// Plugin which registers the systems for updating the slider styles.
-pub struct SliderPlugin;
+pub(crate) struct SliderPlugin;
 
 impl Plugin for SliderPlugin {
     fn build(&self, app: &mut bevy::app::App) {

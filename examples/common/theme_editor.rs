@@ -1,11 +1,8 @@
 //! Theme-editor dialog as a self-contained feature plugin: hosts plume's own
 //! `theme_editor` fill-fn and bakes its palette into the live `UiTheme`.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    constants::font_awesome,
-    imm::PlumeRoot,
-    theme::{ThemeEditablePalette, UiTheme, theme_editor},
-};
+use bevy_jp_plume::prelude::*;
+use bevy_jp_plume::theme::{ThemeEditablePalette, theme_editor};
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::log_on_change;
@@ -22,7 +19,7 @@ pub struct ThemeEditorPlugin(pub bool);
 impl Plugin for ThemeEditorPlugin {
     fn build(&self, app: &mut App) {
         // get palette that was used to generate UiTheme
-        let editable_palette = app.world().resource::<UiTheme>().generated_from.clone();
+        let editable_palette = app.world().resource::<UiTheme>().editable().clone();
 
         app.insert_resource(ThemePaletteEditor(editable_palette))
             .add_debug_dialog(

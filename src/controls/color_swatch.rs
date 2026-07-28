@@ -68,7 +68,7 @@ fn update_swatch_color(
 }
 
 /// Plugin which registers the systems for updating the swatch color.
-pub struct ColorSwatchPlugin;
+pub(crate) struct ColorSwatchPlugin;
 
 impl Plugin for ColorSwatchPlugin {
     fn build(&self, app: &mut bevy::app::App) {

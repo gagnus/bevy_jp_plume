@@ -1044,7 +1044,7 @@ fn update_active_row_outline(
 }
 
 /// Plugin which runs the [`PlumeSelect`] control
-pub struct SelectPlugin;
+pub(crate) struct SelectPlugin;
 
 impl Plugin for SelectPlugin {
     fn build(&self, app: &mut bevy::app::App) {

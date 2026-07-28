@@ -132,7 +132,7 @@ fn update_scrollbar_visibility(
 }
 
 /// Plugin which registers the systems for updating the scrollbar styles.
-pub struct ScrollbarPlugin;
+pub(crate) struct ScrollbarPlugin;
 
 impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut bevy::app::App) {

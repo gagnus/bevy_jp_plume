@@ -425,7 +425,7 @@ fn set_radio_styles(
 }
 
 /// Plugin which registers the systems for updating the radio styles.
-pub struct RadioPlugin;
+pub(crate) struct RadioPlugin;
 
 impl Plugin for RadioPlugin {
     fn build(&self, app: &mut bevy::app::App) {

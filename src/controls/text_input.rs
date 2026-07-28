@@ -519,7 +519,7 @@ fn update_text_input_placeholders(
 }
 
 /// Plugin which registers the systems for updating the text input styles.
-pub struct TextInputPlugin;
+pub(crate) struct TextInputPlugin;
 
 impl Plugin for TextInputPlugin {
     fn build(&self, app: &mut bevy::app::App) {

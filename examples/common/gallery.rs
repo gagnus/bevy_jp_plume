@@ -3,12 +3,7 @@
 //! enabled and disabled. Drawn as a full-screen surface — the backdrop the `showcase`
 //! floats its dialogs over — so it registers no hub entry.
 use bevy::prelude::*;
-use bevy_jp_plume::{
-    constants::size,
-    controls::ButtonVariant,
-    imm::{PlumeImm, PlumeRoot, Ui},
-    theme::{UiTheme, slots::ThemeSlot},
-};
+use bevy_jp_plume::prelude::*;
 
 use super::log_on_change;
 
@@ -87,13 +82,13 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>, theme: Res<U
         ui.flex_spacer();
         ui.horizontal(|ui| {
             for (slot, name) in surfaces {
-                gallery_column(ui, &mut s, theme.palette[slot], name);
+                gallery_column(ui, &mut s, theme.palette(slot), name);
             }
         })
         .align_items(AlignItems::Stretch);
         ui.flex_spacer();
     })
-    .background(theme.palette[ThemeSlot::Neutral0]);
+    .background(theme.palette(ThemeSlot::Neutral0));
     state.set_if_neq(s);
 }
 

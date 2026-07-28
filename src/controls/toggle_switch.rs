@@ -318,7 +318,7 @@ fn set_switch_styles(
 }
 
 /// Plugin which registers the systems for updating the toggle switch styles.
-pub struct ToggleSwitchPlugin;
+pub(crate) struct ToggleSwitchPlugin;
 
 impl Plugin for ToggleSwitchPlugin {
     fn build(&self, app: &mut bevy::app::App) {

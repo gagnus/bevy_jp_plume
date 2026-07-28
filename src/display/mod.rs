@@ -2,4 +2,4 @@
 
 mod caption;
 
-pub use caption::*;
+pub use caption::{caption, caption_color, caption_small_caps, fa_icon};

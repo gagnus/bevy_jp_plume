@@ -335,7 +335,7 @@ fn on_drag_cancel(
 }
 
 /// Registers the reticle-positioning system and the drag observers.
-pub struct XyPadPlugin;
+pub(crate) struct XyPadPlugin;
 
 impl Plugin for XyPadPlugin {
     fn build(&self, app: &mut bevy::app::App) {
