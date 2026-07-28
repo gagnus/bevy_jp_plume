@@ -46,7 +46,7 @@ pub struct ProfileSettings {
     difficulty: Difficulty,
     team: Team,
     permadeath: bool,
-    music: f32,
+    music: u8,
 }
 
 impl Default for ProfileSettings {
@@ -58,7 +58,7 @@ impl Default for ProfileSettings {
             difficulty: Difficulty::default(),
             team: Team::default(),
             permadeath: false,
-            music: 70.0,
+            music: 70,
         }
     }
 }
@@ -145,8 +145,8 @@ fn player_profile_dialog(
                     ui.toggle(&mut s.permadeath);
                 });
                 field(ui, "Music", |ui| {
-                    ui.slider(&mut s.music, 0.0..=100.0).grow().step(1.0);
-                    ui.caption(&format!("{:.0}%", s.music)).width(px(36));
+                    ui.slider(&mut s.music, 0..=100).grow();
+                    ui.caption(&format!("{}%", s.music)).width(px(36));
                 });
             })
             .collapsible(false);

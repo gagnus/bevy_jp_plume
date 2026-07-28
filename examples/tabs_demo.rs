@@ -66,7 +66,7 @@ struct DemoSettings {
     muted: bool,
     volume: f32,
     audio_advanced: bool,
-    buffer_ms: f32,
+    buffer_ms: u32,
 }
 
 impl DemoSettings {
@@ -77,7 +77,7 @@ impl DemoSettings {
             gamma: 1.0,
             volume: 0.8,
             audio_advanced: true,
-            buffer_ms: 256.0,
+            buffer_ms: 256,
             ..Default::default()
         }
     }
@@ -161,7 +161,7 @@ fn tabs_demo_ui(mut root: PlumeRoot, mut settings: ResMut<DemoSettings>) {
                     if s.audio_advanced {
                         ui.horizontal(|ui| {
                             ui.caption("Buffer");
-                            ui.number(&mut s.buffer_ms).step(64.0).suffix("ms").grow();
+                            ui.number(&mut s.buffer_ms).step(64u32).suffix("ms").grow();
                         });
                     }
                 });

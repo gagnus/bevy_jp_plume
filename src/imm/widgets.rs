@@ -29,10 +29,11 @@ use crate::{
     },
     controls::{
         ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
-        PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeSelect, PlumeSlider,
-        PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+        PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
+        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
     },
     display::{caption, caption_small_caps, fa_icon},
+    utils::numeric::Numeric,
 };
 
 use super::{
@@ -115,14 +116,14 @@ pub trait PlumeImm<'w, 's> {
     fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's>;
 
     /// Slider bound to `value` over `range`.
-    fn slider(
+    fn slider<T: Numeric>(
         &mut self,
-        value: &mut f32,
-        range: RangeInclusive<f32>,
+        value: &mut T,
+        range: RangeInclusive<T>,
     ) -> ImmResponse<'_, 'w, 's, kind::Slider>;
 
     /// Numeric input field bound to `value`.
-    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's, kind::Number>;
+    fn number<T: Numeric>(&mut self, value: &mut T) -> ImmResponse<'_, 'w, 's, kind::Number>;
 
     /// Single-line text input bound to `text` (synced per edit, not on commit).
     /// While the field is focused the widget's buffer wins; app writes land on
@@ -239,6 +240,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             hovered,
             entity: entity.entity(),
             will_be_spawned,
+            integral: false,
             e: entity,
             kind: PhantomData,
         }
@@ -281,6 +283,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             hovered,
             entity: entity.entity(),
             will_be_spawned,
+            integral: false,
             e: entity,
             kind: PhantomData,
         }
@@ -395,6 +398,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             hovered,
             entity: entity.entity(),
             will_be_spawned,
+            integral: false,
             e: entity,
             kind: PhantomData,
         }
@@ -475,29 +479,53 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn slider(
+    fn slider<T: Numeric>(
         &mut self,
-        value: &mut f32,
-        range: RangeInclusive<f32>,
+        value: &mut T,
+        range: RangeInclusive<T>,
     ) -> ImmResponse<'_, 'w, 's, kind::Slider> {
-        let (min, max) = (*range.start(), *range.end());
+        let (min, max) = (range.start().to_f32(), range.end().to_f32());
+        // An integer value snaps: whole-number drags and single-unit arrow keys,
+        // rather than a continuous sweep that narrows to the same integer.
+        let (step, precision) = if T::INTEGRAL {
+            (Some(1.0), Some(0))
+        } else {
+            (None, None)
+        };
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id((min.to_bits(), max.to_bits())))
-            .on_spawn_apply_scene(move || bsn! { @PlumeSlider { @min: {min}, @max: {max} } })
+            .on_spawn_apply_scene(move || {
+                bsn! { @PlumeSlider { @min: {min}, @max: {max}, @step: {step}, @precision: {precision} } }
+            })
             .plume_value(value, &mut changed);
-        respond(entity, changed)
+        respond_numeric::<T, _>(entity, changed)
     }
 
     #[track_caller]
-    fn number(&mut self, value: &mut f32) -> ImmResponse<'_, 'w, 's, kind::Number> {
-        let initial = *value;
+    fn number<T: Numeric>(&mut self, value: &mut T) -> ImmResponse<'_, 'w, 's, kind::Number> {
+        let initial = value.to_f32();
+        // An integer field shows whole numbers and clamps to the type's own
+        // limits, so a typed value can't silently saturate on the way back.
+        let PlumeNumberInputProps {
+            precision,
+            min,
+            max,
+            ..
+        } = PlumeNumberInputProps::default();
+        let (precision, min, max) = if T::INTEGRAL {
+            (0, T::MIN.to_f32(), T::MAX.to_f32())
+        } else {
+            (precision, min, max)
+        };
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || bsn! { @PlumeNumberInput { @value: {initial} } })
+            .on_spawn_apply_scene(move || {
+                bsn! { @PlumeNumberInput { @value: {initial}, @precision: {precision}, @min: {min}, @max: {max} } }
+            })
             .plume_value(value, &mut changed);
-        respond(entity, changed)
+        respond_numeric::<T, _>(entity, changed)
     }
 
     #[track_caller]
@@ -1319,8 +1347,21 @@ fn respond<'r, 'w, 's, K>(
         hovered,
         entity: entity.entity(),
         will_be_spawned,
+        integral: false,
         e: entity,
         kind: PhantomData,
+    }
+}
+
+// A value widget's response, tagged with whether the type it is bound to is an
+// integer, so `precision` can reject a setting that type can't express.
+fn respond_numeric<'r, 'w, 's, T: Numeric, K>(
+    entity: ImmEntity<'r, 'w, 's, PlumeCaps>,
+    changed: bool,
+) -> ImmResponse<'r, 'w, 's, K> {
+    ImmResponse {
+        integral: T::INTEGRAL,
+        ..respond(entity, changed)
     }
 }
 

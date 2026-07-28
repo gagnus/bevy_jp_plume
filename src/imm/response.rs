@@ -28,6 +28,7 @@ use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled}
 use super::PlumeCaps;
 use crate::controls::ButtonOutline;
 use crate::imm::ImmPopup;
+use crate::utils::numeric::Numeric;
 use crate::{
     constants::{fonts, size},
     containers::{SectionCollapsed, SectionCollapsible},
@@ -128,6 +129,10 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
     /// The widget's root entity — the escape hatch to the retained layer.
     pub entity: Entity,
     pub(crate) will_be_spawned: bool,
+    // Set by the numeric widgets from their bound `T`. Carried on the response
+    // rather than as a marker component because the builders run in the same
+    // frame as the spawn, before any inserted marker would be visible.
+    pub(crate) integral: bool,
     pub(crate) e: ImmEntity<'r, 'w, 's, PlumeCaps>,
     pub(crate) kind: PhantomData<K>,
 }
@@ -408,20 +413,26 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
 impl<K: kind::Numeric> ImmResponse<'_, '_, '_, K> {
     /// Set the increment applied by arrow keys (slider) or Up/Down in the field
     /// (number input). A slider defaults to 1% of its range, a number input to 1.
-    pub fn step(mut self, step: f32) -> Self {
+    pub fn step<T: Numeric>(mut self, step: T) -> Self {
         struct StepKey;
-        if self.key_changed::<StepKey>(step.to_bits()) {
-            self.e.entity_commands().insert(SliderStep(step));
+        if self.key_changed::<StepKey>(step.to_f32().to_bits()) {
+            self.e.entity_commands().insert(SliderStep(step.to_f32()));
         }
         self
     }
 }
 
 impl ImmResponse<'_, '_, '_, kind::Slider> {
-    /// Decimal places drag values are rounded to (`0` = integer).
+    /// Decimal places drag values are rounded to (`0` = integer). Ignored when the
+    /// bound value is an integer type — with a warning if a non-zero was asked for.
+    #[track_caller]
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
         if self.key_changed::<PrecisionKey>(precision) {
+            if self.integral {
+                warn_integral_precision(precision, Location::caller());
+                return self;
+            }
             self.e
                 .entity_commands()
                 .insert(SliderPrecision(precision as i32));
@@ -432,8 +443,8 @@ impl ImmResponse<'_, '_, '_, kind::Slider> {
 
 impl ImmResponse<'_, '_, '_, kind::Number> {
     /// Set the committable range (clamps typed/stepped values).
-    pub fn range(mut self, range: RangeInclusive<f32>) -> Self {
-        let (min, max) = (*range.start(), *range.end());
+    pub fn range<T: Numeric>(mut self, range: RangeInclusive<T>) -> Self {
+        let (min, max) = (range.start().to_f32(), range.end().to_f32());
         struct RangeKey;
         if self.key_changed::<RangeKey>((min.to_bits(), max.to_bits())) {
             self.e.entity_commands().insert(SliderRange::new(min, max));
@@ -441,11 +452,17 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
         self
     }
 
-    /// Set the displayed/committed decimal precision (`0` = integer).
-    /// Reprints the value.
+    /// Set the displayed/committed decimal precision (`0` = integer). Reprints the
+    /// value. Ignored when the bound value is an integer type — with a warning if a
+    /// non-zero was asked for.
+    #[track_caller]
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
         if self.key_changed::<PrecisionKey>(precision) {
+            if self.integral {
+                warn_integral_precision(precision, Location::caller());
+                return self;
+            }
             self.e
                 .entity_commands()
                 .queue(move |mut entity: EntityWorldMut| {
@@ -459,6 +476,16 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
                 });
         }
         self
+    }
+}
+
+fn warn_integral_precision(precision: usize, caller: &Location<'static>) {
+    if precision > 0 {
+        bevy::log::warn!(
+            precision,
+            %caller,
+            "`precision` ignored: the bound value is an integer type, which always rounds to whole numbers"
+        );
     }
 }
 

@@ -5,4 +5,5 @@ pub mod cursor;
 pub mod focus;
 pub mod font_styles;
 pub(crate) mod hierarchy;
+pub mod numeric;
 pub mod rounded_corners;

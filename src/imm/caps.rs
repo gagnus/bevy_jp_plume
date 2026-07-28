@@ -12,6 +12,7 @@ use bevy_immediate::{
     ui::track_value_change_plugin::{NewValueChange, TrackValueChangePlugin},
 };
 
+use crate::utils::numeric::Numeric;
 use crate::{
     containers::CloseRequested,
     controls::{
@@ -19,7 +20,8 @@ use crate::{
     },
 };
 
-/// Synchronises an app `f32` with a control's [`SliderValue`] (slider, number input).
+/// Synchronises an app [`Numeric`] with a control's [`SliderValue`] (slider,
+/// number input).
 ///
 /// Who-wins: a pending user edit (via `ValueChange<f32>`) always lands in the app
 /// value; otherwise the app value is pushed to the widget, except while the user
@@ -44,14 +46,14 @@ impl ImmCapability for CapabilityPlumeValue {
 pub trait ImmPlumeValue {
     /// Two-way sync between `value` and the entity's [`SliderValue`];
     /// sets `changed` when a user edit landed in `value`.
-    fn plume_value(self, value: &mut f32, changed: &mut bool) -> Self;
+    fn plume_value<T: Numeric>(self, value: &mut T, changed: &mut bool) -> Self;
 }
 
 impl<Cap> ImmPlumeValue for ImmEntity<'_, '_, '_, Cap>
 where
     Cap: ImplCap<CapabilityPlumeValue>,
 {
-    fn plume_value(mut self, value: &mut f32, changed: &mut bool) -> Self {
+    fn plume_value<T: Numeric>(mut self, value: &mut T, changed: &mut bool) -> Self {
         let state = 'read: {
             let Ok(mut entity) = self.cap_get_entity_mut() else {
                 break 'read None;
@@ -69,19 +71,25 @@ where
         };
 
         let Some((pending, widget_value, pressed)) = state else {
-            self.entity_commands()
-                .insert((NewValueChange::<f32>::default(), SliderValue(*value)));
+            self.entity_commands().insert((
+                NewValueChange::<f32>::default(),
+                SliderValue(value.to_f32()),
+            ));
             return self;
         };
 
         let interacting = pressed || focused_within(&self);
+        // The edit is compared in `T`, so a sub-integer drag of an integer value
+        // isn't reported as a change; the push-back is compared in `f32`, so an
+        // integer snaps its widget back on release and an `f64` that has no exact
+        // `f32` stops re-pushing every frame.
         if let Some(new_value) = pending
-            && new_value != *value
+            && T::from_f32(new_value) != *value
         {
-            *value = new_value;
+            *value = T::from_f32(new_value);
             *changed = true;
-        } else if !interacting && *value != widget_value {
-            self.entity_commands().insert(SliderValue(*value));
+        } else if !interacting && value.to_f32() != widget_value {
+            self.entity_commands().insert(SliderValue(value.to_f32()));
         }
         self
     }

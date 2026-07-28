@@ -31,7 +31,7 @@ pub mod theme;
 pub mod utils;
 
 pub use theme::{dark_theme, light_theme, tokens};
-pub use utils::{constants, cursor, focus, font_styles, rounded_corners};
+pub use utils::{constants, cursor, focus, font_styles, numeric, rounded_corners};
 
 // Marks a tree as a Tab-traversal scope; `PlumeDialog` carries one, app-built
 // root panels add their own. Re-exported so apps stay on the plume surface.
