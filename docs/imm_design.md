@@ -451,3 +451,33 @@ caption, separator, buttons and a checkbox at root scope, all themed.
   justify (the number input's right-align) is silently dropped. Plume works around it with a
   `reapply_field_justify` system re-touching `TextLayout` on `Added<ComputedUiRenderTargetInfo>`.
   Same class as port-back item 2 (is_changed-filtered style systems miss scene-spawned entities).
+
+## Flex traps, found by building on it
+
+Standing reference rather than journey: each of these is silent — the UI just looks
+wrong — and each cost real time to diagnose.
+
+**Clipping a cell takes three things, not one.** A long label running under its
+neighbour needs `no_wrap()` on the caption, a wrapper that `grow()`s with
+`min_width(Val::ZERO)`, and `clip()` on *that wrapper*. All three matter:
+`row()`/`column()` default `min_height: 0` but leave `min_width: auto`, which flex
+resolves to the content size — so without the floor the wrapper refuses to shrink
+below the text and overflows its fixed-width parent instead of clipping inside it.
+And the clip must sit on the cell, never the row: **bevy takes a node's clip rect
+from its parent**, so a row-level clip cuts at the row's edge and lets the text run
+under its sibling. `no_wrap()` sets `min_width: 0` on the caption itself for the
+same reason.
+
+**`.grow()` zeroes `flex_basis`**, which has two consequences worth knowing
+together. A growing child contributes nothing to a *hugging* container's width, so
+the row overflows its frame — that is what `grow_from_content()` is for. And flex
+distributes shrink in proportion to basis, so a grown sibling absorbs none of it:
+chrome that must hold its size while something else gives wants `no_shrink()` +
+`min_width()` on the chrome and `grow_from_content().min_width(Val::ZERO).clip()`
+on the part that yields. (Window buttons collapsing in a narrow window was exactly
+this.)
+
+**A spacer-plus-fill meter must zero its container's `row_gap`.** The gauge idiom —
+a `flex_spacer` above a percentage-height fill — puts the column's default gap
+between the two, so a full-weight fill overflows by the gap and flex shrinks it
+back. The meter never quite reaches the top. Applies to any meter built this way.
