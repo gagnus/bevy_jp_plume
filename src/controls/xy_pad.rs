@@ -25,7 +25,7 @@ use bevy::ui::{
     UiGlobalTransform, UiRect, UiScale, Val2, percent, px,
 };
 
-use crate::{constants::size, cursor::EntityCursor, theme::ThemeBorderColor, tokens};
+use crate::{constants::size, cursor::EntityCursor, theme::ThemeBorderToken, tokens};
 
 /// Props used to construct a [`PlumeXyPad`] scene.
 pub struct PlumeXyPadProps {
@@ -109,7 +109,7 @@ impl PlumeXyPad {
             }
             PlumeXyPad
             XyPadValue
-            ThemeBorderColor(tokens::COLOR_SWATCH_BORDER)
+            ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
             Children [(
                 Node {

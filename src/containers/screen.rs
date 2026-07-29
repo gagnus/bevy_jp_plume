@@ -11,7 +11,7 @@ use bevy::ui::{
 use crate::{
     constants::{fonts, size},
     font_styles::InheritableFont,
-    theme::InheritableThemeTextColor,
+    theme::InheritableThemeTextToken,
     tokens,
 };
 
@@ -41,7 +41,7 @@ pub fn screen() -> impl Scene {
             padding: size::PAD,
         }
         Pickable::IGNORE
-        InheritableThemeTextColor(tokens::TEXT_DIM)
+        InheritableThemeTextToken(tokens::TEXT_DIM)
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,

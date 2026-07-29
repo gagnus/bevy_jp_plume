@@ -26,7 +26,7 @@ use crate::{
     constants::size,
     cursor::EntityCursor,
     focus::FocusIndicator,
-    theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderColor, control_box_shadow},
+    theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderToken, control_box_shadow},
     tokens,
     utils::anim::AnimState,
 };
@@ -78,7 +78,7 @@ impl PlumeToggleSwitch {
                         border_radius: {size::TOGGLE_SIZE.y / 2.0},
                     }
                     ToggleSwitchOutline
-                    ThemeBorderColor(tokens::SWITCH_BORDER)
+                    ThemeBorderToken(tokens::SWITCH_BORDER)
                 ),
                 (
                     // The 2px inset nests the 16px knob (radius 8) concentrically inside
@@ -135,7 +135,7 @@ fn update_switch_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
     q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut commands: Commands,
@@ -168,7 +168,7 @@ fn update_switch_styles_remove(
         With<PlumeToggleSwitch>,
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
     q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
@@ -206,7 +206,7 @@ fn apply_switch_styles(
     flat: bool,
     pill_bg: &ThemeBackgroundGradient,
     q_children: &Query<&Children>,
-    q_outline: &Query<&ThemeBorderColor, With<ToggleSwitchOutline>>,
+    q_outline: &Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
     q_slide: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
     q_slide_anim: &mut Query<&mut AnimState, With<ToggleSwitchSlide>>,
     commands: &mut Commands,
@@ -257,7 +257,7 @@ fn set_switch_styles(
     checked: bool,
     flat: bool,
     pill_bg: &ThemeBackgroundGradient,
-    outline_border: &ThemeBorderColor,
+    outline_border: &ThemeBorderToken,
     slide_bg: &ThemeBackgroundGradient,
     has_box_shadow: bool,
     commands: &mut Commands,
@@ -287,7 +287,7 @@ fn set_switch_styles(
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(outline_border_token));
+            .insert(ThemeBorderToken(outline_border_token));
     }
 
     let slide_gradient_amount = if disabled || flat {

@@ -32,7 +32,7 @@ use crate::containers::PopupAnchor;
 use crate::display::caption;
 use crate::font_styles::InheritableFont;
 use crate::theme::{
-    InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, control_box_shadow,
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
 use crate::tokens;
 
@@ -316,11 +316,11 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
             border_radius: size::CORNER_RADIUS_SMALL,
         }
         TooltipPanel
-        ThemeBackgroundColor(tokens::TOOLTIP_BG)
-        ThemeBorderColor(tokens::MENU_BORDER)
+        ThemeBackgroundToken(tokens::TOOLTIP_BG)
+        ThemeBorderToken(tokens::MENU_BORDER)
         template_value(control_box_shadow())
         Pickable::IGNORE
-        InheritableThemeTextColor(tokens::TOOLTIP_TEXT)
+        InheritableThemeTextToken(tokens::TOOLTIP_TEXT)
         InheritableFont {
             font: fonts::REGULAR,
             font_size: size::MEDIUM_FONT,

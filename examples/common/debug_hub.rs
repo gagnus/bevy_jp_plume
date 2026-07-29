@@ -22,7 +22,9 @@ impl DebugDialogRegistry {
 
     /// Register a dialog with its initial open state. First registration wins.
     pub fn register(&mut self, title: &'static str, icon: FaIcon, open: bool) {
-        self.dialogs.entry(title).or_insert((icon, open || self.set_all_open));
+        self.dialogs
+            .entry(title)
+            .or_insert((icon, open || self.set_all_open));
     }
 
     /// Whether the named dialog is open (false if unregistered).

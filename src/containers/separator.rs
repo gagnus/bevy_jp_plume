@@ -2,7 +2,7 @@
 use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignSelf, Node};
 
-use crate::{constants::size, theme::ThemeBackgroundColor, tokens};
+use crate::{constants::size, theme::ThemeBackgroundToken, tokens};
 
 /// A hairline rule taking its orientation from the container it sits in:
 /// horizontal in a [`column`](crate::containers::column), vertical in a
@@ -15,6 +15,6 @@ pub fn separator() -> impl Scene {
             flex_shrink: 0.0,
             align_self: AlignSelf::Stretch,
         }
-        ThemeBackgroundColor(tokens::SEPARATOR)
+        ThemeBackgroundToken(tokens::SEPARATOR)
     }
 }

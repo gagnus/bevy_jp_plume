@@ -32,8 +32,6 @@ use crate::controls::{
 };
 use crate::display::caption;
 use crate::font_styles::TextStyleRelay;
-use crate::theme::InheritableThemeTextColor;
-use crate::tokens;
 
 // The SV plane's side and the hue bar's dimensions. The bar shares the plane's
 // height so the two line up.
@@ -112,7 +110,6 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             align_items: AlignItems::Center,
             column_gap: Val::ZERO,
         }
-        InheritableThemeTextColor(tokens::TEXT_DIM)
         TextStyleRelay
         Children [
             (

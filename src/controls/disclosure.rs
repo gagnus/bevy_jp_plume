@@ -26,7 +26,7 @@ use crate::{
     cursor::EntityCursor,
     display::fa_icon,
     focus::FocusIndicator,
-    theme::InheritableThemeTextColor,
+    theme::InheritableThemeTextToken,
     tokens,
     utils::anim::AnimState,
 };
@@ -53,7 +53,7 @@ impl PlumeDisclosure {
             on(checkbox_self_update)
             AccessibilityNode(accesskit::Node::new(Role::DisclosureTriangle))
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            InheritableThemeTextColor(tokens::BUTTON_TEXT)
+            InheritableThemeTextToken(tokens::BUTTON_TEXT)
             Children [
                 (
                     fa_icon(font_awesome::solid::ANGLE_RIGHT)
@@ -144,7 +144,7 @@ fn apply(
             false => bevy::window::SystemCursorIcon::Pointer,
         };
         commands.entity(disclosure_ent).insert((
-            InheritableThemeTextColor(text_token),
+            InheritableThemeTextToken(text_token),
             EntityCursor::System(cursor_shape),
         ));
     }

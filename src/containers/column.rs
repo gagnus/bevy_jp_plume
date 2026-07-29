@@ -2,12 +2,10 @@
 use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignItems, Display, FlexDirection, Node, Val};
 
-use crate::{
-    constants::size, font_styles::TextStyleRelay, theme::InheritableThemeTextColor, tokens,
-};
+use crate::{constants::size, font_styles::TextStyleRelay};
 
 /// Vertical container that stretches children to its own width; content goes in
-/// `Children`. Carries the standard text color and relays the font.
+/// `Children`. Relays the surrounding text style.
 pub fn column() -> impl Scene {
     bsn! {
         Node {
@@ -21,7 +19,6 @@ pub fn column() -> impl Scene {
             // Floor a container that must not be crushed with `.min_height()`.
             min_height: Val::ZERO,
         }
-        InheritableThemeTextColor(tokens::TEXT_DIM)
         TextStyleRelay
     }
 }

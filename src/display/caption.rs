@@ -1,12 +1,13 @@
 //! BSN scene function for displaying a plain text string in the correct font.
 use bevy::app::PropagateOver;
-use bevy::scene::{Scene, bsn};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextFont};
+use bevy::color::Color;
+use bevy::scene::{Scene, bsn, template_value};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor, TextFont};
 use bevy::ui::widget::Text;
 
 use crate::{
     constants::{FaIcon, fonts, size},
-    theme::{ThemeTextColor, ThemedText, tokens::ThemeToken},
+    theme::{ThemeSlot, ThemeTextSlot, ThemedText},
 };
 
 /// A caption within, say, a button using inherited color.
@@ -17,12 +18,23 @@ pub fn caption(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// A caption but override color
-pub fn caption_color(text: impl Into<String>, token: ThemeToken) -> impl Scene {
+/// A caption in a fixed raw color, for one-offs outside the theme.
+pub fn caption_color(text: impl Into<String>, color: Color) -> impl Scene {
     bsn! {
         Text(text)
         ThemedText
-        ThemeTextColor(token)
+        template_value(TextColor(color))
+        // Keeps the inherited themed color from overwriting it.
+        PropagateOver<TextColor>
+    }
+}
+
+/// A caption colored from a theme slot instead of the inherited color.
+pub fn caption_slot(text: impl Into<String>, slot: ThemeSlot) -> impl Scene {
+    bsn! {
+        Text(text)
+        ThemedText
+        template_value(ThemeTextSlot(slot))
     }
 }
 

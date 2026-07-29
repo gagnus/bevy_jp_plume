@@ -29,8 +29,8 @@ use crate::{
     focus::FocusIndicator,
     font_styles::TextStyleRelay,
     theme::{
-        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
-        ThemeBorderColor, control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient,
+        ThemeBorderToken, control_box_shadow,
     },
     tokens,
     utils::anim::AnimState,
@@ -78,7 +78,7 @@ impl PlumeCheckbox {
             Pickable::IGNORE
             on(checkbox_self_update)
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            InheritableThemeTextColor(tokens::CHECKBOX_TEXT)
+            InheritableThemeTextToken(tokens::CHECKBOX_TEXT)
             TextStyleRelay
             Children [
                 (
@@ -100,7 +100,7 @@ impl PlumeCheckbox {
                                 border_radius: size::CORNER_RADIUS_SMALL,
                             }
                             CheckboxOutline
-                            ThemeBorderColor(tokens::CHECKBOX_BORDER)
+                            ThemeBorderToken(tokens::CHECKBOX_BORDER)
                         ),
                         (
                             // Cheesy checkmark: rotated node with L-shaped border.
@@ -119,7 +119,7 @@ impl PlumeCheckbox {
                             CheckboxMark
                             template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             Visibility::Hidden
-                            ThemeBorderColor(tokens::CHECKBOX_MARK)
+                            ThemeBorderToken(tokens::CHECKBOX_MARK)
                         )
                     ]
                 ),
@@ -156,7 +156,7 @@ fn update_checkbox_styles(
             Has<InteractionDisabled>,
             Has<Checked>,
             Has<Flat>,
-            &InheritableThemeTextColor,
+            &InheritableThemeTextToken,
         ),
         (
             With<CheckboxFrame>,
@@ -171,8 +171,8 @@ fn update_checkbox_styles(
     >,
     q_children: Query<&Children>,
     q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
-    q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
+    q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
@@ -200,14 +200,14 @@ fn update_checkbox_styles_remove(
             Has<InteractionDisabled>,
             Has<Checked>,
             Has<Flat>,
-            &InheritableThemeTextColor,
+            &InheritableThemeTextToken,
         ),
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
     q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: Query<&ThemeBorderColor, With<CheckboxOutline>>,
-    q_mark: Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
+    q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -243,11 +243,11 @@ fn apply_checkbox_styles(
     disabled: bool,
     checked: bool,
     flat: bool,
-    font_color: &InheritableThemeTextColor,
+    font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
     q_bg: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: &Query<&ThemeBorderColor, With<CheckboxOutline>>,
-    q_mark: &Query<&ThemeBorderColor, With<CheckboxMark>>,
+    q_outline: &Query<&ThemeBorderToken, With<CheckboxOutline>>,
+    q_mark: &Query<&ThemeBorderToken, With<CheckboxMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<CheckboxMark>>,
     commands: &mut Commands,
 ) {
@@ -309,9 +309,9 @@ fn set_checkbox_styles(
     checked: bool,
     flat: bool,
     bg_color: &ThemeBackgroundGradient,
-    outline_color: &ThemeBorderColor,
-    mark_color: &ThemeBorderColor,
-    font_color: &InheritableThemeTextColor,
+    outline_color: &ThemeBorderToken,
+    mark_color: &ThemeBorderToken,
+    font_color: &InheritableThemeTextToken,
     has_box_shadow: bool,
     commands: &mut Commands,
 ) {
@@ -348,19 +348,19 @@ fn set_checkbox_styles(
     if outline_color.0 != outline_token {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(outline_token));
+            .insert(ThemeBorderToken(outline_token));
     }
 
     if mark_color.0 != mark_token {
         commands
             .entity(mark_ent)
-            .insert(ThemeBorderColor(mark_token));
+            .insert(ThemeBorderToken(mark_token));
     }
 
     if font_color.0 != font_color_token {
         commands
             .entity(checkbox_ent)
-            .insert(InheritableThemeTextColor(font_color_token));
+            .insert(InheritableThemeTextToken(font_color_token));
     }
 
     let should_have_box_shadow = checked && !disabled;

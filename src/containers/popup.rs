@@ -34,7 +34,7 @@ use super::dialog::CloseRequested;
 use crate::constants::{fonts, size};
 use crate::font_styles::InheritableFont;
 use crate::theme::{
-    InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor, control_box_shadow,
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
@@ -171,13 +171,13 @@ impl PlumePopup {
                 border_radius: size::CORNER_RADIUS,
             }
             PlumePopup
-            ThemeBackgroundColor(tokens::MENU_BG)
-            ThemeBorderColor(tokens::MENU_BORDER)
+            ThemeBackgroundToken(tokens::MENU_BG)
+            ThemeBorderToken(tokens::MENU_BORDER)
             template_value(control_box_shadow())
             GlobalZIndex(100)
             template_value(popover_for(placement))
             OverrideClip
-            InheritableThemeTextColor(tokens::TEXT_DIM)
+            InheritableThemeTextToken(tokens::TEXT_DIM)
             InheritableFont {
                 font: fonts::REGULAR,
                 font_size: size::MEDIUM_FONT,

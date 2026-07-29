@@ -20,12 +20,12 @@ pub use crate::controls::{
     TextInputValue, XyPadDragging, XyPadLock, XyPadValue, select_options,
 };
 pub use crate::display::{
-    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_small_caps, fa_icon,
+    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_slot,
+    caption_small_caps, fa_icon,
 };
 pub use crate::theme::components::{
-    Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextColor, ThemeBackgroundColor,
-    ThemeBackgroundGradient, ThemeBackgroundSlot, ThemeBorderColor, ThemeBorderSlot,
-    ThemeTextColor, ThemeTextSlot, ThemedText, control_box_shadow,
+    Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
+    ThemeBorderSlot, ThemeTextSlot, ThemedText, control_box_shadow,
 };
 pub use crate::utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};
@@ -38,9 +38,3 @@ pub use crate::utils::font_styles::InheritableFont;
 pub use bevy::input_focus::tab_navigation::TabGroup;
 pub use bevy::ui::{Checked, InteractionDisabled, Selected};
 pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};
-
-/// Design tokens: the names a retained scene styles itself by, resolved through
-/// [`UiTheme`](crate::theme::UiTheme) to a palette slot and then a color.
-pub mod tokens {
-    pub use crate::theme::tokens::*;
-}

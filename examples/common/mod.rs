@@ -89,9 +89,10 @@ pub fn apply_args(app: &mut App, default_gallery: bool) {
     }
 
     if args.all_open {
-        app.world_mut().resource_scope(|_, mut registry: Mut<DebugDialogRegistry>| {
-            registry.set_all_open();
-        });
+        app.world_mut()
+            .resource_scope(|_, mut registry: Mut<DebugDialogRegistry>| {
+                registry.set_all_open();
+            });
     }
 }
 

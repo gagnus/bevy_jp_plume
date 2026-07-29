@@ -18,7 +18,7 @@ use bevy::scene::prelude::*;
 use bevy::ui::{ComputedNode, Node, UiSystems, Val};
 use bevy::ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
-use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundColor, tokens};
+use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundToken, tokens};
 
 /// A scrollbar. The `target` property should point to an entity whose
 /// [`ScrollPosition`](bevy::ui::ScrollPosition) will be synchronized with the scrollbar.
@@ -59,10 +59,10 @@ impl PlumeScrollbar {
             Node {
                 border_radius: {size::SCROLLBAR_WIDTH / 2.0}
             }
-            ThemeBackgroundColor(tokens::SCROLLBAR_BG)
+            ThemeBackgroundToken(tokens::SCROLLBAR_BG)
             Children [(
                 Hovered
-                ThemeBackgroundColor(tokens::SCROLLBAR_THUMB)
+                ThemeBackgroundToken(tokens::SCROLLBAR_THUMB)
                 ScrollbarThumb {
                     border_radius: {size::SCROLLBAR_WIDTH / 2.0}
                 }
@@ -75,7 +75,7 @@ impl PlumeScrollbar {
 
 fn update_scrollbar_thumb_styles(
     q_thumbs: Query<
-        (Entity, &Hovered, &ThemeBackgroundColor, &ScrollbarDragState),
+        (Entity, &Hovered, &ThemeBackgroundToken, &ScrollbarDragState),
         (
             With<PlumeScrollbarThumb>,
             Or<(Changed<Hovered>, Changed<ScrollbarDragState>)>,
@@ -89,7 +89,7 @@ fn update_scrollbar_thumb_styles(
         if bg_token != bg_color.0 {
             commands
                 .entity(scrollbar_ent)
-                .insert(ThemeBackgroundColor(bg_token));
+                .insert(ThemeBackgroundToken(bg_token));
         }
     }
 }

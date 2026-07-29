@@ -23,16 +23,16 @@ use crate::constants::size;
 use crate::theme::slots::ThemeSlot;
 use crate::theme::tokens::ThemeToken;
 
-/// Component which causes the background color of an entity to be set based on a theme color.
+// Background color by theme token — plume-internal; apps use [`ThemeBackgroundSlot`].
 #[derive(Component, Clone, Default)]
 #[require(BackgroundColor)]
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-pub struct ThemeBackgroundColor(pub ThemeToken);
+pub(crate) struct ThemeBackgroundToken(pub ThemeToken);
 
-/// Component which causes the background color of an entity to be set based on a theme slot.
-/// Internal use `ThemeBackgroundColor` instead, external prefer this, this takes priority over `ThemeBackgroundColor`.
+/// Component which sets the background color of an entity from a theme slot.
+/// Takes priority over the internal token form.
 #[derive(Component, Clone, Default)]
 #[require(BackgroundColor)]
 #[component(immutable)]
@@ -40,8 +40,8 @@ pub struct ThemeBackgroundColor(pub ThemeToken);
 #[reflect(Component, Clone)]
 pub struct ThemeBackgroundSlot(pub ThemeSlot);
 
-/// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
-pub const GRADIENT_AMOUNT: f32 = 0.05;
+// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
+pub(crate) const GRADIENT_AMOUNT: f32 = 0.05;
 
 /// Opt-in marker: the entity's themed fills render flat (gradient amount 0).
 /// Honored by the gradient-drawn elements (button, checkbox, radio, toggle,
@@ -56,14 +56,14 @@ pub struct Flat;
 #[reflect(Component, Clone, Default)]
 pub struct Inert;
 
-/// Component which fills an entity's background with a gentle top-to-bottom gradient derived
-/// from a theme color.
+// Fills an entity's background with a gentle top-to-bottom gradient derived from a
+// theme token — plume-internal (the gradient look belongs to plume's own controls).
 #[derive(Component, Clone, Default)]
 #[require(BackgroundGradient)]
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-pub struct ThemeBackgroundGradient(pub ThemeToken, pub f32);
+pub(crate) struct ThemeBackgroundGradient(pub ThemeToken, pub f32);
 
 // Build the vertical gradient a `ThemeBackgroundGradient` resolves to.
 pub(crate) fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
@@ -88,17 +88,18 @@ pub fn control_box_shadow() -> BoxShadow {
     )
 }
 
-/// Component which causes the border color of an entity to be set based on a theme color.
-/// Only supports setting all borders to the same color.
+// Border color by theme token — plume-internal; apps use [`ThemeBorderSlot`].
+// Only supports setting all borders to the same color.
 #[derive(Component, Clone, Default)]
 #[require(BorderColor)]
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-pub struct ThemeBorderColor(pub ThemeToken);
+pub(crate) struct ThemeBorderToken(pub ThemeToken);
 
-/// Component which causes the border color of an entity to be set based on a theme slot.
-/// Internal use `ThemeBorderColor` instead, external prefer this, this takes priority over `ThemeBorderColor`.
+/// Component which sets the border color of an entity from a theme slot.
+/// Takes priority over the internal token form. Only supports setting all
+/// borders to the same color.
 #[derive(Component, Clone, Default)]
 #[require(BorderColor)]
 #[component(immutable)]
@@ -106,17 +107,38 @@ pub struct ThemeBorderColor(pub ThemeToken);
 #[reflect(Component, Clone)]
 pub struct ThemeBorderSlot(pub ThemeSlot);
 
-/// Component which causes the inherited text color of an entity to be set based on a theme color.
+// Inherited text color by theme token — plume-internal; apps use
+// [`InheritableThemeTextSlot`]. Colors descendants only, never the carrier.
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
 #[require(ThemedText, PropagateOver::<TextColor>)]
-pub struct InheritableThemeTextColor(pub ThemeToken);
+pub(crate) struct InheritableThemeTextToken(pub ThemeToken);
 
-/// Component which causes the color of a text span to be set based on a theme color. Unlike
-/// [`InheritableThemeTextColor`], this can work when set directly on the text span entity, and is
-/// not inherited.
+/// Component which propagates a theme-slot text color to all descendant themed
+/// text. Colors descendants only, never the carrying entity itself; takes
+/// priority over the internal token form.
+#[derive(Component, Clone, Default)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+#[require(ThemedText, PropagateOver::<TextColor>)]
+pub struct InheritableThemeTextSlot(pub ThemeSlot);
+
+/// Component which propagates a raw text color to all descendant themed text —
+/// for one-off colors that are not part of the theme. Colors descendants only,
+/// never the carrying entity itself.
+#[derive(Component, Clone, Default)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+#[require(ThemedText, PropagateOver::<TextColor>)]
+pub struct InheritableTextColor(pub Color);
+
+// Text color of the span itself by theme token — plume-internal; apps use
+// [`ThemeTextSlot`]. Unlike the inheritable forms this works set directly on the
+// text entity, and is not inherited.
 // TODO: This is necessary because an entity with Propagate doesn't update itself, only its
 // descendants.
 #[derive(Component, Clone, Default)]
@@ -124,11 +146,11 @@ pub struct InheritableThemeTextColor(pub ThemeToken);
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
 #[require(ThemedText, PropagateOver::<TextColor>)]
-pub struct ThemeTextColor(pub ThemeToken);
+pub(crate) struct ThemeTextToken(pub ThemeToken);
 
-/// Component which causes the color of a text span to be set based on a theme slot.
-/// Internal use [`ThemeTextColor`] instead, external prefer this, this takes priority over
-/// `ThemeTextColor`.
+/// Component which sets the color of the text span it is on from a theme slot
+/// (the inheritable forms only reach descendants). Takes priority over the
+/// internal token form.
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
@@ -165,10 +187,10 @@ pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
     }
 }
 pub(crate) fn on_changed_background_token(
-    insert: On<Insert, ThemeBackgroundColor>,
+    insert: On<Insert, ThemeBackgroundToken>,
     mut q_background: Query<
-        (&mut BackgroundColor, &ThemeBackgroundColor),
-        Changed<ThemeBackgroundColor>,
+        (&mut BackgroundColor, &ThemeBackgroundToken),
+        Changed<ThemeBackgroundToken>,
     >,
     theme: Res<UiTheme>,
 ) {
@@ -203,9 +225,9 @@ pub(crate) fn on_changed_gradient(
     }
 }
 
-pub(crate) fn on_changed_border(
-    insert: On<Insert, ThemeBorderColor>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderColor), Changed<ThemeBorderColor>>,
+pub(crate) fn on_changed_border_token(
+    insert: On<Insert, ThemeBorderToken>,
+    mut q_border: Query<(&mut BorderColor, &ThemeBorderToken), Changed<ThemeBorderToken>>,
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
@@ -223,9 +245,9 @@ pub(crate) fn on_changed_border_slot(
     }
 }
 
-pub(crate) fn on_changed_text_color(
-    insert: On<Insert, ThemeTextColor>,
-    mut q_span: Query<(&mut TextColor, &ThemeTextColor), Changed<ThemeTextColor>>,
+pub(crate) fn on_changed_text_token(
+    insert: On<Insert, ThemeTextToken>,
+    mut q_span: Query<(&mut TextColor, &ThemeTextToken), Changed<ThemeTextToken>>,
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
@@ -244,9 +266,9 @@ pub(crate) fn on_changed_text_slot(
 }
 
 // Propagates the resolved text color down to every participating text entity.
-pub(crate) fn on_changed_font_color(
-    insert: On<Insert, InheritableThemeTextColor>,
-    font_color: Query<&InheritableThemeTextColor>,
+pub(crate) fn on_changed_inheritable_text_token(
+    insert: On<Insert, InheritableThemeTextToken>,
+    font_color: Query<&InheritableThemeTextToken>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -255,5 +277,33 @@ pub(crate) fn on_changed_font_color(
         commands
             .entity(insert.entity)
             .insert(Propagate(TextColor(color)));
+    }
+}
+
+// Slot counterpart of `on_changed_inheritable_text_token`.
+pub(crate) fn on_changed_inheritable_text_slot(
+    insert: On<Insert, InheritableThemeTextSlot>,
+    q_slot: Query<&InheritableThemeTextSlot>,
+    theme: Res<UiTheme>,
+    mut commands: Commands,
+) {
+    if let Ok(slot) = q_slot.get(insert.entity) {
+        let color = theme.palette(slot.0);
+        commands
+            .entity(insert.entity)
+            .insert(Propagate(TextColor(color)));
+    }
+}
+
+// Raw counterpart: no theme lookup, the color propagates as given.
+pub(crate) fn on_changed_inheritable_text_color(
+    insert: On<Insert, InheritableTextColor>,
+    q_color: Query<&InheritableTextColor>,
+    mut commands: Commands,
+) {
+    if let Ok(color) = q_color.get(insert.entity) {
+        commands
+            .entity(insert.entity)
+            .insert(Propagate(TextColor(color.0)));
     }
 }

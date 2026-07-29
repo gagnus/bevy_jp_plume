@@ -20,7 +20,6 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::text::{TextColor, TextFont};
 use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
-use smol_str::SmolStr;
 
 use crate::tokens::ThemeToken;
 
@@ -60,9 +59,9 @@ impl UiTheme {
         &self.editable
     }
 
-    /// Lookup a color by design token. If the theme does not have an entry for that token,
-    /// logs a warning and returns an error color.
-    pub fn color(&self, token: &ThemeToken) -> Color {
+    // Lookup a color by design token (tokens are plume-internal). If the theme does
+    // not have an entry for that token, logs a warning and returns an error color.
+    pub(crate) fn color(&self, token: &ThemeToken) -> Color {
         let color = self.tokens.get(token).map(|slot| self.resolved[*slot]);
         match color {
             Some(c) => c,
@@ -72,12 +71,6 @@ impl UiTheme {
                 bevy::color::palettes::basic::FUCHSIA.into()
             }
         }
-    }
-
-    /// Associate a design token with a given palette slot.
-    pub fn set_token(&mut self, token: &str, slot: ThemeSlot) {
-        self.tokens
-            .insert(ThemeToken::new(SmolStr::new(token)), slot);
     }
 
     /// Re-resolve every slot color from an editable palette.
@@ -91,29 +84,39 @@ fn update_theme(
     mut q_background: Query<
         (
             &mut BackgroundColor,
-            Option<&ThemeBackgroundColor>,
+            Option<&ThemeBackgroundToken>,
             Option<&ThemeBackgroundSlot>,
         ),
-        Or<(With<ThemeBackgroundColor>, With<ThemeBackgroundSlot>)>,
+        Or<(With<ThemeBackgroundToken>, With<ThemeBackgroundSlot>)>,
     >,
     mut q_gradient: Query<(&mut BackgroundGradient, &ThemeBackgroundGradient)>,
     mut q_border: Query<
         (
             &mut BorderColor,
-            Option<&ThemeBorderColor>,
+            Option<&ThemeBorderToken>,
             Option<&ThemeBorderSlot>,
         ),
-        Or<(With<ThemeBorderColor>, With<ThemeBorderSlot>)>,
+        Or<(With<ThemeBorderToken>, With<ThemeBorderSlot>)>,
     >,
     mut q_text_color: Query<
         (
             &mut TextColor,
-            Option<&ThemeTextColor>,
+            Option<&ThemeTextToken>,
             Option<&ThemeTextSlot>,
         ),
-        Or<(With<ThemeTextColor>, With<ThemeTextSlot>)>,
+        Or<(With<ThemeTextToken>, With<ThemeTextSlot>)>,
     >,
-    q_inherit: Query<(Entity, &InheritableThemeTextColor)>,
+    q_inherit: Query<
+        (
+            Entity,
+            Option<&InheritableThemeTextToken>,
+            Option<&InheritableThemeTextSlot>,
+        ),
+        Or<(
+            With<InheritableThemeTextToken>,
+            With<InheritableThemeTextSlot>,
+        )>,
+    >,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
@@ -146,10 +149,15 @@ fn update_theme(
             }
         }
 
-        for (entity, inherit) in &q_inherit {
-            commands
-                .entity(entity)
-                .insert(Propagate(TextColor(theme.color(&inherit.0))));
+        for (entity, inherit_token, inherit_slot) in &q_inherit {
+            let color = if let Some(inherit_slot) = inherit_slot {
+                theme.palette(inherit_slot.0)
+            } else if let Some(inherit_token) = inherit_token {
+                theme.color(&inherit_token.0)
+            } else {
+                continue;
+            };
+            commands.entity(entity).insert(Propagate(TextColor(color)));
         }
     }
 }
@@ -158,18 +166,17 @@ fn update_theme(
 // resolves no color or no font sits under a broken chain — the regression net for
 // a wrapper the relay sweep missed, or an app subtree with no establishing surface.
 fn warn_unstyled_themed_text(
+    // `PropagateOver<C>` exempts relays, the `Inheritable*` sources, and pinned
+    // text (direct color forms, raw-colored captions, icons, small caps, input
+    // fields) — all of which style their own text.
     q_no_color: Query<
         (),
         (
             With<ThemedText>,
             Without<Inherited<TextColor>>,
-            Without<ThemeTextColor>,
-            Without<ThemeTextSlot>,
-            Without<InheritableThemeTextColor>,
+            Without<PropagateOver<TextColor>>,
         ),
     >,
-    // `PropagateOver<TextFont>` exempts relays, `InheritableFont` carriers, and
-    // pinned text (icons, small caps, input fields) — all font their own text.
     q_no_font: Query<
         (),
         (
@@ -221,10 +228,12 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_background_token)
             .add_observer(on_changed_background_slot)
             .add_observer(on_changed_gradient)
-            .add_observer(on_changed_border)
+            .add_observer(on_changed_border_token)
             .add_observer(on_changed_border_slot)
-            .add_observer(on_changed_font_color)
-            .add_observer(on_changed_text_color)
+            .add_observer(on_changed_inheritable_text_token)
+            .add_observer(on_changed_inheritable_text_slot)
+            .add_observer(on_changed_inheritable_text_color)
+            .add_observer(on_changed_text_token)
             .add_observer(on_changed_text_slot)
             .add_observer(on_themed_text_inserted::<TextColor>);
     }
@@ -342,17 +351,6 @@ impl ThemeEditablePalette {
     /// Axis color `index`, in X, Y, Z order.
     pub fn axis(&self, index: usize) -> Color {
         self.axes[index].into()
-    }
-
-    /// Color for `token` via the *default* token→slot mapping (ignores any [`UiTheme`] remaps).
-    pub fn token(&self, token: &ThemeToken) -> Color {
-        let resolved = self.resolve();
-        let lookup: HashMap<ThemeToken, ThemeSlot> =
-            slots::DEFAULT_TOKEN_SLOTS.iter().cloned().collect();
-        lookup
-            .get(token)
-            .map(|slot| resolved[*slot])
-            .unwrap_or(Color::NONE)
     }
 }
 

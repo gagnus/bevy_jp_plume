@@ -13,7 +13,7 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{BackgroundColor, Node, PositionType, Val};
 
-use crate::{constants::size, theme::ThemeBorderColor, tokens};
+use crate::{constants::size, theme::ThemeBorderToken, tokens};
 
 /// A color swatch widget.
 ///
@@ -51,7 +51,7 @@ impl PlumeColorSwatch {
                         border: size::CONTROL_BORDER,
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
-                    ThemeBorderColor(tokens::COLOR_SWATCH_BORDER)
+                    ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
                 )
             ]
         }

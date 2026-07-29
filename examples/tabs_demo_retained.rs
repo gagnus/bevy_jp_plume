@@ -7,8 +7,8 @@ use bevy_jp_plume::retained::{
     Checked, ColorSwatchValue, InteractionDisabled, PlumeButton, PlumeCheckbox, PlumeColorSwatch,
     PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeSelect, PlumeSlider,
     PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, Selected, SliderValue,
-    ThemeBackgroundColor, caption, column, fa_icon, flex_spacer, row, screen, select_options,
-    separator, space, tab_body, tokens,
+    ThemeBackgroundSlot, caption, column, fa_icon, flex_spacer, row, screen, select_options,
+    separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -32,7 +32,7 @@ fn root() -> impl Scene {
         // bare caption below renders themed rather than in the engine default font.
         screen()
         Node { align_items: AlignItems::Start }
-        ThemeBackgroundColor(tokens::WINDOW_BG)
+        template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         // Tabs are tabbable, so they need a traversal scope; a dialog would bring
         // its own, but this screen-level container has to declare one.
         Children [

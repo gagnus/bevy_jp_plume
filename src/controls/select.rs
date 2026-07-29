@@ -46,7 +46,7 @@ use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
 use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
-use crate::theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor};
+use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
 use crate::tokens;
 
 /// Select control: a dropdown button over string options.
@@ -328,8 +328,8 @@ impl PlumeSelectOption {
                 padding: UiRect::horizontal(size::GAP),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
-            InheritableThemeTextColor(tokens::OPTION_TEXT)
-            ThemeBackgroundColor(tokens::OPTION_BG)
+            InheritableThemeTextToken(tokens::OPTION_TEXT)
+            ThemeBackgroundToken(tokens::OPTION_BG)
             TextStyleRelay
             Hovered
             ListItem
@@ -866,8 +866,8 @@ fn update_option_styles(
             Has<InteractionDisabled>,
             Has<Selected>,
             &Hovered,
-            &ThemeBackgroundColor,
-            &InheritableThemeTextColor,
+            &ThemeBackgroundToken,
+            &InheritableThemeTextToken,
         ),
         (
             With<PlumeSelectOption>,
@@ -906,8 +906,8 @@ fn update_option_styles_remove(
             Has<InteractionDisabled>,
             Has<Selected>,
             &Hovered,
-            &ThemeBackgroundColor,
-            &InheritableThemeTextColor,
+            &ThemeBackgroundToken,
+            &InheritableThemeTextToken,
         ),
         With<PlumeSelectOption>,
     >,
@@ -947,8 +947,8 @@ fn set_option_styles(
     disabled: bool,
     selected: bool,
     hovered: bool,
-    bg_color: &ThemeBackgroundColor,
-    font_color: &InheritableThemeTextColor,
+    bg_color: &ThemeBackgroundToken,
+    font_color: &InheritableThemeTextToken,
     commands: &mut Commands,
 ) {
     // Background shows hover only; selection is the tick.
@@ -970,13 +970,13 @@ fn set_option_styles(
     if bg_color.0 != outline_bg_token {
         commands
             .entity(option_ent)
-            .insert(ThemeBackgroundColor(outline_bg_token));
+            .insert(ThemeBackgroundToken(outline_bg_token));
     }
 
     if font_color.0 != font_color_token {
         commands
             .entity(option_ent)
-            .insert(InheritableThemeTextColor(font_color_token));
+            .insert(InheritableThemeTextToken(font_color_token));
     }
 
     if let Some(check_ent) = check_ent {
@@ -1039,7 +1039,7 @@ fn update_active_row_outline(
                 border_radius: BorderRadius::all(size::CORNER_RADIUS),
                 ..Default::default()
             },
-            ThemeBorderColor(tokens::FOCUS_RING),
+            ThemeBorderToken(tokens::FOCUS_RING),
             ActiveRowOutline,
         ));
     }

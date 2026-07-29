@@ -27,7 +27,7 @@ use crate::{
     cursor::EntityCursor,
     display::fa_icon,
     font_styles::TextStyleRelay,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken},
     tokens,
     utils::anim::AnimState,
 };
@@ -139,7 +139,7 @@ pub(crate) fn section_frame(
         }
         SectionRoot
         template_value(SectionCollapsible(collapsible))
-        ThemeBackgroundColor(tokens::SECTION_BODY_BG)
+        ThemeBackgroundToken(tokens::SECTION_BODY_BG)
         TextStyleRelay
         Children [
             (
@@ -154,10 +154,10 @@ pub(crate) fn section_frame(
                     border_radius: size::CORNER_RADIUS,
                 }
                 SectionHeader
-                ThemeBackgroundColor(tokens::SECTION_HEADER_BG)
-                ThemeBorderColor(tokens::SEPARATOR)
+                ThemeBackgroundToken(tokens::SECTION_HEADER_BG)
+                ThemeBorderToken(tokens::SEPARATOR)
                 EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-                InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
+                InheritableThemeTextToken(tokens::SECTION_HEADER_TEXT)
                 TextStyleRelay
                 on(toggle_section_collapse)
                 Children [
@@ -182,8 +182,6 @@ pub(crate) fn section_body() -> impl Scene {
             padding: size::PAD,
         }
         SectionBody
-        // The standard container text color, as `column` carries; the font relays.
-        InheritableThemeTextColor(tokens::TEXT_DIM)
         TextStyleRelay
     }
 }
@@ -306,8 +304,8 @@ fn update_section_header_style(
             };
             node.border = border;
             commands.entity(descendant).insert((
-                ThemeBackgroundColor(bg_token),
-                InheritableThemeTextColor(text_token),
+                ThemeBackgroundToken(bg_token),
+                InheritableThemeTextToken(text_token),
                 EntityCursor::System(cursor),
             ));
         }

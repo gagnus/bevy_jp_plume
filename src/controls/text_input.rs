@@ -34,7 +34,7 @@ use crate::{
     cursor::EntityCursor,
     focus::FocusWithinIndicator,
     font_styles::TextStyleRelay,
-    theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
+    theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme},
     tokens,
 };
 
@@ -138,8 +138,8 @@ pub(crate) fn text_input_frame() -> impl Scene {
         TextStyleRelay
         // Ring around the frame while the inner field holds focus.
         FocusWithinIndicator
-        ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
-        ThemeBorderColor(tokens::TEXT_INPUT_BORDER)
+        ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
+        ThemeBorderToken(tokens::TEXT_INPUT_BORDER)
         // On the frame so the whole box (padding included) shows the text cursor; the cursor
         // resolver walks up from the hovered field to find it.
         EntityCursor::System(bevy::window::SystemCursorIcon::Text)
@@ -160,7 +160,7 @@ pub(crate) fn text_input_field(
         TextInputField
         // The field is the text entity, so the inheritable color (which only propagates to
         // descendants) would never reach it; set it directly.
-        ThemeTextColor(tokens::TEXT_INPUT_TEXT)
+        ThemeTextToken(tokens::TEXT_INPUT_TEXT)
         TabIndex(0)
         EditableText {
             cursor_width: 0.3,
@@ -271,7 +271,7 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
             weight: FontWeight::NORMAL,
         }
         PropagateOver<TextFont>
-        ThemeTextColor(tokens::TEXT_DIM)
+        ThemeTextToken(tokens::TEXT_DIM)
         Node {
             position_type: PositionType::Absolute,
             left: TEXT_INPUT_PAD_X,
@@ -291,7 +291,7 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
             weight: FontWeight::NORMAL,
         }
         PropagateOver<TextFont>
-        ThemeTextColor(tokens::TEXT_DIM)
+        ThemeTextToken(tokens::TEXT_DIM)
         Node {
             margin: {UiRect::left(size::GAP_TIGHT)},
         }
@@ -318,9 +318,9 @@ fn update_text_input_styles(
     q_frames: Query<Entity, (With<PlumeTextInput>, Added<InteractionDisabled>)>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
-    q_bg: Query<&ThemeBackgroundColor>,
-    q_border: Query<&ThemeBorderColor>,
-    q_text: Query<&ThemeTextColor>,
+    q_bg: Query<&ThemeBackgroundToken>,
+    q_border: Query<&ThemeBorderToken>,
+    q_text: Query<&ThemeTextToken>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -348,9 +348,9 @@ fn update_text_input_styles_remove(
     q_frames: Query<(), With<PlumeTextInput>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
-    q_bg: Query<&ThemeBackgroundColor>,
-    q_border: Query<&ThemeBorderColor>,
-    q_text: Query<&ThemeTextColor>,
+    q_bg: Query<&ThemeBackgroundToken>,
+    q_border: Query<&ThemeBorderToken>,
+    q_text: Query<&ThemeTextToken>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     focus: Res<InputFocus>,
     mut commands: Commands,
@@ -379,9 +379,9 @@ fn update_text_input_styles_focus(
     q_frames: Query<(Entity, Has<InteractionDisabled>), With<PlumeTextInput>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
-    q_bg: Query<&ThemeBackgroundColor>,
-    q_border: Query<&ThemeBorderColor>,
-    q_text: Query<&ThemeTextColor>,
+    q_bg: Query<&ThemeBackgroundToken>,
+    q_border: Query<&ThemeBorderToken>,
+    q_text: Query<&ThemeTextToken>,
     focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
@@ -426,9 +426,9 @@ fn set_text_input_styles(
     field_ent: Entity,
     disabled: bool,
     focused: bool,
-    q_bg: &Query<&ThemeBackgroundColor>,
-    q_border: &Query<&ThemeBorderColor>,
-    q_text: &Query<&ThemeTextColor>,
+    q_bg: &Query<&ThemeBackgroundToken>,
+    q_border: &Query<&ThemeBorderToken>,
+    q_text: &Query<&ThemeTextToken>,
     commands: &mut Commands,
 ) {
     let (bg_token, font_token, border_token) = match (disabled, focused) {
@@ -459,7 +459,7 @@ fn set_text_input_styles(
     if !q_bg.get(frame_ent).is_ok_and(|bg| bg.0 == bg_token) {
         commands
             .entity(frame_ent)
-            .insert(ThemeBackgroundColor(bg_token));
+            .insert(ThemeBackgroundToken(bg_token));
     }
     if !q_border
         .get(frame_ent)
@@ -467,14 +467,14 @@ fn set_text_input_styles(
     {
         commands
             .entity(frame_ent)
-            .insert(ThemeBorderColor(border_token));
+            .insert(ThemeBorderToken(border_token));
     }
 
     // Text color lives on the editable field itself.
     if !q_text.get(field_ent).is_ok_and(|text| text.0 == font_token) {
         commands
             .entity(field_ent)
-            .insert(ThemeTextColor(font_token));
+            .insert(ThemeTextToken(font_token));
     }
 
     commands

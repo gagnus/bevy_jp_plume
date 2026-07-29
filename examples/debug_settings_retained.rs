@@ -5,9 +5,9 @@ use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Checked, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeNumberInput, PlumeSection, PlumeSelect,
-    PlumeSlider, PlumeToggleSwitch, SliderValue, ThemeBackgroundColor, Tooltip, TooltipContent,
-    caption, caption_color, caption_small_caps, column, fa_icon, flex_spacer, row, select_options,
-    separator, tokens,
+    PlumeSlider, PlumeToggleSwitch, SliderValue, ThemeBackgroundSlot, Tooltip, TooltipContent,
+    caption, caption_slot, caption_small_caps, column, fa_icon, flex_spacer, row, select_options,
+    separator,
 };
 
 #[path = "common/mod.rs"]
@@ -31,7 +31,7 @@ fn root() -> impl Scene {
             width: percent(100),
             height: percent(100),
         }
-        ThemeBackgroundColor(tokens::WINDOW_BG)
+        template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         Children [
             debug_options_dialog(),
         ]
@@ -146,7 +146,7 @@ fn debug_options_dialog() -> impl Scene {
                                     row()
                                     Children [
                                         fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
-                                        caption_color("Reset to defaults", tokens::TEXT_MAIN),
+                                        caption_slot("Reset to defaults", ThemeSlot::Text0),
                                     ]
                                 ),
                                 caption("Every debug option returns to its default value"),

@@ -29,7 +29,7 @@ use crate::containers::{
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
 use crate::display::{caption_small_caps, fa_icon};
-use crate::theme::ThemeTextColor;
+use crate::theme::ThemeTextToken;
 use crate::tokens;
 use crate::utils::hierarchy::{descendant, nearest_with};
 
@@ -137,7 +137,7 @@ fn on_swatch_click(
                             (
                                 caption_small_caps("Color Edit")
                                 Node { width: px(100) }
-                                ThemeTextColor(tokens::TEXT_MAIN)
+                                ThemeTextToken(tokens::TEXT_MAIN)
                             )
                         ]
                     ),

@@ -21,7 +21,7 @@ use crate::{
     controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton},
     display::fa_icon,
     font_styles::{InheritableFont, TextStyleRelay},
-    theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
+    theme::{Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken},
     tokens,
 };
 
@@ -240,9 +240,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                         border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                     }
                     {movable.then(|| bsn!(DialogDragHandle))}
-                    InheritableThemeTextColor(tokens::DIALOG_HEADER_TEXT)
-                    ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
-                    ThemeBorderColor(tokens::DIALOG_BORDER)
+                    InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
+                    ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
+                    ThemeBorderToken(tokens::DIALOG_BORDER)
                     InheritableFont {
                         font: fonts::BOLD, // switch font deliberately here to bold
                         font_size: size::MEDIUM_FONT,
@@ -281,9 +281,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             Dialog
             // Tab-traversal scope for the dialog's fields.
             TabGroup::new(0)
-            ThemeBackgroundColor(tokens::DIALOG_BG)
-            ThemeBorderColor(tokens::DIALOG_BORDER)
-            InheritableThemeTextColor(tokens::TEXT_DIM)
+            ThemeBackgroundToken(tokens::DIALOG_BG)
+            ThemeBorderToken(tokens::DIALOG_BORDER)
+            InheritableThemeTextToken(tokens::TEXT_DIM)
             // The dialog is a genuine UI root (absolutely positioned, often
             // parentless), so it establishes the standard font for its subtree.
             InheritableFont {

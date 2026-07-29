@@ -28,8 +28,8 @@ use crate::{
     focus::FocusIndicator,
     font_styles::TextStyleRelay,
     theme::{
-        Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
-        ThemeBorderColor, control_box_shadow,
+        Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient,
+        ThemeBorderToken, control_box_shadow,
     },
     tokens,
     utils::anim::AnimState,
@@ -76,7 +76,7 @@ impl PlumeRadio {
             Pickable::IGNORE
             on(radio_check_self)
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            InheritableThemeTextColor(tokens::RADIO_TEXT)
+            InheritableThemeTextToken(tokens::RADIO_TEXT)
             TextStyleRelay
             Children [(
                 // Gradient only when checked, since the unchecked fill is transparent.
@@ -105,7 +105,7 @@ impl PlumeRadio {
                             border_radius: BorderRadius::MAX,
                         }
                         RadioOutline
-                        ThemeBorderColor(tokens::RADIO_BORDER)
+                        ThemeBorderToken(tokens::RADIO_BORDER)
                     ),
                     (
                         Node {
@@ -143,6 +143,7 @@ impl PlumeRadioGroup {
             }
             RadioGroup
             PlumeRadioGroup
+            TextStyleRelay
             on(radio_group_uncheck_others)
         }
     }
@@ -192,7 +193,7 @@ fn update_radio_styles(
             Has<InteractionDisabled>,
             Has<Checked>,
             Has<Flat>,
-            &InheritableThemeTextColor,
+            &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
         (
@@ -208,7 +209,7 @@ fn update_radio_styles(
     >,
     q_children: Query<&Children>,
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
-    q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut commands: Commands,
@@ -238,14 +239,14 @@ fn update_radio_styles_remove(
             Has<InteractionDisabled>,
             Has<Checked>,
             Has<Flat>,
-            &InheritableThemeTextColor,
+            &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
         With<RadioButton>,
     >,
     q_children: Query<&Children>,
     q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
-    q_outline: Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
     q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
@@ -285,10 +286,10 @@ fn apply_radio_styles(
     disabled: bool,
     checked: bool,
     flat: bool,
-    font_color: &InheritableThemeTextColor,
+    font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
     q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
-    q_outline: &Query<&ThemeBorderColor, With<RadioOutline>>,
+    q_outline: &Query<&ThemeBorderToken, With<RadioOutline>>,
     q_mark: &Query<&ThemeBackgroundGradient, With<RadioMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<RadioMark>>,
     has_box_shadow: bool,
@@ -353,9 +354,9 @@ fn set_radio_styles(
     checked: bool,
     flat: bool,
     bg: &ThemeBackgroundGradient,
-    outline_border: &ThemeBorderColor,
+    outline_border: &ThemeBorderToken,
     mark_color: &ThemeBackgroundGradient,
-    font_color: &InheritableThemeTextColor,
+    font_color: &InheritableThemeTextToken,
     has_box_shadow: bool,
     commands: &mut Commands,
 ) {
@@ -380,7 +381,7 @@ fn set_radio_styles(
     if outline_border.0 != outline_border_token {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(outline_border_token));
+            .insert(ThemeBorderToken(outline_border_token));
     }
 
     // Gradient only when checked, flat fill otherwise.
@@ -404,7 +405,7 @@ fn set_radio_styles(
     if font_color.0 != font_color_token {
         commands
             .entity(radio_ent)
-            .insert(InheritableThemeTextColor(font_color_token));
+            .insert(InheritableThemeTextToken(font_color_token));
     }
 
     let should_have_box_shadow = checked && !disabled;

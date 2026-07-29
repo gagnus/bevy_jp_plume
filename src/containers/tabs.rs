@@ -31,7 +31,7 @@ use crate::{
     display::{caption, fa_icon},
     focus::FocusIndicator,
     font_styles::TextStyleRelay,
-    theme::{InheritableThemeTextColor, ThemeBackgroundColor},
+    theme::{InheritableThemeTextToken, ThemeBackgroundToken},
     tokens,
     utils::anim::{UI_ANIM_RATE, approach},
 };
@@ -192,7 +192,7 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
         }
         TabsRoot
         template_value(SelectedIndex(selected))
-        ThemeBackgroundColor(tokens::TABS_BODY_BG)
+        ThemeBackgroundToken(tokens::TABS_BODY_BG)
         TextStyleRelay
     }
 }
@@ -210,7 +210,7 @@ pub(crate) fn tab_strip() -> impl Scene {
             padding: UiRect::top(px(4)),
         }
         TabStrip
-        ThemeBackgroundColor(tokens::TABS_STRIP_BG)
+        ThemeBackgroundToken(tokens::TABS_STRIP_BG)
         TextStyleRelay
         Children [
             (
@@ -225,7 +225,7 @@ pub(crate) fn tab_strip() -> impl Scene {
                 ZIndex(1)
                 UiTransform::default()
                 Pickable::IGNORE
-                ThemeBackgroundColor(tokens::TAB_INDICATOR)
+                ThemeBackgroundToken(tokens::TAB_INDICATOR)
             )
         ]
     }
@@ -250,8 +250,8 @@ pub(crate) fn tab_chrome() -> impl Scene {
         TabIndex(0)
         FocusIndicator
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-        ThemeBackgroundColor(tokens::TAB_BG)
-        InheritableThemeTextColor(tokens::TAB_TEXT)
+        ThemeBackgroundToken(tokens::TAB_BG)
+        InheritableThemeTextToken(tokens::TAB_TEXT)
         TextStyleRelay
         on(select_tab_on_activate)
     }
@@ -285,7 +285,6 @@ pub fn tab_body() -> impl Scene {
             flex_grow: 1.0,
             min_height: Val::ZERO,
         }
-        InheritableThemeTextColor(tokens::TEXT_DIM)
         TextStyleRelay
     }
 }
@@ -441,8 +440,8 @@ fn update_tab_styles(
             Has<Selected>,
             &Hovered,
             Has<InteractionDisabled>,
-            &ThemeBackgroundColor,
-            &InheritableThemeTextColor,
+            &ThemeBackgroundToken,
+            &InheritableThemeTextToken,
         ),
         With<TabButton>,
     >,
@@ -466,12 +465,12 @@ fn update_tab_styles(
         if background.0 != background_token {
             commands
                 .entity(tab)
-                .insert(ThemeBackgroundColor(background_token));
+                .insert(ThemeBackgroundToken(background_token));
         }
         if text_color.0 != text_token {
             commands
                 .entity(tab)
-                .insert(InheritableThemeTextColor(text_token));
+                .insert(InheritableThemeTextToken(text_token));
         }
         commands.entity(tab).insert(EntityCursor::System(cursor));
     }

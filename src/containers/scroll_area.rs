@@ -22,8 +22,6 @@ use crate::{
     constants::size,
     controls::{PlumeScrollbar, ScrollbarGutter},
     font_styles::TextStyleRelay,
-    theme::InheritableThemeTextColor,
-    tokens,
 };
 
 // Bounded frame holding the scrolling viewport and its scrollbar. Distinct from a
@@ -74,8 +72,6 @@ pub(crate) fn scroll_content() -> impl Scene {
             row_gap: size::GAP,
             flex_shrink: 0.0,
         }
-        // The standard container text color, as `column` carries; the font relays.
-        InheritableThemeTextColor(tokens::TEXT_DIM)
         TextStyleRelay
     }
 }

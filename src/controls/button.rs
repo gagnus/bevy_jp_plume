@@ -27,8 +27,8 @@ use crate::{
     font_styles::TextStyleRelay,
     rounded_corners::RoundedCorners,
     theme::{
-        Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextColor, ThemeBackgroundGradient,
-        ThemeBorderColor, control_box_shadow,
+        Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextToken, ThemeBackgroundGradient,
+        ThemeBorderToken, control_box_shadow,
     },
     tokens,
 };
@@ -116,7 +116,7 @@ impl PlumeButton {
             FocusIndicator
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
-            InheritableThemeTextColor(tokens::BUTTON_TEXT)
+            InheritableThemeTextToken(tokens::BUTTON_TEXT)
             TextStyleRelay
             Children [
                 (
@@ -134,7 +134,7 @@ impl PlumeButton {
                     }
                     ButtonOutline
                     Pickable::IGNORE
-                    ThemeBorderColor(tokens::BUTTON_BORDER_NONE)
+                    ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
                 ),
                 {props.caption}
             ]
@@ -185,7 +185,7 @@ fn update_button_styles(
             Has<Flat>,
             Has<Inert>,
             &ThemeBackgroundGradient,
-            &InheritableThemeTextColor,
+            &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
         Or<(
@@ -199,7 +199,7 @@ fn update_button_styles(
         )>,
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<ButtonOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<ButtonOutline>>,
     mut commands: Commands,
 ) {
     for (
@@ -240,8 +240,8 @@ fn update_button_styles(
 fn outline_child<'a>(
     button_ent: Entity,
     q_children: &Query<&Children>,
-    q_outline: &'a Query<&ThemeBorderColor, With<ButtonOutline>>,
-) -> Option<(Entity, &'a ThemeBorderColor)> {
+    q_outline: &'a Query<&ThemeBorderToken, With<ButtonOutline>>,
+) -> Option<(Entity, &'a ThemeBorderToken)> {
     q_children
         .get(button_ent)
         .ok()?
@@ -261,11 +261,11 @@ fn update_button_styles_remove(
         Has<Flat>,
         Has<Inert>,
         &ThemeBackgroundGradient,
-        &InheritableThemeTextColor,
+        &InheritableThemeTextToken,
         Has<BoxShadow>,
     )>,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderColor, With<ButtonOutline>>,
+    q_outline: Query<&ThemeBorderToken, With<ButtonOutline>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_pressed: RemovedComponents<Pressed>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -328,9 +328,9 @@ fn set_button_styles(
     flat: bool,
     inert: bool,
     bg_color: &ThemeBackgroundGradient,
-    font_color: &InheritableThemeTextColor,
+    font_color: &InheritableThemeTextToken,
     has_box_shadow: bool,
-    outline: Option<(Entity, &ThemeBorderColor)>,
+    outline: Option<(Entity, &ThemeBorderToken)>,
     commands: &mut Commands,
 ) {
     let variant = if checkable && checked {
@@ -382,7 +382,7 @@ fn set_button_styles(
     if font_color.0 != text_token {
         commands
             .entity(button_ent)
-            .insert(InheritableThemeTextColor(text_token));
+            .insert(InheritableThemeTextToken(text_token));
     }
 
     if let Some((outline_ent, outline_color)) = outline
@@ -390,7 +390,7 @@ fn set_button_styles(
     {
         commands
             .entity(outline_ent)
-            .insert(ThemeBorderColor(border_token));
+            .insert(ThemeBorderToken(border_token));
     }
 
     // An inert button's unfilled variants stay shadowless: the lift is the same
