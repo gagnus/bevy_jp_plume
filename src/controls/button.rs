@@ -344,10 +344,6 @@ fn set_button_styles(
         variant
     };
 
-    // A checkable button's feedback is its checked fill, so hover/press must not
-    // also move it: `Checkable` implies `Inert`.
-    let inert = inert || checkable;
-
     let bg_set = match variant {
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,

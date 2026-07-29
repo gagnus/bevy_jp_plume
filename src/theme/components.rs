@@ -51,7 +51,7 @@ pub const GRADIENT_AMOUNT: f32 = 0.05;
 pub struct Flat;
 
 /// Opt-in marker: the entity does not repond to hover and pressed. Currently only
-/// respected by `PlumeButton`. Implied by [`bevy::ui::Checkable`].
+/// respected by `PlumeButton`.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct Inert;

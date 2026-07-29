@@ -105,7 +105,7 @@ fn debug_hub_ui(
                         font_awesome::solid::BARS
                     })
                     .flat()
-                    .checkable()
+                    .inert()
                     .variant(ButtonVariant::Plain)
                     .clicked
                 {

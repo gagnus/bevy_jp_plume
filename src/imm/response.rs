@@ -396,8 +396,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         self
     }
 
-    /// Button is checkable, which will display as primary variant when checked is true
-    /// also implies inert()
+    /// Button is checkable, which will display as primary variant when checked is true.
     pub fn checkable(mut self) -> Self {
         struct CheckableKey;
         if self.key_changed::<CheckableKey>(true) {
