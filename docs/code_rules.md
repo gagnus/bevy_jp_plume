@@ -89,8 +89,7 @@ fn outer(...) {
 
 Sometimes it's the only option. But destructuring or borrowing
 temporarily is usually better than `.clone()`. When a clone is
-intentional (e.g. an egui local-clone to dodge change detection),
-leave a one-line comment at the call site.
+intentional leave a one-line comment at the call site.
 
 ## Comments
 
