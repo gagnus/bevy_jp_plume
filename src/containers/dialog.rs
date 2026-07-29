@@ -244,7 +244,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     ThemeBackgroundColor(tokens::DIALOG_HEADER_BG)
                     ThemeBorderColor(tokens::DIALOG_BORDER)
                     InheritableFont {
-                        font: fonts::REGULAR,
+                        font: fonts::BOLD, // switch font deliberately here to bold
                         font_size: size::MEDIUM_FONT,
                         weight: FontWeight::NORMAL,
                     }
