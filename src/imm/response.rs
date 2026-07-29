@@ -16,7 +16,7 @@ use bevy::ecs::{
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{
-    FontFeatureTag, FontFeatures, FontSourceTemplate, LineBreak, TextFont, TextLayout,
+    FontFeatureTag, FontFeatures, FontSourceTemplate, LineBreak, TextColor, TextFont, TextLayout,
 };
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
@@ -37,7 +37,10 @@ use crate::{
         text_input_suffix,
     },
     rounded_corners::RoundedCorners,
-    theme::{Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, ThemeSlot, control_box_shadow},
+    theme::{
+        Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, ThemeSlot, ThemeTextSlot,
+        control_box_shadow,
+    },
 };
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -279,6 +282,32 @@ impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Caption> {
+    /// Override the caption's text color.
+    pub fn color(mut self, color: Color) -> Self {
+        struct ColorKey;
+        if self.key_changed::<ColorKey>(format!("{color:?}")) {
+            // `PropagateOver` keeps the inherited themed color from overwriting it.
+            self.e
+                .entity_commands()
+                .insert((TextColor(color), PropagateOver::<TextColor>::default()));
+        }
+        self
+    }
+
+    /// Override the caption's text color from a theme slot.
+    pub fn color_slot(mut self, slot: ThemeSlot) -> Self {
+        struct ColorSlotKey;
+        if self.key_changed::<ColorSlotKey>(&slot) {
+            self.e.entity_commands().insert(ThemeTextSlot(slot));
+        }
+        self
+    }
+
+    /// Set the caption to a brighter text
+    pub fn bright(self) -> Self {
+        self.color_slot(ThemeSlot::Text0)
+    }
+
     /// Keep the text on one line however long it runs, and let it be narrower than
     /// that line — so a bounded container cuts it off instead of the text wrapping
     /// and growing the row.

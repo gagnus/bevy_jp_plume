@@ -126,6 +126,16 @@ pub struct InheritableThemeTextColor(pub ThemeToken);
 #[require(ThemedText, PropagateOver::<TextColor>)]
 pub struct ThemeTextColor(pub ThemeToken);
 
+/// Component which causes the color of a text span to be set based on a theme slot.
+/// Internal use [`ThemeTextColor`] instead, external prefer this, this takes priority over
+/// `ThemeTextColor`.
+#[derive(Component, Clone, Default)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+#[require(ThemedText, PropagateOver::<TextColor>)]
+pub struct ThemeTextSlot(pub ThemeSlot);
+
 /// A marker component that is used to indicate that the text entity wants to opt-in to using
 /// inherited text styles.
 #[derive(Component, Reflect, Default, Clone)]
@@ -220,6 +230,16 @@ pub(crate) fn on_changed_text_color(
 ) {
     if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
         text_color.0 = theme.color(&theme_text_color.0);
+    }
+}
+
+pub(crate) fn on_changed_text_slot(
+    insert: On<Insert, ThemeTextSlot>,
+    mut q_span: Query<(&mut TextColor, &ThemeTextSlot), Changed<ThemeTextSlot>>,
+    theme: Res<UiTheme>,
+) {
+    if let Ok((mut text_color, theme_text_slot)) = q_span.get_mut(insert.entity) {
+        text_color.0 = theme.palette(theme_text_slot.0);
     }
 }
 

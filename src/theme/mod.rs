@@ -104,7 +104,14 @@ fn update_theme(
         ),
         Or<(With<ThemeBorderColor>, With<ThemeBorderSlot>)>,
     >,
-    mut q_text_color: Query<(&mut TextColor, &ThemeTextColor)>,
+    mut q_text_color: Query<
+        (
+            &mut TextColor,
+            Option<&ThemeTextColor>,
+            Option<&ThemeTextSlot>,
+        ),
+        Or<(With<ThemeTextColor>, With<ThemeTextSlot>)>,
+    >,
     q_inherit: Query<(Entity, &InheritableThemeTextColor)>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -130,8 +137,12 @@ fn update_theme(
             }
         }
 
-        for (mut text_color, theme_text_color) in q_text_color.iter_mut() {
-            text_color.0 = theme.color(&theme_text_color.0);
+        for (mut text_color, theme_text_token, theme_text_slot) in q_text_color.iter_mut() {
+            if let Some(theme_text_slot) = theme_text_slot {
+                text_color.0 = theme.palette(theme_text_slot.0);
+            } else if let Some(theme_text_token) = theme_text_token {
+                text_color.0 = theme.color(&theme_text_token.0);
+            }
         }
 
         for (entity, inherit) in &q_inherit {
@@ -151,6 +162,7 @@ fn warn_unstyled_themed_text(
             With<ThemedText>,
             Without<Inherited<TextColor>>,
             Without<ThemeTextColor>,
+            Without<ThemeTextSlot>,
             Without<InheritableThemeTextColor>,
         ),
     >,
@@ -190,6 +202,7 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_border_slot)
             .add_observer(on_changed_font_color)
             .add_observer(on_changed_text_color)
+            .add_observer(on_changed_text_slot)
             .add_observer(on_themed_text_inserted::<TextColor>);
     }
 }
