@@ -20,11 +20,10 @@ use bevy::ui::UiSystems;
 use crate::{
     controls::ControlsPlugin,
     theme::{ThemePlugin, ThemedText, on_themed_text_inserted},
-    utils::{
-        anim::UiAnimPlugin,
-        cursor::{CursorIconPlugin, DefaultCursor, EntityCursor},
-    },
+    utils::{anim::UiAnimPlugin, cursor::CursorIconPlugin},
 };
+
+pub use utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 
 // Short crate-internal paths for the modules the public surface re-exports
 // piecemeal through `style`, `retained` and `theme`.
