@@ -19,11 +19,13 @@ pub use crate::controls::{
     PlumeXyPadProps, ScrollbarGutter, SelectedIndex, SetSelectedIndex, SetTextInputValue,
     TextInputValue, XyPadDragging, XyPadLock, XyPadValue, select_options,
 };
-pub use crate::display::{caption, caption_color, caption_small_caps, fa_icon};
+pub use crate::display::{
+    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_small_caps, fa_icon,
+};
 pub use crate::theme::components::{
     Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextColor, ThemeBackgroundColor,
     ThemeBackgroundGradient, ThemeBackgroundSlot, ThemeBorderColor, ThemeBorderSlot,
-    ThemeTextColor, ThemedText, control_box_shadow,
+    ThemeTextColor, ThemeTextSlot, ThemedText, control_box_shadow,
 };
 pub use crate::utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};

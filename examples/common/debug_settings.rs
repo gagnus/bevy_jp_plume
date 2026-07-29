@@ -1,7 +1,7 @@
 //! Debug-menu dialog as a self-contained feature plugin: two panes of rendering /
 //! physics / diagnostics / cheats controls, backed by one resource.
 use bevy::prelude::*;
-use bevy_jp_plume::imm::ImmSelect;
+use bevy_jp_plume::imm::{ImmResponse, ImmSelect, kind};
 use bevy_jp_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
@@ -135,6 +135,13 @@ fn debug_settings_dialog(
                 let (mut do_reset, mut keep) = (false, false);
                 ui.icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
                     .variant(ButtonVariant::Outline)
+                    .tooltip_ui(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.icon(font_awesome::solid::ARROW_ROTATE_LEFT);
+                            ui.caption("Reset to defaults").bright();
+                        });
+                        ui.caption("Every debug option returns to its default value");
+                    })
                     .popup(&mut reset_confirm_open)
                     .toggle_on_click()
                     .show(|ui| {
@@ -151,8 +158,12 @@ fn debug_settings_dialog(
                     *reset_confirm_open = false;
                 }
                 ui.flex_spacer();
-                ui.button("Cancel").variant(ButtonVariant::Outline);
-                ui.button("Apply").primary();
+                ui.button("Cancel")
+                    .variant(ButtonVariant::Outline)
+                    .tooltip("Discard changes and close");
+                ui.button("Apply")
+                    .primary()
+                    .tooltip("Apply changes and close");
             });
         });
     if open != registry.is_open(TITLE) {
@@ -163,7 +174,8 @@ fn debug_settings_dialog(
 
 fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
     ui.section("Rendering", |ui| {
-        ui.checkbox(&mut s.wireframe, "Wireframe");
+        ui.checkbox(&mut s.wireframe, "Wireframe")
+            .tooltip("Draw all meshes as wireframe");
         ui.checkbox(&mut s.show_colliders, "Show colliders");
         ui.checkbox(&mut s.freeze_culling, "Freeze frustum culling");
         select_row(ui, "View mode", &mut s.view_mode, |select| {
@@ -172,14 +184,17 @@ fn rendering_pane(ui: &mut Ui, s: &mut DebugSettings) {
             select.option(ViewMode::Normals, "Normals");
             select.option(ViewMode::Depth, "Depth");
             select.option(ViewMode::Overdraw, "Overdraw").enabled(false);
-        });
-        slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 0.1, 2, None);
+        })
+        .tooltip("Which render pass fills the viewport");
+        slider_row(ui, "Gamma", &mut s.gamma, 0.5..=3.0, 0.1, 2, None)
+            .tooltip("Display gamma correction");
     });
 }
 
 fn physics_pane(ui: &mut Ui, s: &mut DebugSettings) {
     ui.section("Physics", |ui| {
-        ui.checkbox(&mut s.pause_sim, "Pause simulation");
+        ui.checkbox(&mut s.pause_sim, "Pause simulation")
+            .tooltip("Halt the physics clock; rendering keeps running");
         slider_row(
             ui,
             "Time scale",
@@ -237,15 +252,15 @@ fn cheats_pane(ui: &mut Ui, s: &mut DebugSettings) {
 
 // Reusable rows: repeated calls under one parent need no `push_id` — same-id
 // repeats are disambiguated by occurrence index.
-fn slider_row(
-    ui: &mut Ui,
+fn slider_row<'r, 'w, 's>(
+    ui: &'r mut Ui<'w, 's>,
     label: &str,
     value: &mut f32,
     range: std::ops::RangeInclusive<f32>,
     step: f32,
     precision: usize,
     suffix: Option<&str>,
-) {
+) -> ImmResponse<'r, 'w, 's, kind::Row> {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(84));
         ui.slider(value, range.clone())
@@ -260,19 +275,19 @@ fn slider_row(
         if let Some(suffix) = suffix {
             number.suffix(suffix);
         }
-    });
+    })
 }
 
-fn select_row<T: PartialEq>(
-    ui: &mut Ui,
+fn select_row<'r, 'w, 's, T: PartialEq>(
+    ui: &'r mut Ui<'w, 's>,
     label: &str,
     selected: &mut T,
     options: impl FnOnce(&mut ImmSelect<T>),
-) {
+) -> ImmResponse<'r, 'w, 's, kind::Row> {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(84));
         ui.select(selected, options).grow();
-    });
+    })
 }
 
 fn toggle_row(ui: &mut Ui, label: &str, value: &mut bool) {

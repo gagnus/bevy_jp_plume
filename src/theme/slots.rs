@@ -23,6 +23,7 @@ pub enum ThemeSlot {
     /// - `SECTION_BODY_BG`
     /// - `TABS_BODY_BG`
     /// - `TEXT_INPUT_BG`
+    /// - `TOOLTIP_BG`
     Neutral1,
 
     /// Raised container chrome: section headers.
@@ -103,6 +104,7 @@ pub enum ThemeSlot {
     /// - `TAB_TEXT`
     /// - `TEXT_DIM`
     /// - `TEXT_INPUT_TEXT`
+    /// - `TOOLTIP_TEXT`
     Text1,
 
     /// Disabled bright text.
@@ -339,6 +341,8 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     ),
     (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
+    (tokens::TOOLTIP_BG, ThemeSlot::Neutral1),
+    (tokens::TOOLTIP_TEXT, ThemeSlot::Text1),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_ACTIVE, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_DISABLED, ThemeSlot::Neutral3),

@@ -314,6 +314,13 @@ pub const MENU_BG: ThemeToken = ThemeToken::new_static("plume.menu.bg");
 /// Menu border
 pub const MENU_BORDER: ThemeToken = ThemeToken::new_static("plume.menu.border");
 
+// Tooltip
+
+/// Tooltip background
+pub const TOOLTIP_BG: ThemeToken = ThemeToken::new_static("plume.tooltip.bg");
+/// Tooltip text
+pub const TOOLTIP_TEXT: ThemeToken = ThemeToken::new_static("plume.tooltip.text");
+
 // Text Input
 
 /// Background for text input

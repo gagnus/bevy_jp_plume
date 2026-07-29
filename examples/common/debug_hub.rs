@@ -79,58 +79,33 @@ impl AddDebugDialog for App {
     }
 }
 
-fn debug_hub_ui(
-    mut root: PlumeRoot,
-    mut expanded: Local<bool>,
-    mut registry: ResMut<DebugDialogRegistry>,
-    mouse: Res<ButtonInput<MouseButton>>,
-) {
+fn debug_hub_ui(mut root: PlumeRoot, mut registry: ResMut<DebugDialogRegistry>) {
     let entries = registry.entries();
     if entries.is_empty() {
         return;
     }
 
     let mut toggled: Vec<&'static str> = vec![];
-    // Headerless panel: an always-present, pinned toolbar with no title bar to close or
-    // drag. A panel (not a screen), so the gallery stays the one screen.
-    let content_hovered = root
-        .panel()
+    root.panel()
         .at(px(16), px(16))
         .show(|ui| {
             ui.horizontal(|ui| {
-                if ui
-                    .tool_button(if *expanded {
-                        font_awesome::solid::XMARK
-                    } else {
-                        font_awesome::solid::BARS
-                    })
-                    .flat()
-                    .inert()
-                    .variant(ButtonVariant::Plain)
-                    .clicked
-                {
-                    *expanded = !*expanded;
-                }
-                if *expanded {
-                    for &(title, (icon, is_open)) in &entries {
-                        if ui
-                            .icon_button(icon, title)
-                            .flat()
-                            .checkable()
-                            .checked(is_open)
-                            .variant(ButtonVariant::Plain)
-                            .clicked
-                        {
-                            toggled.push(title);
-                        }
+                for &(title, (icon, is_open)) in &entries {
+                    if ui
+                        .tool_button(icon)
+                        .flat()
+                        .checkable()
+                        .checked(is_open)
+                        .variant(ButtonVariant::Plain)
+                        .tooltip(title)
+                        .clicked
+                    {
+                        toggled.push(title);
                     }
                 }
             });
         })
         .hovered;
-    if *expanded && mouse.just_pressed(MouseButton::Left) && !content_hovered {
-        *expanded = false;
-    }
     for title in toggled {
         let now = registry.is_open(title);
         registry.set_open(title, !now);

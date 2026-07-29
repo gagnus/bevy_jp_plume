@@ -5,8 +5,9 @@ use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Checked, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeNumberInput, PlumeSection, PlumeSelect,
-    PlumeSlider, PlumeToggleSwitch, SliderValue, ThemeBackgroundColor, caption, caption_small_caps,
-    column, fa_icon, flex_spacer, row, select_options, separator, tokens,
+    PlumeSlider, PlumeToggleSwitch, SliderValue, ThemeBackgroundColor, Tooltip, TooltipContent,
+    caption, caption_color, caption_small_caps, column, fa_icon, flex_spacer, row, select_options,
+    separator, tokens,
 };
 
 #[path = "common/mod.rs"]
@@ -59,7 +60,8 @@ fn debug_options_dialog() -> impl Scene {
                                     @contents: bsn_list! {
                                         @PlumeCheckbox {
                                             @caption: bsn! { caption("Wireframe") }
-                                        },
+                                        }
+                                        Tooltip("Draw all meshes as wireframe"),
                                         @PlumeCheckbox {
                                             @caption: bsn! { caption("Show colliders") }
                                         }
@@ -67,11 +69,17 @@ fn debug_options_dialog() -> impl Scene {
                                         @PlumeCheckbox {
                                             @caption: bsn! { caption("Freeze frustum culling") }
                                         },
-                                        select_row(
-                                            "View mode",
-                                            ["Lit", "Albedo", "Normals", "Depth", "Overdraw"],
+                                        (
+                                            select_row(
+                                                "View mode",
+                                                ["Lit", "Albedo", "Normals", "Depth", "Overdraw"],
+                                            )
+                                            Tooltip("Which render pass fills the viewport")
                                         ),
-                                        slider_row("Gamma", 0.5, 3.0, 2.2, 2, None),
+                                        (
+                                            slider_row("Gamma", 0.5, 3.0, 2.2, 2, None)
+                                            Tooltip("Display gamma correction")
+                                        ),
                                     },
                                 },
                                 @PlumeSection {
@@ -79,7 +87,8 @@ fn debug_options_dialog() -> impl Scene {
                                     @contents: bsn_list! {
                                         @PlumeCheckbox {
                                             @caption: bsn! { caption("Pause simulation") }
-                                        },
+                                        }
+                                        Tooltip("Halt the physics clock; rendering keeps running"),
                                         slider_row("Time scale", 0.0, 2.0, 1.0, 2, None),
                                     },
                                 },
@@ -132,6 +141,16 @@ fn debug_options_dialog() -> impl Scene {
                                 },
                                 @variant: ButtonVariant::Outline,
                             }
+                            template_value(TooltipContent::new(|| bsn_list![
+                                (
+                                    row()
+                                    Children [
+                                        fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
+                                        caption_color("Reset to defaults", tokens::TEXT_MAIN),
+                                    ]
+                                ),
+                                caption("Every debug option returns to its default value"),
+                            ]))
                         ),
                         flex_spacer(),
                         (
@@ -139,12 +158,14 @@ fn debug_options_dialog() -> impl Scene {
                                 @caption: bsn! { caption("Cancel") },
                                 @variant: ButtonVariant::Outline,
                             }
+                            Tooltip("Discard changes and close")
                         ),
                         (
                             @PlumeButton {
                                 @caption: bsn! { caption("Apply") },
                                 @variant: ButtonVariant::Primary,
                             }
+                            Tooltip("Apply changes and close")
                         ),
                     ]
                 ),

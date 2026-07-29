@@ -18,6 +18,7 @@ use crate::{
     controls::{
         ColorPickerValue, SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue,
     },
+    display::TooltipShowing,
 };
 
 /// Synchronises an app [`Numeric`] with a control's [`SliderValue`] (slider,
@@ -410,5 +411,30 @@ where
 {
     fn close_requested(&self) -> bool {
         self.cap_entity_contains::<CloseRequested>()
+    }
+}
+
+/// Lets `tooltip_ui` ask whether the tooltip state machine is showing for its
+/// control.
+pub struct CapabilityPlumeTooltip;
+
+impl ImmCapability for CapabilityPlumeTooltip {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        cap_req.request_component_read::<TooltipShowing>(app.world_mut());
+    }
+}
+
+/// Widget-side entry point for [`CapabilityPlumeTooltip`].
+pub trait ImmPlumeTooltip {
+    /// The tooltip state machine is showing for this control.
+    fn tooltip_showing(&self) -> bool;
+}
+
+impl<Cap> ImmPlumeTooltip for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeTooltip>,
+{
+    fn tooltip_showing(&self) -> bool {
+        self.cap_entity_contains::<TooltipShowing>()
     }
 }

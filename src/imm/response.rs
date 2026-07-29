@@ -25,17 +25,19 @@ use bevy::ui::{
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 
-use super::PlumeCaps;
+use super::caps::ImmPlumeTooltip;
+use super::{ImmEntityExt, PlumeCaps, Ui};
 use crate::controls::ButtonOutline;
 use crate::imm::ImmPopup;
 use crate::utils::numeric::Numeric;
 use crate::{
     constants::{fonts, size},
-    containers::{SectionCollapsed, SectionCollapsible},
+    containers::{PopupAnchor, SectionCollapsed, SectionCollapsible},
     controls::{
         ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
         text_input_suffix,
     },
+    display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome},
     rounded_corners::RoundedCorners,
     theme::{
         Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, ThemeSlot, ThemeTextSlot,
@@ -154,6 +156,33 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
             close_on_click_outside: true,
         }
     }
+
+    /// Rich tooltip: `content` builds the panel body each frame while the
+    /// tooltip is showing. Takes precedence over [`tooltip`](Self::tooltip) text.
+    #[track_caller]
+    pub fn tooltip_ui(mut self, content: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+        struct TooltipUiKey;
+        if self.key_changed::<TooltipUiKey>(true) {
+            self.e.entity_commands().insert(TooltipUi);
+        }
+        if !self.e.tooltip_showing() {
+            return self;
+        }
+        let anchor_entity = self.entity;
+        // Unrooted like an imm popup, so the panel is not a descendant of its
+        // anchor; the box carries the anchor as `PopupAnchor` instead.
+        self.e = self.e.unrooted_ui(Location::caller(), |ui| {
+            ui.ch_id("tooltip_box")
+                .on_spawn_apply_scene(tooltip_box)
+                .on_spawn_insert(move || PopupAnchor(anchor_entity))
+                .add_ui(|ui| {
+                    ui.ch_id("tooltip_panel")
+                        .on_spawn_apply_scene(tooltip_chrome)
+                        .add_ui(content);
+                });
+        });
+        self
+    }
 }
 
 /// Universal builders, available on every kind.
@@ -188,6 +217,16 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     /// Enable or disable the control (manages [`bevy::ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
+        self
+    }
+
+    /// Tooltip shown after hovering the widget (or any descendant) for a delay.
+    pub fn tooltip(mut self, text: impl Into<String>) -> Self {
+        struct TooltipKey;
+        let text = text.into();
+        if self.key_changed::<TooltipKey>(&text) {
+            self.e.entity_commands().insert(Tooltip(text));
+        }
         self
     }
 
