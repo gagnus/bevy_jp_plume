@@ -186,6 +186,7 @@ pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
         commands.entity(insert.entity).insert(inherited.clone());
     }
 }
+
 pub(crate) fn on_changed_background_token(
     insert: On<Insert, ThemeBackgroundToken>,
     mut q_background: Query<
