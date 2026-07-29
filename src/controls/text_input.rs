@@ -33,6 +33,7 @@ use crate::{
     controls::DefaultWidth,
     cursor::EntityCursor,
     focus::FocusWithinIndicator,
+    font_styles::TextStyleRelay,
     theme::{ThemeBackgroundColor, ThemeBorderColor, ThemeTextColor, ThemedText, UiTheme},
     tokens,
 };
@@ -132,6 +133,9 @@ pub(crate) fn text_input_frame() -> impl Scene {
         // An empty field measures nothing, so `width: auto` would collapse it.
         DefaultWidth({(size::TEXT_HEIGHT * 8.0).try_add(size::PAD * 2.0).expect("Add Val")})
         PlumeTextInput
+        // The field, placeholder and suffix pin their fonts today, but the frame
+        // still relays so their `Inherited<TextFont>` matches the surroundings.
+        TextStyleRelay
         // Ring around the frame while the inner field holds focus.
         FocusWithinIndicator
         ThemeBackgroundColor(tokens::TEXT_INPUT_BG)

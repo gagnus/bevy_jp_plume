@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::theme::palettes;
 
+use crate::common::debug_hub::DebugDialogRegistry;
 use crate::common::gallery::GalleryPlugin;
 
 pub mod audio_settings;
@@ -52,6 +53,10 @@ struct ExampleArgs {
     /// don't show the gallery
     #[argh(switch)]
     no_gallery: bool,
+
+    /// open all dialogs at start, ignoring the examples preference
+    #[argh(switch)]
+    all_open: bool,
 }
 
 /// Print the backing resource whenever it changes, to confirm every control
@@ -81,6 +86,12 @@ pub fn apply_args(app: &mut App, default_gallery: bool) {
 
     if let Some(path) = args.screenshot {
         app.add_systems(Update, screenshot_and_exit(path));
+    }
+
+    if args.all_open {
+        app.world_mut().resource_scope(|_, mut registry: Mut<DebugDialogRegistry>| {
+            registry.set_all_open();
+        });
     }
 }
 

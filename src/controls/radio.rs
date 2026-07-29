@@ -16,7 +16,6 @@ use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, PositionType, UiTransform, Val, percent, px,
@@ -24,10 +23,10 @@ use bevy::ui::{
 use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     cursor::EntityCursor,
     focus::FocusIndicator,
-    font_styles::InheritableFont,
+    font_styles::TextStyleRelay,
     theme::{
         Flat, GRADIENT_AMOUNT, InheritableThemeTextColor, ThemeBackgroundGradient,
         ThemeBorderColor, control_box_shadow,
@@ -78,11 +77,7 @@ impl PlumeRadio {
             on(radio_check_self)
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextColor(tokens::RADIO_TEXT)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            TextStyleRelay
             Children [(
                 // Gradient only when checked, since the unchecked fill is transparent.
                 Node {

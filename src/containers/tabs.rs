@@ -16,7 +16,6 @@ use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::text::FontWeight;
 use bevy::time::Time;
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
@@ -26,12 +25,12 @@ use bevy::ui::{
 use bevy::ui_widgets::{Activate, Button};
 
 use crate::{
-    constants::{FaIcon, fonts, size},
+    constants::{FaIcon, size},
     controls::{SelectedIndex, SetSelectedIndex},
     cursor::EntityCursor,
     display::{caption, fa_icon},
     focus::FocusIndicator,
-    font_styles::InheritableFont,
+    font_styles::TextStyleRelay,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor},
     tokens,
     utils::anim::{UI_ANIM_RATE, approach},
@@ -194,6 +193,7 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
         TabsRoot
         template_value(SelectedIndex(selected))
         ThemeBackgroundColor(tokens::TABS_BODY_BG)
+        TextStyleRelay
     }
 }
 
@@ -211,6 +211,7 @@ pub(crate) fn tab_strip() -> impl Scene {
         }
         TabStrip
         ThemeBackgroundColor(tokens::TABS_STRIP_BG)
+        TextStyleRelay
         Children [
             (
                 Node {
@@ -251,11 +252,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         ThemeBackgroundColor(tokens::TAB_BG)
         InheritableThemeTextColor(tokens::TAB_TEXT)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
         on(select_tab_on_activate)
     }
 }
@@ -289,11 +286,7 @@ pub fn tab_body() -> impl Scene {
             min_height: Val::ZERO,
         }
         InheritableThemeTextColor(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
     }
 }
 

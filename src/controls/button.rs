@@ -14,7 +14,6 @@ use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
     PositionType, Pressed, UiRect, Val,
@@ -22,10 +21,10 @@ use bevy::ui::{
 use bevy::ui_widgets::Button;
 
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     cursor::EntityCursor,
     focus::FocusIndicator,
-    font_styles::InheritableFont,
+    font_styles::TextStyleRelay,
     rounded_corners::RoundedCorners,
     theme::{
         Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextColor, ThemeBackgroundGradient,
@@ -118,11 +117,7 @@ impl PlumeButton {
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
             InheritableThemeTextColor(tokens::BUTTON_TEXT)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            TextStyleRelay
             Children [
                 (
                     // The border lives on an overlay child rather than on the button node: drawn

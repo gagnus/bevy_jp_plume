@@ -20,7 +20,7 @@ use crate::{
     containers::{flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node},
     controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton},
     display::fa_icon,
-    font_styles::InheritableFont,
+    font_styles::{InheritableFont, TextStyleRelay},
     theme::{Flat, InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
 };
@@ -284,6 +284,13 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             ThemeBackgroundColor(tokens::DIALOG_BG)
             ThemeBorderColor(tokens::DIALOG_BORDER)
             InheritableThemeTextColor(tokens::TEXT_DIM)
+            // The dialog is a genuine UI root (absolutely positioned, often
+            // parentless), so it establishes the standard font for its subtree.
+            InheritableFont {
+                font: fonts::REGULAR,
+                font_size: size::MEDIUM_FONT,
+                weight: FontWeight::NORMAL,
+            }
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
                 size::GAP / 2.0,
@@ -358,11 +365,7 @@ impl PlumeDialogBody {
                 flex_grow: 1.0,
                 min_height: Val::ZERO,
             }
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            TextStyleRelay
         }
     }
 }

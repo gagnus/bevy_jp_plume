@@ -19,20 +19,19 @@ use bevy::ecs::{
 use bevy::math::Vec2;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
     InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent, px,
 };
 use bevy::ui_widgets::SliderValue;
 
-use crate::constants::{fonts, size};
+use crate::constants::size;
 use crate::containers::space;
 use crate::controls::{
     ColorSwatchValue, PlumeColorSwatch, PlumeNumberInput, PlumeXyPad, XyPadLock, XyPadValue,
 };
 use crate::display::caption;
-use crate::font_styles::InheritableFont;
+use crate::font_styles::TextStyleRelay;
 use crate::theme::InheritableThemeTextColor;
 use crate::tokens;
 
@@ -114,11 +113,7 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             column_gap: Val::ZERO,
         }
         InheritableThemeTextColor(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
         Children [
             (
                 space(size::GAP_TIGHT)
@@ -151,6 +146,7 @@ impl PlumeColorPicker {
                 align_items: AlignItems::Start,
             }
             PlumeColorPicker
+            TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
             Children [
                 // Saturation (x) / value (y). The plane's hue-tinted gradient is
@@ -179,6 +175,7 @@ impl PlumeColorPicker {
                         row_gap: {size::GAP_TIGHT / 2.0},
                         flex_grow: 1.0,
                     }
+                    TextStyleRelay
                     Children [
                         (
                             @PlumeColorSwatch

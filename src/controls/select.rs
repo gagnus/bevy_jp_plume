@@ -26,7 +26,7 @@ use bevy::log::warn;
 use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::{FontWeight, LineBreak, TextFont, TextLayout};
+use bevy::text::{LineBreak, TextFont, TextLayout};
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, Val, px, widget::Text,
@@ -37,14 +37,14 @@ use bevy::ui_widgets::{
     listbox_update_selection,
 };
 
-use crate::constants::{font_awesome, fonts, size};
+use crate::constants::{font_awesome, size};
 use crate::containers::{
     PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup, popup_socket,
 };
 use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
-use crate::font_styles::InheritableFont;
+use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
 use crate::theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor};
 use crate::tokens;
@@ -149,6 +149,7 @@ impl PlumeSelect {
                 align_items: AlignItems::Stretch,
             }
             PlumeSelect
+            TextStyleRelay
             template_value(SelectOptions(options))
             template_value(SelectedIndex(selected))
             template_value(SelectMaxVisible(max_visible))
@@ -199,6 +200,9 @@ impl PlumeSelect {
                     Pickable::IGNORE
                     Visibility::Hidden
                     SelectMeasure
+                    // The ghost labels must inherit the real row font, or the
+                    // measured widths bake in the engine default.
+                    TextStyleRelay
                     Children [
                         {ghost_rows}
                     ]
@@ -268,6 +272,7 @@ impl PlumeSelectOptions {
             }
             template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::PAD).unwrap()))
             ListBox
+            TextStyleRelay
             // Focusable for arrow-key selection.
             TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
@@ -282,6 +287,7 @@ impl PlumeSelectOptions {
                         overflow: Overflow::scroll_y(),
                     }
                     ScrollArea
+                    TextStyleRelay
                     Children [
                         {props.options}
                     ]
@@ -324,11 +330,7 @@ impl PlumeSelectOption {
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextColor(tokens::OPTION_TEXT)
             ThemeBackgroundColor(tokens::OPTION_BG)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            TextStyleRelay
             Hovered
             ListItem
             Children [(

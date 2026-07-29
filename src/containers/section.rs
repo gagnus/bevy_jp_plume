@@ -20,14 +20,13 @@ use bevy::picking::{
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::text::FontWeight;
 use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
 
 use crate::{
-    constants::{font_awesome, fonts, size},
+    constants::{font_awesome, size},
     cursor::EntityCursor,
     display::fa_icon,
-    font_styles::InheritableFont,
+    font_styles::TextStyleRelay,
     theme::{InheritableThemeTextColor, ThemeBackgroundColor, ThemeBorderColor},
     tokens,
     utils::anim::AnimState,
@@ -141,6 +140,7 @@ pub(crate) fn section_frame(
         SectionRoot
         template_value(SectionCollapsible(collapsible))
         ThemeBackgroundColor(tokens::SECTION_BODY_BG)
+        TextStyleRelay
         Children [
             (
                 Node {
@@ -158,11 +158,7 @@ pub(crate) fn section_frame(
                 ThemeBorderColor(tokens::SEPARATOR)
                 EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 InheritableThemeTextColor(tokens::SECTION_HEADER_TEXT)
-                InheritableFont {
-                    font: fonts::REGULAR,
-                    font_size: size::MEDIUM_FONT,
-                    weight: FontWeight::NORMAL,
-                }
+                TextStyleRelay
                 on(toggle_section_collapse)
                 Children [
                     {collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron template_value(AnimState::rotation(0.0, -FRAC_PI_2)) UiTransform::default()) })},
@@ -186,15 +182,9 @@ pub(crate) fn section_body() -> impl Scene {
             padding: size::PAD,
         }
         SectionBody
-        // Both, not just the font: `section_frame` carries neither, so it has no
-        // `ThemedText` to relay an inherited color through, and bare text in the
-        // body would fall back to bevy's default white.
+        // The standard container text color, as `column` carries; the font relays.
         InheritableThemeTextColor(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
     }
 }
 

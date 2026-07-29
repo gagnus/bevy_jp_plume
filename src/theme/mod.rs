@@ -1,6 +1,7 @@
 //! A framework for theming.
 use bevy::app::{
-    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateSet,
+    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
+    PropagateSet,
 };
 use bevy::color::{Alpha, Color, Oklcha};
 use bevy::ecs::query::Or;
@@ -16,7 +17,7 @@ use bevy::ecs::{
 use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::TextColor;
+use bevy::text::{TextColor, TextFont};
 use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
 use smol_str::SmolStr;
@@ -153,10 +154,11 @@ fn update_theme(
     }
 }
 
-// Internal frames may break the propagation chain; only text that ends up with no
-// color at all is a bug, so that is what this watches for.
+// Every plume wrapper relays the inherited text styles, so themed text that still
+// resolves no color or no font sits under a broken chain — the regression net for
+// a wrapper the relay sweep missed, or an app subtree with no establishing surface.
 fn warn_unstyled_themed_text(
-    q_unstyled: Query<
+    q_no_color: Query<
         (),
         (
             With<ThemedText>,
@@ -166,19 +168,38 @@ fn warn_unstyled_themed_text(
             Without<InheritableThemeTextColor>,
         ),
     >,
-    mut suspect_last_frame: Local<bool>,
+    // `PropagateOver<TextFont>` exempts relays, `InheritableFont` carriers, and
+    // pinned text (icons, small caps, input fields) — all font their own text.
+    q_no_font: Query<
+        (),
+        (
+            With<ThemedText>,
+            Without<Inherited<TextFont>>,
+            Without<PropagateOver<TextFont>>,
+        ),
+    >,
+    mut color_suspect_last_frame: Local<bool>,
+    mut font_suspect_last_frame: Local<bool>,
 ) {
     // Propagation lands the frame after an entity is parented, so text unresolved
     // this frame may still be in flight.
-    let unstyled = !q_unstyled.is_empty();
-    let confirmed = unstyled && *suspect_last_frame;
-    *suspect_last_frame = unstyled;
-    if confirmed {
+    let no_color = !q_no_color.is_empty();
+    if no_color && *color_suspect_last_frame {
         warn_once!(
-            "Themed text resolved no color and falls back to white. A container an app fills \
-             with text must establish the style, as `row`/`column`/`scroll_content` do."
+            "Themed text resolved no color and falls back to white. Text must sit under a \
+             surface that establishes the style, as `screen`, dialogs and popups do."
         );
     }
+    *color_suspect_last_frame = no_color;
+
+    let no_font = !q_no_font.is_empty();
+    if no_font && *font_suspect_last_frame {
+        warn_once!(
+            "Themed text resolved no font and falls back to the engine default. Text must sit \
+             under a surface that establishes the style, as `screen`, dialogs and popups do."
+        );
+    }
+    *font_suspect_last_frame = no_font;
 }
 
 /// Installs the [`UiTheme`] resource, the theme refresh system, the themed
@@ -193,7 +214,9 @@ impl Plugin for ThemePlugin {
             // After propagation, so text parented this frame has had its chance.
             .add_systems(
                 PostUpdate,
-                warn_unstyled_themed_text.after(PropagateSet::<TextColor>::default()),
+                warn_unstyled_themed_text
+                    .after(PropagateSet::<TextColor>::default())
+                    .after(PropagateSet::<TextFont>::default()),
             )
             .add_observer(on_changed_background_token)
             .add_observer(on_changed_background_slot)

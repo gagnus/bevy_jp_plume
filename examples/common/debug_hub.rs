@@ -11,13 +11,18 @@ use bevy_jp_plume::prelude::*;
 /// Open/closed state for every registered dialog, keyed by title.
 #[derive(Resource, Default)]
 pub struct DebugDialogRegistry {
+    set_all_open: bool,
     dialogs: BTreeMap<&'static str, (FaIcon, bool)>,
 }
 
 impl DebugDialogRegistry {
+    pub fn set_all_open(&mut self) {
+        self.set_all_open = true;
+    }
+
     /// Register a dialog with its initial open state. First registration wins.
     pub fn register(&mut self, title: &'static str, icon: FaIcon, open: bool) {
-        self.dialogs.entry(title).or_insert((icon, open));
+        self.dialogs.entry(title).or_insert((icon, open || self.set_all_open));
     }
 
     /// Whether the named dialog is open (false if unregistered).
@@ -86,26 +91,23 @@ fn debug_hub_ui(mut root: PlumeRoot, mut registry: ResMut<DebugDialogRegistry>) 
     }
 
     let mut toggled: Vec<&'static str> = vec![];
-    root.panel()
-        .at(px(16), px(16))
-        .show(|ui| {
-            ui.horizontal(|ui| {
-                for &(title, (icon, is_open)) in &entries {
-                    if ui
-                        .tool_button(icon)
-                        .flat()
-                        .checkable()
-                        .checked(is_open)
-                        .variant(ButtonVariant::Plain)
-                        .tooltip(title)
-                        .clicked
-                    {
-                        toggled.push(title);
-                    }
+    root.panel().at(px(16), px(16)).show(|ui| {
+        ui.horizontal(|ui| {
+            for &(title, (icon, is_open)) in &entries {
+                if ui
+                    .tool_button(icon)
+                    .flat()
+                    .checkable()
+                    .checked(is_open)
+                    .variant(ButtonVariant::Plain)
+                    .tooltip(title)
+                    .clicked
+                {
+                    toggled.push(title);
                 }
-            });
-        })
-        .hovered;
+            }
+        });
+    });
     for title in toggled {
         let now = registry.is_open(title);
         registry.set_open(title, !now);

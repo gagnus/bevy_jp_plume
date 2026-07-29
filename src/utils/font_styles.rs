@@ -10,9 +10,17 @@ use bevy::ecs::{
     template::FromTemplate,
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::{Font, FontSize, FontWeight, TextFont};
+use bevy::text::{Font, FontSize, FontWeight, TextColor, TextFont};
 
 use crate::theme::ThemedText;
+
+// Structural node that relays inherited text styles without consuming them:
+// `ThemedText` keeps the wrapper on the propagation chain (the recurse filter
+// drops any entity without it), while `PropagateOver` keeps the propagated
+// `TextFont`/`TextColor` off the wrapper itself.
+#[derive(Component, Default, Clone)]
+#[require(ThemedText, PropagateOver::<TextFont>, PropagateOver::<TextColor>)]
+pub(crate) struct TextStyleRelay;
 
 /// A component which, when inserted on an entity, will load the given font and propagate it
 /// downward to any child text entity that has the [`ThemedText`] marker.

@@ -12,7 +12,6 @@ use bevy::ecs::{
 use bevy::log::warn_once;
 use bevy::math::Rect;
 use bevy::scene::{Scene, bsn};
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, PositionType,
     UiGlobalTransform, UiSystems, Val,
@@ -20,9 +19,9 @@ use bevy::ui::{
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     controls::{PlumeScrollbar, ScrollbarGutter},
-    font_styles::InheritableFont,
+    font_styles::TextStyleRelay,
     theme::InheritableThemeTextColor,
     tokens,
 };
@@ -40,6 +39,7 @@ pub(crate) fn scroll_frame() -> impl Scene {
             min_height: Val::ZERO,
         }
         ScrollbarGutter(size::SCROLLBAR_GUTTER)
+        TextStyleRelay
     }
 }
 
@@ -56,6 +56,7 @@ pub(crate) fn scroll_viewport() -> impl Scene {
             overflow: Overflow::scroll_y(),
         }
         ScrollArea
+        TextStyleRelay
     }
 }
 
@@ -73,15 +74,9 @@ pub(crate) fn scroll_content() -> impl Scene {
             row_gap: size::GAP,
             flex_shrink: 0.0,
         }
-        // Text style is relayed only by containers carrying `ThemedText`, which the
-        // frame and viewport don't — so bare text in a scroll area would fall back
-        // to the engine default. Establish it here, as `column` does.
+        // The standard container text color, as `column` carries; the font relays.
         InheritableThemeTextColor(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
     }
 }
 

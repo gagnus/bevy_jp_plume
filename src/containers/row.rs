@@ -1,17 +1,13 @@
 //! BSN scene function for a horizontal flex container.
 use bevy::scene::{Scene, bsn};
-use bevy::text::FontWeight;
 use bevy::ui::{AlignItems, Display, FlexDirection, Node, Val};
 
 use crate::{
-    constants::{fonts, size},
-    font_styles::InheritableFont,
-    theme::InheritableThemeTextColor,
-    tokens,
+    constants::size, font_styles::TextStyleRelay, theme::InheritableThemeTextColor, tokens,
 };
 
 /// Horizontal container that vertically centers mixed-height children; content
-/// goes in `Children`. Carries the standard font and text color.
+/// goes in `Children`. Carries the standard text color and relays the font.
 pub fn row() -> impl Scene {
     bsn! {
         Node {
@@ -26,10 +22,6 @@ pub fn row() -> impl Scene {
             min_height: Val::ZERO,
         }
         InheritableThemeTextColor(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        TextStyleRelay
     }
 }
