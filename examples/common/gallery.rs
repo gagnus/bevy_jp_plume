@@ -67,7 +67,7 @@ impl Plugin for GalleryPlugin {
     }
 }
 
-fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>, theme: Res<UiTheme>) {
+fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>) {
     // Build against a local clone and write back with `set_if_neq`, so the
     // resource only registers as changed when a control actually changed it.
     let mut s = state.clone();
@@ -82,23 +82,23 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>, theme: Res<U
         ui.flex_spacer();
         ui.horizontal(|ui| {
             for (slot, name) in surfaces {
-                gallery_column(ui, &mut s, theme.palette(slot), name);
+                gallery_column(ui, &mut s, slot, name);
             }
         })
         .align_items(AlignItems::Stretch);
         ui.flex_spacer();
     })
-    .background(theme.palette(ThemeSlot::Neutral0));
+    .background_slot(ThemeSlot::Neutral0);
     state.set_if_neq(s);
 }
 
 /// One surface's column: its name, then an enabled and a disabled card
 /// stacked below it — the two rows of the 3-by-2 grid.
-fn gallery_column(ui: &mut Ui, state: &mut GalleryState, bg: Color, name: &str) {
+fn gallery_column(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, name: &str) {
     ui.vertical(|ui| {
         ui.caption(name);
-        gallery_card(ui, state, bg, false);
-        gallery_card(ui, state, bg, true);
+        gallery_card(ui, state, bg_slot, false);
+        gallery_card(ui, state, bg_slot, true);
     })
     .grow();
 }
@@ -106,7 +106,7 @@ fn gallery_column(ui: &mut Ui, state: &mut GalleryState, bg: Color, name: &str) 
 /// One card: a control of every kind, tinted `bg`, all disabled together when
 /// `disabled`. The single function all 6 cards are built from — nothing here
 /// is copy-pasted per cell.
-fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool) {
+fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disabled: bool) {
     ui.vertical(|ui| {
         ui.caption(if disabled { "Disabled" } else { "Enabled" });
 
@@ -156,6 +156,7 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg: Color, disabled: bool
             .enabled(!disabled);
         ui.number(&mut state.number).enabled(!disabled);
     })
-    .background(bg)
-    .pad(size::ROW_HEIGHT);
+    .background_slot(bg_slot)
+    .pad(size::PAD * 2.0)
+    .corners(RoundedCorners::All);
 }
