@@ -138,7 +138,8 @@ fn debug_settings_dialog(
                     .tooltip_ui(|ui| {
                         ui.horizontal(|ui| {
                             ui.icon(font_awesome::solid::ARROW_ROTATE_LEFT);
-                            ui.caption("Reset to defaults").bright();
+                            ui.caption("Reset to defaults")
+                                .text_color_slot(ThemeSlot::Text0);
                         });
                         ui.caption("Every debug option returns to its default value");
                     })

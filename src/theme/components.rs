@@ -108,7 +108,7 @@ pub(crate) struct ThemeBorderToken(pub ThemeToken);
 pub struct ThemeBorderSlot(pub ThemeSlot);
 
 // Inherited text color by theme token — plume-internal; apps use
-// [`InheritableThemeTextSlot`]. Colors descendants only, never the carrier.
+// [`InheritableThemeTextSlot`].
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
@@ -116,9 +116,8 @@ pub struct ThemeBorderSlot(pub ThemeSlot);
 #[require(ThemedText, PropagateOver::<TextColor>)]
 pub(crate) struct InheritableThemeTextToken(pub ThemeToken);
 
-/// Component which propagates a theme-slot text color to all descendant themed
-/// text. Colors descendants only, never the carrying entity itself; takes
-/// priority over the internal token form.
+/// Propagates a theme-slot text color to descendant themed text, and to the
+/// carrier itself when it is text (a direct [`ThemeTextSlot`] still wins).
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
@@ -126,9 +125,8 @@ pub(crate) struct InheritableThemeTextToken(pub ThemeToken);
 #[require(ThemedText, PropagateOver::<TextColor>)]
 pub struct InheritableThemeTextSlot(pub ThemeSlot);
 
-/// Component which propagates a raw text color to all descendant themed text —
-/// for one-off colors that are not part of the theme. Colors descendants only,
-/// never the carrying entity itself.
+/// Propagates a one-off raw text color to descendant themed text, and to the
+/// carrier itself when it is text.
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
@@ -266,18 +264,46 @@ pub(crate) fn on_changed_text_slot(
     }
 }
 
+// Apply a resolved inheritable color: the `Propagate` source, plus the plain
+// `TextColor` when the carrier is itself text (`PropagateOver` blocks the
+// output write there); direct `ThemeTextSlot`/`ThemeTextToken` keep precedence.
+pub(crate) type SelfColorFilter = (
+    bevy::ecs::query::With<bevy::ui::widget::Text>,
+    Without<ThemeTextSlot>,
+    Without<ThemeTextToken>,
+);
+
+pub(crate) fn apply_inheritable_color(
+    commands: &mut Commands,
+    entity: bevy::ecs::entity::Entity,
+    color: Color,
+    styles_own_text: bool,
+) {
+    if styles_own_text {
+        commands
+            .entity(entity)
+            .insert((Propagate(TextColor(color)), TextColor(color)));
+    } else {
+        commands.entity(entity).insert(Propagate(TextColor(color)));
+    }
+}
+
 // Propagates the resolved text color down to every participating text entity.
 pub(crate) fn on_changed_inheritable_text_token(
     insert: On<Insert, InheritableThemeTextToken>,
     font_color: Query<&InheritableThemeTextToken>,
+    q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
     if let Ok(token) = font_color.get(insert.entity) {
         let color = theme.color(&token.0);
-        commands
-            .entity(insert.entity)
-            .insert(Propagate(TextColor(color)));
+        apply_inheritable_color(
+            &mut commands,
+            insert.entity,
+            color,
+            q_self.contains(insert.entity),
+        );
     }
 }
 
@@ -285,14 +311,18 @@ pub(crate) fn on_changed_inheritable_text_token(
 pub(crate) fn on_changed_inheritable_text_slot(
     insert: On<Insert, InheritableThemeTextSlot>,
     q_slot: Query<&InheritableThemeTextSlot>,
+    q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
     if let Ok(slot) = q_slot.get(insert.entity) {
         let color = theme.palette(slot.0);
-        commands
-            .entity(insert.entity)
-            .insert(Propagate(TextColor(color)));
+        apply_inheritable_color(
+            &mut commands,
+            insert.entity,
+            color,
+            q_self.contains(insert.entity),
+        );
     }
 }
 
@@ -300,11 +330,15 @@ pub(crate) fn on_changed_inheritable_text_slot(
 pub(crate) fn on_changed_inheritable_text_color(
     insert: On<Insert, InheritableTextColor>,
     q_color: Query<&InheritableTextColor>,
+    q_self: Query<(), SelfColorFilter>,
     mut commands: Commands,
 ) {
     if let Ok(color) = q_color.get(insert.entity) {
-        commands
-            .entity(insert.entity)
-            .insert(Propagate(TextColor(color.0)));
+        apply_inheritable_color(
+            &mut commands,
+            insert.entity,
+            color.0,
+            q_self.contains(insert.entity),
+        );
     }
 }

@@ -17,6 +17,7 @@ pub mod audio_settings;
 pub mod color_picker;
 pub mod debug_hub;
 pub mod debug_settings;
+pub mod font_scaling;
 pub mod gallery;
 pub mod player_profile;
 pub mod theme_editor;

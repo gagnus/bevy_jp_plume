@@ -3,16 +3,12 @@ use bevy::ecs::name::Name;
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
 use bevy::scene::{Scene, bsn};
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, Val, percent,
 };
 
 use crate::{
-    constants::{fonts, size},
-    font_styles::InheritableFont,
-    theme::InheritableThemeTextToken,
-    tokens,
+    constants::size, font_styles::InheritableFont, theme::InheritableThemeTextToken, tokens,
 };
 
 /// Transparent, padded column filling the viewport, establishing the standard
@@ -42,11 +38,8 @@ pub fn screen() -> impl Scene {
         }
         Pickable::IGNORE
         InheritableThemeTextToken(tokens::TEXT_DIM)
-        InheritableFont {
-            font: fonts::REGULAR,
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
+        // All-inherit: resolves to the standard face and size at root scope.
+        InheritableFont
         LayoutConfig {
             use_rounding: false,
         }

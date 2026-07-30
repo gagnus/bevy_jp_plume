@@ -20,7 +20,7 @@ use bevy::picking::{
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::FontWeight;
+use bevy::text::FontSourceTemplate;
 use bevy::time::{Real, Time};
 use bevy::ui::{
     ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex,
@@ -321,10 +321,10 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
         template_value(control_box_shadow())
         Pickable::IGNORE
         InheritableThemeTextToken(tokens::TOOLTIP_TEXT)
+        // Fully specified: tooltips stay standard-sized inside scaled subtrees.
         InheritableFont {
-            font: fonts::REGULAR,
+            font: FontSourceTemplate::Handle(fonts::REGULAR),
             font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
         }
     }
 }

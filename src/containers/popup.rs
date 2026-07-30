@@ -20,7 +20,6 @@ use bevy::picking::{
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::text::FontWeight;
 use bevy::ui::{
     AlignItems, ComputedNode, Display, FixedNode, FlexDirection, GlobalZIndex, JustifyContent,
     Node, OverrideClip, PositionType, UiGlobalTransform, UiRect, UiSystems, UiTransform, Val, Val2,
@@ -31,7 +30,7 @@ use bevy::ui_widgets::{
 };
 
 use super::dialog::CloseRequested;
-use crate::constants::{fonts, size};
+use crate::constants::size;
 use crate::font_styles::InheritableFont;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
@@ -178,11 +177,9 @@ impl PlumePopup {
             template_value(popover_for(placement))
             OverrideClip
             InheritableThemeTextToken(tokens::TEXT_DIM)
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            // Parentless socket: resolves to the standard font. Empty braces
+            // stop bsn claiming the next interpolation block as a field list.
+            InheritableFont {}
             {(props.dismiss == PopupDismiss::FocusOut).then(|| bsn!(MenuPopup))}
             {(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn!(DismissOnOutsideClick))}
             // A focus-out popup's focus is owned by the menu machinery; the rest

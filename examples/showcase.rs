@@ -6,8 +6,8 @@ mod common;
 
 use common::{
     audio_settings::AudioSettingsPlugin, debug_settings::DebugSettingsPlugin,
-    player_profile::PlayerProfilePlugin, theme_editor::ThemeEditorPlugin,
-    tree_view::TreeViewPlugin,
+    font_scaling::FontScalingPlugin, player_profile::PlayerProfilePlugin,
+    theme_editor::ThemeEditorPlugin, tree_view::TreeViewPlugin,
 };
 
 fn main() {
@@ -15,6 +15,7 @@ fn main() {
     app.add_plugins((
         AudioSettingsPlugin(false),
         DebugSettingsPlugin(false),
+        FontScalingPlugin(false),
         PlayerProfilePlugin(false),
         ThemeEditorPlugin(false),
         TreeViewPlugin(false),

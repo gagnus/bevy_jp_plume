@@ -16,18 +16,20 @@ use bevy::ecs::{
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{
-    FontFeatureTag, FontFeatures, FontSourceTemplate, LineBreak, TextColor, TextFont, TextLayout,
+    FontFeatureTag, FontFeatures, FontSize, FontSourceTemplate, LineBreak, TextFont, TextLayout,
 };
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
     UiRect, Val,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
+use bevy_immediate::ImmId;
 use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
 
 use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, PlumeCaps, Ui};
 use crate::controls::ButtonOutline;
+use crate::font_styles::InheritableFont;
 use crate::imm::ImmPopup;
 use crate::utils::numeric::Numeric;
 use crate::{
@@ -40,8 +42,8 @@ use crate::{
     display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome},
     rounded_corners::RoundedCorners,
     theme::{
-        Flat, Inert, ThemeBackgroundSlot, ThemeBorderSlot, ThemeSlot, ThemeTextSlot,
-        control_box_shadow,
+        Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
+        ThemeBorderSlot, ThemeSlot, control_box_shadow,
     },
 };
 
@@ -291,6 +293,51 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         struct WidthKey;
         self.set_node::<WidthKey, _>(width, |node, width| node.width = width)
     }
+
+    /// Establish the font size for this widget and everything below it.
+    pub fn font_size(mut self, size: FontSize) -> Self {
+        struct FontSizeKey;
+        if self.key_changed::<FontSizeKey>(imm_for_font_size(size)) {
+            self.e.entity_commands().insert(InheritableFont {
+                font: None,
+                font_size: Some(size),
+            });
+        }
+        self
+    }
+
+    /// Establish a one-off text color for this widget and everything below it.
+    /// State-styled controls re-assert their own — color containers/captions.
+    pub fn text_color(mut self, color: Color) -> Self {
+        struct TextColorKey;
+        if self.key_changed::<TextColorKey>(format!("{color:?}")) {
+            self.e.entity_commands().insert(InheritableTextColor(color));
+        }
+        self
+    }
+
+    /// [`text_color`](Self::text_color), but from a theme slot.
+    pub fn text_color_slot(mut self, slot: ThemeSlot) -> Self {
+        struct TextColorSlotKey;
+        if self.key_changed::<TextColorSlotKey>(&slot) {
+            self.e
+                .entity_commands()
+                .insert(InheritableThemeTextSlot(slot));
+        }
+        self
+    }
+}
+
+fn imm_for_font_size(size: FontSize) -> ImmId {
+    let (str, value) = match size {
+        FontSize::Px(v) => ("px", v),
+        FontSize::Vw(v) => ("vw", v),
+        FontSize::Vh(v) => ("vh", v),
+        FontSize::VMin(v) => ("vmin", v),
+        FontSize::VMax(v) => ("vmax", v),
+        FontSize::Rem(v) => ("rem", v),
+    };
+    imm_id((str, value.to_bits()))
 }
 
 impl<K: kind::Heightable> ImmResponse<'_, '_, '_, K> {
@@ -321,32 +368,6 @@ impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Caption> {
-    /// Override the caption's text color.
-    pub fn color(mut self, color: Color) -> Self {
-        struct ColorKey;
-        if self.key_changed::<ColorKey>(format!("{color:?}")) {
-            // `PropagateOver` keeps the inherited themed color from overwriting it.
-            self.e
-                .entity_commands()
-                .insert((TextColor(color), PropagateOver::<TextColor>::default()));
-        }
-        self
-    }
-
-    /// Override the caption's text color from a theme slot.
-    pub fn color_slot(mut self, slot: ThemeSlot) -> Self {
-        struct ColorSlotKey;
-        if self.key_changed::<ColorSlotKey>(&slot) {
-            self.e.entity_commands().insert(ThemeTextSlot(slot));
-        }
-        self
-    }
-
-    /// Set the caption to a brighter text
-    pub fn bright(self) -> Self {
-        self.color_slot(ThemeSlot::Text0)
-    }
-
     /// Keep the text on one line however long it runs, and let it be narrower than
     /// that line — so a bounded container cuts it off instead of the text wrapping
     /// and growing the row.

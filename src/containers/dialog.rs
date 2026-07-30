@@ -8,7 +8,7 @@ use bevy::ecs::{
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::text::FontWeight;
+use bevy::text::FontSourceTemplate;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
     Node, PositionType, UiRect, Val,
@@ -243,10 +243,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
                     ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
                     ThemeBorderToken(tokens::DIALOG_BORDER)
+                    // Bold face pinned; the size inherits.
                     InheritableFont {
-                        font: fonts::BOLD, // switch font deliberately here to bold
-                        font_size: size::MEDIUM_FONT,
-                        weight: FontWeight::NORMAL,
+                        font: FontSourceTemplate::Handle(fonts::BOLD),
                     }
                     Children [
                         {title},
@@ -284,13 +283,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             ThemeBackgroundToken(tokens::DIALOG_BG)
             ThemeBorderToken(tokens::DIALOG_BORDER)
             InheritableThemeTextToken(tokens::TEXT_DIM)
-            // The dialog is a genuine UI root (absolutely positioned, often
-            // parentless), so it establishes the standard font for its subtree.
-            InheritableFont {
-                font: fonts::REGULAR,
-                font_size: size::MEDIUM_FONT,
-                weight: FontWeight::NORMAL,
-            }
+            // A genuine UI root, often parentless: the all-inherit default
+            // resolves to the standard font when nothing flows in from above.
+            InheritableFont
             BoxShadow::new(
                 Srgba::BLACK.with_alpha(0.7).into(),
                 size::GAP / 2.0,

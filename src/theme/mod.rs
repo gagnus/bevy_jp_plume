@@ -1,14 +1,13 @@
 //! A framework for theming.
 use bevy::app::{
-    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, Propagate, PropagateOver,
-    PropagateSet,
+    App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, PropagateOver, PropagateSet,
 };
 use bevy::color::{Alpha, Color, Oklcha};
 use bevy::ecs::query::Or;
 use bevy::ecs::{
     change_detection::DetectChanges,
     entity::Entity,
-    query::{With, Without},
+    query::{Has, With, Without},
     reflect::ReflectResource,
     resource::Resource,
     schedule::IntoScheduleConfigs,
@@ -18,6 +17,7 @@ use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::text::{TextColor, TextFont};
+use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
 
@@ -111,6 +111,9 @@ fn update_theme(
             Entity,
             Option<&InheritableThemeTextToken>,
             Option<&InheritableThemeTextSlot>,
+            Has<Text>,
+            Has<ThemeTextSlot>,
+            Has<ThemeTextToken>,
         ),
         Or<(
             With<InheritableThemeTextToken>,
@@ -149,7 +152,9 @@ fn update_theme(
             }
         }
 
-        for (entity, inherit_token, inherit_slot) in &q_inherit {
+        for (entity, inherit_token, inherit_slot, is_text, has_direct_slot, has_direct_token) in
+            &q_inherit
+        {
             let color = if let Some(inherit_slot) = inherit_slot {
                 theme.palette(inherit_slot.0)
             } else if let Some(inherit_token) = inherit_token {
@@ -157,7 +162,14 @@ fn update_theme(
             } else {
                 continue;
             };
-            commands.entity(entity).insert(Propagate(TextColor(color)));
+            // Same self-write rule as the insert observers; the direct forms
+            // were refreshed by the loops above.
+            apply_inheritable_color(
+                &mut commands,
+                entity,
+                color,
+                is_text && !has_direct_slot && !has_direct_token,
+            );
         }
     }
 }

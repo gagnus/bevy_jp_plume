@@ -81,7 +81,11 @@ impl Plugin for PlumeCorePlugin {
             bevy::window::SystemCursorIcon::Default,
         )));
 
-        app.add_observer(font_styles::on_changed_font);
+        // Before the set so it reads the `Inherited<TextFont>` of the previous run.
+        app.add_systems(
+            PostUpdate,
+            font_styles::resolve_inheritable_font.before(PropagateSet::<TextFont>::default()),
+        );
         // Companion to the `TextColor` registration in `ThemePlugin`.
         app.add_observer(on_themed_text_inserted::<TextFont>);
     }
