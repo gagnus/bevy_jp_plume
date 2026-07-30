@@ -101,6 +101,7 @@ fn demo_column(ui: &mut Ui, s: &mut FontScalingDemo, heading: &str) {
             select.option(Flavour::Strawberry, "Strawberry");
         });
         ui.slider(&mut s.volume, 0.0..=1.0);
+        ui.number(&mut s.volume).precision(2).suffix("vol");
     });
     ui.horizontal(|ui| {
         ui.button("Button");
@@ -134,4 +135,6 @@ fn color_column(ui: &mut Ui, heading: &str) {
     })
     .text_color(Color::srgb(0.9, 0.3, 0.3));
     ui.caption("back to inherited");
+    ui.caption("CAPITAL");
+    ui.caption("Capital").small_caps();
 }

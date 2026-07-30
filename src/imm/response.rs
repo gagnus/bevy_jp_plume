@@ -5,7 +5,6 @@ use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
-use bevy::app::PropagateOver;
 use bevy::color::Color;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::{
@@ -15,9 +14,7 @@ use bevy::ecs::{
 };
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
-use bevy::text::{
-    FontFeatureTag, FontFeatures, FontSize, FontSourceTemplate, LineBreak, TextFont, TextLayout,
-};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSize, LineBreak, TextLayout};
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
     UiRect, Val,
@@ -33,7 +30,7 @@ use crate::font_styles::InheritableFont;
 use crate::imm::ImmPopup;
 use crate::utils::numeric::Numeric;
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     containers::{PopupAnchor, SectionCollapsed, SectionCollapsible},
     controls::{
         ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
@@ -299,8 +296,8 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         struct FontSizeKey;
         if self.key_changed::<FontSizeKey>(imm_for_font_size(size)) {
             self.e.entity_commands().insert(InheritableFont {
-                font: None,
                 font_size: Some(size),
+                ..Default::default()
             });
         }
         self
@@ -395,16 +392,12 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
     pub fn small_caps(mut self) -> Self {
         struct SmallCapsKey;
         if self.key_changed::<SmallCapsKey>(()) {
-            self.e.entity_commands().apply_scene(bsn! {
-                TextFont {
-                    font: FontSourceTemplate::Handle(fonts::REGULAR),
-                    font_size: size::MEDIUM_FONT,
-                    font_features: FontFeatures::from([
-                        FontFeatureTag::SMALL_CAPS,
-                        FontFeatureTag::CAPS_TO_SMALL_CAPS,
-                    ]),
-                }
-                PropagateOver<TextFont>
+            self.e.entity_commands().insert(InheritableFont {
+                font_features: Some(FontFeatures::from([
+                    FontFeatureTag::SMALL_CAPS,
+                    FontFeatureTag::CAPS_TO_SMALL_CAPS,
+                ])),
+                ..Default::default()
             });
         }
         self

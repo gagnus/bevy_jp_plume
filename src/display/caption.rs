@@ -2,11 +2,12 @@
 use bevy::app::PropagateOver;
 use bevy::color::Color;
 use bevy::scene::{Scene, bsn, template_value};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor, TextFont};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor};
 use bevy::ui::widget::Text;
 
 use crate::{
-    constants::{FaIcon, fonts, size},
+    constants::FaIcon,
+    font_styles::InheritableFont,
     theme::{ThemeSlot, ThemeTextSlot, ThemedText},
 };
 
@@ -38,37 +39,30 @@ pub fn caption_slot(text: impl Into<String>, slot: ThemeSlot) -> impl Scene {
     }
 }
 
-/// A caption in small-caps, whatever the input casing.
-///
-/// Pins the font face and size, since `TextFont` is set as a whole and the
-/// features cannot be inherited alongside them. Text color is still themed.
+/// A caption in small-caps, whatever the input casing; face and size inherit.
 pub fn caption_small_caps(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         ThemedText
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
+        InheritableFont {
             font_features: FontFeatures::from([
                 FontFeatureTag::SMALL_CAPS,
                 FontFeatureTag::CAPS_TO_SMALL_CAPS,
             ]),
         }
-        PropagateOver<TextFont>
     }
 }
 
-/// A FontAwesome icon, drawn in the face its glyph belongs to.
+/// A FontAwesome icon, drawn in the face its glyph belongs to; size inherits,
+/// so icons track the surrounding text.
 pub fn fa_icon(icon: FaIcon) -> impl Scene {
     let glyph = icon.glyph();
     let font_path = icon.face().font_path();
     bsn! {
         Text(glyph)
-        PropagateOver<TextFont>
         ThemedText
-        TextFont {
+        InheritableFont {
             font: FontSourceTemplate::Handle(font_path),
-            font_size: size::MEDIUM_FONT,
         }
     }
 }

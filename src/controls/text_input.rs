@@ -1,5 +1,5 @@
 //! Editable text field and its decorative container.
-use bevy::app::{Plugin, PreUpdate, PropagateOver};
+use bevy::app::{Plugin, PreUpdate};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::{
     change_detection::{DetectChanges, DetectChangesMut},
@@ -20,8 +20,7 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, FontSourceTemplate, FontWeight, LineBreak, LineHeight,
-    TextCursorStyle, TextEdit, TextFont, TextLayout,
+    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
 };
 use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
@@ -29,7 +28,7 @@ use bevy::ui::{
 };
 
 use crate::{
-    constants::{fonts, size},
+    constants::size,
     controls::DefaultWidth,
     cursor::EntityCursor,
     focus::FocusWithinIndicator,
@@ -133,8 +132,6 @@ pub(crate) fn text_input_frame() -> impl Scene {
         // An empty field measures nothing, so `width: auto` would collapse it.
         DefaultWidth({(size::TEXT_HEIGHT * 8.0).try_add(size::PAD * 2.0).expect("Add Val")})
         PlumeTextInput
-        // The field, placeholder and suffix pin their fonts today, but the frame
-        // still relays so their `Inherited<TextFont>` matches the surroundings.
         TextStyleRelay
         // Ring around the frame while the inner field holds focus.
         FocusWithinIndicator
@@ -174,12 +171,6 @@ pub(crate) fn text_input_field(
         // Line height fills the content box exactly: a taller line overflows and makes the edit
         // viewport re-clamp (1px jitter) while typing.
         template_value(LineHeight::Px(20.0))
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-        PropagateOver<TextFont>
         TextCursorStyle::default()
     }
 }
@@ -265,12 +256,6 @@ struct TextInputPlaceholder;
 pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-        PropagateOver<TextFont>
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
             position_type: PositionType::Absolute,
@@ -285,12 +270,6 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
 pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
-        TextFont {
-            font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
-            weight: FontWeight::NORMAL,
-        }
-        PropagateOver<TextFont>
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
             margin: {UiRect::left(size::GAP_TIGHT)},

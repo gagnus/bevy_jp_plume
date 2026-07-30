@@ -13,7 +13,7 @@ use bevy::ecs::{
     world::Ref,
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::{FontSize, FontSource, TextColor, TextFont};
+use bevy::text::{FontFeatures, FontSize, FontSource, TextColor, TextFont};
 use bevy::ui::widget::Text;
 
 use crate::constants::{fonts, size};
@@ -39,6 +39,9 @@ pub struct InheritableFont {
     /// The font size; `None` inherits the ancestor's size.
     #[template(built_in)]
     pub font_size: Option<FontSize>,
+    /// Font features (small caps &c.); `None` inherits the ancestor's.
+    #[template(built_in)]
+    pub font_features: Option<FontFeatures>,
 }
 
 // Resolves each `InheritableFont` into a `Propagate<TextFont>` source: `None`
@@ -55,7 +58,9 @@ pub(crate) fn resolve_inheritable_font(
 ) {
     for (entity, inheritable, child_of, is_text) in &holders {
         let parent_inherited = child_of.and_then(|c| inherited.get(c.parent()).ok());
-        let partial = inheritable.font.is_none() || inheritable.font_size.is_none();
+        let partial = inheritable.font.is_none()
+            || inheritable.font_size.is_none()
+            || inheritable.font_features.is_none();
         let needs_resolve = inheritable.is_changed()
             || (partial && parent_inherited.as_ref().is_some_and(|i| i.is_changed()));
         if !needs_resolve {
@@ -74,6 +79,9 @@ pub(crate) fn resolve_inheritable_font(
         }
         if let Some(font_size) = inheritable.font_size {
             font.font_size = font_size;
+        }
+        if let Some(features) = &inheritable.font_features {
+            font.font_features = features.clone();
         }
 
         // A same-value re-insert would still ripple a re-resolve wave through

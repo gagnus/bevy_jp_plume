@@ -1,13 +1,13 @@
 //! Shared popup panel: the floating chrome a control anchors over the UI,
 //! plus the socket that mounts it without disturbing ancestor layout.
-use bevy::app::{Last, Plugin, PostUpdate, Update};
+use bevy::app::{Inherited, Last, Plugin, PostUpdate, Update};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::{ChildOf, Children},
     observer::On,
-    query::{Has, With},
+    query::{Has, With, Without},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res},
@@ -20,6 +20,7 @@ use bevy::picking::{
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
+use bevy::text::TextFont;
 use bevy::ui::{
     AlignItems, ComputedNode, Display, FixedNode, FlexDirection, GlobalZIndex, JustifyContent,
     Node, OverrideClip, PositionType, UiGlobalTransform, UiRect, UiSystems, UiTransform, Val, Val2,
@@ -31,16 +32,18 @@ use bevy::ui_widgets::{
 
 use super::dialog::CloseRequested;
 use crate::constants::size;
-use crate::font_styles::InheritableFont;
+use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
-// Marker for the popup mount point a control keeps in its scene.
+// Marker for the popup mount point a control keeps in its scene. The relay
+// keeps a retained socket (a child of its control) on the text-style chain.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
+#[require(TextStyleRelay)]
 pub(crate) struct PopupSocket;
 
 // The rect a socket overlays, when it is not the socket's own parent.
@@ -85,6 +88,27 @@ fn track_popup_anchors(
         if (node.left, node.top, node.width, node.height) != (left, top, width, height) {
             (node.left, node.top, node.width, node.height) = (left, top, width, height);
         }
+    }
+}
+
+// A parentless (imm) socket sits outside every propagation chain, so the
+// ambient text style is bridged the same way the rect is: the anchor's
+// `Inherited<TextFont>` is copied onto the socket, and the popup's all-inherit
+// `InheritableFont` resolves through it. Nothing else writes `Inherited` on a
+// parentless entity, so the copy is authoritative.
+fn bridge_socket_text_style(
+    q_sockets: Query<(Entity, &PopupAnchor), (With<PopupSocket>, Without<ChildOf>)>,
+    q_inherited: Query<&Inherited<TextFont>>,
+    mut commands: Commands,
+) {
+    for (socket, anchor) in &q_sockets {
+        let Ok(inherited) = q_inherited.get(anchor.0) else {
+            continue;
+        };
+        if q_inherited.get(socket).is_ok_and(|i| i.0 == inherited.0) {
+            continue;
+        }
+        commands.entity(socket).insert(inherited.clone());
     }
 }
 
@@ -346,6 +370,11 @@ impl Plugin for PopupPlugin {
             // Ahead of layout, so `Popover` places the popup against a socket
             // this frame's layout has already moved onto the anchor.
             .add_systems(PostUpdate, track_popup_anchors.in_set(UiSystems::Prepare))
+            // Before the resolver, so the popup re-resolves the same frame.
+            .add_systems(
+                PostUpdate,
+                bridge_socket_text_style.before(crate::font_styles::resolve_inheritable_font),
+            )
             .add_systems(Last, despawn_closing_popups);
     }
 }

@@ -16,7 +16,7 @@ use bevy::picking::PickingSystems;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextFont, TextLayout,
+    EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextLayout,
 };
 use bevy::ui::px;
 use bevy::ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
@@ -27,6 +27,7 @@ use crate::{
         DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
         text_input_suffix,
     },
+    font_styles::InheritableFont,
 };
 
 /// A numeric input on the [`PlumeTextInput`](crate::controls::PlumeTextInput)
@@ -101,7 +102,8 @@ impl PlumeNumberInput {
                         justify: Justify::Right,
                         linebreak: LineBreak::NoWrap,
                     }
-                    TextFont {
+                    // Monospace face pinned; size inherits.
+                    InheritableFont {
                         font: FontSourceTemplate::Handle(fonts::MONOSPACE),
                     }
                     on(number_input_on_key)
