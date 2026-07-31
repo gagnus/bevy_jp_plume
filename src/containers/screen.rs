@@ -11,8 +11,11 @@ use crate::{
     constants::size, font_styles::InheritableFont, theme::InheritableThemeTextToken, tokens,
 };
 
-/// Transparent, padded column filling the viewport, establishing the standard
+/// Transparent, full-bleed column filling the viewport, establishing the standard
 /// [`InheritableFont`] and text color so bare text works at root scope.
+///
+/// Unpadded: the viewport root is a canvas, so edge-anchored content sits flush.
+/// Add `.padding(size::PAD)` for a surface that wants an inset.
 ///
 /// Carries a [`TabGroup`], so every control inside is Tab-reachable without the
 /// app adding one — the same scope [`PlumeDialog`](crate::retained::PlumeDialog)
@@ -34,7 +37,6 @@ pub fn screen() -> impl Scene {
             width: percent(100),
             height: percent(100),
             row_gap: size::GAP,
-            padding: size::PAD,
         }
         Pickable::IGNORE
         InheritableThemeTextToken(tokens::TEXT_DIM)

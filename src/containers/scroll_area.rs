@@ -4,14 +4,17 @@
 use bevy::app::{App, Plugin, PostUpdate};
 use bevy::ecs::{
     entity::Entity,
+    hierarchy::Children,
     query::With,
+    reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Local, Query},
     template::EntityTemplate,
 };
 use bevy::log::warn_once;
 use bevy::math::Rect;
-use bevy::scene::{Scene, bsn};
+use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, PositionType,
     UiGlobalTransform, UiSystems, Val,
@@ -103,6 +106,11 @@ fn warn_unbounded_scroll_area(
     mut suspect_last_frame: Local<bool>,
 ) {
     let clipped_without_scrolling = query_areas.iter().any(|(node, transform, clip)| {
+        // A hidden region (an unselected tab body) lays out at zero size, which
+        // reads as clipped without ever being a problem.
+        if node.size.y <= CLIP_EPSILON {
+            return false;
+        }
         // Overflowing its viewport means it is scrolling, which is the point.
         if node.content_size.y > node.size.y + CLIP_EPSILON {
             return false;
@@ -139,6 +147,55 @@ pub(crate) fn scrollbar_node() -> impl Scene {
         }
         // An em width needs the chain's `EmSize`.
         TextStyleRelay
+    }
+}
+
+/// Vertically scrolling region: `contents` scroll inside a managed viewport with a
+/// self-hiding scrollbar, once they outgrow the height the area is given.
+///
+/// Give it a bounded height (a `max_height`, or a `flex_grow` inside a bounded
+/// parent) — an unbounded one just grows and never scrolls.
+#[derive(SceneComponent, Default, Clone, Reflect)]
+#[scene(PlumeScrollAreaProps)]
+#[reflect(Component, Default, Clone)]
+pub struct PlumeScrollArea;
+
+/// Props for a [`PlumeScrollArea`].
+pub struct PlumeScrollAreaProps {
+    /// The scrolling content.
+    pub contents: Box<dyn SceneList>,
+}
+
+impl Default for PlumeScrollAreaProps {
+    fn default() -> Self {
+        Self {
+            contents: Box::new(bsn_list!()),
+        }
+    }
+}
+
+impl PlumeScrollArea {
+    fn scene(props: PlumeScrollAreaProps) -> impl Scene {
+        let contents = props.contents;
+        bsn! {
+            scroll_frame()
+            Children [
+                (
+                    #viewport
+                    scroll_viewport()
+                    Children [
+                        (scroll_content() Children [ {contents} ])
+                    ]
+                ),
+                (
+                    @PlumeScrollbar {
+                        @target: #viewport,
+                        @orientation: {ControlOrientation::Vertical},
+                    }
+                    scrollbar_node()
+                ),
+            ]
+        }
     }
 }
 

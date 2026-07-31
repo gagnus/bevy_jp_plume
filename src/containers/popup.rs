@@ -39,22 +39,22 @@ use crate::theme::{
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
-// Marker for the popup mount point a control keeps in its scene. The relay
-// keeps a retained socket (a child of its control) on the text-style chain.
+/// Marker for the popup mount point a control keeps in its scene. The relay
+/// keeps a retained socket (a child of its control) on the text-style chain.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 #[require(TextStyleRelay)]
-pub(crate) struct PopupSocket;
+pub struct PopupSocket;
 
 // The rect a socket overlays, when it is not the socket's own parent.
 #[derive(Component, Clone, Copy)]
 pub(crate) struct PopupAnchor(pub Entity);
 
-// Mount point for a control's popup: overlays the anchor exactly, so a popup
-// spawned into it `Popover`-anchors to the same rect. `FixedNode` makes it a
-// layout root — it neither inherits ancestor layout and clipping nor, as an
-// absolute child would, inflates their `content_size` and scroll range.
-pub(crate) fn popup_socket() -> impl Scene {
+/// Mount point for a control's popup: spawn it as a child of the control the
+/// popup should anchor to, then spawn a [`PlumePopup`] into it to open.
+// `FixedNode` makes it a layout root — it neither inherits ancestor layout and
+// clipping nor, as an absolute child would, inflate their scroll range.
+pub fn popup_socket() -> impl Scene {
     bsn! {
         Node { position_type: PositionType::Absolute }
         FixedNode
@@ -112,48 +112,48 @@ fn bridge_socket_text_style(
     }
 }
 
-// Where a popup opens relative to its anchor.
+/// Where a popup opens relative to its anchor.
 #[derive(Default, Clone, Copy, PartialEq)]
-pub(crate) enum PopupPlacement {
-    // Below the anchor, start-aligned; flips above when out of room.
+pub enum PopupPlacement {
+    /// Below the anchor, start-aligned; flips above when out of room.
     #[default]
     Below,
-    // Beside the anchor, center-aligned; tries right, left, above, below.
+    /// Beside the anchor, center-aligned; tries right, left, above, below.
     Beside,
 }
 
-// What requests a popup's close besides code.
+/// What requests a popup's close besides code.
 #[derive(Clone, Copy, PartialEq, Default)]
-pub(crate) enum PopupDismiss {
-    // Close when focus leaves the popup (the bevy menu machinery; the anchor
-    // control routes the resulting `MenuEvent`s).
+pub enum PopupDismiss {
+    /// Close when focus leaves the popup (the bevy menu machinery; the anchor
+    /// control routes the resulting `MenuEvent`s).
     FocusOut,
-    // Close when a press lands outside the popup's anchor control.
+    /// Close when a press lands outside the popup's anchor control.
     #[default]
     OutsideClick,
-    // Only the owner closes it.
+    /// Only the owner closes it.
     Explicit,
 }
 
-// The floating popup panel shared by select and color edit: themed chrome,
-// `Popover` auto-placement, and the configured dismiss/move behaviour. Spawned
-// into a [`popup_socket`] on open and despawned on close — existing is open.
+/// A floating popup panel: themed chrome, `Popover` auto-placement, and the
+/// configured dismiss behaviour. Existing is open — spawn one into a
+/// [`popup_socket`] to open it, [`close_popup`] to close it.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumePopupProps)]
 #[reflect(Component, Default, Clone)]
-pub(crate) struct PlumePopup;
+pub struct PlumePopup;
 
-// Props for a [`PlumePopup`].
-pub(crate) struct PlumePopupProps {
-    // Body content of the popup.
+/// Props for a [`PlumePopup`].
+pub struct PlumePopupProps {
+    /// Body content of the popup.
     pub contents: Box<dyn SceneList>,
-    // Where the popup opens relative to its socket.
+    /// Where the popup opens relative to its socket.
     pub placement: PopupPlacement,
-    // What closes the popup besides code.
+    /// What closes the popup besides code.
     pub dismiss: PopupDismiss,
-    // Whether background drags move the popup (a reopen re-anchors it).
+    /// Whether background drags move the popup (a reopen re-anchors it).
     pub movable: bool,
-    // Padding inside the chrome.
+    /// Padding inside the chrome.
     pub padding: UiRect,
 }
 
@@ -284,10 +284,10 @@ fn on_popup_drag(
 #[reflect(Component, Default)]
 struct ClosingPopup;
 
-// Close `popup`: hidden immediately, despawned at end of frame. The deferral
-// matters — closing usually happens mid-cascade (a row click, a dismiss press),
-// and commands later in the same cascade still target the popup's entities.
-pub(crate) fn close_popup(commands: &mut Commands, popup: Entity) {
+/// Close `popup`: hidden immediately, despawned at end of frame.
+// The deferral matters — closing usually happens mid-cascade (a row click, a
+// dismiss press), and later commands in that cascade still target its entities.
+pub fn close_popup(commands: &mut Commands, popup: Entity) {
     commands
         .entity(popup)
         .insert((Visibility::Hidden, ClosingPopup));

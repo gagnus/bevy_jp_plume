@@ -39,10 +39,10 @@ pub struct PlumeDialogProps {
     /// exceed this, then stops growing. `Val::Auto` for no ceiling. Floored at
     /// [`size::DIALOG_HEADER_HEIGHT`] so the title bar can never overflow.
     pub max_height: Val,
-    /// Initial left offset (the window is absolutely positioned).
-    pub left: Val,
-    /// Initial top offset.
-    pub top: Val,
+    /// Initial offsets from each viewport edge (the window is absolutely
+    /// positioned); an `Auto` side is unanchored, so the opposite one places it.
+    /// [`Corner::inset`](crate::imm::Corner::inset) builds one from a corner.
+    pub inset: UiRect,
     /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
     pub closable: bool,
     /// `false` omits the drag handle, pinning the dialog in place.
@@ -62,8 +62,11 @@ impl Default for PlumeDialogProps {
             width: Val::Auto,
             height: Val::Auto,
             max_height: Val::Auto,
-            left: size::DEFAULT_DIALOG_POS.x,
-            top: size::DEFAULT_DIALOG_POS.y,
+            inset: UiRect {
+                left: size::DEFAULT_DIALOG_POS.x,
+                top: size::DEFAULT_DIALOG_POS.y,
+                ..UiRect::AUTO
+            },
             closable: true,
             movable: true,
             header: true,
@@ -87,8 +90,7 @@ impl PlumeDialog {
             width,
             height,
             max_height,
-            left,
-            top,
+            inset,
             closable,
             movable,
             header,
@@ -143,11 +145,7 @@ impl PlumeDialog {
                 width,
                 height,
                 max_height,
-                inset: UiRect {
-                    left,
-                    top,
-                    ..UiRect::AUTO
-                },
+                inset,
             })
             // Closing despawns the window.
             on(|close: On<RequestClose>, mut commands: Commands| {

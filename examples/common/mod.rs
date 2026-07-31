@@ -14,11 +14,10 @@ use crate::common::debug_hub::DebugDialogRegistry;
 use crate::common::gallery::GalleryPlugin;
 
 pub mod audio_settings;
-pub mod color_picker;
 pub mod debug_hub;
 pub mod debug_settings;
-pub mod font_scaling;
 pub mod gallery;
+pub mod inspector_panel;
 pub mod player_profile;
 pub mod theme_editor;
 pub mod tree_view;
@@ -65,6 +64,36 @@ struct ExampleArgs {
 pub fn log_on_change<R: Resource + core::fmt::Debug>(res: Res<R>) {
     if res.is_changed() {
         info!("{:?}", *res);
+    }
+}
+
+/// An enum offered as select options: imm binds the value, retained binds the index.
+pub trait Options: Copy + PartialEq + Sized + 'static {
+    /// Every option, in the order they appear in the dropdown.
+    const ALL: &'static [Self];
+
+    /// The option's dropdown label.
+    fn label(self) -> &'static str;
+
+    /// Whether the option can be picked.
+    fn enabled(self) -> bool {
+        true
+    }
+
+    fn index(self) -> usize {
+        Self::ALL.iter().position(|&o| o == self).unwrap_or(0)
+    }
+
+    fn from_index(index: usize) -> Self {
+        Self::ALL.get(index).copied().unwrap_or(Self::ALL[0])
+    }
+
+    /// Labels paired with their enabled flag, as [`PlumeSelect`] takes them.
+    fn select_options() -> Vec<(String, bool)> {
+        Self::ALL
+            .iter()
+            .map(|&o| (o.label().to_owned(), o.enabled()))
+            .collect()
     }
 }
 

@@ -4,7 +4,7 @@ use bevy::camera::visibility::Visibility;
 use bevy::ecs::{
     component::Component,
     entity::Entity,
-    hierarchy::Children,
+    hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
     observer::On,
     query::{Added, Has, Or, With},
@@ -21,6 +21,8 @@ use bevy::ui::{
     JustifyContent, Node, PositionType, UiTransform, Val, percent,
 };
 use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
+
+use crate::controls::SetValue;
 
 use crate::{
     constants::size,
@@ -132,7 +134,10 @@ impl PlumeRadio {
 }
 
 /// Groups [`PlumeRadio`] children into a column and keeps their checks mutually
-/// exclusive; emits [`bevy::ui_widgets::ValueChange<Entity>`] with the new pick.
+/// exclusive.
+/// # Emitted events
+/// * [`ValueChange<usize>`](bevy::ui_widgets::ValueChange) with the picked radio's
+///   position in the group.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct PlumeRadioGroup;
@@ -153,6 +158,30 @@ impl PlumeRadioGroup {
     }
 }
 
+// Programmatic selection by position, the counterpart of the group's emitted index.
+fn radio_group_on_set_value(
+    ev: On<SetValue<usize>>,
+    q_groups: Query<(), With<RadioGroup>>,
+    q_children: Query<&Children>,
+    q_radio: Query<(), With<RadioButton>>,
+    mut commands: Commands,
+) {
+    if !q_groups.contains(ev.entity) {
+        return;
+    }
+    for (index, radio) in q_children
+        .iter_descendants(ev.entity)
+        .filter(|&descendant| q_radio.contains(descendant))
+        .enumerate()
+    {
+        if index == ev.value {
+            commands.entity(radio).insert(Checked);
+        } else {
+            commands.entity(radio).remove::<Checked>();
+        }
+    }
+}
+
 // The clicked radio checks itself ([`radio_check_self`]); the group only clears siblings.
 fn radio_group_uncheck_others(
     ev: On<ValueChange<Entity>>,
@@ -168,10 +197,38 @@ fn radio_group_uncheck_others(
 }
 
 // The headless widget only emits `ValueChange<bool>` (always `true`) for an enabled,
-// unchecked radio, so no re-checks are needed here.
-fn radio_check_self(ev: On<ValueChange<bool>>, mut commands: Commands) {
-    if ev.value {
-        commands.entity(ev.source).insert(Checked);
+// unchecked radio, so no re-checks are needed here. The group's pick is re-announced
+// by position from the radio rather than from the group's own observer, which is the
+// arrangement that reaches app observers on the group.
+fn radio_check_self(
+    ev: On<ValueChange<bool>>,
+    q_parents: Query<&ChildOf>,
+    q_children: Query<&Children>,
+    q_groups: Query<(), With<RadioGroup>>,
+    q_radio: Query<(), With<RadioButton>>,
+    mut commands: Commands,
+) {
+    if !ev.value {
+        return;
+    }
+    commands.entity(ev.source).insert(Checked);
+
+    let Some(group) = q_parents
+        .iter_ancestors(ev.source)
+        .find(|ancestor| q_groups.contains(*ancestor))
+    else {
+        return;
+    };
+    let index = q_children
+        .iter_descendants(group)
+        .filter(|&descendant| q_radio.contains(descendant))
+        .position(|descendant| descendant == ev.source);
+    if let Some(index) = index {
+        commands.trigger(ValueChange {
+            source: group,
+            value: index,
+            is_final: true,
+        });
     }
 }
 
@@ -429,6 +486,7 @@ pub(crate) struct RadioPlugin;
 
 impl Plugin for RadioPlugin {
     fn build(&self, app: &mut bevy::app::App) {
+        app.add_observer(radio_group_on_set_value);
         app.add_systems(
             PreUpdate,
             (update_radio_styles, update_radio_styles_remove).in_set(PickingSystems::Last),

@@ -20,6 +20,7 @@ use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{AlignItems, Node, UiRect, Val};
+use bevy::ui_widgets::ValueChange;
 
 use crate::constants::{font_awesome, size};
 use crate::containers::{
@@ -47,6 +48,8 @@ pub struct PlumeColorEditProps {
 
 /// An editable color swatch: click to open a color-picker popup. Spawnable as a
 /// scene component; reports its color in [`ColorPickerValue`] on the root.
+/// # Emitted events
+/// * [`ValueChange<Color>`](bevy::ui_widgets::ValueChange) on each user edit.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeColorEditProps)]
 #[reflect(Component, Clone, Default)]
@@ -170,6 +173,7 @@ fn sync_edit_from_picker(
     q_swatch_marker: Query<(), With<ColorEditSwatch>>,
     mut q_root_value: Query<&mut ColorPickerValue, Without<ColorEditPicker>>,
     mut q_swatch: Query<&mut ColorSwatchValue>,
+    mut commands: Commands,
 ) {
     for (picker, value) in q_picker.iter() {
         let Some(root) = nearest_with(picker, &q_childof, &q_is_edit) else {
@@ -179,6 +183,11 @@ fn sync_edit_from_picker(
             && !colors_close(root_value.0, value.0)
         {
             root_value.0 = value.0;
+            commands.trigger(ValueChange {
+                source: root,
+                value: value.0,
+                is_final: true,
+            });
         }
         set_swatch(root, value.0, &q_children, &q_swatch_marker, &mut q_swatch);
     }

@@ -1,8 +1,7 @@
 //! HSV color picker: a saturation/value plane, a hue bar and a preview swatch,
 //! composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated as one
 //! retained control. Reports its color in [`ColorPickerValue`] and self-updates
-//! it as the user drags, so it works dropped straight into a scene; watch
-//! `Changed<ColorPickerValue>` to react.
+//! it as the user drags, so it works dropped straight into a scene.
 use core::f32::consts::PI;
 
 use bevy::app::{Plugin, PostUpdate};
@@ -23,7 +22,7 @@ use bevy::ui::{
     AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
     InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent,
 };
-use bevy::ui_widgets::SliderValue;
+use bevy::ui_widgets::{SliderValue, ValueChange};
 
 use crate::constants::size;
 use crate::containers::space;
@@ -54,6 +53,8 @@ pub struct PlumeColorPickerProps {
 /// own SV plane, hue bar and swatch.
 ///
 /// Reports [`ColorPickerValue`] and self-updates it as the user drags.
+/// # Emitted events
+/// * [`ValueChange<Color>`](bevy::ui_widgets::ValueChange) on each user edit.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[scene(PlumeColorPickerProps)]
@@ -326,6 +327,7 @@ fn fold_pad_edits(
     q_sv: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerSv>)>,
     q_hue: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerHue>)>,
     mut q_color: Query<&mut ColorPickerValue>,
+    mut commands: Commands,
 ) {
     for (pad_value, parent) in q_sv.iter() {
         if let Ok(mut color) = q_color.get_mut(parent.parent()) {
@@ -335,6 +337,7 @@ fn fold_pad_edits(
                 hsva.saturation = saturation;
                 hsva.value = value;
                 color.0 = hsva.into();
+                emit_value_change(parent.parent(), color.0, &mut commands);
             }
         }
     }
@@ -345,9 +348,20 @@ fn fold_pad_edits(
             if hsva.hue != hue {
                 hsva.hue = hue;
                 color.0 = hsva.into();
+                emit_value_change(parent.parent(), color.0, &mut commands);
             }
         }
     }
+}
+
+// Announce a user-driven color change on the picker root. Programmatic pushes
+// into `ColorPickerValue` deliberately stay silent.
+fn emit_value_change(root: Entity, color: Color, commands: &mut Commands) {
+    commands.trigger(ValueChange {
+        source: root,
+        value: color,
+        is_final: true,
+    });
 }
 
 // Fold a committed numeric-field edit back into the working HSV. Our own pushes
@@ -358,6 +372,7 @@ fn fold_channel_edits(
     q_childof: Query<&ChildOf>,
     q_is_picker: Query<(), With<PlumeColorPicker>>,
     mut q_color: Query<&mut ColorPickerValue>,
+    mut commands: Commands,
 ) {
     for (field, slider, channel) in q_changed.iter() {
         let Some(root) = find_picker_root(field, &q_childof, &q_is_picker) else {
@@ -401,6 +416,7 @@ fn fold_channel_edits(
                 color.0 = hsva.into();
             }
         }
+        emit_value_change(root, color.0, &mut commands);
     }
 }
 

@@ -15,9 +15,7 @@ use bevy_immediate::{
 use crate::utils::numeric::Numeric;
 use crate::{
     containers::CloseRequested,
-    controls::{
-        ColorPickerValue, SelectedIndex, SetSelectedIndex, SetTextInputValue, TextInputValue,
-    },
+    controls::{ColorPickerValue, SelectedIndex, SetValue, TextInputValue},
     display::TooltipShowing,
 };
 
@@ -185,7 +183,7 @@ where
 ///
 /// The capability query only sees imm-managed entities, so all state flows
 /// through the select root: [`SelectedIndex`] (maintained by the retained layer)
-/// for reads, [`SetSelectedIndex`] for writes.
+/// for reads, [`SetValue<usize>`] for writes.
 pub struct CapabilityPlumeSelect;
 
 impl ImmCapability for CapabilityPlumeSelect {
@@ -229,9 +227,9 @@ where
             // The hash is deliberately left at the widget's value: until the push
             // lands, re-push rather than reading the stale widget back.
             let select_entity = self.entity();
-            self.commands().trigger(SetSelectedIndex {
+            self.commands().trigger(SetValue {
                 entity: select_entity,
-                index: *index,
+                value: *index,
             });
         }
         self
@@ -239,7 +237,7 @@ where
 }
 
 /// Synchronises an app `String` with a text input's buffer, via the
-/// [`TextInputValue`] mirror (reads) and [`SetTextInputValue`] (writes).
+/// [`TextInputValue`] mirror (reads) and [`SetValue<String>`] (writes).
 ///
 /// The user's typing always lands in the app string; app pushes are held back
 /// while the field is focused.
@@ -289,9 +287,9 @@ where
             // rather than reading the stale widget back. Focused fields wait for blur.
             let input_entity = self.entity();
             let new_text = text.clone();
-            self.commands().trigger(SetTextInputValue {
+            self.commands().trigger(SetValue {
                 entity: input_entity,
-                text: new_text,
+                value: new_text,
             });
         }
         self
