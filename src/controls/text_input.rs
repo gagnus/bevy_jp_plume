@@ -125,7 +125,7 @@ pub(crate) fn text_input_frame() -> impl Scene {
         Node {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
-            padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, Val::Px(1.0), Val::ZERO),
+            padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, size::em_from_px(1.5), Val::ZERO),
             border: size::CONTAINER_BORDER,
             border_radius: size::CORNER_RADIUS,
             // Two glyphs' worth plus padding, in em — the ballpark, not layout math.
