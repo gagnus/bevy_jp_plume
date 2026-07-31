@@ -25,6 +25,11 @@ pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, ta
 
 pub(crate) use dialog::{CloseRequested, DialogChrome, DialogHeader, dialog_frame};
 pub(crate) use popup::*;
+pub use popup::{
+    PlumePopup, PlumePopupProps, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
+    popup_socket,
+};
 pub(crate) use scroll_area::*;
+pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub(crate) use tabs::{TabsPlugin, tab_button, tab_strip, tabs_frame};

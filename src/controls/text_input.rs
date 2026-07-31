@@ -5,11 +5,10 @@ use bevy::ecs::{
     change_detection::{DetectChanges, DetectChangesMut},
     component::Component,
     entity::Entity,
-    event::EntityEvent,
     hierarchy::{ChildOf, Children},
     lifecycle::RemovedComponents,
     observer::On,
-    query::{Added, Changed, Has, With},
+    query::{Added, Changed, Has, With, Without},
     reflect::ReflectComponent,
     schedule::IntoScheduleConfigs,
     system::{Commands, Query, Res, ResMut},
@@ -27,7 +26,9 @@ use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
     widget::Text,
 };
-use bevy::ui_widgets::TextInput;
+use bevy::ui_widgets::{TextInput, ValueChange};
+
+use crate::controls::SetValue;
 
 use crate::{
     constants::size,
@@ -49,6 +50,8 @@ const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX)
 /// inner editable field and an optional suffix label.
 ///
 /// This is spawnable by inheriting it as a "scene component" with optional [`PlumeTextInputProps`].
+/// # Emitted events
+/// * [`ValueChange<String>`](bevy::ui_widgets::ValueChange) on each keystroke while focused.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeTextInputProps)]
 #[derive(Reflect)]
@@ -65,20 +68,10 @@ pub(crate) struct TextInputField;
 /// The field's text, mirrored onto the [`PlumeTextInput`] frame root: the scene
 /// seeds it as the initial value, and every buffer edit is reflected back into it
 /// (the imm layer reads widget state from roots only). Write through
-/// [`SetTextInputValue`], not by re-inserting this.
+/// [`SetValue<String>`](crate::retained::SetValue), not by re-inserting this.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Reflect)]
 #[reflect(Component, Default)]
 pub struct TextInputValue(pub String);
-
-/// Programmatically replace a [`PlumeTextInput`]'s text; the field's buffer and
-/// [`TextInputValue`] both follow.
-#[derive(EntityEvent, Reflect)]
-pub struct SetTextInputValue {
-    /// The [`PlumeTextInput`] frame root.
-    pub entity: Entity,
-    /// Replacement text.
-    pub text: String,
-}
 
 /// Props used to construct the [`PlumeTextInput`] scene.
 #[derive(Default, Clone)]
@@ -179,20 +172,40 @@ pub(crate) fn text_input_field(
 
 /// Replace the buffer contents (select-all + insert) when they differ.
 pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: String) {
+    // A queued replacement has not reached `value()` yet, so comparing against it
+    // would stack a second select-all + insert and write the text twice.
+    if !editable_text.pending_edits.is_empty() {
+        return;
+    }
     if editable_text.value() != replacement.as_str() {
         editable_text.queue_edit(TextEdit::SelectAll);
         editable_text.queue_edit(TextEdit::Insert(replacement.into()));
     }
 }
 
-// Push a scene-seeded [`TextInputValue`] into the field's buffer. `Added` fires only
-// for the scene insert, so this never fights the mirror below.
+// Marks a frame whose scene-seeded value has been pushed into its buffer.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct TextInputSeeded;
+
+// Push a scene-seeded [`TextInputValue`] into the field's buffer, once. The mirror
+// below re-inserts `TextInputValue`, which re-fires `Added`; seeding again there
+// would queue a second replacement on top of the first and double the text.
 fn seed_text_input_value(
-    q_seeded: Query<(Entity, &TextInputValue), (With<PlumeTextInput>, Added<TextInputValue>)>,
+    q_seeded: Query<
+        (Entity, &TextInputValue),
+        (
+            With<PlumeTextInput>,
+            Added<TextInputValue>,
+            Without<TextInputSeeded>,
+        ),
+    >,
     q_children: Query<&Children>,
     mut q_fields: Query<&mut EditableText, With<TextInputField>>,
+    mut commands: Commands,
 ) {
     for (frame_ent, value) in q_seeded.iter() {
+        commands.entity(frame_ent).insert(TextInputSeeded);
         let Ok(children) = q_children.get(frame_ent) else {
             continue;
         };
@@ -205,13 +218,18 @@ fn seed_text_input_value(
     }
 }
 
-// Reflect every buffer change into the frame's [`TextInputValue`] mirror.
+// Reflect every buffer change into the frame's [`TextInputValue`] mirror, and
+// announce it as a `ValueChange<String>` when the user is the one typing.
 fn mirror_text_input_value(
-    q_changed: Query<(&ChildOf, &EditableText), (With<TextInputField>, Changed<EditableText>)>,
+    q_changed: Query<
+        (Entity, &ChildOf, &EditableText),
+        (With<TextInputField>, Changed<EditableText>),
+    >,
     q_frames: Query<Option<&TextInputValue>, With<PlumeTextInput>>,
+    focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
-    for (child_of, editable_text) in q_changed.iter() {
+    for (field_ent, child_of, editable_text) in q_changed.iter() {
         // A queued (unapplied) edit means the buffer is stale — mirroring it now
         // would clobber the mirror with the pre-edit text for a frame.
         if !editable_text.pending_edits.is_empty() {
@@ -223,13 +241,25 @@ fn mirror_text_input_value(
         };
         let text = editable_text.value().to_string();
         if mirror.is_none_or(|mirror| mirror.0 != text) {
-            commands.entity(frame_ent).insert(TextInputValue(text));
+            commands
+                .entity(frame_ent)
+                .insert(TextInputValue(text.clone()));
+            // Only a focused field can be the user typing; seeding and
+            // `SetValue` moves the buffer too, and must stay silent.
+            if focus.get() == Some(field_ent) {
+                // The field has no separate commit step, so every keystroke is final.
+                commands.trigger(ValueChange {
+                    source: frame_ent,
+                    value: text,
+                    is_final: true,
+                });
+            }
         }
     }
 }
 
 fn text_input_on_set_value(
-    ev: On<SetTextInputValue>,
+    ev: On<SetValue<String>>,
     q_frames: Query<(), With<PlumeTextInput>>,
     q_children: Query<&Children>,
     mut q_fields: Query<&mut EditableText, With<TextInputField>>,
@@ -244,7 +274,7 @@ fn text_input_on_set_value(
         return;
     };
     if let Ok(mut editable_text) = q_fields.get_mut(field_ent) {
-        set_editable_text(&mut editable_text, ev.text.clone());
+        set_editable_text(&mut editable_text, ev.value.clone());
     }
 }
 

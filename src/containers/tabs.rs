@@ -22,11 +22,11 @@ use bevy::ui::{
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val,
     ZIndex, px,
 };
-use bevy::ui_widgets::{Activate, Button};
+use bevy::ui_widgets::{Activate, Button, ValueChange};
 
 use crate::{
     constants::{FaIcon, size},
-    controls::{SelectedIndex, SetSelectedIndex},
+    controls::{SelectedIndex, SetValue},
     cursor::EntityCursor,
     display::{caption, fa_icon},
     focus::FocusIndicator,
@@ -58,6 +58,8 @@ const INDICATOR_BASE_WIDTH: f32 = 100.0;
 ///     }
 /// }
 /// ```
+/// # Emitted events
+/// * [`ValueChange<usize>`](bevy::ui_widgets::ValueChange) with the picked tab index.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeTabsProps)]
 #[reflect(Component, Clone, Default)]
@@ -339,13 +341,18 @@ fn select_tab_on_activate(
     let tabs = strip_tabs(root, &q_children, &q_strips, |tab| q_tabs.contains(tab));
     if let Some(index) = tabs.iter().position(|&tab| tab == tab_ent) {
         commands.entity(root).insert(SelectedIndex(index));
+        commands.trigger(ValueChange {
+            source: root,
+            value: index,
+            is_final: true,
+        });
     }
 }
 
 /// Programmatic selection, the counterpart of the [`PlumeSelect`](crate::controls::PlumeSelect)
 /// observer: same event, matched against tab position instead of list rows.
 fn tabs_on_set_selected_index(
-    ev: On<SetSelectedIndex>,
+    ev: On<SetValue<usize>>,
     q_roots: Query<(), With<TabsRoot>>,
     q_children: Query<&Children>,
     q_strips: Query<(), With<TabStrip>>,
@@ -359,8 +366,8 @@ fn tabs_on_set_selected_index(
     let tabs = strip_tabs(ev.entity, &q_children, &q_strips, |tab| {
         q_tabs.contains(tab)
     });
-    if ev.index < tabs.len() {
-        commands.entity(ev.entity).insert(SelectedIndex(ev.index));
+    if ev.value < tabs.len() {
+        commands.entity(ev.entity).insert(SelectedIndex(ev.value));
     }
 }
 

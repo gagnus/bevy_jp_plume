@@ -704,7 +704,7 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
 impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
     /// Set the container's padding; `UiRect::ZERO` for a flush, full-bleed
     /// surface such as a menu bar.
-    pub fn pad<T: Into<UiRect> + core::fmt::Debug + Send + 'static>(self, padding: T) -> Self {
+    pub fn padding<T: Into<UiRect> + core::fmt::Debug + Send + 'static>(self, padding: T) -> Self {
         struct PadKey;
         let padding = padding.into();
         self.set_node::<PadKey, _>(padding, |node, padding| node.padding = padding)

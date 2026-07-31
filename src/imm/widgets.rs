@@ -1032,7 +1032,9 @@ impl Corner {
         matches!(self, Self::BottomLeft | Self::BottomRight)
     }
 
-    fn inset(self, x: Val, y: Val) -> UiRect {
+    /// Offsets from each viewport edge placing a frame `x`, `y` in from this
+    /// corner, as [`PlumeDialogProps::inset`](crate::retained::PlumeDialogProps).
+    pub fn inset(self, x: Val, y: Val) -> UiRect {
         let (left, right) = if self.is_right() {
             (Val::Auto, x)
         } else {

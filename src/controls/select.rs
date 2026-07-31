@@ -41,7 +41,7 @@ use crate::constants::{font_awesome, size};
 use crate::containers::{
     PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup, popup_socket,
 };
-use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter};
+use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
 use crate::font_styles::TextStyleRelay;
@@ -51,7 +51,7 @@ use crate::tokens;
 
 /// Select control: a dropdown button over string options.
 /// # Emitted events
-/// * [`ValueChange<Entity>`](bevy::ui_widgets::ValueChange) when the selected option is changed.
+/// * [`ValueChange<usize>`](bevy::ui_widgets::ValueChange) with the picked index.
 #[derive(SceneComponent, Default, Clone)]
 #[scene(PlumeSelectProps)]
 #[derive(Reflect)]
@@ -62,16 +62,6 @@ pub struct PlumeSelect;
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 #[reflect(Component)]
 pub struct SelectedIndex(pub usize);
-
-/// Programmatically select an option by index; the caption, [`SelectedIndex`],
-/// and any open popup all follow. No-op if there is no such option.
-#[derive(EntityEvent, Reflect)]
-pub struct SetSelectedIndex {
-    /// The [`PlumeSelect`] root.
-    pub entity: Entity,
-    /// Index into the select's options.
-    pub index: usize,
-}
 
 /// Marker for the caption which changes with selected item
 #[derive(Component, Default, Clone, Reflect)]
@@ -582,6 +572,7 @@ fn close_popup_on_reselect(
 fn re_emit_listbox_value(
     ev: On<ValueChange<Entity>>,
     q_select: Query<(), With<PlumeSelect>>,
+    q_option_index: Query<&SelectOptionIndex>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
     q_popup: Query<(), With<PlumeSelectPopup>>,
@@ -601,10 +592,12 @@ fn re_emit_listbox_value(
         }
     }
 
-    if let Some(select_ent) = select_ent {
+    if let Some(select_ent) = select_ent
+        && let Ok(index) = q_option_index.get(ev.value)
+    {
         commands.trigger(ValueChange {
             source: select_ent,
-            value: ev.value,
+            value: index.0,
             is_final: true,
         });
     };
@@ -646,14 +639,14 @@ fn sync_selected_index(
 }
 
 fn select_on_set_selected_index(
-    ev: On<SetSelectedIndex>,
+    ev: On<SetValue<usize>>,
     mut q_select: Query<(&SelectOptions, &mut SelectedIndex), With<PlumeSelect>>,
 ) {
     let Ok((options, mut index)) = q_select.get_mut(ev.entity) else {
         return;
     };
-    if ev.index < options.0.len() && index.0 != ev.index {
-        index.0 = ev.index;
+    if ev.value < options.0.len() && index.0 != ev.value {
+        index.0 = ev.value;
     }
 }
 

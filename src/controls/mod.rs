@@ -11,6 +11,7 @@ mod number_input;
 mod radio;
 mod scrollbar;
 mod select;
+mod set_value;
 mod slider;
 mod text_input;
 mod toggle_switch;
@@ -26,9 +27,11 @@ pub use disclosure::PlumeDisclosure;
 pub use number_input::{PlumeNumberInput, PlumeNumberInputProps};
 pub use radio::{PlumeRadio, PlumeRadioGroup, PlumeRadioProps};
 pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter};
-pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, SetSelectedIndex, select_options};
+pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, select_options};
+pub use set_value::SetValue;
+pub(crate) use set_value::SetValuePlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
-pub use text_input::{PlumeTextInput, PlumeTextInputProps, SetTextInputValue, TextInputValue};
+pub use text_input::{PlumeTextInput, PlumeTextInputProps, TextInputValue};
 pub use toggle_switch::PlumeToggleSwitch;
 pub use xy_pad::{PlumeXyPad, PlumeXyPadProps, XyPadDragging, XyPadLock, XyPadValue};
 
@@ -79,6 +82,7 @@ impl Plugin for ControlsPlugin {
             RadioPlugin,
             ScrollbarPlugin,
             SelectPlugin,
+            SetValuePlugin,
             SliderPlugin,
             TextInputPlugin,
             ToggleSwitchPlugin,

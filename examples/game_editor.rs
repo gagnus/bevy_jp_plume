@@ -248,8 +248,7 @@ fn editor_ui(
         .grow()
         .align_items(AlignItems::Stretch);
     })
-    .background_slot(ThemeSlot::Neutral0)
-    .pad(UiRect::ZERO);
+    .background_slot(ThemeSlot::Neutral0);
     editor.set_if_neq(state);
     if theme_editor_open != registry.is_open(THEME_EDITOR_TITLE) {
         registry.set_open(THEME_EDITOR_TITLE, theme_editor_open);
@@ -341,7 +340,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
     })
     .background(bg)
-    .pad(size::GAP / 2.0);
+    .padding(size::GAP / 2.0);
 }
 
 fn left_panel(ui: &mut Ui, state: &mut Editor) {
