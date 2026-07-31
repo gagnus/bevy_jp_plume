@@ -137,6 +137,8 @@ pub(crate) fn scrollbar_node() -> impl Scene {
             bottom: Val::ZERO,
             width: size::SCROLLBAR_WIDTH,
         }
+        // An em width needs the chain's `EmSize`.
+        TextStyleRelay
     }
 }
 

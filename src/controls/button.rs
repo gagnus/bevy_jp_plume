@@ -133,6 +133,8 @@ impl PlumeButton {
                         border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
                     }
                     ButtonOutline
+                    // Em-sized chrome needs the chain's `EmSize`.
+                    TextStyleRelay
                     Pickable::IGNORE
                     ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
                 ),

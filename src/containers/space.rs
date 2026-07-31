@@ -2,6 +2,8 @@
 use bevy::scene::{Scene, bsn};
 use bevy::ui::{Node, Val};
 
+use crate::font_styles::TextStyleRelay;
+
 /// An invisible node `length` along its container's main axis — the fixed-size
 /// counterpart to [`flex_spacer`](crate::containers::flex_spacer).
 pub fn space(length: Val) -> impl Scene {
@@ -11,5 +13,7 @@ pub fn space(length: Val) -> impl Scene {
             flex_grow: 0.0,
             flex_shrink: 0.0,
         }
+        // `length` is routinely an em size, which needs the chain's `EmSize`.
+        TextStyleRelay
     }
 }

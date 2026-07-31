@@ -18,7 +18,10 @@ use bevy::scene::prelude::*;
 use bevy::ui::{ComputedNode, Node, UiSystems, Val};
 use bevy::ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
-use crate::{constants::size, cursor::EntityCursor, theme::ThemeBackgroundToken, tokens};
+use crate::{
+    constants::size, cursor::EntityCursor, font_styles::TextStyleRelay,
+    theme::ThemeBackgroundToken, tokens,
+};
 
 /// A scrollbar. The `target` property should point to an entity whose
 /// [`ScrollPosition`](bevy::ui::ScrollPosition) will be synchronized with the scrollbar.
@@ -54,11 +57,15 @@ impl PlumeScrollbar {
             Scrollbar {
                 target: {props.target},
                 orientation: {props.orientation},
+                // Logical px in the headless widget — not a `Val`, so it can't
+                // be em; it only bites on very long scroll extents.
                 min_thumb_length: 8.0
             }
             Node {
                 border_radius: {size::SCROLLBAR_WIDTH / 2.0}
             }
+            // The bar and its thumb are em-sized: they need the chain's `EmSize`.
+            TextStyleRelay
             ThemeBackgroundToken(tokens::SCROLLBAR_BG)
             Children [(
                 Hovered
@@ -67,6 +74,7 @@ impl PlumeScrollbar {
                     border_radius: {size::SCROLLBAR_WIDTH / 2.0}
                 }
                 PlumeScrollbarThumb
+                TextStyleRelay
                 EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             )]
         }

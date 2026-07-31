@@ -300,8 +300,8 @@ impl PlumeSelectOptions {
                 Node {
                     position_type: PositionType::Absolute,
                     right: size::PAD,
-                    top: px(2),
-                    bottom: px(2),
+                    top: {size::GAP_TIGHT / 2.0},
+                    bottom: {size::GAP_TIGHT / 2.0},
                     width: size::SCROLLBAR_WIDTH,
                 }
             ]
@@ -792,9 +792,12 @@ fn measure_select_width(
     mut q_nodes: Query<&mut Node>,
     mut commands: Commands,
 ) {
-    fn val_px(val: Val) -> f32 {
+    // The chrome constants are em, so they only become widths against the em
+    // size of the select they belong to.
+    fn val_px(val: Val, em_px: f32) -> f32 {
         match val {
             Val::Px(v) => v,
+            Val::Em(v) => v * em_px,
             _ => 0.0,
         }
     }
@@ -843,9 +846,13 @@ fn measure_select_width(
         if widest_row > 0.0 {
             // The popup doesn't exist to measure, so its horizontal chrome is
             // reconstructed: border both sides plus the options' scrollbar gutter.
-            let chrome = 2.0 * val_px(size::CONTAINER_BORDER)
-                + val_px(size::SCROLLBAR_GUTTER)
-                + val_px(size::PAD);
+            // Bevy caches the overlay's resolved em size on its `ComputedNode`.
+            let em_px = q_computed
+                .get(measure_ent)
+                .map_or(size::MEDIUM_FONT_PX, |computed| computed.em_size.0);
+            let chrome = 2.0 * val_px(size::CONTAINER_BORDER, em_px)
+                + val_px(size::SCROLLBAR_GUTTER, em_px)
+                + val_px(size::PAD, em_px);
             let button_target = px((widest_row + chrome).ceil());
             let caption_target = px(widest_label.ceil());
             for descendant in q_children.iter_descendants(child_of.parent()) {
@@ -1040,12 +1047,14 @@ fn update_active_row_outline(
                 right: Val::ZERO,
                 top: Val::ZERO,
                 bottom: Val::ZERO,
-                border: UiRect::all(px(2)),
+                border: UiRect::all(size::FOCUS_RING_WIDTH),
                 border_radius: BorderRadius::all(size::CORNER_RADIUS),
                 ..Default::default()
             },
             ThemeBorderToken(tokens::FOCUS_RING),
             ActiveRowOutline,
+            // Em-sized chrome needs the chain's `EmSize`.
+            TextStyleRelay,
         ));
     }
 }

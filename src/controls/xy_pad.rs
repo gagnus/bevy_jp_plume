@@ -22,10 +22,17 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType,
-    UiGlobalTransform, UiRect, UiScale, Val2, percent, px,
+    UiGlobalTransform, UiRect, UiScale, Val, Val2, percent,
 };
 
-use crate::{constants::size, cursor::EntityCursor, theme::ThemeBorderToken, tokens};
+use crate::{
+    constants::size, cursor::EntityCursor, font_styles::TextStyleRelay, theme::ThemeBorderToken,
+    tokens,
+};
+
+// Ring thickness, proportioned to the reticle so it keeps its weight at any font
+// size (thicker than the hairline [`size::CONTROL_BORDER`], which is its own rule).
+const RETICLE_BORDER: Val = size::em_from_px(2.0);
 
 /// Props used to construct a [`PlumeXyPad`] scene.
 pub struct PlumeXyPadProps {
@@ -36,7 +43,7 @@ pub struct PlumeXyPadProps {
 impl Default for PlumeXyPadProps {
     fn default() -> Self {
         Self {
-            reticle_size: px(12).into(),
+            reticle_size: size::em_from_px(12.0).into(),
         }
     }
 }
@@ -101,14 +108,16 @@ impl PlumeXyPad {
             Node {
                 // Small floor so a caller can size the pad down to a thin value
                 // bar; the SV plane sizes itself up explicitly.
-                min_height: px(16.0),
-                min_width: px(16.0),
+                min_height: {size::em_from_px(16.0)},
+                min_width: {size::em_from_px(16.0)},
                 border: size::CONTROL_BORDER,
                 border_radius: size::CORNER_RADIUS_SMALL,
                 padding: UiRect::all(size::CONTROL_BORDER),
             }
             PlumeXyPad
             XyPadValue
+            // Em-sized chrome needs the chain's `EmSize`.
+            TextStyleRelay
             ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
             Children [(
@@ -118,6 +127,7 @@ impl PlumeXyPad {
                     border_radius: size::CORNER_RADIUS_SMALL,
                 }
                 XyPadInner
+                TextStyleRelay
                 Children [(
                     Node {
                         position_type: PositionType::Absolute,
@@ -125,17 +135,18 @@ impl PlumeXyPad {
                         top: percent(50),
                         width: {props.reticle_size.x},
                         height: {props.reticle_size.y},
-                        border: px(2.0),
+                        border: RETICLE_BORDER,
                         border_radius: size::CORNER_RADIUS,
                         // Half-reticle offsets centre the ring on the value position.
                         margin: UiRect { left: {-props.reticle_size.x / 2.0}, top: {-props.reticle_size.y / 2.0} },
                     }
                     XyPadThumb
+                    TextStyleRelay
                     // A white ring with a dark outline reads on any background.
                     bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
                     bevy::ui::Outline {
-                        width: px(1.0),
-                        offset: px(0.0),
+                        width: size::CONTROL_BORDER,
+                        offset: Val::ZERO,
                         color: bevy::color::Color::BLACK,
                     }
                     // Let picks fall through to the inner pad so the reticle never

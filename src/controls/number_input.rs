@@ -1,4 +1,5 @@
 //! Numeric text field: type a value, commit on Enter or focus loss.
+use crate::constants::size;
 use bevy::app::{Plugin, PreUpdate};
 use bevy::ecs::{
     entity::Entity,
@@ -18,7 +19,6 @@ use bevy::scene::prelude::*;
 use bevy::text::{
     EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextLayout,
 };
-use bevy::ui::px;
 use bevy::ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
 use crate::{
@@ -85,7 +85,7 @@ impl PlumeNumberInput {
             text_input_frame()
             // A value does measure, but a content-sized field would resize as
             // digits come and go, so it keeps a fixed fallback.
-            DefaultWidth(px(60))
+            DefaultWidth(size::em_from_px(60.0))
             PlumeNumberInput { precision: {props.precision} }
             SliderValue({props.value})
             SliderRange::new(props.min, props.max)

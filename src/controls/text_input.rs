@@ -20,7 +20,8 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout, TextReadWriteMode,
+    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
+    TextReadWriteMode,
 };
 use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
@@ -40,10 +41,9 @@ use crate::{
 
 /// Horizontal inset of the field content (border + padding = GAP, aligning the text
 /// with button captions); the placeholder overlay must match it.
-const TEXT_INPUT_PAD_X: Val = match size::GAP.try_sub(size::CONTAINER_BORDER) {
-    Ok(inset) => inset,
-    Err(_) => unreachable!(),
-};
+// The border is a px hairline and the padding is em, so the subtraction happens
+// in px at the standard font; scaled, the pair drifts by well under a pixel.
+const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX);
 
 /// A single-line text input: a themed frame (background, border, focus ring, sizing) wrapping an
 /// inner editable field and an optional suffix label.

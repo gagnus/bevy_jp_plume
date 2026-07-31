@@ -19,7 +19,7 @@ use bevy::ecs::{
 use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
-use bevy::ui::{AlignItems, Node, UiRect, Val, px};
+use bevy::ui::{AlignItems, Node, UiRect, Val};
 
 use crate::constants::{font_awesome, size};
 use crate::containers::{
@@ -29,6 +29,7 @@ use crate::containers::{
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
 use crate::display::{caption_small_caps, fa_icon};
+use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeTextToken;
 use crate::tokens;
 use crate::utils::hierarchy::{descendant, nearest_with};
@@ -74,6 +75,8 @@ impl PlumeColorEdit {
                 align_items: AlignItems::Start,
             }
             PlumeColorEdit
+            // Without this the swatch below is off the chain — no `EmSize`.
+            TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
             Children [
                 // The swatch is the click target that toggles the popup.
@@ -136,7 +139,7 @@ fn on_swatch_click(
                             ),
                             (
                                 caption_small_caps("Color Edit")
-                                Node { width: px(100) }
+                                Node { width: {size::em_from_px(100.0)} }
                                 ThemeTextToken(tokens::TEXT_MAIN)
                             )
                         ]

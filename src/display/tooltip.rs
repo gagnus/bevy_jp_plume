@@ -285,6 +285,13 @@ pub(crate) struct TooltipPanel;
 #[derive(Component, Default, Clone)]
 pub(crate) struct TooltipBox;
 
+// Tooltips pin the standard font on purpose (see `tooltip_chrome`), so their
+// wrap width is px like the font behind it, not em.
+const TOOLTIP_WIDTH: f32 = 280.0;
+
+// Far enough off-screen that an unmeasured tooltip never flashes into view.
+const PARKED_LEFT: f32 = -4000.0;
+
 // Invisible fixed-width positioning box; the visual panel centres inside it
 // and hugs its content. A `FixedNode` layout root, so the panel's text wraps
 // at the box width rather than the anchor's, and its inset is viewport-
@@ -293,8 +300,8 @@ pub(crate) fn tooltip_box() -> impl Scene {
     bsn! {
         Node {
             position_type: PositionType::Absolute,
-            left: px(-4000.),
-            width: px(280.),
+            left: px(PARKED_LEFT),
+            width: px(TOOLTIP_WIDTH),
             justify_content: JustifyContent::Center,
         }
         FixedNode

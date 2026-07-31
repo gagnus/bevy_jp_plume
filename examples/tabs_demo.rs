@@ -185,6 +185,7 @@ fn tabs_demo_ui(mut root: PlumeRoot, mut settings: ResMut<DemoSettings>) {
             });
         })
         .width(px(420));
-    }).background_slot(ThemeSlot::Neutral0);
+    })
+    .background_slot(ThemeSlot::Neutral0);
     settings.set_if_neq(s);
 }

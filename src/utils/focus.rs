@@ -15,9 +15,9 @@ use bevy::input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex}
 use bevy::picking::PickingSystems;
 use bevy::platform::collections::HashSet;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::ui::{InteractionDisabled, Outline, UiSystems, px};
+use bevy::ui::{InteractionDisabled, Outline, UiSystems};
 
-use crate::{theme::UiTheme, tokens};
+use crate::{constants::size, theme::UiTheme, tokens};
 
 /// Marker: show a focus outline on this entity when it or an ancestor is focused.
 #[derive(Component, Default, Clone, Reflect)]
@@ -45,8 +45,8 @@ fn manage_focus_indicators(
 
     let ring = |theme: &UiTheme| Outline {
         color: theme.color(&tokens::FOCUS_RING),
-        width: px(2),
-        offset: px(2),
+        width: size::FOCUS_RING_WIDTH,
+        offset: size::FOCUS_RING_OFFSET,
     };
 
     let mut visited = HashSet::<Entity>::with_capacity(q_indicators.count());

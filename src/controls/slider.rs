@@ -27,7 +27,7 @@ use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
     InteractionDisabled, InterpolationColorSpace, LinearGradient, Node, PositionType, Pressed,
-    UiRect, UiTransform, Val, percent, px,
+    UiRect, UiTransform, Val, percent,
 };
 use bevy::ui_widgets::{
     Slider, SliderOrientation, SliderPrecision, SliderRange, SliderStep, SliderThumb, SliderValue,
@@ -88,10 +88,10 @@ impl PlumeSlider {
             Node {
                 height: size::ROW_HEIGHT,
                 align_items: AlignItems::Center,
-                min_width: px(40.0),
+                min_width: size::em_from_px(40.0),
             }
             // An empty track measures nothing, so `width: auto` would collapse it.
-            DefaultWidth(px(180.0))
+            DefaultWidth(size::em_from_px(180.0))
             Hovered
             TabIndex(0)
             FocusIndicator

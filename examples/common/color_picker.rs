@@ -38,7 +38,9 @@ fn color_picker_ui(mut root: PlumeRoot, mut state: ResMut<ColorPickerState>) {
         ui.flex_spacer();
         ui.horizontal(|ui| {
             ui.flex_spacer();
+            ui.color_picker(&mut color).font_size(FontSize::Px(20.0));
             ui.color_picker(&mut color);
+            ui.color_picker(&mut color).font_size(FontSize::Px(8.0));
             ui.flex_spacer();
         });
         ui.horizontal(|ui| {

@@ -207,7 +207,7 @@ pub(crate) fn tab_strip() -> impl Scene {
             align_items: AlignItems::Stretch,
             justify_content: JustifyContent::Start,
             min_height: size::HEADER_HEIGHT,
-            padding: UiRect::top(px(4)),
+            padding: UiRect::top(size::GAP_TIGHT),
         }
         TabStrip
         ThemeBackgroundToken(tokens::TABS_STRIP_BG)
@@ -222,6 +222,8 @@ pub(crate) fn tab_strip() -> impl Scene {
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
                 TabIndicator
+                // Em-sized chrome needs the chain's `EmSize`.
+                TextStyleRelay
                 ZIndex(1)
                 UiTransform::default()
                 Pickable::IGNORE

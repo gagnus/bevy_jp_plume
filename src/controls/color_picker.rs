@@ -21,7 +21,7 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
-    InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent, px,
+    InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent,
 };
 use bevy::ui_widgets::SliderValue;
 
@@ -33,10 +33,15 @@ use crate::controls::{
 use crate::display::caption;
 use crate::font_styles::TextStyleRelay;
 
-// The SV plane's side and the hue bar's dimensions. The bar shares the plane's
-// height so the two line up.
-const PLANE_SIZE: f32 = 220.0;
-const HUE_BAR_WIDTH: f32 = 20.0;
+// The SV plane's side and the hue bar's dimensions, em-sized so the picker
+// tracks the effective font. The bar shares the plane's height so the two line up.
+const PLANE_SIZE: Val = size::em_from_px(220.0);
+const HUE_BAR_WIDTH: Val = size::em_from_px(20.0);
+// The hue bar's reticle spans the bar, so it is wider than it is tall.
+const HUE_RETICLE_SIZE: Val2 = Val2 {
+    x: size::em_from_px(24.0),
+    y: size::em_from_px(12.0),
+};
 
 /// Scene props for [`PlumeColorPicker`].
 #[derive(Default, Clone)]
@@ -113,7 +118,7 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
         TextStyleRelay
         Children [
             (
-                space(size::GAP_TIGHT)
+                space(size::em_from_px(4.0))
             )
             (
                 caption(label)
@@ -139,7 +144,7 @@ impl PlumeColorPicker {
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
-                column_gap: size::GAP,
+                column_gap: size::em_from_px(8.0),
                 align_items: AlignItems::Start,
             }
             PlumeColorPicker
@@ -150,15 +155,15 @@ impl PlumeColorPicker {
                 // driven by the sync system, since it tracks the hue bar.
                 (
                     @PlumeXyPad
-                    Node { width: px(PLANE_SIZE), height: px(PLANE_SIZE) }
+                    Node { width: PLANE_SIZE, height: PLANE_SIZE }
                     ColorPickerSv
                 ),
                 // Hue bar: a pad locked to x, so it only moves along the hue axis.
                 (
                     @PlumeXyPad {
-                        @reticle_size: Val2::new(px(24.0), px(12.0))
+                        @reticle_size: HUE_RETICLE_SIZE
                     }
-                    Node { width: px(HUE_BAR_WIDTH), height: px(PLANE_SIZE) }
+                    Node { width: HUE_BAR_WIDTH, height: PLANE_SIZE }
                     XyPadLock { x: {Some(0.5)}, y: {None} }
                     BackgroundGradient({hue_gradient()})
                     ColorPickerHue
@@ -169,7 +174,7 @@ impl PlumeColorPicker {
                     Node {
                         flex_direction: FlexDirection::Column,
                         align_self: AlignSelf::Stretch,
-                        row_gap: {size::GAP_TIGHT / 2.0},
+                        row_gap: size::em_from_px(2.0),
                         flex_grow: 1.0,
                     }
                     TextStyleRelay
@@ -183,7 +188,7 @@ impl PlumeColorPicker {
                         (channel_row("R", Channel::R, 3, 1.0)),
                         (channel_row("G", Channel::G, 3, 1.0)),
                         (channel_row("B", Channel::B, 3, 1.0)),
-                        (Node { height: px(2.0) }),
+                        (space(size::GAP_TIGHT / 2.0)),
                         (channel_row("H", Channel::H, 0, 360.0)),
                         (channel_row("S", Channel::S, 3, 1.0)),
                         (channel_row("V", Channel::V, 3, 1.0)),

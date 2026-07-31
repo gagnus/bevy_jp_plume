@@ -96,6 +96,12 @@ impl Plugin for PlumeCorePlugin {
                 .after(PropagateSet::<TextFont>::default())
                 .before(UiSystems::Layout),
         );
+        // The mirror's regression net: em chrome the mirror never reaches.
+        #[cfg(debug_assertions)]
+        app.add_systems(
+            PostUpdate,
+            font_styles::warn_em_without_em_size.after(font_styles::mirror_em_size),
+        );
         // Companion to the `TextColor` registration in `ThemePlugin`.
         app.add_observer(on_themed_text_inserted::<TextFont>);
     }

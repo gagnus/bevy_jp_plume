@@ -13,6 +13,7 @@ pub struct FontScalingDemo {
     flavour: Flavour,
     volume: f32,
     name: String,
+    color: Color,
 }
 
 impl Default for FontScalingDemo {
@@ -22,6 +23,7 @@ impl Default for FontScalingDemo {
             flavour: Flavour::default(),
             volume: 0.5,
             name: "".into(),
+            color: Color::srgb(0.3, 0.6, 0.9),
         }
     }
 }
@@ -59,6 +61,7 @@ fn font_scaling_dialog(
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
         .width(px(640))
+        .height(px(200))
         .at(px(640), px(60))
         .icon(font_awesome::solid::TEXT_HEIGHT)
         .show(|ui| {
@@ -84,7 +87,8 @@ fn font_scaling_dialog(
                     .text_color_slot(ThemeSlot::Accent1);
             })
             .align_items(AlignItems::Start);
-        });
+        })
+        .map(|dialog_response| dialog_response.font_size(FontSize::Px(20.0)));
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
     }
@@ -114,6 +118,8 @@ fn demo_column(ui: &mut Ui, s: &mut FontScalingDemo, heading: &str) {
         ui.checkbox(&mut s.enabled, "A");
         ui.toggle(&mut s.enabled);
         ui.radio(&mut s.enabled, true, "B");
+        // Click the swatch: the picker popup inherits the column's font too.
+        ui.color_edit(&mut s.color);
     });
     // Per-widget override on a bare caption — a text leaf styling itself.
     ui.caption("28 px caption").font_size(FontSize::Px(28.0));

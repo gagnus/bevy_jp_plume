@@ -53,6 +53,7 @@ impl PlumeColorSwatch {
                         border: size::CONTROL_BORDER,
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
+                    TextStyleRelay
                     ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
                 )
             ]

@@ -13,9 +13,22 @@ use bevy::ecs::{
     world::Ref,
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::{EditableText, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont};
+use bevy::text::{
+    EditableText, EmSize, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont,
+};
+use bevy::ui::ComputedUiRenderTargetInfo;
 use bevy::ui::widget::Text;
-use bevy::ui::{ComputedUiRenderTargetInfo, EmSize};
+#[cfg(debug_assertions)]
+use {
+    bevy::ecs::{
+        entity::{EntityHashMap, EntityHashSet},
+        name::Name,
+        query::Without,
+        system::Local,
+    },
+    bevy::log::warn,
+    bevy::ui::{BoxShadow, Node, Outline, UiRect, UiTransform, Val, Val2},
+};
 
 use crate::constants::{fonts, size};
 use crate::theme::ThemedText;
@@ -74,6 +87,137 @@ pub(crate) fn mirror_em_size(
             commands.entity(entity).insert(em);
         }
     }
+}
+
+// The regression net for the mirror above. An em value on a node the mirror
+// never reaches resolves against `RemSize` — right at the standard font and
+// wrong everywhere else, so the bug hides until someone scales a subtree. This
+// names the node instead: a node authoring `Val::Em` with neither its own
+// `TextFont` (text leaves resolve from that) nor an `EmSize` is off the chain
+// and wants a `TextStyleRelay`.
+//
+// Debug builds only: it scans every node lacking an `EmSize`, which in an app
+// with a large non-plume UI is not free, and the answer never differs in
+// release.
+#[cfg(debug_assertions)]
+pub(crate) fn warn_em_without_em_size(
+    suspects: Query<
+        (
+            Entity,
+            Option<&Name>,
+            &Node,
+            Option<&Outline>,
+            Option<&BoxShadow>,
+            Option<&UiTransform>,
+        ),
+        (Without<EmSize>, Without<TextFont>),
+    >,
+    mut suspect_frames: Local<EntityHashMap<u8>>,
+    mut warned: Local<EntityHashSet>,
+) {
+    // A freshly spawned node has no `EmSize` until propagation and the mirror
+    // have both run, and a popup socket takes an extra hop; only a node still
+    // bare after that is genuinely off the chain.
+    const GRACE_FRAMES: u8 = 3;
+
+    let mut current = EntityHashMap::default();
+    for (entity, name, node, outline, shadow, transform) in &suspects {
+        // Counting stops at the warning: a node that is genuinely off the chain
+        // stays a suspect for the rest of the session, and there is nothing left
+        // to learn from it.
+        if warned.contains(&entity) {
+            continue;
+        }
+        let fields = em_fields(node, outline, shadow, transform);
+        if fields.is_empty() {
+            continue;
+        }
+        let frames = suspect_frames.get(&entity).copied().unwrap_or(0) + 1;
+        current.insert(entity, frames);
+        if frames >= GRACE_FRAMES && warned.insert(entity) {
+            warn!(
+                entity = ?entity,
+                name = name.map_or("<unnamed>", Name::as_str),
+                fields = fields.join(", "),
+                "Node authors `Val::Em` but has no `EmSize`, so it resolves against the global \
+                 `RemSize` and stays standard-sized in a scaled subtree. Plume mirrors `EmSize` \
+                 onto text-chain nodes only — give this node a `TextStyleRelay`."
+            );
+        }
+    }
+    *suspect_frames = current;
+}
+
+// The em-authoring fields of one node, named for the warning. `Em(0.0)` is zero
+// at any font size, so it is not a miss.
+#[cfg(debug_assertions)]
+fn em_fields(
+    node: &Node,
+    outline: Option<&Outline>,
+    shadow: Option<&BoxShadow>,
+    transform: Option<&UiTransform>,
+) -> Vec<&'static str> {
+    fn is_em(val: Val) -> bool {
+        matches!(val, Val::Em(v) if v != 0.0)
+    }
+    fn rect_is_em(rect: UiRect) -> bool {
+        is_em(rect.left) || is_em(rect.right) || is_em(rect.top) || is_em(rect.bottom)
+    }
+    fn val2_is_em(val2: Val2) -> bool {
+        is_em(val2.x) || is_em(val2.y)
+    }
+
+    let mut fields = Vec::new();
+    let mut check = |present: bool, field| {
+        if present {
+            fields.push(field);
+        }
+    };
+    check(
+        is_em(node.left) || is_em(node.right) || is_em(node.top) || is_em(node.bottom),
+        "offsets",
+    );
+    check(is_em(node.width) || is_em(node.height), "size");
+    check(
+        is_em(node.min_width)
+            || is_em(node.min_height)
+            || is_em(node.max_width)
+            || is_em(node.max_height),
+        "min/max size",
+    );
+    check(is_em(node.flex_basis), "flex_basis");
+    check(is_em(node.row_gap) || is_em(node.column_gap), "gap");
+    check(rect_is_em(node.margin), "margin");
+    check(rect_is_em(node.padding), "padding");
+    check(rect_is_em(node.border), "border");
+    let radius = node.border_radius;
+    check(
+        val2_is_em(radius.top_left)
+            || val2_is_em(radius.top_right)
+            || val2_is_em(radius.bottom_right)
+            || val2_is_em(radius.bottom_left),
+        "border_radius",
+    );
+    check(
+        outline.is_some_and(|outline| is_em(outline.width) || is_em(outline.offset)),
+        "outline",
+    );
+    check(
+        shadow.is_some_and(|shadow| {
+            shadow.0.iter().any(|style| {
+                is_em(style.x_offset)
+                    || is_em(style.y_offset)
+                    || is_em(style.spread_radius)
+                    || is_em(style.blur_radius)
+            })
+        }),
+        "box_shadow",
+    );
+    check(
+        transform.is_some_and(|transform| val2_is_em(transform.translation)),
+        "ui_transform",
+    );
+    fields
 }
 
 // Resolves each `InheritableFont` into a `Propagate<TextFont>` source: `None`

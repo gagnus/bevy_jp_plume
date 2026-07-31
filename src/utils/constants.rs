@@ -14,7 +14,17 @@ pub mod fonts {
     pub const FA_REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/FontAwesome-Regular.otf";
 }
 
-/// Size constants
+/// Size constants.
+///
+/// Nearly everything here is a [`Val::Em`] stated in px-at-the-standard-font
+/// (via [`size::em_from_px`]), so a container that sets a bigger font gets
+/// chrome, spacing and rounding to match. What stays [`Val::Px`] is what should
+/// look identical at any size: hairline borders, the focus ring, and positions
+/// measured at runtime.
+///
+/// Anything em-sized needs an `EmSize`, which plume mirrors onto text-chain
+/// nodes only — a node authoring em without one is a bug the debug-build
+/// `warn_em_without_em_size` lint names for you.
 pub mod size {
     use bevy::text::FontSize;
     use bevy::ui::{Val, Val2};
@@ -36,10 +46,10 @@ pub mod size {
     pub const CHECKBOX_SIZE: Val = em_from_px(18.0);
 
     /// Height for pane headers
-    pub const HEADER_HEIGHT: Val = Val::Px(30.0);
+    pub const HEADER_HEIGHT: Val = em_from_px(30.0);
 
     /// Height for dialog headers
-    pub const DIALOG_HEADER_HEIGHT: Val = Val::Px(40.0);
+    pub const DIALOG_HEADER_HEIGHT: Val = em_from_px(40.0);
 
     /// Width and height of a radio button
     pub const RADIO_SIZE: Val = em_from_px(18.0);
@@ -50,42 +60,58 @@ pub mod size {
         y: em_from_px(18.0),
     };
 
-    /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS: Val = Val::Px(6.0);
+    /// Standard corner radius for controls and containers; em, so a scaled
+    /// control keeps its rounding in proportion rather than looking sharper.
+    pub const CORNER_RADIUS: Val = em_from_px(6.0);
 
     /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS_SMALL: Val = Val::Px(4.0);
+    pub const CORNER_RADIUS_SMALL: Val = em_from_px(4.0);
 
     /// Increased corner radius for dialogs
-    pub const DIALOG_RADIUS: Val = Val::Px(8.0);
+    pub const DIALOG_RADIUS: Val = em_from_px(8.0);
+
+    /// Hairline thickness in px: borders stay one crisp pixel at any font size,
+    /// so they are the one part of the look that never scales.
+    pub(crate) const HAIRLINE_PX: f32 = 1.0;
 
     /// Border width of control chrome (checkbox, radio, toggle)
-    pub const CONTROL_BORDER: Val = Val::Px(1.0);
+    pub const CONTROL_BORDER: Val = Val::Px(HAIRLINE_PX);
 
-    /// Thickness of the accent underline marking the selected tab
-    pub const TAB_INDICATOR_HEIGHT: Val = Val::Px(2.0);
+    /// Thickness of the accent underline marking the selected tab; it sits under
+    /// text, so it scales with it.
+    pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(2.0);
 
     /// Border width of containers (dialog, section header, menu popup, text input)
-    pub const CONTAINER_BORDER: Val = Val::Px(1.0);
+    pub const CONTAINER_BORDER: Val = Val::Px(HAIRLINE_PX);
+
+    /// Focus ring thickness; px with the other hairlines, so the ring reads the
+    /// same on every control whatever font it sits in.
+    pub const FOCUS_RING_WIDTH: Val = Val::Px(2.0);
+
+    /// Clearance between a control's edge and its focus ring.
+    pub const FOCUS_RING_OFFSET: Val = Val::Px(2.0);
 
     /// Tight vertical gap for dense section interiors (section, radio group)
-    pub const GAP_TIGHT: Val = Val::Px(4.0);
+    pub const GAP_TIGHT: Val = em_from_px(GAP_TIGHT_PX);
+    pub(crate) const GAP_TIGHT_PX: f32 = 4.0;
 
     /// Standard gap: every horizontal gap (rows, caption slots) and page-level
     /// column gap; also buttons' and list rows' horizontal padding
-    pub const GAP: Val = Val::Px(8.0);
+    pub const GAP: Val = em_from_px(GAP_PX);
+    pub(crate) const GAP_PX: f32 = 8.0;
 
     /// Container body padding (dialog, section)
-    pub const PAD: Val = Val::Px(6.0);
+    pub const PAD: Val = em_from_px(PAD_PX);
+    pub(crate) const PAD_PX: f32 = 6.0;
 
     /// Knob diameter (slider thumb, toggle knob)
     pub const KNOB_SIZE: Val = em_from_px(16.0);
 
     /// Scrollbar thumb width
-    pub const SCROLLBAR_WIDTH: Val = Val::Px(6.0);
+    pub const SCROLLBAR_WIDTH: Val = em_from_px(6.0);
 
     /// Gutter reserved beside scrollable content for the scrollbar plus clearance
-    pub const SCROLLBAR_GUTTER: Val = Val::Px(12.0);
+    pub const SCROLLBAR_GUTTER: Val = em_from_px(12.0);
 
     /// Default dialog pos
     pub const DEFAULT_DIALOG_POS: Val2 = Val2 {
@@ -94,7 +120,7 @@ pub mod size {
     };
 
     /// Visible track strip thickness (the full-height node around it is the hit area).
-    pub const SLIDER_TRACK_HEIGHT: Val = Val::Px(4.0);
+    pub const SLIDER_TRACK_HEIGHT: Val = em_from_px(4.0);
 
     /// The one font size: every control and container uses this.
     pub const MEDIUM_FONT: FontSize = FontSize::Px(MEDIUM_FONT_PX);
