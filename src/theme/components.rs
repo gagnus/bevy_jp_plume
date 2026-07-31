@@ -268,7 +268,10 @@ pub(crate) fn on_changed_text_slot(
 // `TextColor` when the carrier is itself text (`PropagateOver` blocks the
 // output write there); direct `ThemeTextSlot`/`ThemeTextToken` keep precedence.
 pub(crate) type SelfColorFilter = (
-    bevy::ecs::query::With<bevy::ui::widget::Text>,
+    bevy::ecs::query::Or<(
+        bevy::ecs::query::With<bevy::ui::widget::Text>,
+        bevy::ecs::query::With<bevy::text::EditableText>,
+    )>,
     Without<ThemeTextSlot>,
     Without<ThemeTextToken>,
 );

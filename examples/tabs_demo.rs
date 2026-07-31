@@ -181,11 +181,10 @@ fn tabs_demo_ui(mut root: PlumeRoot, mut settings: ResMut<DemoSettings>) {
                 ui.separator();
                 ui.flex_spacer();
                 ui.button("Cancel");
-                ui.space(px(12));
                 ui.button("Apply").primary();
             });
         })
         .width(px(420));
-    });
+    }).background_slot(ThemeSlot::Neutral0);
     settings.set_if_neq(s);
 }

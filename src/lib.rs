@@ -86,6 +86,16 @@ impl Plugin for PlumeCorePlugin {
             PostUpdate,
             font_styles::resolve_inheritable_font.before(PropagateSet::<TextFont>::default()),
         );
+        // `Val::Em` chrome: nodes without an `EmSize` fall back to `RemSize`,
+        // so the standard size must be the fallback; the mirror then feeds the
+        // effective inherited font to every chain node ahead of layout.
+        app.insert_resource(bevy::text::RemSize(constants::size::MEDIUM_FONT_PX));
+        app.add_systems(
+            PostUpdate,
+            font_styles::mirror_em_size
+                .after(PropagateSet::<TextFont>::default())
+                .before(UiSystems::Layout),
+        );
         // Companion to the `TextColor` registration in `ThemePlugin`.
         app.add_observer(on_themed_text_inserted::<TextFont>);
     }

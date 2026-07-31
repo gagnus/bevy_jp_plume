@@ -13,7 +13,7 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{BackgroundColor, Node, PositionType, Val};
 
-use crate::{constants::size, theme::ThemeBorderToken, tokens};
+use crate::{constants::size, font_styles::TextStyleRelay, theme::ThemeBorderToken, tokens};
 
 /// A color swatch widget.
 ///
@@ -39,6 +39,8 @@ impl PlumeColorSwatch {
             }
             PlumeColorSwatch
             ColorSwatchValue
+            // Em-sized chrome needs the chain's `EmSize`.
+            TextStyleRelay
             Children [
                 // Border overlay: sits over the fill so the color reaches every edge.
                 (

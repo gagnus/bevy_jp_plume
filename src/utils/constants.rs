@@ -19,11 +19,21 @@ pub mod size {
     use bevy::text::FontSize;
     use bevy::ui::{Val, Val2};
 
+    /// The standard font size in pixels; [`MEDIUM_FONT`] and [`em`] derive
+    /// from it, and the `RemSize` resource is set to it at plugin init.
+    pub(crate) const MEDIUM_FONT_PX: f32 = 14.0;
+
+    // A length stated in px-at-standard-font but carried as `Val::Em`, so the
+    // chrome it sizes tracks the effective font.
+    pub(crate) const fn em_from_px(px_at_standard_font: f32) -> Val {
+        Val::Em(px_at_standard_font / MEDIUM_FONT_PX)
+    }
+
     /// Common row size for buttons, sliders, spinners, etc.
-    pub const ROW_HEIGHT: Val = Val::Px(24.0);
+    pub const ROW_HEIGHT: Val = em_from_px(24.0);
 
     /// Width and height of a checkbox
-    pub const CHECKBOX_SIZE: Val = Val::Px(18.0);
+    pub const CHECKBOX_SIZE: Val = em_from_px(18.0);
 
     /// Height for pane headers
     pub const HEADER_HEIGHT: Val = Val::Px(30.0);
@@ -32,12 +42,12 @@ pub mod size {
     pub const DIALOG_HEADER_HEIGHT: Val = Val::Px(40.0);
 
     /// Width and height of a radio button
-    pub const RADIO_SIZE: Val = Val::Px(18.0);
+    pub const RADIO_SIZE: Val = em_from_px(18.0);
 
     /// Size of a toggle switch
     pub const TOGGLE_SIZE: Val2 = Val2 {
-        x: Val::Px(32.0),
-        y: Val::Px(18.0),
+        x: em_from_px(32.0),
+        y: em_from_px(18.0),
     };
 
     /// Standard corner radius for controls and containers
@@ -69,7 +79,7 @@ pub mod size {
     pub const PAD: Val = Val::Px(6.0);
 
     /// Knob diameter (slider thumb, toggle knob)
-    pub const KNOB_SIZE: Val = Val::Px(16.0);
+    pub const KNOB_SIZE: Val = em_from_px(16.0);
 
     /// Scrollbar thumb width
     pub const SCROLLBAR_WIDTH: Val = Val::Px(6.0);
@@ -87,13 +97,10 @@ pub mod size {
     pub const SLIDER_TRACK_HEIGHT: Val = Val::Px(4.0);
 
     /// The one font size: every control and container uses this.
-    pub const MEDIUM_FONT: FontSize = FontSize::Px(14.0);
+    pub const MEDIUM_FONT: FontSize = FontSize::Px(MEDIUM_FONT_PX);
 
-    /// The one font size: every control and container uses this.
-    pub const TEXT_HEIGHT: Val = match MEDIUM_FONT {
-        FontSize::Px(font_px) => Val::Px(font_px),
-        _ => panic!("MEDIUM_FONT must be Px"),
-    };
+    /// One line of text, as an em length — tracks the effective font.
+    pub const TEXT_HEIGHT: Val = em_from_px(MEDIUM_FONT_PX);
 
     /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
     /// so this tracks [`MEDIUM_FONT`].

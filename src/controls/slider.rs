@@ -34,6 +34,7 @@ use bevy::ui_widgets::{
     TrackClick, slider_self_update,
 };
 
+use crate::font_styles::TextStyleRelay;
 use crate::{
     constants::size,
     controls::DefaultWidth,
@@ -99,6 +100,8 @@ impl PlumeSlider {
                 orientation: SliderOrientation::Horizontal,
             }
             PlumeSlider
+            // Em-sized chrome needs the chain's `EmSize`.
+            TextStyleRelay
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
@@ -118,6 +121,7 @@ impl PlumeSlider {
                         border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
+                    TextStyleRelay
                     // Bar/track drawn as a gradient, seeded from the theme so the
                     // slider is styled on its first frame regardless of scene-application order.
                     template(|ctx| {
@@ -154,6 +158,7 @@ impl PlumeSlider {
                             }
                             template_value(control_box_shadow())
                             SliderThumb
+                            TextStyleRelay
                             template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
                             UiTransform::default()
                             on(grab_thumb_on_press)

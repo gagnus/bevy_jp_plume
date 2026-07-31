@@ -18,10 +18,11 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{
     BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, UiTransform,
-    Val, percent, px,
+    Val, percent,
 };
 use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
+use crate::font_styles::TextStyleRelay;
 use crate::{
     constants::size,
     cursor::EntityCursor,
@@ -33,9 +34,9 @@ use crate::{
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 
-/// Horizontal knob travel between off and on, in px: pill width 32 − knob 16 −
-/// a 1px inset at each end, so the knob keeps a 1px margin on both sides.
-const KNOB_TRAVEL: f32 = 14.0;
+/// Horizontal knob travel between off and on: pill width 32 − knob 16 − a 1px
+/// inset at each end (at the standard font), so the knob keeps its margins.
+const KNOB_TRAVEL: Val = size::em_from_px(14.0);
 
 /// A toggle switch, spawnable as a scene component. Emits
 /// [`bevy::ui_widgets::ValueChange<bool>`] with the new state.
@@ -58,6 +59,8 @@ impl PlumeToggleSwitch {
             }
             Checkbox
             PlumeToggleSwitch
+            // Em-sized chrome needs the chain's `EmSize`.
+            TextStyleRelay
             TabIndex(0)
             FocusIndicator
             on(checkbox_self_update)
@@ -78,6 +81,7 @@ impl PlumeToggleSwitch {
                         border_radius: {size::TOGGLE_SIZE.y / 2.0},
                     }
                     ToggleSwitchOutline
+                    TextStyleRelay
                     ThemeBorderToken(tokens::SWITCH_BORDER)
                 ),
                 (
@@ -87,14 +91,15 @@ impl PlumeToggleSwitch {
                     // `UiTransform` translation so it never triggers a relayout.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: px(1),
-                        top: px(1),
+                        left: {size::em_from_px(1.0)},
+                        top: {size::em_from_px(1.0)},
                         width: size::KNOB_SIZE,
                         height: size::KNOB_SIZE,
                         border_radius: BorderRadius::MAX,
                     }
                     ToggleSwitchSlide
-                    template_value(AnimState::translate_x(0.0, KNOB_TRAVEL))
+                    TextStyleRelay
+                    template_value(AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL))
                     UiTransform::default()
                     ThemeBackgroundGradient(tokens::SWITCH_SLIDE_BG, SLIDE_GRADIENT_AMOUNT)
                     template_value(control_box_shadow())

@@ -154,7 +154,13 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
         ui.text_edit(&mut state.text)
             .placeholder("Type here")
             .enabled(!disabled);
-        ui.number(&mut state.number).enabled(!disabled);
+        ui.horizontal(|ui| {
+            ui.number(&mut state.number).enabled(!disabled).grow();
+            ui.number(&mut state.number)
+                .suffix("px")
+                .enabled(!disabled)
+                .grow();
+        });
     })
     .background_slot(bg_slot)
     .pad(size::PAD * 2.0)

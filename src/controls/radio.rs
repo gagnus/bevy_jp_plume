@@ -18,7 +18,7 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
-    JustifyContent, Node, PositionType, UiTransform, Val, percent, px,
+    JustifyContent, Node, PositionType, UiTransform, Val, percent,
 };
 use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
@@ -89,6 +89,8 @@ impl PlumeRadio {
                     border_radius: BorderRadius::MAX,
                 }
                 RadioBg
+                // Em-sized chrome needs the chain's `EmSize`.
+                TextStyleRelay
                 // Ring hugs the disc, not the label row.
                 FocusIndicator
                 ThemeBackgroundGradient(tokens::RADIO_BG, 0.0)
@@ -108,13 +110,15 @@ impl PlumeRadio {
                         ThemeBorderToken(tokens::RADIO_BORDER)
                     ),
                     (
+                        // Proportioned to the disc so it scales with it.
                         Node {
-                            width: px(12),
-                            height: px(12),
-                            border: px(2),
+                            width: {size::em_from_px(12.0)},
+                            height: {size::em_from_px(12.0)},
+                            border: {size::em_from_px(2.0)},
                             border_radius: BorderRadius::MAX,
                         }
                         RadioMark
+                        TextStyleRelay
                         template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                         UiTransform::default()
                         Visibility::Hidden

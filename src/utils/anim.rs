@@ -8,10 +8,10 @@ use bevy::ecs::{
     reflect::ReflectComponent,
     system::{Query, Res},
 };
-use bevy::math::{Rot2, Vec2};
+use bevy::math::{Rot2, TryStableInterpolate, Vec2};
 use bevy::reflect::Reflect;
 use bevy::time::Time;
-use bevy::ui::{UiTransform, px};
+use bevy::ui::{UiTransform, Val};
 
 /// Exponential-approach rate for the crate's UI micro-transitions; higher settles
 /// faster.
@@ -42,8 +42,8 @@ fn lerp(from: f32, to: f32, t: f32) -> f32 {
 pub(crate) enum AnimOutput {
     /// Uniform scale from `.0` to `.1`.
     Scale(f32, f32),
-    /// X-translation in px from `.0` to `.1`.
-    TranslateX(f32, f32),
+    /// X-translation between two same-unit [`Val`]s (px, em, …).
+    TranslateX(Val, Val),
     /// Rotation in radians from `.0` to `.1`.
     Rotation(f32, f32),
 }
@@ -52,7 +52,11 @@ impl AnimOutput {
     fn apply(self, pos: f32, transform: &mut UiTransform) {
         match self {
             AnimOutput::Scale(from, to) => transform.scale = Vec2::splat(lerp(from, to, pos)),
-            AnimOutput::TranslateX(from, to) => transform.translation.x = px(lerp(from, to, pos)),
+            AnimOutput::TranslateX(from, to) => {
+                transform.translation.x = from
+                    .try_interpolate_stable(&to, pos)
+                    .expect("TranslateX endpoints must share a unit");
+            }
             AnimOutput::Rotation(from, to) => {
                 transform.rotation = Rot2::radians(lerp(from, to, pos))
             }
@@ -92,8 +96,9 @@ impl AnimState {
         Self::new(AnimOutput::Scale(from, to))
     }
 
-    /// Ease [`UiTransform`] x-translation in px between `from` (at rest) and `to`.
-    pub(crate) fn translate_x(from: f32, to: f32) -> Self {
+    /// Ease [`UiTransform`] x-translation between `from` (at rest) and `to`;
+    /// the endpoints must share a unit.
+    pub(crate) fn translate_x(from: Val, to: Val) -> Self {
         Self::new(AnimOutput::TranslateX(from, to))
     }
 

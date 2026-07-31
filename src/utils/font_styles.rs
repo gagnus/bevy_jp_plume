@@ -6,15 +6,16 @@ use bevy::ecs::{
     component::Component,
     entity::Entity,
     hierarchy::ChildOf,
-    query::Has,
+    query::{Changed, Has},
     reflect::ReflectComponent,
     system::{Commands, Query, Res},
     template::FromTemplate,
     world::Ref,
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::{FontFeatures, FontSize, FontSource, TextColor, TextFont};
+use bevy::text::{EditableText, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont};
 use bevy::ui::widget::Text;
+use bevy::ui::{ComputedUiRenderTargetInfo, EmSize};
 
 use crate::constants::{fonts, size};
 use crate::theme::ThemedText;
@@ -44,19 +45,58 @@ pub struct InheritableFont {
     pub font_features: Option<FontFeatures>,
 }
 
+// Bevy resolves `Val::Em` against a node's own `TextFont`, else its `EmSize`,
+// else the `RemSize` resource — it does not propagate `EmSize`. This mirrors
+// the inherited font onto every chain node so em-authored chrome scales with
+// its context; `RemSize` is set to the standard size at plugin init, so nodes
+// the mirror hasn't reached yet resolve at 1.0 scale rather than wrong.
+pub(crate) fn mirror_em_size(
+    changed: Query<
+        (
+            Entity,
+            &Inherited<TextFont>,
+            Option<&ComputedUiRenderTargetInfo>,
+            Option<&EmSize>,
+        ),
+        Changed<Inherited<TextFont>>,
+    >,
+    rem_size: Res<RemSize>,
+    mut commands: Commands,
+) {
+    for (entity, inherited, target, existing) in &changed {
+        let logical_size = target.map(ComputedUiRenderTargetInfo::logical_size);
+        let em = EmSize::from_font_size(
+            inherited.0.font_size,
+            logical_size.unwrap_or_default(),
+            *rem_size,
+        );
+        if existing != Some(&em) {
+            commands.entity(entity).insert(em);
+        }
+    }
+}
+
 // Resolves each `InheritableFont` into a `Propagate<TextFont>` source: `None`
 // fields fill from the parent's `Inherited<TextFont>`, or the standard font at
 // a root. Partial holders re-resolve on parent changes, settling one override
 // level per frame. A holder that is itself `Text` gets the plain `TextFont`
 // too — `PropagateOver` blocks the output write, but a text leaf styles itself.
 pub(crate) fn resolve_inheritable_font(
-    holders: Query<(Entity, Ref<InheritableFont>, Option<&ChildOf>, Has<Text>)>,
+    holders: Query<(
+        Entity,
+        Ref<InheritableFont>,
+        Option<&ChildOf>,
+        (Has<Text>, Has<EditableText>),
+    )>,
     inherited: Query<Ref<Inherited<TextFont>>>,
     existing: Query<&Propagate<TextFont>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    for (entity, inheritable, child_of, is_text) in &holders {
+    for (entity, inheritable, child_of, (has_text, has_editable)) in &holders {
+        // An `EditableText` field is a text leaf too — its required
+        // `PropagateOver` otherwise leaves it on the default `TextFont`.
+        let is_text = has_text || has_editable;
         let parent_inherited = child_of.and_then(|c| inherited.get(c.parent()).ok());
         let partial = inheritable.font.is_none()
             || inheritable.font_size.is_none()

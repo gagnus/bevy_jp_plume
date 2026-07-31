@@ -43,8 +43,10 @@ fn color_picker_ui(mut root: PlumeRoot, mut state: ResMut<ColorPickerState>) {
         });
         ui.horizontal(|ui| {
             ui.flex_spacer();
-            ui.caption("Swatch");
+            /*ui.caption("Swatch");
             ui.color_edit(&mut color);
+            */
+            ui.caption(&format!("{color:?}")).width(px(600));
             ui.flex_spacer();
         });
         ui.flex_spacer();

@@ -2,7 +2,7 @@
 //! that only exists while open.
 use accesskit::Role;
 use bevy::a11y::AccessibilityNode;
-use bevy::app::{Plugin, PostUpdate, PreUpdate, Update};
+use bevy::app::{Inherited, Plugin, PostUpdate, PreUpdate, Update};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::{
     change_detection::DetectChanges,
@@ -783,7 +783,7 @@ fn sync_select_width(
 // Size the button (and pin the caption) to the widest option from the measured
 // ghost rows, so picking never resizes the control; the ghosts then despawn.
 fn measure_select_width(
-    q_measures: Query<(Entity, &ChildOf), With<SelectMeasure>>,
+    q_measures: Query<(Entity, &ChildOf, Option<&Inherited<TextFont>>), With<SelectMeasure>>,
     q_children: Query<&Children>,
     q_labels: Query<(&Text, Option<&TextFont>), Without<SelectOptionCheck>>,
     q_button: Query<(), With<PlumeSelectButton>>,
@@ -804,7 +804,12 @@ fn measure_select_width(
             .map(|computed| computed.size().x * computed.inverse_scale_factor())
             .unwrap_or(0.0)
     };
-    'measures: for (measure_ent, child_of) in q_measures.iter() {
+    'measures: for (measure_ent, child_of, inherited) in q_measures.iter() {
+        // The effective font at this select; the overlay is a relay, so it
+        // arrives with normal propagation.
+        let Some(effective) = inherited else {
+            continue;
+        };
         let rows = q_children.get(measure_ent).ok();
         let (mut widest_row, mut widest_label) = (0.0f32, 0.0f32);
         for row in rows.iter().flat_map(|rows| rows.iter()) {
@@ -825,7 +830,7 @@ fn measure_select_width(
             }
             // Unmeasured until the row font has propagated (a default-font width
             // would bake in the wrong size) and the glyphs have a real layout.
-            if text_font.is_none_or(|font| font.font_size != size::MEDIUM_FONT) {
+            if text_font.is_none_or(|font| font.font_size != effective.0.font_size) {
                 continue 'measures;
             }
             let label_width = width_of(label_ent);

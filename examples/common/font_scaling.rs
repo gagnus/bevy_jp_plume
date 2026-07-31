@@ -12,6 +12,7 @@ pub struct FontScalingDemo {
     enabled: bool,
     flavour: Flavour,
     volume: f32,
+    name: String,
 }
 
 impl Default for FontScalingDemo {
@@ -20,6 +21,7 @@ impl Default for FontScalingDemo {
             enabled: true,
             flavour: Flavour::default(),
             volume: 0.5,
+            name: "".into(),
         }
     }
 }
@@ -56,17 +58,18 @@ fn font_scaling_dialog(
     let mut s = demo.clone();
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
-        .width(px(560))
+        .width(px(640))
         .at(px(640), px(60))
         .icon(font_awesome::solid::TEXT_HEIGHT)
         .show(|ui| {
             ui.horizontal(|ui| {
                 // Shared backing fields: flipping a control moves its twin.
-                ui.vertical(|ui| demo_column(ui, &mut s, "Standard 14 px"))
-                    .grow();
-                ui.vertical(|ui| demo_column(ui, &mut s, "Scaled 21 px"))
+                ui.vertical(|ui| demo_column(ui, &mut s, "11 px"))
                     .grow()
-                    .font_size(FontSize::Px(21.0));
+                    .font_size(FontSize::Px(11.0));
+                ui.vertical(|ui| demo_column(ui, &mut s, "18 px"))
+                    .grow()
+                    .font_size(FontSize::Px(18.0));
             })
             .align_items(AlignItems::Start);
 
@@ -94,18 +97,23 @@ fn demo_column(ui: &mut Ui, s: &mut FontScalingDemo, heading: &str) {
         ui.icon(font_awesome::solid::FONT);
     });
     ui.section("Section", |ui| {
-        ui.checkbox(&mut s.enabled, "Enabled");
         ui.select(&mut s.flavour, |select| {
             select.option(Flavour::Vanilla, "Vanilla");
             select.option(Flavour::Chocolate, "Chocolate");
             select.option(Flavour::Strawberry, "Strawberry");
         });
         ui.slider(&mut s.volume, 0.0..=1.0);
-        ui.number(&mut s.volume).precision(2).suffix("vol");
+        ui.number(&mut s.volume).precision(2).suffix("%");
+        ui.text_edit(&mut s.name).placeholder("Name");
     });
     ui.horizontal(|ui| {
         ui.button("Button");
         ui.button("Primary").primary();
+    });
+    ui.horizontal(|ui| {
+        ui.checkbox(&mut s.enabled, "A");
+        ui.toggle(&mut s.enabled);
+        ui.radio(&mut s.enabled, true, "B");
     });
     // Per-widget override on a bare caption — a text leaf styling itself.
     ui.caption("28 px caption").font_size(FontSize::Px(28.0));
@@ -135,6 +143,4 @@ fn color_column(ui: &mut Ui, heading: &str) {
     })
     .text_color(Color::srgb(0.9, 0.3, 0.3));
     ui.caption("back to inherited");
-    ui.caption("CAPITAL");
-    ui.caption("Capital").small_caps();
 }

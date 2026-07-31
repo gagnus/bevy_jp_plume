@@ -20,12 +20,13 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
+    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout, TextReadWriteMode,
 };
 use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
     widget::Text,
 };
+use bevy::ui_widgets::TextInput;
 
 use crate::{
     constants::size,
@@ -127,10 +128,11 @@ pub(crate) fn text_input_frame() -> impl Scene {
             padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, Val::Px(1.0), Val::ZERO),
             border: size::CONTAINER_BORDER,
             border_radius: size::CORNER_RADIUS,
-            min_width: {(size::TEXT_HEIGHT * 2.0).try_add(size::PAD * 2.0).expect("Add Val")},
+            // Two glyphs' worth plus padding, in em — the ballpark, not layout math.
+            min_width: {size::em_from_px(40.0)},
         }
         // An empty field measures nothing, so `width: auto` would collapse it.
-        DefaultWidth({(size::TEXT_HEIGHT * 8.0).try_add(size::PAD * 2.0).expect("Add Val")})
+        DefaultWidth({size::em_from_px(124.0)})
         PlumeTextInput
         TextStyleRelay
         // Ring around the frame while the inner field holds focus.
@@ -159,6 +161,8 @@ pub(crate) fn text_input_field(
         // descendants) would never reach it; set it directly.
         ThemeTextToken(tokens::TEXT_INPUT_TEXT)
         TabIndex(0)
+        TextInput
+        template_value(TextReadWriteMode::Editable)
         EditableText {
             cursor_width: 0.3,
             visible_width: {visible_width},
@@ -168,9 +172,7 @@ pub(crate) fn text_input_field(
         TextLayout {
             linebreak: LineBreak::NoWrap,
         }
-        // Line height fills the content box exactly: a taller line overflows and makes the edit
-        // viewport re-clamp (1px jitter) while typing.
-        template_value(LineHeight::Px(20.0))
+        template_value(LineHeight::RelativeToFont(20.0 / size::MEDIUM_FONT_PX))
         TextCursorStyle::default()
     }
 }

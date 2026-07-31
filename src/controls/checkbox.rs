@@ -19,7 +19,7 @@ use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled, JustifyContent,
-    Node, PositionType, UiRect, UiTransform, px,
+    Node, PositionType, UiRect, UiTransform,
 };
 use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
@@ -88,6 +88,8 @@ impl PlumeCheckbox {
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     CheckboxBg
+                    // Em-sized chrome needs the chain's `EmSize`.
+                    TextStyleRelay
                     // Ring hugs the box, not the label row.
                     FocusIndicator
                     ThemeBackgroundGradient(tokens::CHECKBOX_BG, 0.0)
@@ -100,23 +102,27 @@ impl PlumeCheckbox {
                                 border_radius: size::CORNER_RADIUS_SMALL,
                             }
                             CheckboxOutline
+                            TextStyleRelay
                             ThemeBorderToken(tokens::CHECKBOX_BORDER)
                         ),
                         (
-                            // Cheesy checkmark: rotated node with L-shaped border.
+                            // Cheesy checkmark: rotated node with L-shaped border,
+                            // proportioned to the box so it scales with it.
                             Node {
                                 position_type: PositionType::Absolute,
-                                left: px(6),
-                                top: px(2),
-                                width: px(6),
-                                height: px(11),
-                                border: UiRect {
-                                    bottom: px(2),
-                                    right: px(2),
-                                },
+                                left: {size::em_from_px(6.0)},
+                                top: {size::em_from_px(2.0)},
+                                width: {size::em_from_px(6.0)},
+                                height: {size::em_from_px(11.0)},
+                                border: {UiRect {
+                                    bottom: size::em_from_px(2.0),
+                                    right: size::em_from_px(2.0),
+                                    ..UiRect::ZERO
+                                }},
                             }
                             UiTransform::from_rotation(Rot2::FRAC_PI_4)
                             CheckboxMark
+                            TextStyleRelay
                             template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             Visibility::Hidden
                             ThemeBorderToken(tokens::CHECKBOX_MARK)

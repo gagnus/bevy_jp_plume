@@ -16,7 +16,7 @@ use bevy::ecs::{
 use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
-use bevy::text::{TextColor, TextFont};
+use bevy::text::{EditableText, TextColor, TextFont};
 use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
@@ -111,7 +111,7 @@ fn update_theme(
             Entity,
             Option<&InheritableThemeTextToken>,
             Option<&InheritableThemeTextSlot>,
-            Has<Text>,
+            (Has<Text>, Has<EditableText>),
             Has<ThemeTextSlot>,
             Has<ThemeTextToken>,
         ),
@@ -152,8 +152,14 @@ fn update_theme(
             }
         }
 
-        for (entity, inherit_token, inherit_slot, is_text, has_direct_slot, has_direct_token) in
-            &q_inherit
+        for (
+            entity,
+            inherit_token,
+            inherit_slot,
+            (has_text, has_editable),
+            has_direct_slot,
+            has_direct_token,
+        ) in &q_inherit
         {
             let color = if let Some(inherit_slot) = inherit_slot {
                 theme.palette(inherit_slot.0)
@@ -168,7 +174,7 @@ fn update_theme(
                 &mut commands,
                 entity,
                 color,
-                is_text && !has_direct_slot && !has_direct_token,
+                (has_text || has_editable) && !has_direct_slot && !has_direct_token,
             );
         }
     }

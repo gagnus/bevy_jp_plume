@@ -8,7 +8,7 @@ use bevy_jp_plume::retained::{
     PlumeDisclosure, PlumeNumberInput, PlumeRadio, PlumeRadioGroup, PlumeSelect, PlumeSlider,
     PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, Selected, SliderValue,
     ThemeBackgroundSlot, caption, column, fa_icon, flex_spacer, row, screen, select_options,
-    separator, space, tab_body,
+    separator, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -31,7 +31,6 @@ fn root() -> impl Scene {
         // The screen surface establishes the standard font and text color, so the
         // bare caption below renders themed rather than in the engine default font.
         screen()
-        Node { align_items: AlignItems::Start }
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         // Tabs are tabbable, so they need a traversal scope; a dialog would bring
         // its own, but this screen-level container has to declare one.
@@ -221,7 +220,6 @@ fn footer() -> impl Scene {
             separator(),
             flex_spacer(),
             (@PlumeButton { @caption: bsn! { caption("Cancel") } }),
-            space(px(12)),
             (
                 @PlumeButton {
                     @caption: bsn! { caption("Apply") },
