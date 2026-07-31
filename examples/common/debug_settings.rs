@@ -107,9 +107,10 @@ fn debug_settings_dialog(
     // registers as changed when a control actually changed it.
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
+
     // Fixed width so the equal-.grow() columns have something to resolve against.
     root.dialog(TITLE, &mut open)
-        .width(px(600))
+        .width(em(600.0 / 14.0))
         .at(px(20), px(320))
         .icon(font_awesome::solid::BUG)
         .show(|ui| {
@@ -166,7 +167,9 @@ fn debug_settings_dialog(
                     .primary()
                     .tooltip("Apply changes and close");
             });
-        });
+        }).map(|r| r.font_size(FontSize::Px(14.0 * s.time_scale)));
+
+
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
     }
@@ -200,7 +203,7 @@ fn physics_pane(ui: &mut Ui, s: &mut DebugSettings) {
             ui,
             "Time scale",
             &mut s.time_scale,
-            0.0..=2.0,
+            0.5..=2.0,
             0.05,
             2,
             None,
@@ -221,7 +224,7 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
         // Inline (not select_row) to chain .max_visible(): the popup caps at
         // three rows and scrolls the remaining two.
         ui.horizontal(|ui| {
-            ui.caption("Log level").width(px(84));
+            ui.caption("Log level").width(em(84.0 / 14.0));
             ui.select(&mut s.log_level, |select| {
                 select.option(LogLevel::Error, "Error");
                 select.option(LogLevel::Warn, "Warn");
@@ -263,7 +266,7 @@ fn slider_row<'r, 'w, 's>(
     suffix: Option<&str>,
 ) -> ImmResponse<'r, 'w, 's, kind::Row> {
     ui.horizontal(|ui| {
-        ui.caption(label).width(px(84));
+        ui.caption(label).width(em(84.0 / 14.0));
         ui.slider(value, range.clone())
             .grow()
             .step(step)
@@ -286,7 +289,7 @@ fn select_row<'r, 'w, 's, T: PartialEq>(
     options: impl FnOnce(&mut ImmSelect<T>),
 ) -> ImmResponse<'r, 'w, 's, kind::Row> {
     ui.horizontal(|ui| {
-        ui.caption(label).width(px(84));
+        ui.caption(label).width(em(84.0 / 14.0));
         ui.select(selected, options).grow();
     })
 }
