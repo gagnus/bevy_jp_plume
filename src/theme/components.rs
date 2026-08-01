@@ -1,5 +1,5 @@
 //! Theme-driven styling components: the markers a retained scene puts on an
-//! entity to have `ThemePlugin` colour it.
+//! entity to have `ThemePlugin` color it.
 use bevy::app::{Inherited, Propagate, PropagateOver, PropagateStop};
 use bevy::color::{Alpha, Color, Luminance, Srgba};
 use bevy::ecs::{

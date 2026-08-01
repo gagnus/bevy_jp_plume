@@ -425,7 +425,7 @@ fn material_tab(m: Material) -> impl Scene {
                 ),
                 (
                     @PlumeSection {
-                        @header: bsn! { caption_small_caps("Colour picker") },
+                        @header: bsn! { caption_small_caps("Color picker") },
                         @contents: bsn_list! {
                             (
                                 @PlumeColorPicker { @initial_color: {base} }

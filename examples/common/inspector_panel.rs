@@ -288,7 +288,7 @@ fn material_fields(ui: &mut Ui, s: &mut Material) {
         });
     });
 
-    ui.section("Colour picker", |ui| {
+    ui.section("Color picker", |ui| {
         ui.color_picker(&mut s.base_color);
     })
     .start_collapsed();

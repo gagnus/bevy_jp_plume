@@ -22,7 +22,7 @@ use crate::controls::ColorPickerValue;
 /// One event per value kind: `bool` checks a checkbox, toggle, disclosure or radio;
 /// `f32` moves a slider or number input; `usize` picks a select option, a tab, or a
 /// radio within its group; `String` replaces a text input's buffer; [`Color`]
-/// retargets a colour edit or picker.
+/// retargets a color edit or picker.
 #[derive(EntityEvent)]
 pub struct SetValue<T> {
     /// The control root.
@@ -89,7 +89,7 @@ fn on_set_f32(
     commands.entity(ev.entity).insert(SliderValue(value));
 }
 
-// Colour edit and colour picker both report through `ColorPickerValue`.
+// Color edit and color picker both report through `ColorPickerValue`.
 fn on_set_color(
     ev: On<SetValue<Color>>,
     q_values: Query<(), With<ColorPickerValue>>,
