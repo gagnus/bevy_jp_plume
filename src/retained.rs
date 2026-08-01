@@ -18,8 +18,7 @@ pub use crate::controls::{
     PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup,
     PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps,
     PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch,
-    PlumeToolButton, PlumeXyPad, PlumeXyPadProps, ScrollbarGutter, SelectedIndex, SetValue,
-    TextInputValue, XyPadDragging, XyPadLock, XyPadValue, select_options,
+    PlumeToolButton, ScrollbarGutter, SelectedIndex, SetValue, TextInputValue, select_options,
 };
 pub use crate::display::{
     Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_slot,

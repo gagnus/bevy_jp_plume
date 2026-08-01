@@ -33,7 +33,7 @@ pub(crate) use set_value::SetValuePlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
 pub use text_input::{NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue};
 pub use toggle_switch::PlumeToggleSwitch;
-pub use xy_pad::{PlumeXyPad, PlumeXyPadProps, XyPadDragging, XyPadLock, XyPadValue};
+pub(crate) use xy_pad::{PlumeXyPad, XyPadLock, XyPadValue};
 
 pub(crate) use button::ButtonOutline;
 pub(crate) use select::set_select_max_visible;
