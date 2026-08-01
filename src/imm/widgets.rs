@@ -816,7 +816,7 @@ pub struct ImmSelectOption<'a, T> {
 }
 
 impl<T> ImmSelectOption<'_, T> {
-    /// Default is `true`. If `false` then grey the option out and refuse picks on it.
+    /// Default is `true`. If `false` then gray the option out and refuse picks on it.
     pub fn enabled(self, enabled: bool) -> Self {
         self.option.enabled = enabled;
         self
@@ -877,7 +877,7 @@ impl<T> ImmTab<'_, '_, '_, '_, T> {
         self
     }
 
-    /// Grey the tab out and ignore clicks on it. A disabled tab that is
+    /// Gray the tab out and ignore clicks on it. A disabled tab that is
     /// nonetheless selected still shows its body.
     pub fn enabled(self, enabled: bool) -> Self {
         self.entry.enabled = enabled;

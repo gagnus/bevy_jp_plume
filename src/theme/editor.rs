@@ -64,7 +64,7 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
 }
 
 // Hue, chroma, then one lightness row per stop. `chroma_max` keeps neutral/text
-// ramps near-grey while the accent ramp reaches full saturation. Each lightness row
+// ramps near-gray while the accent ramp reaches full saturation. Each lightness row
 // previews its stop color; hue/chroma rows reserve the same slot so sliders line up.
 fn ramp_rows<const N: usize>(ui: &mut Ui, ramp: &mut OklchaArray<N>, chroma_max: f32) {
     param_row(

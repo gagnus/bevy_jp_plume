@@ -87,7 +87,7 @@ struct SelectMaxVisible(usize);
 /// Props for the control
 pub struct PlumeSelectProps {
     /// Option labels in popup order, each with whether it can be picked. A
-    /// disabled option still shows, greyed and inert.
+    /// disabled option still shows, grayed and inert.
     pub options: Vec<(String, bool)>,
     /// Index of the initially selected option.
     pub selected: usize,
@@ -203,7 +203,7 @@ impl PlumeSelect {
 }
 
 // A single option row: check-tick gutter plus the label. `InteractionDisabled`
-// is what `set_option_styles` greys and what makes the row refuse picks.
+// is what `set_option_styles` grays and what makes the row refuse picks.
 fn option_row(label: String) -> impl Scene {
     bsn! {
         @PlumeSelectOption

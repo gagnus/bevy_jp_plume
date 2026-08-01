@@ -47,7 +47,7 @@ pub enum ButtonVariant {
     /// Don't display the button background unless hovering or pressed.
     Plain,
     /// A bordered button with no fill at rest: a secondary action that stays legible on any
-    /// surface, where [`Normal`](Self::Normal) would read as grey-on-grey.
+    /// surface, where [`Normal`](Self::Normal) would read as gray-on-gray.
     Outline,
 }
 
