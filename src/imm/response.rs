@@ -491,7 +491,7 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         });
     }
 
-    /// Set checked on a button also marked as checkable
+    /// Set checked state for a button marked as checkable.
     pub fn checked(mut self, checked: bool) -> Self {
         struct CheckedKey;
         if self.key_changed::<CheckedKey>(format!("{checked:?}")) {
@@ -611,7 +611,7 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Whether taking focus selects the whole value.
+    /// Whether taking focus selects the whole value. Default is `true`
     pub fn select_on_focus(mut self, select_on_focus: bool) -> Self {
         struct SelectOnFocusKey;
         if self.key_changed::<SelectOnFocusKey>(select_on_focus) {
@@ -712,7 +712,9 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         self.set_node::<ClipKey, _>((), |node, ()| node.overflow = Overflow::clip())
     }
 
-    /// Let pointer events fall through to whatever is behind.
+    /// Is this container pickable (`true`) or does it let pointer events fall 
+    /// through to whatever is behind (`false`). Default `true` for all containers
+    /// except `screen`. 
     pub fn pickable(mut self, pickable: bool) -> Self {
         struct PickableKey;
         if self.key_changed::<PickableKey>(pickable) {

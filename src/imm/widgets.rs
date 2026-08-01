@@ -816,7 +816,7 @@ pub struct ImmSelectOption<'a, T> {
 }
 
 impl<T> ImmSelectOption<'_, T> {
-    /// Grey the option out and refuse picks on it.
+    /// Default is `true`. If `false` then grey the option out and refuse picks on it.
     pub fn enabled(self, enabled: bool) -> Self {
         self.option.enabled = enabled;
         self
@@ -1131,7 +1131,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
         self
     }
 
-    /// Let background drags move the popup; a reopen re-anchors it.
+    /// If `true` then let background drags move the popup; a reopen re-anchors it.
     pub fn movable(mut self, movable: bool) -> Self {
         self.movable = movable;
         self
