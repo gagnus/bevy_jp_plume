@@ -2,15 +2,13 @@
 use bevy::app::{Inherited, Propagate, PropagateOver};
 use bevy::asset::AssetServer;
 use bevy::ecs::{
-    change_detection::DetectChanges,
     component::Component,
-    entity::Entity,
+    entity::{Entity, EntityHashMap},
     hierarchy::ChildOf,
     query::{Changed, Has},
     reflect::ReflectComponent,
-    system::{Commands, Query, Res},
+    system::{Commands, Local, Query, Res},
     template::FromTemplate,
-    world::Ref,
 };
 use bevy::reflect::{Reflect, prelude::ReflectDefault};
 use bevy::text::{
@@ -20,12 +18,7 @@ use bevy::ui::ComputedUiRenderTargetInfo;
 use bevy::ui::widget::Text;
 #[cfg(debug_assertions)]
 use {
-    bevy::ecs::{
-        entity::{EntityHashMap, EntityHashSet},
-        name::Name,
-        query::Without,
-        system::Local,
-    },
+    bevy::ecs::{entity::EntityHashSet, name::Name, query::Without},
     bevy::log::warn,
     bevy::ui::{BoxShadow, Node, Outline, UiRect, UiTransform, Val, Val2},
 };
@@ -221,51 +214,69 @@ fn em_fields(
 }
 
 // Resolves each `InheritableFont` into a `Propagate<TextFont>` source: `None`
-// fields fill from the parent's `Inherited<TextFont>`, or the standard font at
-// a root. Partial holders re-resolve on parent changes, settling one override
-// level per frame. A holder that is itself `Text` gets the plain `TextFont`
-// too — `PropagateOver` blocks the output write, but a text leaf styles itself.
+// fields fill from the nearest ancestor source, or the standard font at a root.
+// A holder that is itself `Text` gets the plain `TextFont` too — `PropagateOver`
+// blocks the output write, but a text leaf styles itself.
+//
+// A holder resolves from the ancestor chain rather than from its parent's
+// `Inherited<TextFont>` alone, because propagation runs after this system: on the
+// frame a subtree spawns, nothing in it has an inherited value yet. Reading the
+// chain (and resolving the holders on it, outermost first) settles a whole nest
+// in one frame, so a newly spawned caption never renders a frame at the standard
+// size — a jump the layout above it would inherit as a height pop.
 pub(crate) fn resolve_inheritable_font(
-    holders: Query<(
-        Entity,
-        Ref<InheritableFont>,
-        Option<&ChildOf>,
-        (Has<Text>, Has<EditableText>),
-    )>,
-    inherited: Query<Ref<Inherited<TextFont>>>,
+    holders: Query<(Entity, &InheritableFont, (Has<Text>, Has<EditableText>))>,
+    parents: Query<&ChildOf>,
     existing: Query<&Propagate<TextFont>>,
     asset_server: Res<AssetServer>,
+    mut resolved: Local<EntityHashMap<TextFont>>,
+    mut chain: Local<Vec<Entity>>,
     mut commands: Commands,
 ) {
-    for (entity, inheritable, child_of, (has_text, has_editable)) in &holders {
-        // An `EditableText` field is a text leaf too — its required
-        // `PropagateOver` otherwise leaves it on the default `TextFont`.
-        let is_text = has_text || has_editable;
-        let parent_inherited = child_of.and_then(|c| inherited.get(c.parent()).ok());
-        let partial = inheritable.font.is_none()
-            || inheritable.font_size.is_none()
-            || inheritable.font_features.is_none();
-        let needs_resolve = inheritable.is_changed()
-            || (partial && parent_inherited.as_ref().is_some_and(|i| i.is_changed()));
-        if !needs_resolve {
-            continue;
+    // Holders resolved this run, keyed by entity: an outer holder is the base for
+    // every holder under it, and one ancestor walk can settle several at once.
+    resolved.clear();
+
+    for (entity, _, (has_text, has_editable)) in &holders {
+        // Walk up collecting the holders above this one, stopping at the first
+        // already resolved this run. Only holders are consulted: `Inherited` is a
+        // copy of some ancestor holder's font, and a fresh node's copy is seeded
+        // from its parent at spawn (by the propagation plugin's `ChildOf`
+        // observer), so on a spawn frame it still holds the pre-scaling font.
+        chain.clear();
+        let mut base = None;
+        let mut cursor = Some(entity);
+        while let Some(current) = cursor {
+            if let Some(done) = resolved.get(&current) {
+                base = Some(done.clone());
+                break;
+            }
+            if holders.contains(current) {
+                chain.push(current);
+            }
+            cursor = parents.get(current).ok().map(ChildOf::parent);
         }
 
-        let mut font = parent_inherited
-            .map(|i| i.0.clone())
-            .unwrap_or_else(|| TextFont {
-                font: asset_server.load(fonts::REGULAR).into(),
-                font_size: size::MEDIUM_FONT,
-                ..Default::default()
-            });
-        if let Some(face) = &inheritable.font {
-            font.font = face.clone();
-        }
-        if let Some(font_size) = inheritable.font_size {
-            font.font_size = font_size;
-        }
-        if let Some(features) = &inheritable.font_features {
-            font.font_features = features.clone();
+        // Outermost first, each holder overriding the fields it declares.
+        let mut font = base.unwrap_or_else(|| TextFont {
+            font: asset_server.load(fonts::REGULAR).into(),
+            font_size: size::MEDIUM_FONT,
+            ..Default::default()
+        });
+        for holder in chain.iter().rev() {
+            let Ok((_, inheritable, _)) = holders.get(*holder) else {
+                continue;
+            };
+            if let Some(face) = &inheritable.font {
+                font.font = face.clone();
+            }
+            if let Some(font_size) = inheritable.font_size {
+                font.font_size = font_size;
+            }
+            if let Some(features) = &inheritable.font_features {
+                font.font_features = features.clone();
+            }
+            resolved.insert(*holder, font.clone());
         }
 
         // A same-value re-insert would still ripple a re-resolve wave through
@@ -273,12 +284,96 @@ pub(crate) fn resolve_inheritable_font(
         if existing.get(entity).is_ok_and(|p| p.0 == font) {
             continue;
         }
-        if is_text {
+        // An `EditableText` field is a text leaf too — its required
+        // `PropagateOver` otherwise leaves it on the default `TextFont`.
+        if has_text || has_editable {
             commands
                 .entity(entity)
                 .insert((Propagate(font.clone()), font));
         } else {
             commands.entity(entity).insert(Propagate(font));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bevy::MinimalPlugins;
+    use bevy::app::{App, HierarchyPropagatePlugin, PostUpdate};
+    use bevy::asset::{AssetApp, AssetPlugin};
+    use bevy::ecs::hierarchy::Children;
+    use bevy::ecs::schedule::IntoScheduleConfigs;
+    use bevy::ecs::spawn::SpawnRelated;
+    use bevy::text::FontSize;
+    use bevy::ui::widget::Text;
+
+    // The font pipeline as `PlumeCorePlugin` wires it, minus everything that
+    // needs a window: resolve, then propagate.
+    fn font_app() -> App {
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            AssetPlugin::default(),
+            HierarchyPropagatePlugin::<TextFont, bevy::ecs::query::With<ThemedText>>::new(
+                PostUpdate,
+            ),
+        ));
+        app.init_asset::<bevy::text::Font>();
+        app.insert_resource(RemSize(size::MEDIUM_FONT_PX));
+        app.add_systems(
+            PostUpdate,
+            resolve_inheritable_font.before(bevy::app::PropagateSet::<TextFont>::default()),
+        );
+        app
+    }
+
+    // A scaled container, a plain wrapper, and a caption that only pins a face:
+    // the caption's size has to come from the container, in the frame they spawn.
+    // The wrapper is what makes this bite — the propagation plugin's `ChildOf`
+    // observer seeds its `Inherited<TextFont>` from the unscaled font the
+    // container had before this run, so anything trusting that copy resolves the
+    // caption a frame behind.
+    #[test]
+    fn nested_holder_scales_in_its_first_frame() {
+        let mut app = font_app();
+        // An established tree at the standard font, as a dialog is by the time a
+        // widget appears in it: its settled value is what the observer hands down.
+        let root = app.world_mut().spawn(InheritableFont::default()).id();
+        app.update();
+        app.update();
+
+        let container = app
+            .world_mut()
+            .spawn((
+                ChildOf(root),
+                InheritableFont {
+                    font_size: Some(FontSize::Px(12.0)),
+                    ..Default::default()
+                },
+                Children::spawn_one((
+                    ThemedText,
+                    Children::spawn_one((
+                        Text::new("0.00/1.00s"),
+                        ThemedText,
+                        InheritableFont {
+                            font: Some(FontSource::Handle(Default::default())),
+                            ..Default::default()
+                        },
+                    )),
+                )),
+            ))
+            .id();
+
+        app.update();
+
+        let wrapper = app.world().get::<Children>(container).unwrap()[0];
+        let caption = app.world().get::<Children>(wrapper).unwrap()[0];
+
+        assert_eq!(
+            app.world().get::<TextFont>(caption).map(|f| f.font_size),
+            Some(FontSize::Px(12.0)),
+            "caption fell back to the standard font for a frame",
+        );
     }
 }

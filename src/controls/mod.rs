@@ -31,7 +31,7 @@ pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, select_options};
 pub use set_value::SetValue;
 pub(crate) use set_value::SetValuePlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
-pub use text_input::{PlumeTextInput, PlumeTextInputProps, TextInputValue};
+pub use text_input::{NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue};
 pub use toggle_switch::PlumeToggleSwitch;
 pub use xy_pad::{PlumeXyPad, PlumeXyPadProps, XyPadDragging, XyPadLock, XyPadValue};
 

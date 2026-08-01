@@ -26,7 +26,7 @@ use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
     widget::Text,
 };
-use bevy::ui_widgets::{TextInput, ValueChange};
+use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
 use crate::controls::SetValue;
 
@@ -34,7 +34,6 @@ use crate::{
     constants::size,
     controls::DefaultWidth,
     cursor::EntityCursor,
-    focus::FocusWithinIndicator,
     font_styles::TextStyleRelay,
     theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme},
     tokens,
@@ -42,14 +41,11 @@ use crate::{
 
 /// Horizontal inset of the field content (border + padding = GAP, aligning the text
 /// with button captions); the placeholder overlay must match it.
-// The border is a px hairline and the padding is em, so the subtraction happens
-// in px at the standard font; scaled, the pair drifts by well under a pixel.
 const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX);
 
-/// A single-line text input: a themed frame (background, border, focus ring, sizing) wrapping an
+/// A single-line text input: a themed frame (background, border, sizing) wrapping an
 /// inner editable field and an optional suffix label.
 ///
-/// This is spawnable by inheriting it as a "scene component" with optional [`PlumeTextInputProps`].
 /// # Emitted events
 /// * [`ValueChange<String>`](bevy::ui_widgets::ValueChange) on each keystroke while focused.
 #[derive(SceneComponent, Default, Clone)]
@@ -58,16 +54,12 @@ const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX)
 #[reflect(Component, Default, Clone)]
 pub struct PlumeTextInput;
 
-/// Marker for the editable text entity nested inside a [`PlumeTextInput`] frame. This is the
-/// entity that actually holds focus and the [`EditableText`] buffer; the frame styling systems
-/// find it via the frame's children.
+/// Marker for the editable text entity nested inside a [`PlumeTextInput`] frame.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct TextInputField;
 
-/// The field's text, mirrored onto the [`PlumeTextInput`] frame root: the scene
-/// seeds it as the initial value, and every buffer edit is reflected back into it
-/// (the imm layer reads widget state from roots only). Write through
+/// The field's text, mirrored onto the [`PlumeTextInput`] frame root. Write through
 /// [`SetValue<String>`](crate::retained::SetValue), not by re-inserting this.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq, Reflect)]
 #[reflect(Component, Default)]
@@ -107,9 +99,7 @@ impl PlumeTextInput {
     }
 }
 
-/// The themed frame shared by [`PlumeTextInput`] and the number input: background, border, focus
-/// ring, sizing, and the horizontal row that lays out the editable field beside its suffix. Carries
-/// the [`PlumeTextInput`] marker so the frame styling systems drive it. Callers append the field
+/// The themed frame shared by [`PlumeTextInput`] and the number input. Callers append the field
 /// (and optional suffix) as children.
 pub(crate) fn text_input_frame() -> impl Scene {
     bsn! {
@@ -121,24 +111,18 @@ pub(crate) fn text_input_frame() -> impl Scene {
             padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, size::em_from_px(1.5), Val::ZERO),
             border: size::CONTAINER_BORDER,
             border_radius: size::CORNER_RADIUS,
-            // Two glyphs' worth plus padding, in em — the ballpark, not layout math.
             min_width: {size::em_from_px(40.0)},
         }
-        // An empty field measures nothing, so `width: auto` would collapse it.
         DefaultWidth({size::em_from_px(124.0)})
         PlumeTextInput
         TextStyleRelay
-        // Ring around the frame while the inner field holds focus.
-        FocusWithinIndicator
         ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
         ThemeBorderToken(tokens::TEXT_INPUT_BORDER)
-        // On the frame so the whole box (padding included) shows the text cursor; the cursor
-        // resolver walks up from the hovered field to find it.
         EntityCursor::System(bevy::window::SystemCursorIcon::Text)
     }
 }
 
-/// The inner editable text entity: fills the frame, holds focus and the [`EditableText`] buffer.
+/// The inner editable text entity: fills the frame.
 pub(crate) fn text_input_field(
     visible_width: Option<f32>,
     max_characters: Option<usize>,
@@ -155,6 +139,7 @@ pub(crate) fn text_input_field(
         ThemeTextToken(tokens::TEXT_INPUT_TEXT)
         TabIndex(0)
         TextInput
+        SelectAllOnFocus
         template_value(TextReadWriteMode::Editable)
         EditableText {
             cursor_width: 0.3,
@@ -181,6 +166,39 @@ pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: S
         editable_text.queue_edit(TextEdit::SelectAll);
         editable_text.queue_edit(TextEdit::Insert(replacement.into()));
     }
+}
+
+/// Opt-out marker on a text-input frame ([`PlumeTextInput`] or
+/// [`PlumeNumberInput`](crate::controls::PlumeNumberInput)).
+///
+/// It sits on the frame rather than on the field so callers can set it without reaching into the
+/// frame's children; a system relays it to the field.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+pub struct NoSelectAllOnFocus;
+
+// Relay the frame's [`NoSelectAllOnFocus`] to its field, in both directions. Running as a system
+// (not at insertion time) means the field is always spawned by the time the marker is read.
+fn sync_select_all_on_focus(
+    q_added: Query<Entity, (With<PlumeTextInput>, Added<NoSelectAllOnFocus>)>,
+    q_frames: Query<(), With<PlumeTextInput>>,
+    q_children: Query<&Children>,
+    q_is_field: Query<(), With<TextInputField>>,
+    mut removed: RemovedComponents<NoSelectAllOnFocus>,
+    mut commands: Commands,
+) {
+    for frame_ent in q_added.iter() {
+        if let Some(field_ent) = get_field_ent(frame_ent, &q_children, &q_is_field) {
+            commands.entity(field_ent).remove::<SelectAllOnFocus>();
+        }
+    }
+    removed.read().for_each(|frame_ent| {
+        if q_frames.contains(frame_ent)
+            && let Some(field_ent) = get_field_ent(frame_ent, &q_children, &q_is_field)
+        {
+            commands.entity(field_ent).insert(SelectAllOnFocus);
+        }
+    });
 }
 
 // Marks a frame whose scene-seeded value has been pushed into its buffer.
@@ -311,17 +329,26 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
     }
 }
 
+// Theme the caret and selection of every field: on a theme change, and on each
+// field as it appears.
 fn update_text_cursor_color(
     mut q_field: Query<&mut TextCursorStyle, With<TextInputField>>,
     theme: Res<UiTheme>,
 ) {
-    if theme.is_changed() {
-        for mut cursor_style in q_field.iter_mut() {
-            cursor_style.color = theme.color(&tokens::TEXT_INPUT_CURSOR);
-            cursor_style.selection_color = theme.color(&tokens::TEXT_INPUT_SELECTION);
-            cursor_style.unfocused_selection_color =
-                theme.color(&tokens::TEXT_INPUT_SELECTION_UNFOCUSED);
+    let theme_changed = theme.is_changed();
+    for mut cursor_style in q_field.iter_mut() {
+        if !theme_changed && !cursor_style.is_added() {
+            continue;
         }
+        let themed = TextCursorStyle {
+            color: theme.color(&tokens::TEXT_INPUT_CURSOR),
+            selection_color: theme.color(&tokens::TEXT_INPUT_SELECTION),
+            unfocused_selection_color: theme.color(&tokens::TEXT_INPUT_SELECTION_UNFOCUSED),
+            ..*cursor_style
+        };
+        // A `Changed` tick here re-extracts the node for rendering, so write
+        // only a real difference.
+        cursor_style.set_if_neq(themed);
     }
 }
 
@@ -547,6 +574,7 @@ impl Plugin for TextInputPlugin {
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
                 update_text_input_placeholders,
+                sync_select_all_on_focus,
                 seed_text_input_value,
                 mirror_text_input_value,
             )

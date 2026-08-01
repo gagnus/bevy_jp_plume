@@ -5,6 +5,7 @@ use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
+use bevy::asset::AssetServer;
 use bevy::color::Color;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::{
@@ -14,7 +15,7 @@ use bevy::ecs::{
 };
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSize, LineBreak, TextLayout};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSize, FontSource, LineBreak, TextLayout};
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
     UiRect, Val,
@@ -33,11 +34,12 @@ use crate::{
     constants::size,
     containers::{PopupAnchor, SectionCollapsed, SectionCollapsible},
     controls::{
-        ButtonVariant, PlumeNumberInput, set_select_max_visible, text_input_placeholder,
-        text_input_suffix,
+        ButtonVariant, NoSelectAllOnFocus, PlumeNumberInput, set_select_max_visible,
+        text_input_placeholder, text_input_suffix,
     },
     display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome},
     rounded_corners::RoundedCorners,
+    style::fonts,
     theme::{
         Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
         ThemeBorderSlot, ThemeSlot, control_box_shadow,
@@ -213,6 +215,23 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
+    // Write one `InheritableFont` field, merging into whatever the widget already
+    // carries.
+    fn set_inheritable_font(
+        &mut self,
+        set: impl FnOnce(&mut InheritableFont, &AssetServer) + Send + 'static,
+    ) {
+        self.e
+            .entity_commands()
+            .queue(move |mut entity: EntityWorldMut| {
+                // Cloned (an `Arc` bump) so the resource borrow ends before `entry`
+                // takes the entity mutably.
+                let assets = entity.resource::<AssetServer>().clone();
+                let mut font = entity.entry::<InheritableFont>().or_default();
+                set(&mut font.get_mut(), &assets);
+            });
+    }
+
     /// Enable or disable the control (manages [`bevy::ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
@@ -295,10 +314,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     pub fn font_size(mut self, size: FontSize) -> Self {
         struct FontSizeKey;
         if self.key_changed::<FontSizeKey>(imm_for_font_size(size)) {
-            self.e.entity_commands().insert(InheritableFont {
-                font_size: Some(size),
-                ..Default::default()
-            });
+            self.set_inheritable_font(move |font, _| font.font_size = Some(size));
         }
         self
     }
@@ -392,12 +408,22 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
     pub fn small_caps(mut self) -> Self {
         struct SmallCapsKey;
         if self.key_changed::<SmallCapsKey>(()) {
-            self.e.entity_commands().insert(InheritableFont {
-                font_features: Some(FontFeatures::from([
+            self.set_inheritable_font(|font, _| {
+                font.font_features = Some(FontFeatures::from([
                     FontFeatureTag::SMALL_CAPS,
                     FontFeatureTag::CAPS_TO_SMALL_CAPS,
-                ])),
-                ..Default::default()
+                ]));
+            });
+        }
+        self
+    }
+
+    /// Pin the caption to the monospace face; size and features still inherit.
+    pub fn monospace(mut self) -> Self {
+        struct MonospaceKey;
+        if self.key_changed::<MonospaceKey>(()) {
+            self.set_inheritable_font(|font, assets| {
+                font.font = Some(FontSource::Handle(assets.load(fonts::MONOSPACE)));
             });
         }
         self
@@ -581,6 +607,18 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
                     child.insert(ChildOf(parent));
                 }
             });
+        }
+        self
+    }
+
+    /// Whether taking focus selects the whole value.
+    pub fn select_on_focus(mut self, select_on_focus: bool) -> Self {
+        struct SelectOnFocusKey;
+        if self.key_changed::<SelectOnFocusKey>(select_on_focus) {
+            match select_on_focus {
+                true => self.e.entity_commands().remove::<NoSelectAllOnFocus>(),
+                false => self.e.entity_commands().insert(NoSelectAllOnFocus),
+            };
         }
         self
     }

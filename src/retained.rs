@@ -12,14 +12,14 @@ pub use crate::containers::{
     popup_socket, row, screen, separator, space, tab_body,
 };
 pub use crate::controls::{
-    ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, PlumeButton,
-    PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps,
-    PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput,
-    PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar,
-    PlumeScrollbarProps, PlumeSelect, PlumeSelectProps, PlumeSlider, PlumeSliderProps,
-    PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton, PlumeXyPad,
-    PlumeXyPadProps, ScrollbarGutter, SelectedIndex, SetValue, TextInputValue, XyPadDragging,
-    XyPadLock, XyPadValue, select_options,
+    ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoSelectAllOnFocus,
+    PlumeButton, PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps, PlumeColorEdit,
+    PlumeColorEditProps, PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch,
+    PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup,
+    PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps,
+    PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch,
+    PlumeToolButton, PlumeXyPad, PlumeXyPadProps, ScrollbarGutter, SelectedIndex, SetValue,
+    TextInputValue, XyPadDragging, XyPadLock, XyPadValue, select_options,
 };
 pub use crate::display::{
     Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_slot,

@@ -31,11 +31,11 @@ pub mod size {
 
     /// The standard font size in pixels; [`MEDIUM_FONT`] and [`em`] derive
     /// from it, and the `RemSize` resource is set to it at plugin init.
-    pub(crate) const MEDIUM_FONT_PX: f32 = 14.0;
+    pub const MEDIUM_FONT_PX: f32 = 14.0;
 
-    // A length stated in px-at-standard-font but carried as `Val::Em`, so the
-    // chrome it sizes tracks the effective font.
-    pub(crate) const fn em_from_px(px_at_standard_font: f32) -> Val {
+    /// A length stated in px-at-standard-font but carried as `Val::Em`, so the
+    /// chrome it sizes tracks the effective font.
+    pub const fn em_from_px(px_at_standard_font: f32) -> Val {
         Val::Em(px_at_standard_font / MEDIUM_FONT_PX)
     }
 

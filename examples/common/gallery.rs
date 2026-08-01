@@ -152,9 +152,17 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
         })
         .max_visible(3)
         .enabled(!disabled);
-        ui.text_edit(&mut state.text)
-            .placeholder("Type here")
-            .enabled(!disabled);
+        ui.horizontal(|ui| {
+            ui.text_edit(&mut state.text)
+                .placeholder("Type here")
+                .enabled(!disabled)
+                .grow();
+            ui.text_edit(&mut state.text)
+                .select_on_focus(false)
+                .placeholder("Caret on click")
+                .enabled(!disabled)
+                .grow();
+        });
         ui.horizontal(|ui| {
             ui.number(&mut state.number).enabled(!disabled).grow();
             ui.number(&mut state.number)
