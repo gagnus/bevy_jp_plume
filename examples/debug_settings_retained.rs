@@ -31,7 +31,7 @@ fn main() {
     app.run();
 }
 
-/// The [`DebugSettings`] field a control is bound to.
+// The [`DebugSettings`] field a control is bound to.
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 enum Bound {
     Wireframe,
@@ -95,7 +95,7 @@ impl Bound {
     }
 }
 
-/// Push the resource back into the controls, so Reset moves what you can see.
+// Push the resource back into the controls, so Reset moves what you can see.
 fn push_settings(
     mut settings: ResMut<DebugSettings>,
     q_bound: Query<(Entity, &Bound)>,
@@ -120,7 +120,7 @@ fn push_settings(
     }
 }
 
-/// The imm twin's `.font_size()` on the dialog, as a retained cascade root.
+// The imm twin's `.font_size()` on the dialog, as a retained cascade root.
 fn push_ui_scale(
     settings: Res<DebugSettings>,
     q_dialog: Query<Entity, With<PlumeDialog>>,
@@ -308,7 +308,6 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
     }
 }
 
-/// Marks the open reset-confirm popup, so its buttons can find and close it.
 #[derive(Component, Default, Clone)]
 struct ResetConfirm;
 
@@ -440,7 +439,6 @@ fn footer() -> impl Scene {
     }
 }
 
-/// One half of the debug dialog: an equal-width column of sections.
 fn debug_column() -> impl Scene {
     bsn! {
         column()
@@ -451,7 +449,7 @@ fn debug_column() -> impl Scene {
     }
 }
 
-/// `Checked` as an optional patch, so one scene covers both states.
+// `Checked` as an optional patch, so one scene covers both states.
 fn maybe_checked(checked: bool) -> impl Scene {
     checked.then(|| bsn! { Checked })
 }
@@ -465,7 +463,6 @@ fn checkbox(label: &str, bound: Bound, checked: bool) -> impl Scene {
     }
 }
 
-/// A fixed-width dim label sitting left of a control in a [`row`].
 fn field_label(text: &str) -> impl Scene {
     let text = text.to_string();
     bsn! {
@@ -513,8 +510,6 @@ fn select_row(
     }
 }
 
-/// A labelled row holding a slider and the number input mirroring it, both bound
-/// to the same field.
 fn slider_row(
     label: &str,
     bound: Bound,

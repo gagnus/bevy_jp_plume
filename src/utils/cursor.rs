@@ -79,9 +79,9 @@ impl Default for EntityCursor {
     }
 }
 
-/// System which updates the window cursor icon whenever the mouse hovers over an entity with
-/// a [`CursorIcon`] component. If no entity is hovered, the cursor icon is set to
-/// the cursor in the [`DefaultCursor`] resource.
+// System which updates the window cursor icon whenever the mouse hovers over an entity with
+// a [`CursorIcon`] component. If no entity is hovered, the cursor icon is set to
+// the cursor in the [`DefaultCursor`] resource.
 pub(crate) fn update_cursor(
     mut commands: Commands,
     hover_map: Option<Res<HoverMap>>,
@@ -116,7 +116,7 @@ pub(crate) fn update_cursor(
     }
 }
 
-/// Plugin that supports automatically changing the cursor based on the hovered entity.
+// Plugin that supports automatically changing the cursor based on the hovered entity.
 pub(crate) struct CursorIconPlugin;
 
 impl Plugin for CursorIconPlugin {

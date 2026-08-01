@@ -7,7 +7,6 @@ mod common;
 
 use common::{debug_hub::DebugDialogRegistry, theme_editor::ThemeEditorPlugin};
 
-/// The active manipulation tool, shown pressed-in on the tool bar.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 enum Tool {
     #[default]
@@ -54,8 +53,6 @@ enum ColliderKind {
     Trimesh,
 }
 
-/// One entity in the scene tree: a display name, a type icon, its visibility
-/// toggle and fold state, and its children.
 #[derive(Clone, PartialEq)]
 struct SceneNode {
     id: u32,
@@ -94,8 +91,6 @@ fn branch(
     }
 }
 
-/// All the state the mock editor's controls read and write — a stand-in for the
-/// real ECS world the panels would inspect.
 #[derive(Resource, Clone, PartialEq)]
 struct Editor {
     tool: Tool,
@@ -110,7 +105,6 @@ struct Editor {
     tree: Vec<SceneNode>,
     selected: u32,
 
-    // Inspector fields for the "selected" entity.
     name: String,
     position: [f32; 3],
     rotation: [f32; 3],
@@ -207,9 +201,8 @@ fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, PlumePlugins))
         .init_resource::<Editor>()
-        // Mount the theme editor's feature plugin (registry + dialog + live rebake) but
-        // not the debug hub's floating launcher — the toolbar's palette button is our
-        // launcher. Starts closed.
+        // The theme editor without the debug hub's floating launcher: the
+        // toolbar's palette button is this example's launcher.
         .add_plugins(ThemeEditorPlugin(false))
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2d);
@@ -219,8 +212,6 @@ fn main() {
     app.run();
 }
 
-/// Title the theme-editor feature registered itself under; the toolbar's palette
-/// button flips this registry entry to open/close the dialog.
 const THEME_EDITOR_TITLE: &str = "Theme Editor";
 
 fn editor_ui(
@@ -258,20 +249,17 @@ fn editor_ui(
 
 fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut bool) {
     ui.horizontal(|ui| {
-        // File.
         ui.tool_button(font_awesome::solid::FILE);
         ui.tool_button(font_awesome::solid::FOLDER_OPEN);
         ui.tool_button(font_awesome::solid::FLOPPY_DISK);
         ui.separator();
 
-        // Undo / redo / clipboard.
         ui.tool_button(font_awesome::solid::ARROW_ROTATE_LEFT);
         ui.tool_button(font_awesome::solid::ARROW_ROTATE_RIGHT);
         ui.tool_button(font_awesome::solid::PASTE);
         ui.tool_button(font_awesome::solid::TRASH);
         ui.separator();
 
-        // Manipulation tools — a radio group of pressed-in icon buttons.
         for (tool, icon) in [
             (Tool::Select, font_awesome::solid::ARROW_POINTER),
             (Tool::Move, font_awesome::solid::ARROWS_UP_DOWN_LEFT_RIGHT),
@@ -293,7 +281,6 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
         ui.separator();
 
-        // Snapping toggles.
         if ui
             .tool_button(font_awesome::solid::MAGNET)
             .checkable()
@@ -313,7 +300,6 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             state.show_grid = !state.show_grid;
         }
 
-        // Playback lives at the trailing edge.
         ui.flex_spacer();
         if ui
             .tool_button(font_awesome::solid::PLAY)
@@ -329,7 +315,6 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             state.playing = false;
         }
 
-        // Cheeky: pop plume's own theme editor so the whole UI can be repainted live.
         ui.separator();
         if ui
             .tool_button(font_awesome::solid::PALETTE)
@@ -360,21 +345,17 @@ fn left_panel(ui: &mut Ui, state: &mut Editor) {
     .width(px(280));
 }
 
-/// One tree row, then its children when the row is expanded. `selected` is shared
-/// down the recursion so any row can become the selection.
 fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize) {
     let has_children = !node.children.is_empty();
     let is_selected = *selected == node.id;
 
-    // The whole row is one clickable surface, so the selection fill spans it edge to
-    // edge and the content left-aligns. The twisty and eye inside keep their own
-    // clicks — Button/Checkbox swallow the press before it can reach the row.
+    // One clickable surface, so the selection fill spans the row edge to edge; the
+    // twisty and eye keep their own clicks, swallowing the press before it arrives.
     let clicked = ui
         .button_container(|ui| {
             if depth > 0 {
                 ui.space(size::TEXT_HEIGHT * (depth as f32));
             }
-            // A twisty on branches; leaves reserve its width so labels line up.
             if has_children {
                 ui.disclosure(&mut node.expanded);
             } else {
@@ -414,10 +395,7 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
 }
 
 fn center_panel(ui: &mut Ui, state: &mut Editor) {
-    // Grows to take the width the fixed side panels leave; stacks the viewport
-    // over the bottom dock.
     ui.vertical(|ui| {
-        // The 3D viewport: just a black fill that eats the remaining height.
         ui.vertical(|_| {}).grow().background(Color::BLACK);
         bottom_dock(ui, state);
     })
@@ -428,7 +406,6 @@ fn center_panel(ui: &mut Ui, state: &mut Editor) {
 fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
     ui.tabs(&mut state.bottom_tab, |tabs| {
         tabs.tab(BottomTab::Output, "Output", |ui| {
-            // Stand-in log lines so the console reads as populated.
             for line in [
                 "[info] Loaded dungeon seed 0xC0FFEE (42 rooms)",
                 "[info] Baked navmesh in 18.4 ms",
@@ -440,7 +417,6 @@ fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
         })
         .icon(font_awesome::solid::LIST);
         tabs.tab(BottomTab::Assets, "Assets", |ui| {
-            // No asset-grid control yet — describe what would live here.
             ui.caption("Asset browser — imported meshes, textures and materials appear here.");
         })
         .icon(font_awesome::solid::FOLDER_OPEN);
@@ -467,7 +443,6 @@ fn right_panel(ui: &mut Ui, state: &mut Editor) {
 }
 
 fn inspector(ui: &mut Ui, state: &mut Editor) {
-    // Entity header: name field and enabled toggle.
     ui.horizontal(|ui| {
         ui.caption("Name");
         ui.text_edit(&mut state.name).grow();
@@ -525,7 +500,6 @@ fn inspector(ui: &mut Ui, state: &mut Editor) {
     });
 }
 
-/// A labeled row of three number inputs (X/Y/Z), the inspector's workhorse.
 fn vec3_row(ui: &mut Ui, label: &str, value: &mut [f32; 3]) {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(64.0));

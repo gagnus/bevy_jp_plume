@@ -68,7 +68,7 @@ impl PlumeDisclosure {
     }
 }
 
-/// Marker for the rotating chevron glyph inside a [`PlumeDisclosure`].
+// Marker for the rotating chevron glyph inside a [`PlumeDisclosure`].
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct DisclosureChevron;
@@ -119,8 +119,8 @@ fn update_disclosure_styles_remove(
     );
 }
 
-/// Point every listed disclosure's chevron at its open/closed angle and re-pick its
-/// enabled/disabled color.
+// Point every listed disclosure's chevron at its open/closed angle and re-pick its
+// enabled/disabled color.
 fn apply(
     disclosures: impl Iterator<Item = (Entity, bool, bool)>,
     q_children: &Query<&Children>,
@@ -150,7 +150,7 @@ fn apply(
     }
 }
 
-/// Plugin which registers the systems for updating the disclosure styles.
+// Plugin which registers the systems for updating the disclosure styles.
 pub(crate) struct DisclosurePlugin;
 
 impl Plugin for DisclosurePlugin {

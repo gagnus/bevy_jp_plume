@@ -8,7 +8,6 @@ use super::{Options, log_on_change};
 /// Base font size the panel scales from.
 pub const BASE_FONT_PX: f32 = 14.0;
 
-/// Width of the label gutter every field row aligns to.
 const GUTTER: f32 = 78.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -356,7 +355,6 @@ fn footer(ui: &mut Ui, s: &mut Inspector) {
     });
 }
 
-/// One gutter row: a caption pinned to [`GUTTER`], then whatever `f` builds.
 fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(GUTTER));
@@ -364,7 +362,6 @@ fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
     });
 }
 
-/// A gutter row whose label turns accent-coloured once the value leaves its default.
 fn modified_row(ui: &mut Ui, label: &str, modified: bool, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
         let caption = ui.caption(label).width(px(GUTTER));

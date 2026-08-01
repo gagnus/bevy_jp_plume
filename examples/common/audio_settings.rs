@@ -53,8 +53,6 @@ fn audio_settings_dialog(
     mut registry: ResMut<DebugDialogRegistry>,
     mut settings: ResMut<AudioSettings>,
 ) {
-    // Build against a clone and write back with `set_if_neq`, so the resource only
-    // registers as changed when a control actually changed it.
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)

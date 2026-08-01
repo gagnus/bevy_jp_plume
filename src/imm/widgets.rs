@@ -985,8 +985,8 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     }
 }
 
-/// The dialog's frame-level props, split out so they travel to the scene as one
-/// value instead of eight positional arguments.
+// The dialog's frame-level props, split out so they travel to the scene as one
+// value instead of eight positional arguments.
 #[derive(Clone, Copy)]
 struct DialogLayout {
     width: Val,
@@ -999,8 +999,8 @@ struct DialogLayout {
 }
 
 impl DialogLayout {
-    /// Whether the body needs the scrolling machinery: either height knob bounds
-    /// the dialog, so its content can no longer be assumed to fit.
+    // Whether the body needs the scrolling machinery: either height knob bounds
+    // the dialog, so its content can no longer be assumed to fit.
     fn scrolls(&self) -> bool {
         self.height != Val::Auto || self.max_height != Val::Auto
     }
@@ -1218,9 +1218,9 @@ fn imm_popup_scene(
     }
 }
 
-/// Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
-/// content in the scrolling machinery when a height knob bounds it. Position is not
-/// re-applied — the user's dragging owns it after spawn.
+// Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
+// content in the scrolling machinery when a height knob bounds it. Position is not
+// re-applied — the user's dragging owns it after spawn.
 fn reconcile_frame_body<'e, 'w, 's>(
     mut entity: ImmEntity<'e, 'w, 's, PlumeCaps>,
     layout: DialogLayout,
@@ -1284,19 +1284,19 @@ fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
     ImmIdBuilder::Hierarchy(ImmId::new((Location::caller(), key)))
 }
 
-/// Salt folded into a repeated id's suffix; a fixed tag so a disambiguated id can
-/// never coincide with a genuine `(location, key)` base.
+// Salt folded into a repeated id's suffix; a fixed tag so a disambiguated id can
+// never coincide with a genuine `(location, key)` base.
 const OCCURRENCE_SALT: u32 = 0x506c_756d; // "Plum"
 
-/// Child creation with plume-side occurrence disambiguation.
-///
-/// Unpatched `bevy_immediate` maps each hierarchy id to exactly one entity, so two
-/// widgets built from the same call site — a helper called in a loop — would land
-/// on the same entity. This threads a per-`(parent, base id)` occurrence counter
-/// (held in [`PlumeOccurrences`]): the first use keeps the plain id (so a widget
-/// that appears once, or a conditional sibling, never shifts the others) and each
-/// repeat takes a distinct suffix. Keeping it here lets plume track upstream
-/// `bevy_immediate` with no `resolve`-time patch.
+// Child creation with plume-side occurrence disambiguation.
+//
+// Unpatched `bevy_immediate` maps each hierarchy id to exactly one entity, so two
+// widgets built from the same call site — a helper called in a loop — would land
+// on the same entity. This threads a per-`(parent, base id)` occurrence counter
+// (held in [`PlumeOccurrences`]): the first use keeps the plain id (so a widget
+// that appears once, or a conditional sibling, never shifts the others) and each
+// repeat takes a distinct suffix. Keeping it here lets plume track upstream
+// `bevy_immediate` with no `resolve`-time patch.
 trait PlumeChild<'w, 's> {
     fn ch_loc(&mut self, id: ImmIdBuilder) -> ImmEntity<'_, 'w, 's, PlumeCaps>;
 }
@@ -1329,8 +1329,8 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
     }
 }
 
-/// Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
-/// spawned, since the face keys the button's identity.
+// Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
+// spawned, since the face keys the button's identity.
 fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
     let children: Vec<Entity> = button
         .get::<Children>()

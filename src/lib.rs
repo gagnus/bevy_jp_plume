@@ -41,7 +41,7 @@ pub mod retained;
 pub mod style;
 pub mod theme;
 
-/// Plugin which installs observers and systems for plume themes, cursors, and all controls.
+// Plugin which installs observers and systems for plume themes, cursors, and all controls.
 pub(crate) struct PlumeCorePlugin;
 
 impl Plugin for PlumeCorePlugin {

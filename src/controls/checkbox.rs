@@ -135,22 +135,22 @@ impl PlumeCheckbox {
     }
 }
 
-/// Marker for the checkbox frame (contains both checkbox and label)
+// Marker for the checkbox frame (contains both checkbox and label)
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxFrame;
 
-/// Marker for the checkbox bg
+// Marker for the checkbox bg
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxBg;
 
-/// Marker for the checkbox outline
+// Marker for the checkbox outline
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxOutline;
 
-/// Marker for the checkbox check mark
+// Marker for the checkbox check mark
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxMark;
@@ -243,7 +243,7 @@ fn update_checkbox_styles_remove(
         });
 }
 
-/// Resolve the checkbox's child entities and push the current styles onto them.
+// Resolve the checkbox's child entities and push the current styles onto them.
 fn apply_checkbox_styles(
     checkbox_ent: Entity,
     disabled: bool,
@@ -381,7 +381,7 @@ fn set_checkbox_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
-/// Plugin which registers the systems for updating the checkbox styles.
+// Plugin which registers the systems for updating the checkbox styles.
 pub(crate) struct CheckboxPlugin;
 
 impl Plugin for CheckboxPlugin {

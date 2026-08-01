@@ -34,8 +34,8 @@ use crate::{
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 
-/// Horizontal knob travel between off and on: pill width 32 − knob 16 − a 1px
-/// inset at each end (at the standard font), so the knob keeps its margins.
+// Horizontal knob travel between off and on: pill width 32 − knob 16 − a 1px
+// inset at each end (at the standard font), so the knob keeps its margins.
 const KNOB_TRAVEL: Val = size::em_from_px(14.0);
 
 /// A toggle switch, spawnable as a scene component. Emits
@@ -109,12 +109,12 @@ impl PlumeToggleSwitch {
     }
 }
 
-/// Marker for the toggle switch border ring
+// Marker for the toggle switch border ring
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchOutline;
 
-/// Marker for the toggle switch slide
+// Marker for the toggle switch slide
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchSlide;
@@ -203,7 +203,7 @@ fn update_switch_styles_remove(
         });
 }
 
-/// Resolve the switch's child entities and push the current styles onto them.
+// Resolve the switch's child entities and push the current styles onto them.
 fn apply_switch_styles(
     switch_ent: Entity,
     disabled: bool,
@@ -322,7 +322,7 @@ fn set_switch_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
-/// Plugin which registers the systems for updating the toggle switch styles.
+// Plugin which registers the systems for updating the toggle switch styles.
 pub(crate) struct ToggleSwitchPlugin;
 
 impl Plugin for ToggleSwitchPlugin {

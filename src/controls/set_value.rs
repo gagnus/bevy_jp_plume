@@ -31,8 +31,8 @@ pub struct SetValue<T> {
     pub value: T,
 }
 
-/// Installs the [`SetValue`] handlers shared by every control that stores its value
-/// in a common component; the rest live with the control that owns them.
+// Installs the [`SetValue`] handlers shared by every control that stores its value
+// in a common component; the rest live with the control that owns them.
 pub(crate) struct SetValuePlugin;
 
 impl Plugin for SetValuePlugin {

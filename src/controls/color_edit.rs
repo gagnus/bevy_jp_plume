@@ -56,17 +56,17 @@ pub struct PlumeColorEditProps {
 #[require(ColorPickerValue)]
 pub struct PlumeColorEdit;
 
-/// Marks the swatch shown on the closed control (also the click target that opens it).
+// Marks the swatch shown on the closed control (also the click target that opens it).
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorEditSwatch;
 
-/// Marks the popup whose visibility is toggled open/closed.
+// Marks the popup whose visibility is toggled open/closed.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorEditPopup;
 
-/// Marks the picker inside the popup.
+// Marks the picker inside the popup.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorEditPicker;
@@ -254,7 +254,7 @@ fn on_popup_close_requested(
     }
 }
 
-/// Registers the color-edit open observer and value-mirror systems.
+// Registers the color-edit open observer and value-mirror systems.
 pub(crate) struct ColorEditPlugin;
 
 impl Plugin for ColorEditPlugin {

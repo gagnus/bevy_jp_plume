@@ -1,6 +1,5 @@
-//! Scaffolding shared by the imm acceptance examples: resource change logging,
-//! headless screenshot verification, theme selection, and the feature modules each
-//! example (and the combined `showcase`) mounts as a plugin.
+//! Scaffolding shared by the imm acceptance examples: change logging, screenshot
+//! verification, theme selection, and the feature modules each example mounts.
 // Every example bin compiles all of `common` but mounts only some feature modules, so
 // the rest are unavoidably dead code in that bin.
 #![allow(dead_code)]
@@ -36,6 +35,8 @@ pub fn demo_app(default_gallery: bool) -> App {
 }
 
 /// Command-line options accepted by every example.
+// `argh` reads the description and every flag's help text from `///`, so these
+// stay doc comments despite the type being private.
 #[derive(argh::FromArgs, Debug)]
 struct ExampleArgs {
     /// save a screenshot here once the UI has settled, then exit
@@ -97,12 +98,8 @@ pub trait Options: Copy + PartialEq + Sized + 'static {
     }
 }
 
-/// Apply the example command line:
-///
-/// - `--screenshot shot.png` (or `--screenshot=shot.png`): headless verification —
-///   save a PNG once the UI has settled, then exit. Without it the app runs normally.
-/// - `--light`: swap in the light palette. `PlumePlugins` installs the dark one, so
-///   this overwrites [`UiTheme`] and must be called after the plugins are added.
+/// Apply the example command line. `--light` overwrites the [`UiTheme`] that
+/// `PlumePlugins` installed, so this has to run after the plugins are added.
 pub fn apply_args(app: &mut App, default_gallery: bool) {
     let args: ExampleArgs = argh::from_env();
 

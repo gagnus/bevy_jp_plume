@@ -63,7 +63,7 @@ pub struct PlumeSelect;
 #[reflect(Component)]
 pub struct SelectedIndex(pub usize);
 
-/// Marker for the caption which changes with selected item
+// Marker for the caption which changes with selected item
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct SelectCaption;
@@ -1052,7 +1052,7 @@ fn update_active_row_outline(
     }
 }
 
-/// Plugin which runs the [`PlumeSelect`] control
+// Plugin which runs the [`PlumeSelect`] control
 pub(crate) struct SelectPlugin;
 
 impl Plugin for SelectPlugin {

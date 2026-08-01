@@ -79,8 +79,8 @@ pub(crate) fn scroll_content() -> impl Scene {
     }
 }
 
-/// Installs the check for a scroll region that was never given a height to
-/// scroll within.
+// Installs the check for a scroll region that was never given a height to
+// scroll within.
 pub(crate) struct ScrollAreaPlugin;
 
 impl Plugin for ScrollAreaPlugin {

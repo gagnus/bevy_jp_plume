@@ -13,16 +13,16 @@ use bevy::reflect::Reflect;
 use bevy::time::Time;
 use bevy::ui::{UiTransform, Val};
 
-/// Exponential-approach rate for the crate's UI micro-transitions; higher settles
-/// faster.
+// Exponential-approach rate for the crate's UI micro-transitions; higher settles
+// faster.
 pub(crate) const UI_ANIM_RATE: f32 = 44.0;
 
-/// Snap distance: exponential approach only nears the target asymptotically, so
-/// within this the value jumps onto it and idle systems stop writing.
+// Snap distance: exponential approach only nears the target asymptotically, so
+// within this the value jumps onto it and idle systems stop writing.
 const SNAP_EPS: f32 = 0.001;
 
-/// Move `current` toward `target` by one framerate-independent exponential step,
-/// snapping on within [`SNAP_EPS`] so tweens terminate.
+// Move `current` toward `target` by one framerate-independent exponential step,
+// snapping on within [`SNAP_EPS`] so tweens terminate.
 pub(crate) fn approach(current: f32, target: f32, rate: f32, dt: f32) -> f32 {
     let next = current + (target - current) * (1.0 - (-rate * dt).exp());
     if (next - target).abs() < SNAP_EPS {
@@ -36,8 +36,8 @@ fn lerp(from: f32, to: f32, t: f32) -> f32 {
     from + (to - from) * t
 }
 
-/// The [`UiTransform`] channel an [`AnimState`] drives, with its `pos = 0` and
-/// `pos = 1` endpoints.
+// The [`UiTransform`] channel an [`AnimState`] drives, with its `pos = 0` and
+// `pos = 1` endpoints.
 #[derive(Clone, Copy, Reflect)]
 pub(crate) enum AnimOutput {
     /// Uniform scale from `.0` to `.1`.
@@ -64,9 +64,9 @@ impl AnimOutput {
     }
 }
 
-/// A UI micro-animation on an entity's [`UiTransform`]: `pos` eases toward
-/// `target` (both `0..=1`) each frame, driving `output`. The owning control calls
-/// [`set_target`](Self::set_target).
+// A UI micro-animation on an entity's [`UiTransform`]: `pos` eases toward
+// `target` (both `0..=1`) each frame, driving `output`. The owning control calls
+// [`set_target`](Self::set_target).
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub(crate) struct AnimState {
@@ -125,8 +125,8 @@ impl AnimState {
     }
 }
 
-/// Ease every [`AnimState`] toward its target and apply it to the entity's
-/// [`UiTransform`]. Post-layout, so it never triggers a relayout.
+// Ease every [`AnimState`] toward its target and apply it to the entity's
+// [`UiTransform`]. Post-layout, so it never triggers a relayout.
 fn advance_ui_anims(
     time: Res<Time>,
     mut q_anims: Query<(&mut AnimState, &mut UiTransform, Option<&mut Visibility>)>,
@@ -155,7 +155,7 @@ fn advance_ui_anims(
     }
 }
 
-/// Registers [`advance_ui_anims`], driving every [`AnimState`] in the app.
+// Registers [`advance_ui_anims`], driving every [`AnimState`] in the app.
 pub(crate) struct UiAnimPlugin;
 
 impl Plugin for UiAnimPlugin {

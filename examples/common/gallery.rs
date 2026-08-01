@@ -1,7 +1,5 @@
-//! Control gallery as a self-contained feature plugin: a 3-by-2 grid of "one of each
-//! control" cards previewing every control against the three neutral surface slots,
-//! enabled and disabled. Drawn as a full-screen surface — the backdrop the `showcase`
-//! floats its dialogs over — so it registers no hub entry.
+//! Control gallery feature plugin: a 3-by-2 grid of "one of each control" cards over
+//! the three neutral surface slots, enabled and disabled. The `showcase` backdrop.
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 
@@ -68,17 +66,13 @@ impl Plugin for GalleryPlugin {
 }
 
 fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>) {
-    // Build against a local clone and write back with `set_if_neq`, so the
-    // resource only registers as changed when a control actually changed it.
     let mut s = state.clone();
-    // The three neutral surface shades, read fresh each frame so palette edits land.
     let surfaces = [
         (ThemeSlot::Neutral0, "Neutral0 — Window"),
         (ThemeSlot::Neutral1, "Neutral1 — Dialog"),
         (ThemeSlot::Neutral2, "Neutral2 — Section Header"),
     ];
     root.screen(|ui| {
-        // Equal spacers above and below centre the grid in the full-height screen column.
         ui.flex_spacer();
         ui.horizontal(|ui| {
             for (slot, name) in surfaces {
@@ -93,8 +87,6 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>) {
     state.set_if_neq(s);
 }
 
-/// One surface's column: its name, then an enabled and a disabled card
-/// stacked below it — the two rows of the 3-by-2 grid.
 fn gallery_column(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, name: &str) {
     ui.vertical(|ui| {
         ui.caption(name);
@@ -104,9 +96,6 @@ fn gallery_column(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, nam
     .grow();
 }
 
-/// One card: a control of every kind, tinted `bg`, all disabled together when
-/// `disabled`. The single function all 6 cards are built from — nothing here
-/// is copy-pasted per cell.
 fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disabled: bool) {
     ui.vertical(|ui| {
         ui.caption(if disabled { "Disabled" } else { "Enabled" });

@@ -227,8 +227,8 @@ fn warn_unstyled_themed_text(
     *font_suspect_last_frame = no_font;
 }
 
-/// Installs the [`UiTheme`] resource, the theme refresh system, the themed
-/// text-color propagation, and the token-change observers.
+// Installs the [`UiTheme`] resource, the theme refresh system, the themed
+// text-color propagation, and the token-change observers.
 pub(crate) struct ThemePlugin;
 
 impl Plugin for ThemePlugin {

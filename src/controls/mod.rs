@@ -62,7 +62,7 @@ use text_input::TextInputPlugin;
 use toggle_switch::ToggleSwitchPlugin;
 use xy_pad::XyPadPlugin;
 
-/// Plugin which registers all controls.
+// Plugin which registers all controls.
 pub(crate) struct ControlsPlugin;
 
 impl Plugin for ControlsPlugin {

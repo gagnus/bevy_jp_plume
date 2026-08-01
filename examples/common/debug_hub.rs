@@ -1,6 +1,5 @@
-//! Debug dialog registry + a toolbar that toggles each entry. A feature plugin calls
-//! [`AddDebugDialog::add_debug_dialog`] to register a titled dialog and its system;
-//! the hub renders one button per entry that flips its open state.
+//! Debug dialog registry plus a toolbar that toggles each entry: a feature plugin
+//! registers a titled dialog with [`AddDebugDialog::add_debug_dialog`].
 use std::collections::BTreeMap;
 
 use bevy::ecs::schedule::IntoScheduleConfigs;

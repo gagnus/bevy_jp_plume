@@ -232,17 +232,17 @@ fn radio_check_self(
     }
 }
 
-/// Marker for the radio filled disc
+// Marker for the radio filled disc
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioBg;
 
-/// Marker for the radio outline
+// Marker for the radio outline
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioOutline;
 
-/// Marker for the radio check mark
+// Marker for the radio check mark
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioMark;
@@ -341,7 +341,7 @@ fn update_radio_styles_remove(
         });
 }
 
-/// Resolve the radio's child entities and push the current styles onto them.
+// Resolve the radio's child entities and push the current styles onto them.
 fn apply_radio_styles(
     radio_ent: Entity,
     disabled: bool,
@@ -481,7 +481,7 @@ fn set_radio_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
-/// Plugin which registers the systems for updating the radio styles.
+// Plugin which registers the systems for updating the radio styles.
 pub(crate) struct RadioPlugin;
 
 impl Plugin for RadioPlugin {

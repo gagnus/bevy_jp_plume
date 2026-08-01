@@ -8,7 +8,6 @@ use super::log_on_change;
 
 const TITLE: &str = "Player Profile";
 
-/// Width of the label gutter every row aligns to.
 const GUTTER: f32 = 76.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -75,7 +74,6 @@ impl Plugin for PlayerProfilePlugin {
     }
 }
 
-/// One gutter row: a caption pinned to [`GUTTER`], then whatever `f` builds.
 fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
         ui.caption(label).width(px(GUTTER));
@@ -88,8 +86,6 @@ fn player_profile_dialog(
     mut registry: ResMut<DebugDialogRegistry>,
     mut settings: ResMut<ProfileSettings>,
 ) {
-    // Build against a clone and write back with `set_if_neq`, so the resource only
-    // registers as changed when a control actually changed it.
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
     // `done` closes from inside the body (the dialog holds `open` until `show` ends).
@@ -99,7 +95,6 @@ fn player_profile_dialog(
         .at(px(450), px(60))
         .icon(font_awesome::solid::PERSON)
         .show(|ui| {
-            // Identity: three text/choice fields sharing the gutter.
             ui.section("Profile", |ui| {
                 field(ui, "Name", |ui| {
                     ui.text_edit(&mut s.name).grow();
@@ -120,7 +115,6 @@ fn player_profile_dialog(
             })
             .collapsible(false);
 
-            // Match settings: radio groups laid out along the same gutter.
             ui.section("Match", |ui| {
                 field(ui, "Difficulty", |ui| {
                     ui.radio(&mut s.difficulty, Difficulty::Easy, "Easy");
@@ -134,7 +128,6 @@ fn player_profile_dialog(
             })
             .collapsible(false);
 
-            // Options: a right-aligned toggle and a slider with a live read-out.
             ui.section("Options", |ui| {
                 field(ui, "Permadeath", |ui| {
                     ui.flex_spacer();

@@ -366,12 +366,12 @@ where
     }
 }
 
-/// Per-pass table counting how many times each `(parent, base id)` pair has been
-/// requested, so repeated sibling widgets get distinct ids without the caller
-/// supplying one. This reimplements, on plume's side, the occurrence
-/// disambiguation that would otherwise have to live in `bevy_immediate`'s id
-/// resolver — letting plume track the unmodified upstream crate. Cleared at the
-/// start of every [`PlumeRoot`](crate::imm::PlumeRoot) build (i.e. per system run).
+// Per-pass table counting how many times each `(parent, base id)` pair has been
+// requested, so repeated sibling widgets get distinct ids without the caller
+// supplying one. This reimplements, on plume's side, the occurrence
+// disambiguation that would otherwise have to live in `bevy_immediate`'s id
+// resolver — letting plume track the unmodified upstream crate. Cleared at the
+// start of every [`PlumeRoot`](crate::imm::PlumeRoot) build (i.e. per system run).
 #[derive(Resource, Default)]
 pub(crate) struct PlumeOccurrences(pub(crate) HashMap<ImmId, u32>);
 

@@ -160,10 +160,10 @@ impl PlumeDialog {
 #[derive(Component)]
 pub(crate) struct CloseRequested;
 
-/// Chrome-level input for [`dialog_frame`], kept distinct from the public
-/// [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,
-/// inserted verbatim — and body padding never reaches the frame (it lives on the
-/// body's [`PlumeDialogBody`]).
+// Chrome-level input for [`dialog_frame`], kept distinct from the public
+// [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,
+// inserted verbatim — and body padding never reaches the frame (it lives on the
+// body's [`PlumeDialogBody`]).
 pub(crate) struct DialogChrome {
     /// Debug name to give the entity
     pub name: Name,
@@ -185,7 +185,7 @@ pub(crate) struct DialogChrome {
     pub inset: UiRect,
 }
 
-/// Title-bar configuration for a [`DialogChrome`] that has one.
+// Title-bar configuration for a [`DialogChrome`] that has one.
 pub(crate) struct DialogHeader {
     /// Title content shown in the drag bar (e.g. `bsn! { caption("…") }`).
     pub title: Box<dyn SceneList>,
@@ -195,9 +195,9 @@ pub(crate) struct DialogHeader {
     pub movable: bool,
 }
 
-/// Dialog chrome (frame, optional title bar, ✕) shared by the public [`PlumeDialog`]
-/// and the imm layer, with no close behavior — callers attach their own
-/// `RequestClose` observer.
+// Dialog chrome (frame, optional title bar, ✕) shared by the public [`PlumeDialog`]
+// and the imm layer, with no close behavior — callers attach their own
+// `RequestClose` observer.
 pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
     let DialogChrome {
         name,

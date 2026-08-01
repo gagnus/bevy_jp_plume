@@ -18,7 +18,6 @@ pub struct ThemeEditorPlugin(pub bool);
 
 impl Plugin for ThemeEditorPlugin {
     fn build(&self, app: &mut App) {
-        // get palette that was used to generate UiTheme
         let editable_palette = app.world().resource::<UiTheme>().editable().clone();
 
         app.insert_resource(ThemePaletteEditor(editable_palette))
@@ -44,8 +43,6 @@ fn theme_editor_dialog(
     mut registry: ResMut<DebugDialogRegistry>,
     mut editor: ResMut<ThemePaletteEditor>,
 ) {
-    // Build against a clone and write back with `set_if_neq`, so the resource only
-    // registers as changed when a control actually moved.
     let mut local = editor.clone();
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)

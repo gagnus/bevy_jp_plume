@@ -81,9 +81,9 @@ fn manage_focus_indicators(
     }
 }
 
-/// Disabled controls leave the Tab order; negative keeps the click-to-focus marker in place.
-/// (The text input manages its own field marker: disabled state and `TabIndex` live on
-/// different entities there.)
+// Disabled controls leave the Tab order; negative keeps the click-to-focus marker in place.
+// (The text input manages its own field marker: disabled state and `TabIndex` live on
+// different entities there.)
 fn sync_disabled_tab_index(
     q_added: Query<(Entity, &TabIndex), Added<InteractionDisabled>>,
     q_index: Query<&TabIndex>,
@@ -102,7 +102,7 @@ fn sync_disabled_tab_index(
     });
 }
 
-/// Plugin which registers the focus outline and Tab-order systems.
+// Plugin which registers the focus outline and Tab-order systems.
 pub(crate) struct FocusPlugin;
 
 impl Plugin for FocusPlugin {

@@ -102,9 +102,9 @@ fn update_scrollbar_thumb_styles(
     }
 }
 
-/// Hide scrollbars whose target content fits its viewport (same overflow math as
-/// the headless widget, which otherwise renders a full-length thumb), and
-/// reclaim the parent's [`ScrollbarGutter`] while hidden.
+// Hide scrollbars whose target content fits its viewport (same overflow math as
+// the headless widget, which otherwise renders a full-length thumb), and
+// reclaim the parent's [`ScrollbarGutter`] while hidden.
 fn update_scrollbar_visibility(
     mut q_scrollbars: Query<(Entity, &Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
     q_scroll_area: Query<&ComputedNode>,
@@ -139,7 +139,7 @@ fn update_scrollbar_visibility(
     }
 }
 
-/// Plugin which registers the systems for updating the scrollbar styles.
+// Plugin which registers the systems for updating the scrollbar styles.
 pub(crate) struct ScrollbarPlugin;
 
 impl Plugin for ScrollbarPlugin {

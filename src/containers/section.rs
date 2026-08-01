@@ -39,9 +39,9 @@ use crate::{
 #[reflect(Component, Clone, Default)]
 pub struct PlumeSection;
 
-/// Plain root marker, inserted by [`section_frame`]
-/// in both the retained and imm paths (unlike the [`PlumeSection`] scene-component,
-/// which must not be inserted as a bare component).
+// Plain root marker, inserted by [`section_frame`]
+// in both the retained and imm paths (unlike the [`PlumeSection`] scene-component,
+// which must not be inserted as a bare component).
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionRoot;
@@ -51,10 +51,10 @@ pub(crate) struct SectionRoot;
 #[reflect(Component, Clone, Default)]
 pub struct SectionCollapsed;
 
-/// Whether a section's header responds to clicks by folding its body. App-owned
-/// config (unlike [`SectionCollapsed`], which is user state), so the imm layer
-/// reconciles it every frame from the `.collapsible(_)` builder. Absent means
-/// collapsible, matching the [`Default`].
+// Whether a section's header responds to clicks by folding its body. App-owned
+// config (unlike [`SectionCollapsed`], which is user state), so the imm layer
+// reconciles it every frame from the `.collapsible(_)` builder. Absent means
+// collapsible, matching the [`Default`].
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionCollapsible(pub(crate) bool);
@@ -121,10 +121,10 @@ impl PlumeSection {
     }
 }
 
-/// Section chrome (root, header bar, chevron, collapse behavior) shared by the
-/// public [`PlumeSection`] and the imm layer. `props.contents` is inserted as the
-/// body slot verbatim (the public section wraps it in a [`section_body`]; the imm
-/// layer leaves it empty and reconciles the body itself).
+// Section chrome (root, header bar, chevron, collapse behavior) shared by the
+// public [`PlumeSection`] and the imm layer. `props.contents` is inserted as the
+// body slot verbatim (the public section wraps it in a [`section_body`]; the imm
+// layer leaves it empty and reconciles the body itself).
 pub(crate) fn section_frame(
     header: impl SceneList,
     collapsible: bool,
@@ -170,8 +170,8 @@ pub(crate) fn section_frame(
     }
 }
 
-/// The section body node: a padded, tight-gapped column folded away on collapse.
-/// Callers append the body content as children; children stretch to the body width.
+// The section body node: a padded, tight-gapped column folded away on collapse.
+// Callers append the body content as children; children stretch to the body width.
 pub(crate) fn section_body() -> impl Scene {
     bsn! {
         Node {
@@ -242,9 +242,9 @@ fn update_section_collapse(
     }
 }
 
-/// The chevron is spawned once at build time, but the imm layer sets
-/// [`SectionCollapsible`] after the fact via `.collapsible(_)`, so its visibility
-/// tracks the component here rather than the spawn-time prop.
+// The chevron is spawned once at build time, but the imm layer sets
+// [`SectionCollapsible`] after the fact via `.collapsible(_)`, so its visibility
+// tracks the component here rather than the spawn-time prop.
 fn update_section_collapsible(
     q_changed: Query<
         (Entity, &SectionCollapsible, Has<SectionCollapsed>),
@@ -268,7 +268,7 @@ fn update_section_collapsible(
     }
 }
 
-/// Header with `collapsible` false (`SectionCollapsible(false)`) is non-filled.
+// Header with `collapsible` false (`SectionCollapsible(false)`) is non-filled.
 fn update_section_header_style(
     q_changed: Query<Entity, (With<SectionRoot>, Changed<SectionCollapsible>)>,
     q_sections: Query<Option<&SectionCollapsible>, With<SectionRoot>>,
@@ -312,7 +312,7 @@ fn update_section_header_style(
     }
 }
 
-/// Plugin which registers the section collapse systems.
+// Plugin which registers the section collapse systems.
 pub(crate) struct SectionPlugin;
 
 impl Plugin for SectionPlugin {

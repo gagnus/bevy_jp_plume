@@ -39,8 +39,8 @@ use crate::{
     tokens,
 };
 
-/// Horizontal inset of the field content (border + padding = GAP, aligning the text
-/// with button captions); the placeholder overlay must match it.
+// Horizontal inset of the field content (border + padding = GAP, aligning the text
+// with button captions); the placeholder overlay must match it.
 const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX);
 
 /// A single-line text input: a themed frame (background, border, sizing) wrapping an
@@ -54,7 +54,7 @@ const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX)
 #[reflect(Component, Default, Clone)]
 pub struct PlumeTextInput;
 
-/// Marker for the editable text entity nested inside a [`PlumeTextInput`] frame.
+// Marker for the editable text entity nested inside a [`PlumeTextInput`] frame.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct TextInputField;
@@ -99,8 +99,8 @@ impl PlumeTextInput {
     }
 }
 
-/// The themed frame shared by [`PlumeTextInput`] and the number input. Callers append the field
-/// (and optional suffix) as children.
+// The themed frame shared by [`PlumeTextInput`] and the number input. Callers append the field
+// (and optional suffix) as children.
 pub(crate) fn text_input_frame() -> impl Scene {
     bsn! {
         // Border + horizontal padding = GAP, so the text aligns with button captions; the row
@@ -122,7 +122,7 @@ pub(crate) fn text_input_frame() -> impl Scene {
     }
 }
 
-/// The inner editable text entity: fills the frame.
+// The inner editable text entity: fills the frame.
 pub(crate) fn text_input_field(
     visible_width: Option<f32>,
     max_characters: Option<usize>,
@@ -155,7 +155,7 @@ pub(crate) fn text_input_field(
     }
 }
 
-/// Replace the buffer contents (select-all + insert) when they differ.
+// Replace the buffer contents (select-all + insert) when they differ.
 pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: String) {
     // A queued replacement has not reached `value()` yet, so comparing against it
     // would stack a second select-all + insert and write the text twice.
@@ -316,7 +316,7 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// A non-interactive dim suffix (unit) shown after the editable field.
+// A non-interactive dim suffix (unit) shown after the editable field.
 pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
@@ -412,7 +412,7 @@ fn update_text_input_styles_remove(
     });
 }
 
-/// Restyle every text input when focus moves, so the edited one gets the active border.
+// Restyle every text input when focus moves, so the edited one gets the active border.
 fn update_text_input_styles_focus(
     q_frames: Query<(Entity, Has<InteractionDisabled>), With<PlumeTextInput>>,
     q_children: Query<&Children>,
@@ -444,8 +444,8 @@ fn update_text_input_styles_focus(
     }
 }
 
-/// The editable [`TextInputField`] child of a frame, or `None` while the frame's children are still
-/// being spawned.
+// The editable [`TextInputField`] child of a frame, or `None` while the frame's children are still
+// being spawned.
 fn get_field_ent(
     frame_ent: Entity,
     q_children: &Query<&Children>,
@@ -528,7 +528,7 @@ fn set_text_input_styles(
     }
 }
 
-/// Show each placeholder only while its sibling field is empty and unfocused.
+// Show each placeholder only while its sibling field is empty and unfocused.
 fn update_text_input_placeholders(
     mut q_placeholders: Query<(&ChildOf, &mut Visibility), With<TextInputPlaceholder>>,
     q_fields: Query<&EditableText, With<TextInputField>>,
@@ -560,7 +560,7 @@ fn update_text_input_placeholders(
     }
 }
 
-/// Plugin which registers the systems for updating the text input styles.
+// Plugin which registers the systems for updating the text input styles.
 pub(crate) struct TextInputPlugin;
 
 impl Plugin for TextInputPlugin {

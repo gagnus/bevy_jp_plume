@@ -84,8 +84,8 @@ impl Default for PlumeButtonProps {
 }
 
 impl ButtonVariant {
-    /// Whether this variant paints a solid background at rest. The unfilled variants swap the
-    /// resting drop shadow for a hover/press-only one.
+    // Whether this variant paints a solid background at rest. The unfilled variants swap the
+    // resting drop shadow for a hover/press-only one.
     fn filled(&self) -> bool {
         !matches!(self, ButtonVariant::Plain | ButtonVariant::Outline)
     }
@@ -144,8 +144,8 @@ impl PlumeButton {
     }
 }
 
-/// Marker for a button's border overlay. Every button carries one; only
-/// [`ButtonVariant::Outline`] paints it, so a runtime variant swap needs no respawn.
+// Marker for a button's border overlay. Every button carries one; only
+// [`ButtonVariant::Outline`] paints it, so a runtime variant swap needs no respawn.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct ButtonOutline;
@@ -238,7 +238,7 @@ fn update_button_styles(
     }
 }
 
-/// The button's border overlay child, if it has spawned yet.
+// The button's border overlay child, if it has spawned yet.
 fn outline_child<'a>(
     button_ent: Entity,
     q_children: &Query<&Children>,
@@ -410,7 +410,7 @@ fn set_button_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
-/// Plugin which registers the systems for updating the button styles.
+// Plugin which registers the systems for updating the button styles.
 pub(crate) struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {

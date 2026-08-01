@@ -193,7 +193,7 @@ pub enum ThemeSlot {
 }
 
 impl ThemeSlot {
-    /// Every slot, in discriminant order (matches [`super::ThemeResolvedPalette`] storage).
+    /// Every slot, in discriminant order (matches the resolved palette's storage).
     pub const ALL: [ThemeSlot; 21] = [
         ThemeSlot::Neutral0,
         ThemeSlot::Neutral1,
@@ -218,7 +218,7 @@ impl ThemeSlot {
         ThemeSlot::Transparent,
     ];
 
-    /// Number of slots — the backing size of [`super::ThemeResolvedPalette`].
+    /// Number of slots — the backing size of the resolved palette.
     pub const COUNT: usize = Self::ALL.len();
 
     /// Human-readable name, for editor UI / pickers.

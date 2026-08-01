@@ -254,7 +254,7 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
     }
 }
 
-/// Registers the immediate-mode reconciler.
+// Registers the immediate-mode reconciler.
 pub(crate) struct ImmPlugin;
 
 impl Plugin for ImmPlugin {

@@ -70,7 +70,7 @@ fn update_swatch_color(
     }
 }
 
-/// Plugin which registers the systems for updating the swatch color.
+// Plugin which registers the systems for updating the swatch color.
 pub(crate) struct ColorSwatchPlugin;
 
 impl Plugin for ColorSwatchPlugin {

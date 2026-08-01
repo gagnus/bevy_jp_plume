@@ -91,13 +91,13 @@ pub struct XyPadLock {
     pub y: Option<f32>,
 }
 
-/// The stretch child that fills the pad inside its border and carries the pointer
-/// picks; the reticle is positioned relative to it.
+// The stretch child that fills the pad inside its border and carries the pointer
+// picks; the reticle is positioned relative to it.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct XyPadInner;
 
-/// The draggable reticle.
+// The draggable reticle.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct XyPadThumb;
@@ -158,7 +158,7 @@ impl PlumeXyPad {
     }
 }
 
-/// Move the reticle to match the value whenever it changes.
+// Move the reticle to match the value whenever it changes.
 fn update_xy_pad_thumb(
     q_pad: Query<(&XyPadValue, &Children), Changed<XyPadValue>>,
     q_children: Query<&Children>,
@@ -345,7 +345,7 @@ fn on_drag_cancel(
     }
 }
 
-/// Registers the reticle-positioning system and the drag observers.
+// Registers the reticle-positioning system and the drag observers.
 pub(crate) struct XyPadPlugin;
 
 impl Plugin for XyPadPlugin {

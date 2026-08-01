@@ -35,7 +35,7 @@ fn main() {
     app.run();
 }
 
-/// The [`Inspector`] field a control is bound to.
+// The [`Inspector`] field a control is bound to.
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 enum Bound {
     Name,
@@ -93,11 +93,11 @@ impl Bound {
     }
 }
 
-/// Marks a tree row with the node it draws, so the filter/fold system can hide it.
+// Marks a tree row with the node it draws, so the filter/fold system can hide it.
 #[derive(Component, Clone, Copy, Default)]
 struct TreeRow(usize);
 
-/// Marks the per-node controls, which bind by index rather than by field.
+// Marks the per-node controls, which bind by index rather than by field.
 #[derive(Component, Clone, Copy)]
 enum NodeBound {
     Expanded(usize),
@@ -146,7 +146,7 @@ fn on_choice(bound: Bound) -> impl Scene {
     }
 }
 
-/// Push the resource back into the controls, so Revert moves what you can see.
+// Push the resource back into the controls, so Revert moves what you can see.
 fn push_material(
     mut state: ResMut<Inspector>,
     q_bound: Query<(Entity, &Bound)>,
@@ -174,7 +174,7 @@ fn push_material(
     }
 }
 
-/// The imm twin's `.font_size()` on the panel, as a retained cascade root.
+// The imm twin's `.font_size()` on the panel, as a retained cascade root.
 fn push_ui_scale(
     state: Res<Inspector>,
     q_panel: Query<(Entity, Option<&InheritableFont>), With<InspectorPanel>>,
@@ -195,8 +195,8 @@ fn push_ui_scale(
     }
 }
 
-/// Retained rows are spawned once, so filtering and folding hide them rather than
-/// rebuilding the list.
+// Retained rows are spawned once, so filtering and folding hide them rather than
+// rebuilding the list.
 fn push_tree_rows(
     state: Res<Inspector>,
     mut q_rows: Query<(&TreeRow, &mut Node)>,
@@ -247,7 +247,7 @@ fn push_tree_rows(
     }
 }
 
-/// Marks the panel column, the root of the UI-scale font cascade.
+// Marks the panel column, the root of the UI-scale font cascade.
 #[derive(Component, Default, Clone)]
 struct InspectorPanel;
 

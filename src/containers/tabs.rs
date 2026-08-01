@@ -36,8 +36,8 @@ use crate::{
     utils::anim::{UI_ANIM_RATE, approach},
 };
 
-/// Width the indicator node is spawned at; it is scaled to the selected tab's
-/// width from there, so the slide is a transform and never a relayout.
+// Width the indicator node is spawned at; it is scaled to the selected tab's
+// width from there, so the slide is a transform and never a relayout.
 const INDICATOR_BASE_WIDTH: f32 = 100.0;
 
 /// A tab container: a header strip of [`PlumeTab`]s over the bodies they target.
@@ -177,8 +177,8 @@ pub(crate) struct TabIndicator {
     settled: bool,
 }
 
-/// Tab container chrome: a clipped column for [`tab_strip`] and the tab bodies,
-/// with the initially selected tab seeded as `selected`. Note this is not rounded.
+// Tab container chrome: a clipped column for [`tab_strip`] and the tab bodies,
+// with the initially selected tab seeded as `selected`. Note this is not rounded.
 pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
     bsn! {
         Node {
@@ -197,8 +197,8 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
     }
 }
 
-/// The header strip. Tabs are appended as children; the indicator overlays the
-/// bottom edge, so the strip carries no padding for the two to share an origin.
+// The header strip. Tabs are appended as children; the indicator overlays the
+// bottom edge, so the strip carries no padding for the two to share an origin.
 pub(crate) fn tab_strip() -> impl Scene {
     bsn! {
         Node {
@@ -233,8 +233,8 @@ pub(crate) fn tab_strip() -> impl Scene {
     }
 }
 
-/// A tab's chrome, shared by the public [`PlumeTab`] and the imm layer; callers
-/// append the label content as children.
+// A tab's chrome, shared by the public [`PlumeTab`] and the imm layer; callers
+// append the label content as children.
 pub(crate) fn tab_chrome() -> impl Scene {
     bsn! {
         Node {
@@ -259,8 +259,8 @@ pub(crate) fn tab_chrome() -> impl Scene {
     }
 }
 
-/// A tab with a text label and an optional leading icon: the imm layer's tab, and
-/// the shorthand a retained caller reaches for over a hand-built caption.
+// A tab with a text label and an optional leading icon: the imm layer's tab, and
+// the shorthand a retained caller reaches for over a hand-built caption.
 pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
     bsn! {
         tab_chrome()
@@ -347,8 +347,8 @@ fn select_tab_on_activate(
     }
 }
 
-/// Programmatic selection, the counterpart of the [`PlumeSelect`](crate::controls::PlumeSelect)
-/// observer: same event, matched against tab position instead of list rows.
+// Programmatic selection, the counterpart of the [`PlumeSelect`](crate::controls::PlumeSelect)
+// observer: same event, matched against tab position instead of list rows.
 fn tabs_on_set_selected_index(
     ev: On<SetValue<usize>>,
     q_roots: Query<(), With<TabsRoot>>,
@@ -369,9 +369,9 @@ fn tabs_on_set_selected_index(
     }
 }
 
-/// Adopt the app's initial pick: a retained container spawns its tabs with
-/// [`Selected`] on one of them, which this reads back into the root's index
-/// before [`apply_tab_selection`] starts driving the other direction.
+// Adopt the app's initial pick: a retained container spawns its tabs with
+// [`Selected`] on one of them, which this reads back into the root's index
+// before [`apply_tab_selection`] starts driving the other direction.
 fn seed_tab_selection(
     q_roots: Query<Entity, (With<TabsRoot>, Without<TabsSeeded>)>,
     q_children: Query<&Children>,
@@ -396,8 +396,8 @@ fn seed_tab_selection(
     }
 }
 
-/// Push the root's index onto the tabs: exactly one carries [`Selected`], and each
-/// tab's [`TabTarget`] body is displayed only while its tab is the selected one.
+// Push the root's index onto the tabs: exactly one carries [`Selected`], and each
+// tab's [`TabTarget`] body is displayed only while its tab is the selected one.
 fn apply_tab_selection(
     q_roots: Query<(Entity, &SelectedIndex), (With<TabsRoot>, With<TabsSeeded>)>,
     q_children: Query<&Children>,
@@ -483,8 +483,8 @@ fn update_tab_styles(
     }
 }
 
-/// Ease the underline toward the selected tab. Runs after layout and writes only
-/// [`UiTransform`], so tracking the tab's width costs no relayout.
+// Ease the underline toward the selected tab. Runs after layout and writes only
+// [`UiTransform`], so tracking the tab's width costs no relayout.
 fn update_tab_indicator(
     time: Res<Time>,
     q_roots: Query<Entity, With<TabsRoot>>,
@@ -558,7 +558,7 @@ fn update_tab_indicator(
     }
 }
 
-/// Plugin which registers the tab selection, styling and indicator systems.
+// Plugin which registers the tab selection, styling and indicator systems.
 pub(crate) struct TabsPlugin;
 
 impl Plugin for TabsPlugin {

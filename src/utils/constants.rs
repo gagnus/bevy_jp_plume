@@ -16,11 +16,11 @@ pub mod fonts {
 
 /// Size constants.
 ///
-/// Nearly everything here is a [`Val::Em`] stated in px-at-the-standard-font
-/// (via [`size::em_from_px`]), so a container that sets a bigger font gets
-/// chrome, spacing and rounding to match. What stays [`Val::Px`] is what should
-/// look identical at any size: hairline borders, the focus ring, and positions
-/// measured at runtime.
+/// Nearly everything here is a [`Val::Em`](bevy::ui::Val::Em) stated in
+/// px-at-the-standard-font (via [`size::em_from_px`]), so a container that sets a
+/// bigger font gets chrome, spacing and rounding to match. What stays
+/// [`Val::Px`](bevy::ui::Val::Px) is what should look identical at any size:
+/// hairline borders, the focus ring, and positions measured at runtime.
 ///
 /// Anything em-sized needs an `EmSize`, which plume mirrors onto text-chain
 /// nodes only — a node authoring em without one is a bug the debug-build
@@ -29,8 +29,8 @@ pub mod size {
     use bevy::text::FontSize;
     use bevy::ui::{Val, Val2};
 
-    /// The standard font size in pixels; [`MEDIUM_FONT`] and [`em`] derive
-    /// from it, and the `RemSize` resource is set to it at plugin init.
+    /// The standard font size in pixels; [`MEDIUM_FONT`] and [`em_from_px`]
+    /// derive from it, and the `RemSize` resource is set to it at plugin init.
     pub const MEDIUM_FONT_PX: f32 = 14.0;
 
     /// A length stated in px-at-standard-font but carried as `Val::Em`, so the

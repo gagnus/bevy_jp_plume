@@ -45,7 +45,7 @@ use crate::{
     utils::anim::AnimState,
 };
 
-/// Thumb scale while grabbed: the knob grows this much on press for grab feedback.
+// Thumb scale while grabbed: the knob grows this much on press for grab feedback.
 const THUMB_GRABBED_SCALE: f32 = 1.15;
 
 /// A slider, spawnable as a scene component with optional [`PlumeSliderProps`].
@@ -171,7 +171,7 @@ impl PlumeSlider {
     }
 }
 
-/// Marker for the track strip
+// Marker for the track strip
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SliderTrack;
@@ -265,7 +265,7 @@ fn update_slider_styles_remove(
         });
 }
 
-/// Re-apply slider styles to every slider when the theme changes.
+// Re-apply slider styles to every slider when the theme changes.
 fn update_slider_styles_theme(
     q_sliders: Query<
         (
@@ -304,7 +304,7 @@ fn update_slider_styles_theme(
     }
 }
 
-/// Resolve the slider's child entities and push the current styles onto them.
+// Resolve the slider's child entities and push the current styles onto them.
 fn apply_slider_styles(
     slider_ent: Entity,
     disabled: bool,
@@ -443,9 +443,9 @@ fn update_slider_pos(
     }
 }
 
-/// On mouse-down, mark the slider [`Pressed`] so the thumb grows at once. The
-/// widget only sets [`Pressed`] on a track click, not a thumb grab; its own
-/// release/cancel/drag-end handlers clear it either way.
+// On mouse-down, mark the slider [`Pressed`] so the thumb grows at once. The
+// widget only sets [`Pressed`] on a track click, not a thumb grab; its own
+// release/cancel/drag-end handlers clear it either way.
 fn grab_thumb_on_press(
     press: On<Pointer<Press>>,
     q_child_of: Query<&ChildOf>,
@@ -465,7 +465,7 @@ fn grab_thumb_on_press(
     }
 }
 
-/// Plugin which registers the systems for updating the slider styles.
+// Plugin which registers the systems for updating the slider styles.
 pub(crate) struct SliderPlugin;
 
 impl Plugin for SliderPlugin {

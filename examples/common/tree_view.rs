@@ -1,11 +1,5 @@
-//! Tree-view dialog as a self-contained feature plugin: a collapsible world outliner
-//! where every node carries a checkbox and a label, non-leaf nodes fold their
-//! children on a chevron click, and a footer expands/collapses the whole tree.
-//!
-//! The whole thing is written against the public imm API — `horizontal`, `space`,
-//! `tool_button`, `checkbox`, `push_id` — with no bespoke widget. Per-node
-//! expand/checked state lives on the nodes themselves in one resource; the recursion
-//! keys each node with `push_id` so identity follows the data, not call order.
+//! Tree-view dialog feature plugin: a collapsible world outliner, each node a checkbox
+//! and a label, keyed by `push_id` so identity follows the data rather than call order.
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 
@@ -13,10 +7,8 @@ use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 
 const TITLE: &str = "World Outliner";
 
-/// Indent applied per depth level, in pixels.
 const INDENT: f32 = 14.0;
 
-/// One node in the outliner: a label, its own checkbox and fold state, and children.
 struct TreeNode {
     label: String,
     checked: bool,
@@ -50,7 +42,6 @@ pub struct OutlinerState {
 
 impl Default for OutlinerState {
     fn default() -> Self {
-        // Invented dungeon scene graph — deep enough to show nesting and folding.
         Self {
             roots: vec![
                 branch(
@@ -201,7 +192,7 @@ fn tree_view_dialog(
     }
 }
 
-/// Render one node's row, then recurse into its children when expanded.
+// Render one node's row, then recurse into its children when expanded.
 fn node_row(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
     let has_children = !node.children.is_empty();
     ui.horizontal(|ui| {
@@ -224,7 +215,7 @@ fn node_row(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
     }
 }
 
-/// Count `(checked, total)` leaves-and-branches over the whole forest.
+// Count `(checked, total)` leaves-and-branches over the whole forest.
 fn tree_totals(roots: &[TreeNode]) -> (usize, usize) {
     fn walk(node: &TreeNode, checked: &mut usize, total: &mut usize) {
         *total += 1;

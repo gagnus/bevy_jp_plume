@@ -261,7 +261,7 @@ fn number_input_on_focus_lost(
     }
 }
 
-/// Reflect any value write (self-commit or external, e.g. a paired slider) into the field's text.
+// Reflect any value write (self-commit or external, e.g. a paired slider) into the field's text.
 fn update_number_input_text(
     query_frames: Query<(&PlumeNumberInput, &SliderValue, &Children), Changed<SliderValue>>,
     mut query_fields: Query<&mut EditableText, With<TextInputField>>,
@@ -279,7 +279,7 @@ fn update_number_input_text(
     }
 }
 
-/// Plugin which keeps the number input's text in sync with its value.
+// Plugin which keeps the number input's text in sync with its value.
 pub(crate) struct NumberInputPlugin;
 
 impl Plugin for NumberInputPlugin {

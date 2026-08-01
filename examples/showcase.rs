@@ -1,6 +1,5 @@
-//! Combined showcase: the control gallery as a full-screen backdrop with every feature
-//! dialog floating over it, each toggled from the hub toolbar. Every dialog is the same
-//! plugin its standalone example mounts — this one just mounts them all at once.
+//! Combined showcase: the gallery as a full-screen backdrop with every feature dialog
+//! floating over it, each the same plugin its standalone example mounts.
 #[path = "common/mod.rs"]
 mod common;
 

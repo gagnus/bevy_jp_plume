@@ -68,22 +68,22 @@ pub struct PlumeColorPicker;
 #[reflect(Component, Clone, Default)]
 pub struct ColorPickerValue(pub Color);
 
-/// Marks the saturation/value plane child.
+// Marks the saturation/value plane child.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorPickerSv;
 
-/// Marks the hue bar child.
+// Marks the hue bar child.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorPickerHue;
 
-/// Marks the preview swatch child.
+// Marks the preview swatch child.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorPickerSwatch;
 
-/// Which color component a numeric field edits.
+// Which color component a numeric field edits.
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Reflect)]
 enum Channel {
     /// sRGB red.
@@ -101,7 +101,7 @@ enum Channel {
     V,
 }
 
-/// Marks a numeric field and names the color component it edits.
+// Marks a numeric field and names the color component it edits.
 #[derive(Component, Default, Clone, Copy, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorPickerChannel(Channel);
@@ -475,7 +475,7 @@ fn hue_gradient() -> Vec<Gradient> {
     })]
 }
 
-/// Registers the color-picker sync systems.
+// Registers the color-picker sync systems.
 pub(crate) struct ColorPickerPlugin;
 
 impl Plugin for ColorPickerPlugin {
