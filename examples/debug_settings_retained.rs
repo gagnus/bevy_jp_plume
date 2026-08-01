@@ -449,7 +449,6 @@ fn debug_column() -> impl Scene {
     }
 }
 
-// `Checked` as an optional patch, so one scene covers both states.
 fn maybe_checked(checked: bool) -> impl Scene {
     checked.then(|| bsn! { Checked })
 }
