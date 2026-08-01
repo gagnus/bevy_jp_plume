@@ -178,18 +178,16 @@ pub(crate) struct TabIndicator {
 }
 
 /// Tab container chrome: a clipped column for [`tab_strip`] and the tab bodies,
-/// with the initially selected tab seeded as `selected`.
+/// with the initially selected tab seeded as `selected`. Note this is not rounded.
 pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            border_radius: size::CORNER_RADIUS,
-            // Clipped so the square-cornered strip doesn't spill past the rounded frame.
             overflow: Overflow::clip(),
-            // A clipping frame has to be able to shrink below its content, or a
-            // bounded container can never size it and its body just clips away.
+            // Flex's `auto` minimum refuses to shrink below content, so a nested scroll
+            // area only bounds once every container above it can give. Re-floor with `.min_height()`.
             min_height: Val::ZERO,
         }
         TabsRoot
