@@ -136,7 +136,7 @@ pub enum PopupDismiss {
 }
 
 /// A floating popup panel: themed chrome, `Popover` auto-placement, and the
-/// configured dismiss behaviour. Existing is open — spawn one into a
+/// configured dismiss behavior. Existing is open — spawn one into a
 /// [`popup_socket`] to open it, [`close_popup`] to close it.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumePopupProps)]

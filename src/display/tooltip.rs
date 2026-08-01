@@ -292,7 +292,7 @@ const TOOLTIP_WIDTH: f32 = 280.0;
 // Far enough off-screen that an unmeasured tooltip never flashes into view.
 const PARKED_LEFT: f32 = -4000.0;
 
-// Invisible fixed-width positioning box; the visual panel centres inside it
+// Invisible fixed-width positioning box; the visual panel centers inside it
 // and hugs its content. A `FixedNode` layout root, so the panel's text wraps
 // at the box width rather than the anchor's, and its inset is viewport-
 // relative for [`place_tooltip_box`]. Spawns parked off-screen until measured.
@@ -367,7 +367,7 @@ fn rich_tooltip_panel(contents: Box<dyn SceneList>) -> impl Scene {
     }
 }
 
-// Positions each tooltip box: the panel centred under its anchor, slid
+// Positions each tooltip box: the panel centered under its anchor, slid
 // horizontally to stay inside the window, flipped above when out of room
 // below. Placement math uses the panel's rect (the box is wider); rects are
 // the last layout's, so it trails the anchor by a frame like

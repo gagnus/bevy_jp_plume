@@ -106,7 +106,7 @@ enum Channel {
 #[reflect(Component, Clone, Default)]
 struct ColorPickerChannel(Channel);
 
-// One labelled numeric field: a fixed-width caption and a number input carrying
+// One labeled numeric field: a fixed-width caption and a number input carrying
 // the channel marker. The value is seeded by the sync system on spawn.
 fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32) -> impl Scene {
     let suffix = matches!(channel, Channel::H).then(|| "\u{b0}".to_string());

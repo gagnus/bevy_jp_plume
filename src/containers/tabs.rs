@@ -545,7 +545,7 @@ fn update_tab_indicator(
             indicator.settled = true;
         }
 
-        // Scale is about the node's centre, so the translation targets centres too.
+        // Scale is about the node's center, so the translation targets centers too.
         let scale_x = indicator.width / INDICATOR_BASE_WIDTH;
         let translation_x = indicator.pos + indicator.width / 2.0 - INDICATOR_BASE_WIDTH / 2.0;
         if transform.scale.x != scale_x {

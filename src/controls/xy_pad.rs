@@ -66,7 +66,7 @@ pub struct XyPadValue(pub Vec2);
 
 impl Default for XyPadValue {
     fn default() -> Self {
-        // Centre, so a freshly spawned pad puts its reticle in the middle rather
+        // Center, so a freshly spawned pad puts its reticle in the middle rather
         // than pinned to the top-left corner.
         Self(Vec2::splat(0.5))
     }
@@ -137,7 +137,7 @@ impl PlumeXyPad {
                         height: {props.reticle_size.y},
                         border: RETICLE_BORDER,
                         border_radius: size::CORNER_RADIUS,
-                        // Half-reticle offsets centre the ring on the value position.
+                        // Half-reticle offsets center the ring on the value position.
                         margin: UiRect { left: {-props.reticle_size.x / 2.0}, top: {-props.reticle_size.y / 2.0} },
                     }
                     XyPadThumb
@@ -194,7 +194,7 @@ fn value_from_pointer(
         *transform,
         pointer_position * node_target.scale_factor() / ui_scale,
     )?;
-    // `normalize_point` is centre-origin (-0.5..0.5); shift to 0..1 and clamp so
+    // `normalize_point` is center-origin (-0.5..0.5); shift to 0..1 and clamp so
     // dragging outside the pad pins to the edge rather than overshooting.
     Some((pos + Vec2::splat(0.5)).clamp(Vec2::ZERO, Vec2::ONE))
 }

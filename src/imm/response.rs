@@ -61,7 +61,7 @@ pub mod kind {
     /// Kinds whose padding is layout rather than theming, so an app may set it:
     /// Excludes the themed containers (section, dialog).
     pub trait Padded {}
-    /// Kinds an app may give a height: they either centre their content (button,
+    /// Kinds an app may give a height: they either center their content (button,
     /// swatch) or hold whatever size they are handed (tabs, scroll area). Excludes
     /// controls whose height is font-driven or fixed geometry (caption, toggle,
     /// slider, checkbox, radio), where forcing one clips text or deforms the control.
@@ -712,9 +712,9 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         self.set_node::<ClipKey, _>((), |node, ()| node.overflow = Overflow::clip())
     }
 
-    /// Is this container pickable (`true`) or does it let pointer events fall 
+    /// Is this container pickable (`true`) or does it let pointer events fall
     /// through to whatever is behind (`false`). Default `true` for all containers
-    /// except `screen`. 
+    /// except `screen`.
     pub fn pickable(mut self, pickable: bool) -> Self {
         struct PickableKey;
         if self.key_changed::<PickableKey>(pickable) {

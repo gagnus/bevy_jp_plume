@@ -19,7 +19,7 @@ use crate::{
     display::TooltipShowing,
 };
 
-/// Synchronises an app [`Numeric`] with a control's [`SliderValue`] (slider,
+/// Synchronizes an app [`Numeric`] with a control's [`SliderValue`] (slider,
 /// number input).
 ///
 /// Who-wins: a pending user edit (via `ValueChange<f32>`) always lands in the app
@@ -114,7 +114,7 @@ fn focused_within<Cap: CapSet>(entity: &ImmEntity<'_, '_, '_, Cap>) -> bool {
         .is_some_and(|children| children.contains(&focused))
 }
 
-/// Synchronises an app `bool` with a self-updating checked control ([`Checked`]).
+/// Synchronizes an app `bool` with a self-updating checked control ([`Checked`]).
 pub struct CapabilityPlumeChecked;
 
 impl ImmCapability for CapabilityPlumeChecked {
@@ -179,7 +179,7 @@ where
     }
 }
 
-/// Synchronises an app `usize` index with a select's picked row.
+/// Synchronizes an app `usize` index with a select's picked row.
 ///
 /// The capability query only sees imm-managed entities, so all state flows
 /// through the select root: [`SelectedIndex`] (maintained by the retained layer)
@@ -236,7 +236,7 @@ where
     }
 }
 
-/// Synchronises an app `String` with a text input's buffer, via the
+/// Synchronizes an app `String` with a text input's buffer, via the
 /// [`TextInputValue`] mirror (reads) and [`SetValue<String>`] (writes).
 ///
 /// The user's typing always lands in the app string; app pushes are held back
@@ -296,7 +296,7 @@ where
     }
 }
 
-/// Synchronises an app [`Color`] with a color picker's [`ColorPickerValue`].
+/// Synchronizes an app [`Color`] with a color picker's [`ColorPickerValue`].
 ///
 /// The picker self-updates its value as the user drags, so this mirrors the
 /// xy/select/text pattern: a widget value that moved since the last sync is the
