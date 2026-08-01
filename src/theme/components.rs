@@ -137,8 +137,6 @@ pub struct InheritableTextColor(pub Color);
 // Text color of the span itself by theme token — plume-internal; apps use
 // [`ThemeTextSlot`]. Unlike the inheritable forms this works set directly on the
 // text entity, and is not inherited.
-// TODO: This is necessary because an entity with Propagate doesn't update itself, only its
-// descendants.
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
 #[derive(Reflect)]
