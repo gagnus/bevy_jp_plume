@@ -956,8 +956,8 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     }
 
     /// Set body padding.
-    pub fn pad(mut self, pad: UiRect) -> Self {
-        self.layout.body_padding = pad;
+    pub fn padding<T: Into<UiRect>>(mut self, padding: T) -> Self {
+        self.layout.body_padding = padding.into();
         self
     }
 
