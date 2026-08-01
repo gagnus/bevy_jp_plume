@@ -246,6 +246,7 @@ fn editor_ui(
             right_panel(ui, &mut state);
         })
         .grow()
+        .gap(px(1))
         .align_items(AlignItems::Stretch);
     })
     .background_slot(ThemeSlot::Neutral0);
@@ -420,6 +421,7 @@ fn center_panel(ui: &mut Ui, state: &mut Editor) {
         ui.vertical(|_| {}).grow().background(Color::BLACK);
         bottom_dock(ui, state);
     })
+    .gap(px(1))
     .grow();
 }
 
