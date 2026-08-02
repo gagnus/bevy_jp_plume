@@ -36,7 +36,7 @@ use crate::controls::DefaultWidth;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
-use crate::theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow};
+use crate::theme::{GradientAmount, ThemeBackgroundToken, UiTheme, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
 
@@ -157,7 +157,8 @@ impl PlumeSlider {
                             template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
                             UiTransform::default()
                             on(grab_thumb_on_press)
-                            ThemeBackgroundGradient(tokens::SLIDER_THUMB, GRADIENT_AMOUNT)
+                            ThemeBackgroundToken(tokens::SLIDER_THUMB)
+                            template_value(GradientAmount::STANDARD)
                         )
                     ]
                 )
@@ -173,13 +174,7 @@ struct SliderTrack;
 
 fn update_slider_styles(
     q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            Has<Flat>,
-        ),
+        (Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered),
         (
             With<PlumeSlider>,
             // Added<PlumeSlider> guarantees the initial style pass on spawn.
@@ -188,24 +183,22 @@ fn update_slider_styles(
                 Added<InteractionDisabled>,
                 Changed<Hovered>,
                 Added<Pressed>,
-                Added<Flat>,
             )>,
         ),
     >,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    for (slider_ent, disabled, pressed, hovered, flat) in q_sliders.iter() {
+    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
         apply_slider_styles(
             slider_ent,
             disabled,
             pressed,
             hovered.0,
-            flat,
             &q_children,
             &mut q_tracks,
             &q_thumbs,
@@ -217,22 +210,12 @@ fn update_slider_styles(
 }
 
 fn update_slider_styles_remove(
-    q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            Has<Flat>,
-        ),
-        With<PlumeSlider>,
-    >,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
-    mut removed_flat: RemovedComponents<Flat>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -240,15 +223,13 @@ fn update_slider_styles_remove(
     removed_disabled
         .read()
         .chain(remove_pressed.read())
-        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((slider_ent, disabled, pressed, hovered, flat)) = q_sliders.get(ent) {
+            if let Ok((slider_ent, disabled, pressed, hovered)) = q_sliders.get(ent) {
                 apply_slider_styles(
                     slider_ent,
                     disabled,
                     pressed,
                     hovered.0,
-                    flat,
                     &q_children,
                     &mut q_tracks,
                     &q_thumbs,
@@ -262,19 +243,10 @@ fn update_slider_styles_remove(
 
 // Re-apply slider styles to every slider when the theme changes.
 fn update_slider_styles_theme(
-    q_sliders: Query<
-        (
-            Entity,
-            Has<InteractionDisabled>,
-            Has<Pressed>,
-            &Hovered,
-            Has<Flat>,
-        ),
-        With<PlumeSlider>,
-    >,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -282,13 +254,12 @@ fn update_slider_styles_theme(
     if !theme.is_changed() {
         return;
     }
-    for (slider_ent, disabled, pressed, hovered, flat) in q_sliders.iter() {
+    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
         apply_slider_styles(
             slider_ent,
             disabled,
             pressed,
             hovered.0,
-            flat,
             &q_children,
             &mut q_tracks,
             &q_thumbs,
@@ -305,10 +276,9 @@ fn apply_slider_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
-    flat: bool,
     q_children: &Query<&Children>,
     q_tracks: &mut Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: &Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
     q_thumb_anim: &mut Query<&mut AnimState, With<SliderThumb>>,
     theme: &UiTheme,
     commands: &mut Commands,
@@ -334,7 +304,7 @@ fn apply_slider_styles(
     let mut track_background_gradient = q_tracks
         .get_mut(track_ent)
         .expect("track entity was just found via q_tracks::contains");
-    let (thumb_gradient_color, has_box_shadow) = q_thumbs
+    let (thumb_token, thumb_amount, has_box_shadow) = q_thumbs
         .get(thumb_ent)
         .expect("thumb entity was just found via q_thumbs::contains");
     set_slider_styles(
@@ -343,9 +313,8 @@ fn apply_slider_styles(
         disabled,
         pressed,
         hovered,
-        flat,
         &mut track_background_gradient,
-        thumb_gradient_color,
+        (thumb_token, thumb_amount),
         has_box_shadow,
         theme,
         commands,
@@ -358,9 +327,8 @@ fn set_slider_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
-    flat: bool,
     track_background_gradient: &mut BackgroundGradient,
-    thumb_gradient_color: &ThemeBackgroundGradient,
+    thumb_now: (&ThemeBackgroundToken, &GradientAmount),
     has_box_shadow: bool,
     theme: &UiTheme,
     commands: &mut Commands,
@@ -369,11 +337,12 @@ fn set_slider_styles(
     let bg_color = theme.color(&tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered));
     let thumb_token = tokens::sets::SLIDER_THUMB.pick(disabled, pressed, hovered);
 
-    // Disabled thumb reads inert: flat fill, no gradient.
-    let thumb_gradient_amount = if disabled || flat {
-        0.0
+    // Disabled thumb reads inert: flat fill, no gradient. A `Flat` slider is
+    // flattened by the theme layer, so the marker plays no part here.
+    let thumb_amount = if disabled {
+        GradientAmount(0.0)
     } else {
-        GRADIENT_AMOUNT
+        GradientAmount::STANDARD
     };
 
     let cursor_shape = match disabled {
@@ -388,10 +357,14 @@ fn set_slider_styles(
         linear_gradient.stops[3].color = bg_color;
     }
 
-    if thumb_gradient_color.0 != thumb_token || thumb_gradient_color.1 != thumb_gradient_amount {
+    let (thumb_token_now, thumb_amount_now) = thumb_now;
+    if thumb_token_now.0 != thumb_token {
         commands
             .entity(thumb_ent)
-            .insert(ThemeBackgroundGradient(thumb_token, thumb_gradient_amount));
+            .insert(ThemeBackgroundToken(thumb_token));
+    }
+    if *thumb_amount_now != thumb_amount {
+        commands.entity(thumb_ent).insert(thumb_amount);
     }
 
     let should_have_box_shadow = !disabled;

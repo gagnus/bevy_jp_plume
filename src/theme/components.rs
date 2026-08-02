@@ -2,11 +2,13 @@
 //! entity to have `ThemePlugin` color it.
 use bevy::app::{Inherited, Propagate, PropagateOver, PropagateStop};
 use bevy::color::{Alpha, Color, Luminance, Srgba};
+use bevy::ecs::change_detection::DetectChanges;
 use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::ChildOf;
-use bevy::ecs::lifecycle::Insert;
+use bevy::ecs::lifecycle::{Insert, RemovedComponents};
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Changed, Without};
+use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query, Res};
 use bevy::reflect::Reflect;
@@ -39,12 +41,29 @@ pub(crate) struct ThemeBackgroundToken(pub ThemeToken);
 #[reflect(Component, Clone)]
 pub struct ThemeBackgroundSlot(pub ThemeSlot);
 
-// The standard luminance adjust (+-) for an active control's [`ThemeBackgroundGradient`].
+// The standard luminance adjust (+-) for an active control's [`GradientAmount`].
 pub(crate) const GRADIENT_AMOUNT: f32 = 0.05;
 
-/// Opt-in marker: the entity's themed fills render flat (gradient amount 0).
-/// Honored by the gradient-drawn elements (button, checkbox, radio, toggle,
-/// slider thumb, section header); everything else ignores it.
+/// Shades an entity's themed background into a vertical gradient: the fill is
+/// lightened by this much at the top and darkened by it at the bottom. Zero — or
+/// no component at all — paints a flat fill instead.
+///
+/// Orthogonal to the source of the color, so it shades a [`ThemeBackgroundSlot`]
+/// as readily as one of plume's internal tokens. [`Flat`] overrides it to zero.
+#[derive(Component, Clone, Copy, Default, PartialEq)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct GradientAmount(pub f32);
+
+impl GradientAmount {
+    /// The shading plume's own raised controls carry.
+    pub const STANDARD: Self = Self(GRADIENT_AMOUNT);
+}
+
+/// Opt-in marker: the entity's themed fill renders flat, whatever
+/// [`GradientAmount`] it carries. Honored wherever a themed background is
+/// painted, so it works on plume's controls and on an app's own surfaces alike.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct Flat;
@@ -55,17 +74,8 @@ pub struct Flat;
 #[reflect(Component, Clone, Default)]
 pub struct Inert;
 
-// Fills an entity's background with a gentle top-to-bottom gradient derived from a
-// theme token — plume-internal (the gradient look belongs to plume's own controls).
-#[derive(Component, Clone, Default)]
-#[require(BackgroundGradient)]
-#[component(immutable)]
-#[derive(Reflect)]
-#[reflect(Component, Clone)]
-pub(crate) struct ThemeBackgroundGradient(pub ThemeToken, pub f32);
-
-// Build the vertical gradient a `ThemeBackgroundGradient` resolves to.
-pub(crate) fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
+// Build the gentle top-to-bottom gradient a non-zero `GradientAmount` resolves to.
+fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
     BackgroundGradient(vec![Gradient::Linear(LinearGradient {
         angle: LinearGradient::TO_BOTTOM,
         stops: vec![
@@ -182,42 +192,108 @@ pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
     }
 }
 
-pub(crate) fn on_changed_background_token(
-    insert: On<Insert, ThemeBackgroundToken>,
-    mut q_background: Query<
-        (&mut BackgroundColor, &ThemeBackgroundToken),
-        Changed<ThemeBackgroundToken>,
-    >,
-    theme: Res<UiTheme>,
-) {
-    if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
-        bg.0 = theme.color(&theme_bg.0);
+// Everything that decides what a themed background paints: where the color comes
+// from, and how hard it is shaded.
+type BackgroundSource<'w> = (
+    Entity,
+    Option<&'w ThemeBackgroundToken>,
+    Option<&'w ThemeBackgroundSlot>,
+    Option<&'w GradientAmount>,
+    Has<Flat>,
+);
+
+// Carries a themed background at all — the slot form wins where both are present,
+// which is how an app overrides a plume control's internal token.
+type HasBackground = Or<(With<ThemeBackgroundToken>, With<ThemeBackgroundSlot>)>;
+
+// Paint one themed background as either a gradient or a flat fill, and blank
+// whichever of the two is not in use: bevy draws `BackgroundGradient` over
+// `BackgroundColor`, so leaving both populated stacks two fills.
+fn paint_background(commands: &mut Commands, entity: Entity, color: Color, amount: f32) {
+    let mut entity = commands.entity(entity);
+    if amount == 0.0 {
+        entity
+            .insert(BackgroundColor(color))
+            .remove::<BackgroundGradient>();
+    } else {
+        entity.insert((
+            BackgroundColor(Color::NONE),
+            theme_background_gradient(color, amount),
+        ));
     }
 }
 
-pub(crate) fn on_changed_background_slot(
-    insert: On<Insert, ThemeBackgroundSlot>,
-    mut q_background: Query<
-        (&mut BackgroundColor, &ThemeBackgroundSlot),
-        Changed<ThemeBackgroundSlot>,
-    >,
-    theme: Res<UiTheme>,
+// Resolve one entity's source components against the theme and paint it.
+fn resolve_background(
+    commands: &mut Commands,
+    theme: &UiTheme,
+    (entity, token, slot, amount, flat): (
+        Entity,
+        Option<&ThemeBackgroundToken>,
+        Option<&ThemeBackgroundSlot>,
+        Option<&GradientAmount>,
+        bool,
+    ),
 ) {
-    if let Ok((mut bg, theme_bg)) = q_background.get_mut(insert.entity) {
-        bg.0 = theme.palette(theme_bg.0);
-    }
+    let color = match (slot, token) {
+        (Some(slot), _) => theme.palette(slot.0),
+        (None, Some(token)) => theme.color(&token.0),
+        (None, None) => return,
+    };
+    let amount = if flat {
+        0.0
+    } else {
+        amount.map_or(0.0, |a| a.0)
+    };
+    paint_background(commands, entity, color, amount);
 }
 
-pub(crate) fn on_changed_gradient(
-    insert: On<Insert, ThemeBackgroundGradient>,
-    mut q_gradient: Query<
-        (&mut BackgroundGradient, &ThemeBackgroundGradient),
-        Changed<ThemeBackgroundGradient>,
+// Repaints themed backgrounds whose source, shading or `Flat` marker moved, and
+// every one of them when the palette itself changes.
+//
+// A system rather than insert observers, because the inputs arrive on an entity
+// separately and in no fixed order — a scene supplies the token and `Flat` from
+// two different layers, and the control style systems write the token and the
+// amount as independent commands. Running once, late, after all of them have
+// landed is what makes the result order-independent.
+pub(crate) fn resolve_backgrounds(
+    q_backgrounds: Query<BackgroundSource, HasBackground>,
+    q_dirty: Query<
+        Entity,
+        (
+            HasBackground,
+            Or<(
+                Changed<ThemeBackgroundToken>,
+                Changed<ThemeBackgroundSlot>,
+                Changed<GradientAmount>,
+                Added<Flat>,
+            )>,
+        ),
     >,
+    mut removed_flat: RemovedComponents<Flat>,
+    mut removed_amount: RemovedComponents<GradientAmount>,
     theme: Res<UiTheme>,
+    mut commands: Commands,
 ) {
-    if let Ok((mut gradient, theme_grad)) = q_gradient.get_mut(insert.entity) {
-        *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
+    if theme.is_changed() {
+        // A palette swap repaints everything, so the dirty lists are moot — but
+        // they still have to be drained or they fire again next frame.
+        removed_flat.clear();
+        removed_amount.clear();
+        for source in &q_backgrounds {
+            resolve_background(&mut commands, &theme, source);
+        }
+        return;
+    }
+
+    for entity in q_dirty
+        .iter()
+        .chain(removed_flat.read())
+        .chain(removed_amount.read())
+    {
+        if let Ok(source) = q_backgrounds.get(entity) {
+            resolve_background(&mut commands, &theme, source);
+        }
     }
 }
 
@@ -265,17 +341,14 @@ pub(crate) fn on_changed_text_slot(
 // `TextColor` when the carrier is itself text (`PropagateOver` blocks the
 // output write there); direct `ThemeTextSlot`/`ThemeTextToken` keep precedence.
 pub(crate) type SelfColorFilter = (
-    bevy::ecs::query::Or<(
-        bevy::ecs::query::With<bevy::ui::widget::Text>,
-        bevy::ecs::query::With<bevy::text::EditableText>,
-    )>,
+    Or<(With<bevy::ui::widget::Text>, With<bevy::text::EditableText>)>,
     Without<ThemeTextSlot>,
     Without<ThemeTextToken>,
 );
 
 pub(crate) fn apply_inheritable_color(
     commands: &mut Commands,
-    entity: bevy::ecs::entity::Entity,
+    entity: Entity,
     color: Color,
     styles_own_text: bool,
 ) {

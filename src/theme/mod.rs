@@ -15,8 +15,8 @@ use bevy::platform::collections::HashMap;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::{EditableText, TextColor, TextFont};
+use bevy::ui::BorderColor;
 use bevy::ui::widget::Text;
-use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
 use rand::RngExt;
 
 use crate::tokens::ThemeToken;
@@ -78,16 +78,9 @@ impl UiTheme {
     }
 }
 
+// Themed backgrounds are refreshed by `resolve_backgrounds`, which owns the
+// gradient-or-flat decision and so has to handle the palette swap itself.
 fn update_theme(
-    mut q_background: Query<
-        (
-            &mut BackgroundColor,
-            Option<&ThemeBackgroundToken>,
-            Option<&ThemeBackgroundSlot>,
-        ),
-        Or<(With<ThemeBackgroundToken>, With<ThemeBackgroundSlot>)>,
-    >,
-    mut q_gradient: Query<(&mut BackgroundGradient, &ThemeBackgroundGradient)>,
     mut q_border: Query<
         (
             &mut BorderColor,
@@ -122,18 +115,6 @@ fn update_theme(
     mut commands: Commands,
 ) {
     if theme.is_changed() {
-        for (mut bg, theme_bg_token, theme_bg_slot) in q_background.iter_mut() {
-            if let Some(theme_bg_slot) = theme_bg_slot {
-                bg.0 = theme.palette(theme_bg_slot.0);
-            } else if let Some(theme_bg_token) = theme_bg_token {
-                bg.0 = theme.color(&theme_bg_token.0);
-            }
-        }
-
-        for (mut gradient, theme_grad) in q_gradient.iter_mut() {
-            *gradient = theme_background_gradient(theme.color(&theme_grad.0), theme_grad.1);
-        }
-
         for (mut border, theme_border_token, theme_border_slot) in q_border.iter_mut() {
             if let Some(theme_border_slot) = theme_border_slot {
                 border.set_all(theme.palette(theme_border_slot.0));
@@ -233,7 +214,7 @@ impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UiTheme>()
             .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
-            .add_systems(PostUpdate, update_theme)
+            .add_systems(PostUpdate, (update_theme, resolve_backgrounds))
             // After propagation, so text parented this frame has had its chance.
             .add_systems(
                 PostUpdate,
@@ -241,9 +222,6 @@ impl Plugin for ThemePlugin {
                     .after(PropagateSet::<TextColor>::default())
                     .after(PropagateSet::<TextFont>::default()),
             )
-            .add_observer(on_changed_background_token)
-            .add_observer(on_changed_background_slot)
-            .add_observer(on_changed_gradient)
             .add_observer(on_changed_border_token)
             .add_observer(on_changed_border_slot)
             .add_observer(on_changed_inheritable_text_token)

@@ -27,7 +27,7 @@ use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{
-    Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient, ThemeBorderToken,
+    GradientAmount, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,
 };
 use crate::tokens;
@@ -89,7 +89,8 @@ impl PlumeCheckbox {
                     TextStyleRelay
                     // Ring hugs the box, not the label row.
                     FocusIndicator
-                    ThemeBackgroundGradient(tokens::CHECKBOX_BG, 0.0)
+                    ThemeBackgroundToken(tokens::CHECKBOX_BG)
+                    GradientAmount(0.0)
                     Children [
                         (
                             Node {
@@ -158,7 +159,6 @@ fn update_checkbox_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
             &InheritableThemeTextToken,
         ),
         (
@@ -168,23 +168,21 @@ fn update_checkbox_styles(
                 Added<CheckboxFrame>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
-                Added<Flat>,
             )>,
         ),
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
+    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
-    for (checkbox_ent, disabled, checked, flat, font_color) in q_checkboxes.iter() {
+    for (checkbox_ent, disabled, checked, font_color) in q_checkboxes.iter() {
         apply_checkbox_styles(
             checkbox_ent,
             disabled,
             checked,
-            flat,
             font_color,
             &q_children,
             &q_bg,
@@ -202,32 +200,28 @@ fn update_checkbox_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
             &InheritableThemeTextToken,
         ),
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
+    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
     q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
-    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
-        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((checkbox_ent, disabled, checked, flat, font_color)) = q_checkboxes.get(ent) {
+            if let Ok((checkbox_ent, disabled, checked, font_color)) = q_checkboxes.get(ent) {
                 apply_checkbox_styles(
                     checkbox_ent,
                     disabled,
                     checked,
-                    flat,
                     font_color,
                     &q_children,
                     &q_bg,
@@ -245,10 +239,9 @@ fn apply_checkbox_styles(
     checkbox_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
     font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
-    q_bg: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<CheckboxBg>>,
+    q_bg: &Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
     q_outline: &Query<&ThemeBorderToken, With<CheckboxOutline>>,
     q_mark: &Query<&ThemeBorderToken, With<CheckboxMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<CheckboxMark>>,
@@ -277,7 +270,7 @@ fn apply_checkbox_styles(
     if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
         mark_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
-    let (bg_color, has_box_shadow) = q_bg
+    let (bg_token, bg_amount, has_box_shadow) = q_bg
         .get(bg_ent)
         .expect("bg entity was just found via q_bg::contains");
     let outline_color = q_outline
@@ -293,8 +286,8 @@ fn apply_checkbox_styles(
         mark_ent,
         disabled,
         checked,
-        flat,
-        bg_color,
+        bg_token,
+        bg_amount,
         outline_color,
         mark_color,
         font_color,
@@ -310,8 +303,8 @@ fn set_checkbox_styles(
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
-    bg_color: &ThemeBackgroundGradient,
+    bg_token_now: &ThemeBackgroundToken,
+    bg_amount_now: &GradientAmount,
     outline_color: &ThemeBorderToken,
     mark_color: &ThemeBorderToken,
     font_color: &InheritableThemeTextToken,
@@ -336,16 +329,19 @@ fn set_checkbox_styles(
         false => bevy::window::SystemCursorIcon::Pointer,
     };
 
-    // Gradient only when ticked, flat fill otherwise.
-    let bg_gradient_amount = if checked && !flat {
-        GRADIENT_AMOUNT
+    // Gradient only when ticked; the unticked fill is transparent.
+    let bg_amount = if checked {
+        GradientAmount::STANDARD
     } else {
-        0.0
+        GradientAmount(0.0)
     };
-    if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
+    if bg_token_now.0 != bg_token {
         commands
             .entity(bg_ent)
-            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
+            .insert(ThemeBackgroundToken(bg_token));
+    }
+    if *bg_amount_now != bg_amount {
+        commands.entity(bg_ent).insert(bg_amount);
     }
 
     if outline_color.0 != outline_token {

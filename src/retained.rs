@@ -33,8 +33,8 @@ pub use crate::display::{
     caption_small_caps, fa_icon,
 };
 pub use crate::theme::components::{
-    Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
-    ThemeBorderSlot, ThemeTextSlot, ThemedText, control_box_shadow,
+    Flat, GradientAmount, Inert, InheritableTextColor, InheritableThemeTextSlot,
+    ThemeBackgroundSlot, ThemeBorderSlot, ThemeTextSlot, ThemedText, control_box_shadow,
 };
 pub use crate::utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};

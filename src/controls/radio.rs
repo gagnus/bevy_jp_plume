@@ -27,7 +27,7 @@ use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{
-    Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient, ThemeBorderToken,
+    GradientAmount, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,
 };
 use crate::tokens;
@@ -91,7 +91,8 @@ impl PlumeRadio {
                 TextStyleRelay
                 // Ring hugs the disc, not the label row.
                 FocusIndicator
-                ThemeBackgroundGradient(tokens::RADIO_BG, 0.0)
+                ThemeBackgroundToken(tokens::RADIO_BG)
+                GradientAmount(0.0)
                 Children [
                     (
                         // Border ring overlaying the disc; only its color is themed.
@@ -120,7 +121,8 @@ impl PlumeRadio {
                         template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                         UiTransform::default()
                         Visibility::Hidden
-                        ThemeBackgroundGradient(tokens::RADIO_MARK)
+                        ThemeBackgroundToken(tokens::RADIO_MARK)
+                        GradientAmount(0.0)
                     )
                 ]),
                 {props.caption}
@@ -249,7 +251,6 @@ fn update_radio_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
             &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
@@ -260,23 +261,21 @@ fn update_radio_styles(
                 Added<PlumeRadio>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
-                Added<Flat>,
             )>,
         ),
     >,
     q_children: Query<&Children>,
-    q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
     q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    q_mark: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut commands: Commands,
 ) {
-    for (radio_ent, disabled, checked, flat, font_color, has_box_shadow) in q_radios.iter() {
+    for (radio_ent, disabled, checked, font_color, has_box_shadow) in q_radios.iter() {
         apply_radio_styles(
             radio_ent,
             disabled,
             checked,
-            flat,
             font_color,
             &q_children,
             &q_bg,
@@ -295,35 +294,31 @@ fn update_radio_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
             &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
         With<RadioButton>,
     >,
     q_children: Query<&Children>,
-    q_bg: Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
     q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    q_mark: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
-    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
-        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((radio_ent, disabled, checked, flat, font_color, has_box_shadow)) =
+            if let Ok((radio_ent, disabled, checked, font_color, has_box_shadow)) =
                 q_radios.get(ent)
             {
                 apply_radio_styles(
                     radio_ent,
                     disabled,
                     checked,
-                    flat,
                     font_color,
                     &q_children,
                     &q_bg,
@@ -342,12 +337,11 @@ fn apply_radio_styles(
     radio_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
     font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
-    q_bg: &Query<&ThemeBackgroundGradient, With<RadioBg>>,
+    q_bg: &Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
     q_outline: &Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: &Query<&ThemeBackgroundGradient, With<RadioMark>>,
+    q_mark: &Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<RadioMark>>,
     has_box_shadow: bool,
     commands: &mut Commands,
@@ -376,13 +370,13 @@ fn apply_radio_styles(
         mark_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
 
-    let bg = q_bg
+    let (bg_token, bg_amount) = q_bg
         .get(bg_ent)
         .expect("bg entity was just found via q_bg::contains");
     let outline_border = q_outline
         .get(outline_ent)
         .expect("outline entity was just found via q_outline::contains");
-    let mark_color = q_mark
+    let (mark_token, mark_amount) = q_mark
         .get(mark_ent)
         .expect("mark entity was just found via q_mark::contains");
     set_radio_styles(
@@ -392,10 +386,9 @@ fn apply_radio_styles(
         mark_ent,
         disabled,
         checked,
-        flat,
-        bg,
+        (bg_token, bg_amount),
         outline_border,
-        mark_color,
+        (mark_token, mark_amount),
         font_color,
         has_box_shadow,
         commands,
@@ -409,10 +402,9 @@ fn set_radio_styles(
     mark_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
-    bg: &ThemeBackgroundGradient,
+    bg_now: (&ThemeBackgroundToken, &GradientAmount),
     outline_border: &ThemeBorderToken,
-    mark_color: &ThemeBackgroundGradient,
+    mark_now: (&ThemeBackgroundToken, &GradientAmount),
     font_color: &InheritableThemeTextToken,
     has_box_shadow: bool,
     commands: &mut Commands,
@@ -441,22 +433,31 @@ fn set_radio_styles(
             .insert(ThemeBorderToken(outline_border_token));
     }
 
-    // Gradient only when checked, flat fill otherwise.
-    let bg_gradient_amount = if checked && !flat {
-        GRADIENT_AMOUNT
+    // Gradient only when checked; the unchecked fill is transparent.
+    let amount = if checked {
+        GradientAmount::STANDARD
     } else {
-        0.0
+        GradientAmount(0.0)
     };
-    if bg.0 != bg_token || bg.1 != bg_gradient_amount {
+
+    let (bg_token_now, bg_amount_now) = bg_now;
+    if bg_token_now.0 != bg_token {
         commands
             .entity(bg_ent)
-            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
+            .insert(ThemeBackgroundToken(bg_token));
+    }
+    if *bg_amount_now != amount {
+        commands.entity(bg_ent).insert(amount);
     }
 
-    if mark_color.0 != mark_token || bg.1 != bg_gradient_amount {
+    let (mark_token_now, mark_amount_now) = mark_now;
+    if mark_token_now.0 != mark_token {
         commands
             .entity(mark_ent)
-            .insert(ThemeBackgroundGradient(mark_token, bg_gradient_amount));
+            .insert(ThemeBackgroundToken(mark_token));
+    }
+    if *mark_amount_now != amount {
+        commands.entity(mark_ent).insert(amount);
     }
 
     if font_color.0 != font_color_token {

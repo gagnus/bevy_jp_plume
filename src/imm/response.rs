@@ -242,7 +242,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Set `Flat` (not all controls use this but a lot have a gradient).
+    /// Set `Flat`: the themed fill renders without its gradient shading.
     pub fn flat(mut self) -> Self {
         struct FlatKey;
         if self.key_changed::<FlatKey>(true) {

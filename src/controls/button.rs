@@ -26,8 +26,8 @@ use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
 use crate::theme::{
-    Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextToken, ThemeBackgroundGradient,
-    ThemeBorderToken, control_box_shadow,
+    Flat, GradientAmount, Inert, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
+    control_box_shadow,
 };
 use crate::tokens;
 
@@ -113,7 +113,8 @@ impl PlumeButton {
             TabIndex(0)
             FocusIndicator
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            ThemeBackgroundGradient(tokens::BUTTON_BG, GRADIENT_AMOUNT)
+            ThemeBackgroundToken(tokens::BUTTON_BG)
+            template_value(GradientAmount::STANDARD)
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
             TextStyleRelay
             Children [
@@ -184,7 +185,8 @@ fn update_button_styles(
             Has<Checkable>,
             Has<Flat>,
             Has<Inert>,
-            &ThemeBackgroundGradient,
+            &ThemeBackgroundToken,
+            &GradientAmount,
             &InheritableThemeTextToken,
             Has<BoxShadow>,
         ),
@@ -212,7 +214,8 @@ fn update_button_styles(
         checkable,
         flat,
         inert,
-        bg_color,
+        bg_token,
+        bg_amount,
         font_color,
         has_box_shadow,
     ) in q_buttons.iter()
@@ -227,7 +230,8 @@ fn update_button_styles(
             checkable,
             flat,
             inert,
-            bg_color,
+            bg_token,
+            bg_amount,
             font_color,
             has_box_shadow,
             outline_child(button_ent, &q_children, &q_outline),
@@ -260,7 +264,8 @@ fn update_button_styles_remove(
         Has<Checkable>,
         Has<Flat>,
         Has<Inert>,
-        &ThemeBackgroundGradient,
+        &ThemeBackgroundToken,
+        &GradientAmount,
         &InheritableThemeTextToken,
         Has<BoxShadow>,
     )>,
@@ -292,7 +297,8 @@ fn update_button_styles_remove(
                 checkable,
                 flat,
                 inert,
-                bg_color,
+                bg_token,
+                bg_amount,
                 font_color,
                 has_box_shadow,
             )) = q_buttons.get(ent)
@@ -307,7 +313,8 @@ fn update_button_styles_remove(
                     checkable,
                     flat,
                     inert,
-                    bg_color,
+                    bg_token,
+                    bg_amount,
                     font_color,
                     has_box_shadow,
                     outline_child(button_ent, &q_children, &q_outline),
@@ -327,7 +334,8 @@ fn set_button_styles(
     checkable: bool,
     flat: bool,
     inert: bool,
-    bg_color: &ThemeBackgroundGradient,
+    bg_token_now: &ThemeBackgroundToken,
+    bg_amount_now: &GradientAmount,
     font_color: &InheritableThemeTextToken,
     has_box_shadow: bool,
     outline: Option<(Entity, &ThemeBorderToken)>,
@@ -361,11 +369,12 @@ fn set_button_styles(
         (_, false) => tokens::BUTTON_TEXT,
     };
 
-    // Disabled buttons read as dead: flat fill, no gradient.
-    let bg_gradient_amount = if disabled || flat {
-        0.0
+    // Disabled buttons read as dead: flat fill, no gradient. A `Flat` button is
+    // flattened by the theme layer, so the marker plays no part here.
+    let bg_amount = if disabled {
+        GradientAmount(0.0)
     } else {
-        GRADIENT_AMOUNT
+        GradientAmount::STANDARD
     };
 
     let cursor_shape = match disabled {
@@ -373,10 +382,14 @@ fn set_button_styles(
         false => bevy::window::SystemCursorIcon::Pointer,
     };
 
-    if bg_color.0 != bg_token || bg_color.1 != bg_gradient_amount {
+    if bg_token_now.0 != bg_token {
         commands
             .entity(button_ent)
-            .insert(ThemeBackgroundGradient(bg_token, bg_gradient_amount));
+            .insert(ThemeBackgroundToken(bg_token));
+    }
+
+    if *bg_amount_now != bg_amount {
+        commands.entity(button_ent).insert(bg_amount);
     }
 
     if font_color.0 != text_token {

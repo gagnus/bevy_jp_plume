@@ -25,9 +25,7 @@ use crate::constants::size;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
-use crate::theme::{
-    Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderToken, control_box_shadow,
-};
+use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
 
@@ -63,7 +61,8 @@ impl PlumeToggleSwitch {
             TabIndex(0)
             FocusIndicator
             on(checkbox_self_update)
-            ThemeBackgroundGradient(tokens::SWITCH_BG, GRADIENT_AMOUNT)
+            ThemeBackgroundToken(tokens::SWITCH_BG)
+            template_value(GradientAmount::STANDARD)
             template_value(control_box_shadow())
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
@@ -100,7 +99,8 @@ impl PlumeToggleSwitch {
                     TextStyleRelay
                     template_value(AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL))
                     UiTransform::default()
-                    ThemeBackgroundGradient(tokens::SWITCH_SLIDE_BG, SLIDE_GRADIENT_AMOUNT)
+                    ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)
+                    GradientAmount(SLIDE_GRADIENT_AMOUNT)
                     template_value(control_box_shadow())
                 )
             ]
@@ -124,8 +124,8 @@ fn update_switch_styles(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
-            &ThemeBackgroundGradient,
+            &ThemeBackgroundToken,
+            &GradientAmount,
         ),
         (
             With<PlumeToggleSwitch>,
@@ -134,23 +134,24 @@ fn update_switch_styles(
                 Added<PlumeToggleSwitch>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
-                Added<Flat>,
             )>,
         ),
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
-    q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    q_slide: Query<
+        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut commands: Commands,
 ) {
-    for (switch_ent, disabled, checked, flat, pill_bg) in q_switches.iter() {
+    for (switch_ent, disabled, checked, pill_token, pill_amount) in q_switches.iter() {
         apply_switch_styles(
             switch_ent,
             disabled,
             checked,
-            flat,
-            pill_bg,
+            (pill_token, pill_amount),
             &q_children,
             &q_outline,
             &q_slide,
@@ -166,32 +167,34 @@ fn update_switch_styles_remove(
             Entity,
             Has<InteractionDisabled>,
             Has<Checked>,
-            Has<Flat>,
-            &ThemeBackgroundGradient,
+            &ThemeBackgroundToken,
+            &GradientAmount,
         ),
         With<PlumeToggleSwitch>,
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
-    q_slide: Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    q_slide: Query<
+        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
-    mut removed_flat: RemovedComponents<Flat>,
     mut commands: Commands,
 ) {
     removed_disabled
         .read()
         .chain(removed_checked.read())
-        .chain(removed_flat.read())
         .for_each(|ent| {
-            if let Ok((switch_ent, disabled, checked, flat, pill_bg)) = q_switches.get(ent) {
+            if let Ok((switch_ent, disabled, checked, pill_token, pill_amount)) =
+                q_switches.get(ent)
+            {
                 apply_switch_styles(
                     switch_ent,
                     disabled,
                     checked,
-                    flat,
-                    pill_bg,
+                    (pill_token, pill_amount),
                     &q_children,
                     &q_outline,
                     &q_slide,
@@ -207,11 +210,13 @@ fn apply_switch_styles(
     switch_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
-    pill_bg: &ThemeBackgroundGradient,
+    pill_now: (&ThemeBackgroundToken, &GradientAmount),
     q_children: &Query<&Children>,
     q_outline: &Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
-    q_slide: &Query<(&ThemeBackgroundGradient, Has<BoxShadow>), With<ToggleSwitchSlide>>,
+    q_slide: &Query<
+        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        With<ToggleSwitchSlide>,
+    >,
     q_slide_anim: &mut Query<&mut AnimState, With<ToggleSwitchSlide>>,
     commands: &mut Commands,
 ) {
@@ -235,7 +240,7 @@ fn apply_switch_styles(
     let outline_border = q_outline
         .get(outline_ent)
         .expect("outline entity was just found via q_outline::contains");
-    let (slide_bg, has_box_shadow) = q_slide
+    let (slide_token, slide_amount, has_box_shadow) = q_slide
         .get(slide_ent)
         .expect("slide entity was just found via q_slide::contains");
     set_switch_styles(
@@ -244,10 +249,9 @@ fn apply_switch_styles(
         slide_ent,
         disabled,
         checked,
-        flat,
-        pill_bg,
+        pill_now,
         outline_border,
-        slide_bg,
+        (slide_token, slide_amount),
         has_box_shadow,
         commands,
     );
@@ -259,10 +263,9 @@ fn set_switch_styles(
     slide_ent: Entity,
     disabled: bool,
     checked: bool,
-    flat: bool,
-    pill_bg: &ThemeBackgroundGradient,
+    pill_now: (&ThemeBackgroundToken, &GradientAmount),
     outline_border: &ThemeBorderToken,
-    slide_bg: &ThemeBackgroundGradient,
+    slide_now: (&ThemeBackgroundToken, &GradientAmount),
     has_box_shadow: bool,
     commands: &mut Commands,
 ) {
@@ -275,17 +278,27 @@ fn set_switch_styles(
         false => bevy::window::SystemCursorIcon::Pointer,
     };
 
-    // Disabled reads inert: flat fill, no gradient.
-    let gradient_amount = if disabled || flat {
-        0.0
+    // Disabled reads inert: flat fill, no gradient. A `Flat` switch is flattened
+    // by the theme layer, so the marker plays no part here.
+    let pill_amount = if disabled {
+        GradientAmount(0.0)
     } else {
-        GRADIENT_AMOUNT
+        GradientAmount::STANDARD
+    };
+    let slide_amount = if disabled {
+        GradientAmount(0.0)
+    } else {
+        GradientAmount(SLIDE_GRADIENT_AMOUNT)
     };
 
-    if pill_bg.0 != pill_bg_token || pill_bg.1 != gradient_amount {
+    let (pill_token_now, pill_amount_now) = pill_now;
+    if pill_token_now.0 != pill_bg_token {
         commands
             .entity(switch_ent)
-            .insert(ThemeBackgroundGradient(pill_bg_token, gradient_amount));
+            .insert(ThemeBackgroundToken(pill_bg_token));
+    }
+    if *pill_amount_now != pill_amount {
+        commands.entity(switch_ent).insert(pill_amount);
     }
 
     if outline_border.0 != outline_border_token {
@@ -294,17 +307,14 @@ fn set_switch_styles(
             .insert(ThemeBorderToken(outline_border_token));
     }
 
-    let slide_gradient_amount = if disabled || flat {
-        0.0
-    } else {
-        SLIDE_GRADIENT_AMOUNT
-    };
-
-    if slide_bg.0 != slide_bg_token || slide_bg.1 != slide_gradient_amount {
-        commands.entity(slide_ent).insert(ThemeBackgroundGradient(
-            slide_bg_token,
-            slide_gradient_amount,
-        ));
+    let (slide_token_now, slide_amount_now) = slide_now;
+    if slide_token_now.0 != slide_bg_token {
+        commands
+            .entity(slide_ent)
+            .insert(ThemeBackgroundToken(slide_bg_token));
+    }
+    if *slide_amount_now != slide_amount {
+        commands.entity(slide_ent).insert(slide_amount);
     }
 
     let should_have_box_shadow = !disabled;
