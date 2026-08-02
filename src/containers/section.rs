@@ -2,35 +2,30 @@
 use core::f32::consts::FRAC_PI_2;
 
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    observer::On,
-    query::{Added, Changed, Has, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
-use bevy::picking::{
-    PickingSystems,
-    events::{Click, Pointer},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Changed, Has, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
+use bevy::picking::PickingSystems;
+use bevy::picking::events::{Click, Pointer};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
 
-use crate::{
-    constants::{font_awesome, size},
-    cursor::EntityCursor,
-    display::fa_icon,
-    font_styles::TextStyleRelay,
-    theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken},
-    tokens,
-    utils::anim::AnimState,
-};
+use crate::constants::{font_awesome, size};
+use crate::cursor::EntityCursor;
+use crate::display::fa_icon;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
+use crate::tokens;
+use crate::utils::anim::AnimState;
 
 /// A section: a header bar over a body. Collapsible by default — clicking the
 /// header folds the body away.

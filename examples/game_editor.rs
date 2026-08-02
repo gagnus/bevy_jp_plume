@@ -5,7 +5,8 @@ use bevy_jp_plume::prelude::*;
 #[path = "common/mod.rs"]
 mod common;
 
-use common::{debug_hub::DebugDialogRegistry, theme_editor::ThemeEditorPlugin};
+use common::debug_hub::DebugDialogRegistry;
+use common::theme_editor::ThemeEditorPlugin;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 enum Tool {

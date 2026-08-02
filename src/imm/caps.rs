@@ -7,17 +7,15 @@ use bevy::input_focus::InputFocus;
 use bevy::platform::collections::HashMap;
 use bevy::ui::{Checked, Pressed};
 use bevy::ui_widgets::SliderValue;
+use bevy_immediate::ui::track_value_change_plugin::{NewValueChange, TrackValueChangePlugin};
 use bevy_immediate::{
     CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImmId, ImplCap, imm_id,
-    ui::track_value_change_plugin::{NewValueChange, TrackValueChangePlugin},
 };
 
+use crate::containers::CloseRequested;
+use crate::controls::{ColorPickerValue, SelectedIndex, SetValue, TextInputValue};
+use crate::display::TooltipShowing;
 use crate::utils::numeric::Numeric;
-use crate::{
-    containers::CloseRequested,
-    controls::{ColorPickerValue, SelectedIndex, SetValue, TextInputValue},
-    display::TooltipShowing,
-};
 
 /// Synchronizes an app [`Numeric`] with a control's [`SliderValue`] (slider,
 /// number input).

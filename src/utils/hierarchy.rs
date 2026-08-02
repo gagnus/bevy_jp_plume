@@ -1,11 +1,9 @@
 //! Marker-based hierarchy walks shared by controls.
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    query::With,
-    system::Query,
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::query::With;
+use bevy::ecs::system::Query;
 
 // `entity` itself if it carries marker `M`, else the nearest such ancestor.
 pub(crate) fn nearest_with<M: Component>(

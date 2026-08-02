@@ -13,22 +13,20 @@ use bevy::app::{
     HierarchyPropagatePlugin, Plugin, PluginGroup, PluginGroupBuilder, PostUpdate, PropagateSet,
 };
 use bevy::asset::embedded_asset;
-use bevy::ecs::{query::With, schedule::IntoScheduleConfigs};
+use bevy::ecs::query::With;
+use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::text::TextFont;
 use bevy::ui::UiSystems;
-
-use crate::{
-    controls::ControlsPlugin,
-    theme::{ThemePlugin, ThemedText, on_themed_text_inserted},
-    utils::{anim::UiAnimPlugin, cursor::CursorIconPlugin},
-};
-
-pub use utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
-
 // Short crate-internal paths for the modules the public surface re-exports
 // piecemeal through `style`, `retained` and `theme`.
 pub(crate) use theme::tokens;
+pub use utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub(crate) use utils::{constants, cursor, focus, font_styles, rounded_corners};
+
+use crate::controls::ControlsPlugin;
+use crate::theme::{ThemePlugin, ThemedText, on_themed_text_inserted};
+use crate::utils::anim::UiAnimPlugin;
+use crate::utils::cursor::CursorIconPlugin;
 
 mod containers;
 mod controls;

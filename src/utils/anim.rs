@@ -2,12 +2,10 @@
 //! `pos` toward a target each frame and applies it to the entity's transform.
 use bevy::app::{Plugin, Update};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    change_detection::DetectChanges,
-    component::Component,
-    reflect::ReflectComponent,
-    system::{Query, Res},
-};
+use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::component::Component;
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Query, Res};
 use bevy::math::{Rot2, TryStableInterpolate, Vec2};
 use bevy::reflect::Reflect;
 use bevy::time::Time;

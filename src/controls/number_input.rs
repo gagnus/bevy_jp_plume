@@ -1,34 +1,31 @@
 //! Numeric text field: type a value, commit on Enter or focus loss.
-use crate::constants::size;
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Changed, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, ResMut},
-};
-use bevy::input::{ButtonState, keyboard::KeyCode, keyboard::KeyboardInput};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Changed, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, ResMut};
+use bevy::input::ButtonState;
+use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::input_focus::{FocusLost, FocusedInput, InputFocus};
 use bevy::picking::PickingSystems;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
     EditableText, EditableTextFilter, FontSourceTemplate, Justify, LineBreak, TextLayout,
 };
 use bevy::ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange};
 
-use crate::{
-    constants::fonts,
-    controls::{
-        DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
-        text_input_suffix,
-    },
-    font_styles::InheritableFont,
+use crate::constants::{fonts, size};
+use crate::controls::{
+    DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
+    text_input_suffix,
 };
+use crate::font_styles::InheritableFont;
 
 /// A numeric input on the [`PlumeTextInput`](crate::controls::PlumeTextInput)
 /// frame, holding its value in [`SliderValue`] / [`SliderRange`] like a slider.

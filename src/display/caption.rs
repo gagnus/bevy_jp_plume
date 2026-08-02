@@ -5,11 +5,9 @@ use bevy::scene::{Scene, bsn, template_value};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor};
 use bevy::ui::widget::Text;
 
-use crate::{
-    constants::FaIcon,
-    font_styles::InheritableFont,
-    theme::{ThemeSlot, ThemeTextSlot, ThemedText},
-};
+use crate::constants::FaIcon;
+use crate::font_styles::InheritableFont;
+use crate::theme::{ThemeSlot, ThemeTextSlot, ThemedText};
 
 /// A caption within, say, a button using inherited color.
 pub fn caption(text: impl Into<String>) -> impl Scene {

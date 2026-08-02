@@ -458,7 +458,7 @@ Standing reference rather than journey: each of these is silent — the UI just 
 wrong — and each cost real time to diagnose.
 
 **Clipping a cell takes three things, not one.** A long label running under its
-neighbour needs `no_wrap()` on the caption, a wrapper that `grow()`s with
+neighbor needs `no_wrap()` on the caption, a wrapper that `grow()`s with
 `min_width(Val::ZERO)`, and `clip()` on *that wrapper*. All three matter:
 `row()`/`column()` default `min_height: 0` but leave `min_width: auto`, which flex
 resolves to the content size — so without the floor the wrapper refuses to shrink

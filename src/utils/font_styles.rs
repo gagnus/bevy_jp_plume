@@ -1,16 +1,15 @@
 //! A framework for inheritable font styles.
 use bevy::app::{Inherited, Propagate, PropagateOver};
 use bevy::asset::AssetServer;
-use bevy::ecs::{
-    component::Component,
-    entity::{Entity, EntityHashMap},
-    hierarchy::ChildOf,
-    query::{Changed, Has},
-    reflect::ReflectComponent,
-    system::{Commands, Local, Query, Res},
-    template::FromTemplate,
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::{Entity, EntityHashMap};
+use bevy::ecs::hierarchy::ChildOf;
+use bevy::ecs::query::{Changed, Has};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Commands, Local, Query, Res};
+use bevy::ecs::template::FromTemplate;
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::{
     EditableText, EmSize, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont,
 };
@@ -298,7 +297,6 @@ pub(crate) fn resolve_inheritable_font(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use bevy::MinimalPlugins;
     use bevy::app::{App, HierarchyPropagatePlugin, PostUpdate};
     use bevy::asset::{AssetApp, AssetPlugin};
@@ -307,6 +305,8 @@ mod tests {
     use bevy::ecs::spawn::SpawnRelated;
     use bevy::text::FontSize;
     use bevy::ui::widget::Text;
+
+    use super::*;
 
     // The font pipeline as `PlumeCorePlugin` wires it, minus everything that
     // needs a window: resolve, then propagate.

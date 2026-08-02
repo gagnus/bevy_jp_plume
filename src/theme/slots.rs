@@ -1,6 +1,7 @@
 //! ThemeSlot provides contextual names for the palette entries
 
-use bevy::{ecs::component::Component, reflect::Reflect};
+use bevy::ecs::component::Component;
+use bevy::reflect::Reflect;
 
 use crate::tokens::{self, ThemeToken};
 

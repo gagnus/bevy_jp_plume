@@ -4,31 +4,29 @@
 //! [`BackgroundGradient`](bevy::ui::BackgroundGradient) on it — so the same pad
 //! backs a saturation/value color plane or any other two-axis picker.
 use bevy::app::{Plugin, PostUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Changed, Has, With},
-    reflect::ReflectComponent,
-    system::{Query, Res},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Changed, Has, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Query, Res};
 use bevy::math::Vec2;
-use bevy::picking::{
-    Pickable,
-    events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::Pickable;
+use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType,
     UiGlobalTransform, UiRect, UiScale, Val, Val2, percent,
 };
 
-use crate::{
-    constants::size, cursor::EntityCursor, font_styles::TextStyleRelay, theme::ThemeBorderToken,
-    tokens,
-};
+use crate::constants::size;
+use crate::cursor::EntityCursor;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::ThemeBorderToken;
+use crate::tokens;
 
 // Ring thickness, proportioned to the reticle so it keeps its weight at any font
 // size (thicker than the hairline [`size::CONTROL_BORDER`], which is its own rule).

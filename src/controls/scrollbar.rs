@@ -1,27 +1,28 @@
 //! Themed scrollbar control.
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    query::{Changed, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-    template::EntityTemplate,
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::query::{Changed, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
+use bevy::ecs::template::EntityTemplate;
 use bevy::math::Vec2;
-use bevy::picking::{PickingSystems, hover::Hovered};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::PickingSystems;
+use bevy::picking::hover::Hovered;
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{ComputedNode, Node, UiSystems, Val};
 use bevy::ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, ScrollbarThumb};
 
-use crate::{
-    constants::size, cursor::EntityCursor, font_styles::TextStyleRelay,
-    theme::ThemeBackgroundToken, tokens,
-};
+use crate::constants::size;
+use crate::cursor::EntityCursor;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::ThemeBackgroundToken;
+use crate::tokens;
 
 /// A scrollbar. The `target` property should point to an entity whose
 /// [`ScrollPosition`](bevy::ui::ScrollPosition) will be synchronized with the scrollbar.

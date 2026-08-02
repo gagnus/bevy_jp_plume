@@ -7,12 +7,9 @@ use core::panic::Location;
 
 use bevy::asset::AssetServer;
 use bevy::color::Color;
-use bevy::ecs::hierarchy::Children;
-use bevy::ecs::{
-    entity::Entity,
-    hierarchy::ChildOf,
-    world::{EntityWorldMut, World},
-};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::world::{EntityWorldMut, World};
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSize, FontSource, LineBreak, TextLayout};
@@ -21,30 +18,27 @@ use bevy::ui::{
     UiRect, Val,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
-use bevy_immediate::ImmId;
-use bevy_immediate::{ImmEntity, imm_id, ui::disabled::ImmUiInteractionsDisabled};
+use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
+use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
 use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, PlumeCaps, Ui};
-use crate::controls::ButtonOutline;
+use crate::constants::size;
+use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible};
+use crate::controls::{
+    ButtonOutline, ButtonVariant, NoSelectAllOnFocus, PlumeNumberInput, set_select_max_visible,
+    text_input_placeholder, text_input_suffix,
+};
+use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::InheritableFont;
 use crate::imm::ImmPopup;
-use crate::utils::numeric::Numeric;
-use crate::{
-    constants::size,
-    containers::{PopupAnchor, SectionCollapsed, SectionCollapsible},
-    controls::{
-        ButtonVariant, NoSelectAllOnFocus, PlumeNumberInput, set_select_max_visible,
-        text_input_placeholder, text_input_suffix,
-    },
-    display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome},
-    rounded_corners::RoundedCorners,
-    style::fonts,
-    theme::{
-        Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
-        ThemeBorderSlot, ThemeSlot, control_box_shadow,
-    },
+use crate::rounded_corners::RoundedCorners;
+use crate::style::fonts;
+use crate::theme::{
+    Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
+    ThemeBorderSlot, ThemeSlot, control_box_shadow,
 };
+use crate::utils::numeric::Numeric;
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
 /// response typed to its kind, so kind-specific builders are compile-checked

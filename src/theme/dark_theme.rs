@@ -1,6 +1,7 @@
 //! The standard Plume dark theme.
-use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 use bevy::color::Oklcha;
+
+use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 
 /// Default plume dark palette editable inputs
 pub fn default_dark_palette() -> ThemeEditablePalette {

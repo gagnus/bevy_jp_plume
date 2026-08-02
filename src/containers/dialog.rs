@@ -1,12 +1,15 @@
 //! Movable floating dialog with a draggable title bar and close button.
 use bevy::color::{Alpha, Srgba};
+use bevy::ecs::component::Component;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::Children;
 use bevy::ecs::name::Name;
-use bevy::ecs::{
-    component::Component, event::EntityEvent, hierarchy::Children, observer::On,
-    reflect::ReflectComponent, system::Commands,
-};
+use bevy::ecs::observer::On;
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::Commands;
 use bevy::input_focus::tab_navigation::TabGroup;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::text::FontSourceTemplate;
 use bevy::ui::{
@@ -15,15 +18,15 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
-use crate::{
-    constants::{font_awesome, fonts, size},
-    containers::{flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node},
-    controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton},
-    display::fa_icon,
-    font_styles::{InheritableFont, TextStyleRelay},
-    theme::{Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken},
-    tokens,
+use crate::constants::{font_awesome, fonts, size};
+use crate::containers::{
+    flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
 };
+use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
+use crate::display::fa_icon;
+use crate::font_styles::{InheritableFont, TextStyleRelay};
+use crate::theme::{Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
+use crate::tokens;
 
 /// Props used to construct a [`PlumeDialog`] scene.
 pub struct PlumeDialogProps {

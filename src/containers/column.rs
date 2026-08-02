@@ -2,7 +2,8 @@
 use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignItems, Display, FlexDirection, Node, Val};
 
-use crate::{constants::size, font_styles::TextStyleRelay};
+use crate::constants::size;
+use crate::font_styles::TextStyleRelay;
 
 /// Vertical container that stretches children to its own width; content goes in
 /// `Children`.

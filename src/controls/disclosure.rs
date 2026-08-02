@@ -4,32 +4,29 @@ use core::f32::consts::FRAC_PI_2;
 use accesskit::Role;
 use bevy::a11y::AccessibilityNode;
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::Children,
-    lifecycle::RemovedComponents,
-    query::{Added, Has, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::query::{Added, Has, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{AlignItems, Checked, InteractionDisabled, JustifyContent, Node, UiTransform};
 use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
-use crate::{
-    constants::{font_awesome, size},
-    cursor::EntityCursor,
-    display::fa_icon,
-    focus::FocusIndicator,
-    theme::InheritableThemeTextToken,
-    tokens,
-    utils::anim::AnimState,
-};
+use crate::constants::{font_awesome, size};
+use crate::cursor::EntityCursor;
+use crate::display::fa_icon;
+use crate::focus::FocusIndicator;
+use crate::theme::InheritableThemeTextToken;
+use crate::tokens;
+use crate::utils::anim::AnimState;
 
 /// A disclosure twisty: a chevron that points right when closed and eases through
 /// a quarter turn to point down when open. No fill or border.

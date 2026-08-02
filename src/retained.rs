@@ -4,6 +4,14 @@
 //! Prefer `imm` — it drives all of this for you. Reach here to compose a widget
 //! plume does not offer, or to read a control's state off its entity.
 
+// The engine types a hand-built scene has to name: control state to read or
+// seed, and the Tab-traversal scope for a root that is not `screen()`. Kept on
+// plume's surface so an app never has to reach into `bevy_ui`/`bevy_ui_widgets`
+// (see the Plume-only surface rule in CLAUDE.md).
+pub use bevy::input_focus::tab_navigation::TabGroup;
+pub use bevy::ui::{Checked, InteractionDisabled, Selected};
+pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};
+
 pub use crate::containers::{
     PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
     PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps, PlumeSection,
@@ -31,11 +39,3 @@ pub use crate::theme::components::{
 pub use crate::utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};
 pub use crate::utils::font_styles::InheritableFont;
-
-// The engine types a hand-built scene has to name: control state to read or
-// seed, and the Tab-traversal scope for a root that is not `screen()`. Kept on
-// plume's surface so an app never has to reach into `bevy_ui`/`bevy_ui_widgets`
-// (see the Plume-only surface rule in CLAUDE.md).
-pub use bevy::input_focus::tab_navigation::TabGroup;
-pub use bevy::ui::{Checked, InteractionDisabled, Selected};
-pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};

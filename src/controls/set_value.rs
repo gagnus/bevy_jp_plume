@@ -2,14 +2,12 @@
 //! [`ValueChange`](bevy::ui_widgets::ValueChange).
 use bevy::app::{App, Plugin};
 use bevy::color::Color;
-use bevy::ecs::{
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Or, With},
-    system::{Commands, Query},
-};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Or, With};
+use bevy::ecs::system::{Commands, Query};
 use bevy::ui::Checked;
 use bevy::ui_widgets::{Checkbox, RadioButton, RadioGroup, SliderRange, SliderValue};
 

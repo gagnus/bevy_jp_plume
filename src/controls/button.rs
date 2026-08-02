@@ -1,18 +1,18 @@
 //! Styled button controls.
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::Children,
-    lifecycle::RemovedComponents,
-    query::{Added, Changed, Has, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::query::{Added, Changed, Has, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabIndex;
-use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::hover::Hovered;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
@@ -20,18 +20,16 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::Button;
 
-use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    focus::FocusIndicator,
-    font_styles::TextStyleRelay,
-    rounded_corners::RoundedCorners,
-    theme::{
-        Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextToken, ThemeBackgroundGradient,
-        ThemeBorderToken, control_box_shadow,
-    },
-    tokens,
+use crate::constants::size;
+use crate::cursor::EntityCursor;
+use crate::focus::FocusIndicator;
+use crate::font_styles::TextStyleRelay;
+use crate::rounded_corners::RoundedCorners;
+use crate::theme::{
+    Flat, GRADIENT_AMOUNT, Inert, InheritableThemeTextToken, ThemeBackgroundGradient,
+    ThemeBorderToken, control_box_shadow,
 };
+use crate::tokens;
 
 /// Color variants for buttons. This also functions as a component used by the dynamic styling
 /// system to identify which entities are buttons.

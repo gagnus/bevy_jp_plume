@@ -4,46 +4,40 @@ use core::ops::RangeInclusive;
 use core::panic::Location;
 
 use bevy::color::Color;
-use bevy::ecs::{
-    entity::Entity, event::EntityEvent, hierarchy::Children, observer::On, system::Commands,
-    world::EntityWorldMut,
-};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::observer::On;
+use bevy::ecs::system::Commands;
+use bevy::ecs::world::EntityWorldMut;
 use bevy::scene::{Scene, bsn, bsn_list, on, template_value};
-use bevy::ui::{JustifyContent, Node, UiRect, Val, widget::Text};
+use bevy::ui::widget::Text;
+use bevy::ui::{JustifyContent, Node, UiRect, Val};
 use bevy::ui_widgets::RequestClose;
-use bevy_immediate::{
-    ImmEntity, ImmId, ImmIdBuilder, imm_id,
-    ui::{
-        activated::ImmUiActivated, disabled::ImmUiInteractionsDisabled,
-        interaction::ImmUiInteraction,
-    },
-};
+use bevy_immediate::ui::activated::ImmUiActivated;
+use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
+use bevy_immediate::ui::interaction::ImmUiInteraction;
+use bevy_immediate::{ImmEntity, ImmId, ImmIdBuilder, imm_id};
 
-use crate::{
-    constants::{FaIcon, size},
-    containers::{
-        CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-        PopupAnchor, PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket,
-        row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body,
-        section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
-    },
-    controls::{
-        ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
-        PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
-        PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
-    },
-    display::{caption, caption_small_caps, fa_icon},
-    utils::numeric::Numeric,
+use super::caps::{
+    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue,
+    PlumeOccurrences,
 };
-
-use super::{
-    ImmEntityExt, ImmResponse, PlumeCaps, Ui,
-    caps::{
-        ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText,
-        ImmPlumeValue, PlumeOccurrences,
-    },
-    kind,
+use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
+use crate::constants::{FaIcon, size};
+use crate::containers::{
+    CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
+    PopupAnchor, PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket,
+    row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body,
+    section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
 };
+use crate::controls::{
+    ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
+    PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
+    PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+};
+use crate::display::{caption, caption_small_caps, fa_icon};
+use crate::utils::numeric::Numeric;
 
 /// Widget calls for immediate-mode systems. Implemented by [`Ui`]; import it
 /// wherever imm systems are written.
@@ -1434,12 +1428,13 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::imm::{ImmPlugin, PlumeRoot};
     use bevy::MinimalPlugins;
     use bevy::app::{App, Update};
     use bevy::ecs::resource::Resource;
     use bevy::ecs::system::ResMut;
+
+    use super::*;
+    use crate::imm::{ImmPlugin, PlumeRoot};
 
     // Records the sibling entities produced each frame, so the test can check both
     // within-frame distinctness and across-frame stability.

@@ -1,20 +1,20 @@
 //! Tab container: a strip of tab buttons over a body, one tab visible at a time.
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Has, With, Without},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
-    template::{EntityTemplate, FromTemplate},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Has, With, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::ecs::template::{EntityTemplate, FromTemplate};
 use bevy::input_focus::tab_navigation::TabIndex;
-use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::hover::Hovered;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::time::Time;
 use bevy::ui::{
@@ -24,17 +24,15 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Activate, Button, ValueChange};
 
-use crate::{
-    constants::{FaIcon, size},
-    controls::{SelectedIndex, SetValue},
-    cursor::EntityCursor,
-    display::{caption, fa_icon},
-    focus::FocusIndicator,
-    font_styles::TextStyleRelay,
-    theme::{InheritableThemeTextToken, ThemeBackgroundToken},
-    tokens,
-    utils::anim::{UI_ANIM_RATE, approach},
-};
+use crate::constants::{FaIcon, size};
+use crate::controls::{SelectedIndex, SetValue};
+use crate::cursor::EntityCursor;
+use crate::display::{caption, fa_icon};
+use crate::focus::FocusIndicator;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
+use crate::tokens;
+use crate::utils::anim::{UI_ANIM_RATE, approach};
 
 // Width the indicator node is spawned at; it is scaled to the selected tab's
 // width from there, so the slide is a transform and never a relayout.

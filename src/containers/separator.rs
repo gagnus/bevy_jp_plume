@@ -2,7 +2,9 @@
 use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignSelf, Node};
 
-use crate::{constants::size, theme::ThemeBackgroundToken, tokens};
+use crate::constants::size;
+use crate::theme::ThemeBackgroundToken;
+use crate::tokens;
 
 /// A hairline rule taking its orientation from the container it sits in:
 /// horizontal in a [`column`](crate::containers::column), vertical in a

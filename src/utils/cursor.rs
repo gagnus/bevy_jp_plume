@@ -1,19 +1,20 @@
 //! Provides a way to automatically set the mouse cursor based on hovered entity.
 use bevy::app::{App, Plugin, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::ChildOf,
-    query::{With, Without},
-    reflect::{ReflectComponent, ReflectResource},
-    resource::Resource,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
-    template::FromTemplate,
-};
-use bevy::picking::{PickingSystems, hover::HoverMap, pointer::PointerId};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::ChildOf;
+use bevy::ecs::query::{With, Without};
+use bevy::ecs::reflect::{ReflectComponent, ReflectResource};
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::ecs::template::FromTemplate;
+use bevy::picking::PickingSystems;
+use bevy::picking::hover::HoverMap;
+use bevy::picking::pointer::PointerId;
 use bevy::prelude::Deref;
-use bevy::reflect::{Reflect, std_traits::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::std_traits::ReflectDefault;
 #[cfg(feature = "custom_cursor")]
 use bevy::window::CustomCursor;
 use bevy::window::{CursorIcon, SystemCursorIcon, Window};

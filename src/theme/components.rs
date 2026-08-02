@@ -2,16 +2,15 @@
 //! entity to have `ThemePlugin` color it.
 use bevy::app::{Inherited, Propagate, PropagateOver, PropagateStop};
 use bevy::color::{Alpha, Color, Luminance, Srgba};
-use bevy::ecs::{
-    component::Component,
-    hierarchy::ChildOf,
-    lifecycle::Insert,
-    observer::On,
-    query::{Changed, Without},
-    reflect::ReflectComponent,
-    system::{Commands, Query, Res},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::hierarchy::ChildOf;
+use bevy::ecs::lifecycle::Insert;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Changed, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::TextColor;
 use bevy::ui::{
     BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,

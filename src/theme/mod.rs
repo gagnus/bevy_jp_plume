@@ -3,19 +3,17 @@ use bevy::app::{
     App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, PropagateOver, PropagateSet,
 };
 use bevy::color::{Alpha, Color, Oklcha};
-use bevy::ecs::query::Or;
-use bevy::ecs::{
-    change_detection::DetectChanges,
-    entity::Entity,
-    query::{Has, With, Without},
-    reflect::ReflectResource,
-    resource::Resource,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Local, Query, Res},
-};
+use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::{Has, Or, With, Without};
+use bevy::ecs::reflect::ReflectResource;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Local, Query, Res};
 use bevy::log::warn_once;
 use bevy::platform::collections::HashMap;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::{EditableText, TextColor, TextFont};
 use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, BackgroundGradient, BorderColor};
@@ -390,10 +388,9 @@ mod slots;
 
 pub(crate) mod tokens;
 
+pub(crate) use components::*;
 pub use editor::theme_editor;
 pub use slots::ThemeSlot;
-
-pub(crate) use components::*;
 
 /// The built-in parametric palettes, ready to hand to [`UiTheme::from`].
 pub mod palettes {

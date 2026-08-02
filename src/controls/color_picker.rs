@@ -6,17 +6,16 @@ use core::f32::consts::PI;
 
 use bevy::app::{Plugin, PostUpdate};
 use bevy::color::{Color, Hsva, Srgba};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    query::{Changed, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::query::{Changed, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::math::Vec2;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,

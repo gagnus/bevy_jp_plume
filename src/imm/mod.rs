@@ -5,24 +5,22 @@ mod caps;
 mod response;
 mod widgets;
 
-pub use crate::utils::numeric::Numeric;
-pub use response::{ImmResponse, kind};
-pub use widgets::{Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm};
-
 use core::sync::atomic::{AtomicU64, Ordering};
 
 use bevy::app::Plugin;
-use bevy::ecs::{
-    change_detection::Tick,
-    query::FilteredAccessSet,
-    system::{SystemMeta, SystemParam, SystemParamValidationError},
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
-};
+use bevy::ecs::change_detection::Tick;
+use bevy::ecs::query::FilteredAccessSet;
+use bevy::ecs::system::{SystemMeta, SystemParam, SystemParamValidationError};
+use bevy::ecs::world::World;
+use bevy::ecs::world::unsafe_world_cell::UnsafeWorldCell;
 use bevy_immediate::{
     BevyImmediatePlugin, Imm, ImmCtx, ImmEntity, ImmId, ImmIdBuilder, ImmScopeGuard,
 };
-
 use caps::PlumeOccurrences;
+pub use response::{ImmResponse, kind};
+pub use widgets::{Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm};
+
+pub use crate::utils::numeric::Numeric;
 
 /// Capability set powering plume's immediate-mode layer.
 #[doc(hidden)]
@@ -32,14 +30,12 @@ pub struct PlumeCaps;
 // a private module keeps it unnameable. Trait impls are not module-scoped, so
 // `PlumeCaps`' capabilities still apply crate-wide.
 mod cap_set {
-    use bevy_immediate::{
-        ImplCapsEmpty, impl_capability_set,
-        ui::{
-            activated::CapabilityUiActivated, base::CapabilityUiBase,
-            disabled::CapabilityUiDisabled, interaction::CapabilityUiInteraction,
-            layout_order::CapabilityUiLayoutOrder,
-        },
-    };
+    use bevy_immediate::ui::activated::CapabilityUiActivated;
+    use bevy_immediate::ui::base::CapabilityUiBase;
+    use bevy_immediate::ui::disabled::CapabilityUiDisabled;
+    use bevy_immediate::ui::interaction::CapabilityUiInteraction;
+    use bevy_immediate::ui::layout_order::CapabilityUiLayoutOrder;
+    use bevy_immediate::{ImplCapsEmpty, impl_capability_set};
 
     use super::PlumeCaps;
     use super::caps::{

@@ -3,22 +3,19 @@
 use std::sync::Arc;
 
 use bevy::app::{Plugin, PostUpdate, Update};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Added, Or, With},
-    reflect::ReflectComponent,
-    resource::Resource,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res, ResMut},
-};
-use bevy::picking::{
-    Pickable,
-    events::{Move, Pointer, Press},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res, ResMut};
+use bevy::picking::Pickable;
+use bevy::picking::events::{Move, Pointer, Press};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::FontSourceTemplate;
 use bevy::time::{Real, Time};

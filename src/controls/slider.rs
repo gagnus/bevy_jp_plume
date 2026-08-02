@@ -2,27 +2,24 @@
 use core::f32::consts::PI;
 
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    change_detection::DetectChanges,
-    component::Component,
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    observer::On,
-    query::{Added, Changed, Has, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
-    template::template,
-};
+use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Changed, Has, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::ecs::template::template;
 use bevy::input_focus::tab_navigation::TabIndex;
-use bevy::picking::{
-    PickingSystems,
-    events::{Pointer, Press},
-    hover::Hovered,
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::PickingSystems;
+use bevy::picking::events::{Pointer, Press};
+use bevy::picking::hover::Hovered;
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BackgroundGradient, BorderRadius, BoxShadow, ColorStop, Gradient,
@@ -34,16 +31,14 @@ use bevy::ui_widgets::{
     TrackClick, slider_self_update,
 };
 
+use crate::constants::size;
+use crate::controls::DefaultWidth;
+use crate::cursor::EntityCursor;
+use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
-use crate::{
-    constants::size,
-    controls::DefaultWidth,
-    cursor::EntityCursor,
-    focus::FocusIndicator,
-    theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow},
-    tokens,
-    utils::anim::AnimState,
-};
+use crate::theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, UiTheme, control_box_shadow};
+use crate::tokens;
+use crate::utils::anim::AnimState;
 
 // Thumb scale while grabbed: the knob grows this much on press for grab feedback.
 const THUMB_GRABBED_SCALE: f32 = 1.15;

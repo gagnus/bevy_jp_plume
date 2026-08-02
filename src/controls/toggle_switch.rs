@@ -2,19 +2,18 @@
 use accesskit::Role;
 use bevy::a11y::AccessibilityNode;
 use bevy::app::{Plugin, PreUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::Children,
-    lifecycle::RemovedComponents,
-    query::{Added, Has, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::query::{Added, Has, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::PickingSystems;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     BorderRadius, BoxShadow, Checked, InteractionDisabled, Node, PositionType, UiRect, UiTransform,
@@ -22,15 +21,15 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
+use crate::constants::size;
+use crate::cursor::EntityCursor;
+use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
-use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    focus::FocusIndicator,
-    theme::{Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderToken, control_box_shadow},
-    tokens,
-    utils::anim::AnimState,
+use crate::theme::{
+    Flat, GRADIENT_AMOUNT, ThemeBackgroundGradient, ThemeBorderToken, control_box_shadow,
 };
+use crate::tokens;
+use crate::utils::anim::AnimState;
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 

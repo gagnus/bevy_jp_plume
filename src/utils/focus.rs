@@ -1,23 +1,25 @@
 //! Focus outlines and Tab-order upkeep for focusable controls.
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
-use bevy::ecs::{
-    change_detection::DetectChanges,
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    query::{Added, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
-};
-use bevy::input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex};
+use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::query::{Added, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::input_focus::{InputFocus, InputFocusVisible};
 use bevy::picking::PickingSystems;
 use bevy::platform::collections::HashSet;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::ui::{InteractionDisabled, Outline, UiSystems};
 
-use crate::{constants::size, theme::UiTheme, tokens};
+use crate::constants::size;
+use crate::theme::UiTheme;
+use crate::tokens;
 
 /// Marker: show a focus outline on this entity when it or an ancestor is focused.
 #[derive(Component, Default, Clone, Reflect)]

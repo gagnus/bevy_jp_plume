@@ -4,32 +4,31 @@ use accesskit::Role;
 use bevy::a11y::AccessibilityNode;
 use bevy::app::{Inherited, Plugin, PostUpdate, PreUpdate, Update};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    change_detection::DetectChanges,
-    component::Component,
-    entity::Entity,
-    event::EntityEvent,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    observer::On,
-    query::{Added, Changed, Has, Or, With, Without},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs as _,
-    system::{Commands, Query, Res, ResMut},
-    world::World,
-};
-use bevy::input_focus::{
-    FocusCause, InputFocus, InputFocusVisible,
-    tab_navigation::{NavAction, TabIndex},
-};
+use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs as _;
+use bevy::ecs::system::{Commands, Query, Res, ResMut};
+use bevy::ecs::world::World;
+use bevy::input_focus::tab_navigation::{NavAction, TabIndex};
+use bevy::input_focus::{FocusCause, InputFocus, InputFocusVisible};
 use bevy::log::warn;
-use bevy::picking::{Pickable, PickingSystems, hover::Hovered};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::hover::Hovered;
+use bevy::picking::{Pickable, PickingSystems};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{LineBreak, TextFont, TextLayout};
+use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
-    JustifyContent, Node, Overflow, PositionType, Selected, UiRect, Val, px, widget::Text,
+    JustifyContent, Node, Overflow, PositionType, Selected, UiRect, Val, px,
 };
 use bevy::ui_widgets::{
     ActivateOnPress, ActiveDescendant, ControlOrientation, ListBox, ListItem, MenuAction,

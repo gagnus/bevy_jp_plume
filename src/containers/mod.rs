@@ -12,24 +12,23 @@ mod space;
 mod tabs;
 
 pub use column::column;
+pub(crate) use dialog::{CloseRequested, DialogChrome, DialogHeader, dialog_frame};
 pub use dialog::{
     PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
 };
 pub use flex_spacer::flex_spacer;
-pub use row::row;
-pub use screen::screen;
-pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
-pub use separator::separator;
-pub use space::space;
-pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body};
-
-pub(crate) use dialog::{CloseRequested, DialogChrome, DialogHeader, dialog_frame};
 pub(crate) use popup::*;
 pub use popup::{
     PlumePopup, PlumePopupProps, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket,
 };
+pub use row::row;
+pub use screen::screen;
 pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps};
+pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
+pub use separator::separator;
+pub use space::space;
+pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body};
 pub(crate) use tabs::{TabsPlugin, tab_button, tab_strip, tabs_frame};

@@ -1,19 +1,21 @@
 //! Color preview swatch: a themed rounded box filled with the current color.
 use bevy::app::{Plugin, PostUpdate};
 use bevy::color::Color;
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::Children,
-    query::Changed,
-    reflect::ReflectComponent,
-    system::{Commands, Query},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::query::Changed;
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Commands, Query};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{BackgroundColor, Node, PositionType, Val};
 
-use crate::{constants::size, font_styles::TextStyleRelay, theme::ThemeBorderToken, tokens};
+use crate::constants::size;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::ThemeBorderToken;
+use crate::tokens;
 
 /// A color swatch widget.
 ///

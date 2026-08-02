@@ -2,18 +2,17 @@
 //! viewport, and the scrollbar that drives it. Shared by the dialog body and the
 //! imm `scroll_area` widget.
 use bevy::app::{App, Plugin, PostUpdate};
-use bevy::ecs::{
-    entity::Entity,
-    hierarchy::Children,
-    query::With,
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Local, Query},
-    template::EntityTemplate,
-};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::Children;
+use bevy::ecs::query::With;
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Local, Query};
+use bevy::ecs::template::EntityTemplate;
 use bevy::log::warn_once;
 use bevy::math::Rect;
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, PositionType,
@@ -21,11 +20,9 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
-use crate::{
-    constants::size,
-    controls::{PlumeScrollbar, ScrollbarGutter},
-    font_styles::TextStyleRelay,
-};
+use crate::constants::size;
+use crate::controls::{PlumeScrollbar, ScrollbarGutter};
+use crate::font_styles::TextStyleRelay;
 
 // Bounded frame holding the scrolling viewport and its scrollbar. Distinct from a
 // plain column because `ScrollbarGutter` assigns `padding.right`, which elsewhere

@@ -6,18 +6,17 @@
 //! layer with no extra work.
 use bevy::app::{Plugin, PostUpdate};
 use bevy::color::Color;
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    lifecycle::Add,
-    observer::On,
-    query::{Changed, With, Without},
-    reflect::ReflectComponent,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::Add;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Changed, With, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::system::{Commands, Query};
 use bevy::picking::events::{Pointer, Press};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{AlignItems, Node, UiRect, Val};
 use bevy::ui_widgets::ValueChange;

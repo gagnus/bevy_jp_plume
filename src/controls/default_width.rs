@@ -1,15 +1,14 @@
 //! Parent-aware default width for controls with nothing inside to measure.
 use bevy::app::{Plugin, PostUpdate};
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::ChildOf,
-    query::{Has, Without},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::ChildOf;
+use bevy::ecs::query::{Has, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::ui::{AlignItems, AlignSelf, Display, FlexDirection, Node, UiSystems, Val};
 
 /// Width for a control with nothing inside to measure, applied only where the

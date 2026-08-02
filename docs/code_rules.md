@@ -89,7 +89,7 @@ fn outer(...) {
 
 Sometimes it's the only option. But destructuring or borrowing
 temporarily is usually better than `.clone()`. When a clone is
-intentional leave a one-line comment at the call site.
+intentional, leave a one-line comment at the call site.
 
 ## Comments
 
@@ -126,9 +126,15 @@ none.
 - Stale cross-references — if `Foo::bar` no longer exists, delete the
   comment, not just the link.
 
-## Run `cargo fmt` after every edit
+## Run `cargo +nightly fmt` after every edit
 
 Always. Keeps diffs clean.
+
+The `+nightly` is required, not a preference: `rustfmt.toml` sets
+`unstable_features = true` to get `group_imports` and
+`imports_granularity`, and stable rustfmt silently ignores both. A plain
+`cargo fmt` therefore leaves imports unsorted and produces a diff against
+whatever the next `cargo +nightly fmt` writes.
 
 # Bevy-specific naming
 

@@ -17,50 +17,47 @@ mod text_input;
 mod toggle_switch;
 mod xy_pad;
 
+use bevy::app::Plugin;
+// Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
+pub use bevy::text::EditableTextFilter;
+pub(crate) use button::ButtonOutline;
+use button::ButtonPlugin;
 pub use button::{ButtonVariant, PlumeButton, PlumeButtonProps, PlumeToolButton};
+use checkbox::CheckboxPlugin;
 pub use checkbox::{PlumeCheckbox, PlumeCheckboxProps};
+use color_edit::ColorEditPlugin;
 pub use color_edit::{PlumeColorEdit, PlumeColorEditProps};
+use color_picker::ColorPickerPlugin;
 pub use color_picker::{ColorPickerValue, PlumeColorPicker, PlumeColorPickerProps};
+use color_swatch::ColorSwatchPlugin;
 pub use color_swatch::{ColorSwatchValue, PlumeColorSwatch};
 pub use default_width::DefaultWidth;
+use default_width::DefaultWidthPlugin;
+use disclosure::DisclosurePlugin;
 pub use disclosure::PlumeDisclosure;
+use number_input::NumberInputPlugin;
 pub use number_input::{PlumeNumberInput, PlumeNumberInputProps};
+use radio::RadioPlugin;
 pub use radio::{PlumeRadio, PlumeRadioGroup, PlumeRadioProps};
+use scrollbar::ScrollbarPlugin;
 pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter};
+use select::SelectPlugin;
+pub(crate) use select::set_select_max_visible;
 pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, select_options};
 pub use set_value::SetValue;
 pub(crate) use set_value::SetValuePlugin;
+use slider::SliderPlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
+use text_input::TextInputPlugin;
 pub use text_input::{NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue};
-pub use toggle_switch::PlumeToggleSwitch;
-pub(crate) use xy_pad::{PlumeXyPad, XyPadLock, XyPadValue};
-
-pub(crate) use button::ButtonOutline;
-pub(crate) use select::set_select_max_visible;
 pub(crate) use text_input::{
     TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_placeholder,
     text_input_suffix,
 };
-
-// Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
-pub use bevy::text::EditableTextFilter;
-
-use bevy::app::Plugin;
-use button::ButtonPlugin;
-use checkbox::CheckboxPlugin;
-use color_edit::ColorEditPlugin;
-use color_picker::ColorPickerPlugin;
-use color_swatch::ColorSwatchPlugin;
-use default_width::DefaultWidthPlugin;
-use disclosure::DisclosurePlugin;
-use number_input::NumberInputPlugin;
-use radio::RadioPlugin;
-use scrollbar::ScrollbarPlugin;
-use select::SelectPlugin;
-use slider::SliderPlugin;
-use text_input::TextInputPlugin;
+pub use toggle_switch::PlumeToggleSwitch;
 use toggle_switch::ToggleSwitchPlugin;
 use xy_pad::XyPadPlugin;
+pub(crate) use xy_pad::{PlumeXyPad, XyPadLock, XyPadValue};
 
 // Plugin which registers all controls.
 pub(crate) struct ControlsPlugin;

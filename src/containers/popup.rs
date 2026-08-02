@@ -2,33 +2,29 @@
 //! plus the socket that mounts it without disturbing ancestor layout.
 use bevy::app::{Inherited, Last, Plugin, PostUpdate, Update};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    observer::On,
-    query::{Has, With, Without},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res},
-};
-use bevy::input::{ButtonInput, keyboard::KeyCode};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Has, With, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res};
+use bevy::input::ButtonInput;
+use bevy::input::keyboard::KeyCode;
 use bevy::input_focus::tab_navigation::TabGroup;
-use bevy::picking::{
-    Pickable,
-    events::{Drag, Pointer, Press},
-};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::picking::Pickable;
+use bevy::picking::events::{Drag, Pointer, Press};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::TextFont;
 use bevy::ui::{
     AlignItems, ComputedNode, Display, FixedNode, FlexDirection, GlobalZIndex, JustifyContent,
     Node, OverrideClip, PositionType, UiGlobalTransform, UiRect, UiSystems, UiTransform, Val, Val2,
 };
-use bevy::ui_widgets::{
-    MenuPopup,
-    popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
-};
+use bevy::ui_widgets::MenuPopup;
+use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 
 use super::dialog::CloseRequested;
 use crate::constants::size;

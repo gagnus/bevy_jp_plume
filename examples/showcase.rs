@@ -3,11 +3,11 @@
 #[path = "common/mod.rs"]
 mod common;
 
-use common::{
-    audio_settings::AudioSettingsPlugin, debug_settings::DebugSettingsPlugin,
-    player_profile::PlayerProfilePlugin, theme_editor::ThemeEditorPlugin,
-    tree_view::TreeViewPlugin,
-};
+use common::audio_settings::AudioSettingsPlugin;
+use common::debug_settings::DebugSettingsPlugin;
+use common::player_profile::PlayerProfilePlugin;
+use common::theme_editor::ThemeEditorPlugin;
+use common::tree_view::TreeViewPlugin;
 
 fn main() {
     let mut app = common::demo_app(true);

@@ -1,20 +1,19 @@
 //! Radio button control.
 use bevy::app::{Plugin, PreUpdate};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    observer::On,
-    query::{Added, Has, Or, With},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query},
-};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Has, Or, With};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems};
-use bevy::reflect::{Reflect, prelude::ReflectDefault};
+use bevy::reflect::Reflect;
+use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Checked, Display, FlexDirection, InteractionDisabled,
@@ -22,20 +21,17 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
+use crate::constants::size;
 use crate::controls::SetValue;
-
-use crate::{
-    constants::size,
-    cursor::EntityCursor,
-    focus::FocusIndicator,
-    font_styles::TextStyleRelay,
-    theme::{
-        Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient,
-        ThemeBorderToken, control_box_shadow,
-    },
-    tokens,
-    utils::anim::AnimState,
+use crate::cursor::EntityCursor;
+use crate::focus::FocusIndicator;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::{
+    Flat, GRADIENT_AMOUNT, InheritableThemeTextToken, ThemeBackgroundGradient, ThemeBorderToken,
+    control_box_shadow,
 };
+use crate::tokens;
+use crate::utils::anim::AnimState;
 
 /// A radio, spawnable as a scene component with optional [`PlumeRadioProps`].
 /// Emits [`bevy::ui_widgets::ValueChange<bool>`] (always true) when checked.

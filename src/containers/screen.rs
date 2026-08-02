@@ -7,7 +7,9 @@ use bevy::ui::{
     AlignItems, Display, FlexDirection, LayoutConfig, Node, PositionType, Val, percent,
 };
 
-use crate::{font_styles::InheritableFont, theme::InheritableThemeTextToken, tokens};
+use crate::font_styles::InheritableFont;
+use crate::theme::InheritableThemeTextToken;
+use crate::tokens;
 
 /// Transparent, full-bleed column filling the viewport.
 ///

@@ -1,19 +1,18 @@
 //! Editable text field and its decorative container.
 use bevy::app::{Plugin, PreUpdate};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::{
-    change_detection::{DetectChanges, DetectChangesMut},
-    component::Component,
-    entity::Entity,
-    hierarchy::{ChildOf, Children},
-    lifecycle::RemovedComponents,
-    observer::On,
-    query::{Added, Changed, Has, With, Without},
-    reflect::ReflectComponent,
-    schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res, ResMut},
-};
-use bevy::input_focus::{InputFocus, tab_navigation::TabIndex};
+use bevy::ecs::change_detection::{DetectChanges, DetectChangesMut};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, Changed, Has, With, Without};
+use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query, Res, ResMut};
+use bevy::input_focus::InputFocus;
+use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
@@ -22,22 +21,18 @@ use bevy::text::{
     EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
     TextReadWriteMode,
 };
+use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
-    widget::Text,
 };
 use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
-use crate::controls::SetValue;
-
-use crate::{
-    constants::size,
-    controls::DefaultWidth,
-    cursor::EntityCursor,
-    font_styles::TextStyleRelay,
-    theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme},
-    tokens,
-};
+use crate::constants::size;
+use crate::controls::{DefaultWidth, SetValue};
+use crate::cursor::EntityCursor;
+use crate::font_styles::TextStyleRelay;
+use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme};
+use crate::tokens;
 
 // Horizontal inset of the field content (border + padding = GAP, aligning the text
 // with button captions); the placeholder overlay must match it.
