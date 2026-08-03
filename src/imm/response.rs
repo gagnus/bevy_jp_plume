@@ -22,16 +22,15 @@ use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
 use super::caps::ImmPlumeTooltip;
-use super::{ImmEntityExt, PlumeCaps, Ui};
+use super::{ImmPopup, ImmEntityExt, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible};
 use crate::controls::{
-    ButtonOutline, ButtonVariant, NoSelectAllOnFocus, PlumeNumberInput, set_select_max_visible,
-    text_input_placeholder, text_input_suffix,
+    ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
+    set_select_max_visible, text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::InheritableFont;
-use crate::imm::ImmPopup;
 use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
 use crate::theme::{
@@ -541,6 +540,19 @@ impl ImmResponse<'_, '_, '_, kind::Slider> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Number> {
+    /// Whether dragging horizontally scrubs the value. Default is `true`;
+    /// disabling leaves click-to-type as the only pointer interaction.
+    pub fn draggable(mut self, draggable: bool) -> Self {
+        struct DraggableKey;
+        if self.key_changed::<DraggableKey>(draggable) {
+            match draggable {
+                true => self.e.entity_commands().remove::<NoDrag>(),
+                false => self.e.entity_commands().insert(NoDrag),
+            };
+        }
+        self
+    }
+
     /// Set the committable range (clamps typed/stepped values).
     pub fn range<T: Numeric>(mut self, range: RangeInclusive<T>) -> Self {
         let (min, max) = (range.start().to_f32(), range.end().to_f32());

@@ -36,7 +36,7 @@ use default_width::DefaultWidthPlugin;
 use disclosure::DisclosurePlugin;
 pub use disclosure::PlumeDisclosure;
 use number_input::NumberInputPlugin;
-pub use number_input::{PlumeNumberInput, PlumeNumberInputProps};
+pub use number_input::{NoDrag, PlumeNumberInput, PlumeNumberInputProps};
 use radio::RadioPlugin;
 pub use radio::{PlumeRadio, PlumeRadioGroup, PlumeRadioProps};
 use scrollbar::ScrollbarPlugin;
