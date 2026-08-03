@@ -16,7 +16,7 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::TextColor;
 use bevy::ui::{
     BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
-    InterpolationColorSpace, LinearGradient, Val, percent,
+    InterpolationColorSpace, LinearGradient, percent,
 };
 
 use super::UiTheme;
@@ -89,11 +89,11 @@ fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
 /// The standard drop shadow under a raised control.
 pub fn control_box_shadow() -> BoxShadow {
     BoxShadow::new(
-        Srgba::BLACK.with_alpha(0.4).into(),
+        Srgba::BLACK.with_alpha(0.5).into(),
+        size::GAP / 4.0,
+        size::GAP / 4.0,
         size::GAP / 8.0,
         size::GAP / 4.0,
-        Val::ZERO,
-        size::GAP / 2.0,
     )
 }
 

@@ -6,6 +6,7 @@ use bevy::ecs::entity::{Entity, EntityHashMap};
 use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::query::{Changed, Has};
 use bevy::ecs::reflect::ReflectComponent;
+use bevy::ecs::schedule::SystemSet;
 use bevy::ecs::system::{Commands, Local, Query, Res};
 use bevy::ecs::template::FromTemplate;
 use bevy::reflect::Reflect;
@@ -25,13 +26,19 @@ use {
 use crate::constants::{fonts, size};
 use crate::theme::ThemedText;
 
-// Structural node that relays inherited text styles without consuming them:
+/// Keeps a structural node on the text-style propagation chain without styling the
+/// node itself — stamp it on any wrapper authoring `Val::Em` inside a scaled subtree.
 // `ThemedText` keeps the wrapper on the propagation chain (the recurse filter
 // drops any entity without it), while `PropagateOver` keeps the propagated
 // `TextFont`/`TextColor` off the wrapper itself.
 #[derive(Component, Default, Clone)]
 #[require(ThemedText, PropagateOver::<TextFont>, PropagateOver::<TextColor>)]
-pub(crate) struct TextStyleRelay;
+pub struct TextStyleRelay;
+
+/// The `PostUpdate` pass resolving `InheritableFont`s into propagated fonts; a
+/// system writing font sizes (a zoom, a UI scale) runs `.before` it to land the same frame.
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FontStyleSystems;
 
 /// Establishes the font for descendant [`ThemedText`] entities; `None` fields
 /// inherit from the nearest ancestor source (the standard font at a root).

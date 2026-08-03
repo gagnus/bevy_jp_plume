@@ -38,4 +38,4 @@ pub use crate::theme::components::{
 };
 pub use crate::utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};
-pub use crate::utils::font_styles::InheritableFont;
+pub use crate::utils::font_styles::{FontStyleSystems, InheritableFont, TextStyleRelay};

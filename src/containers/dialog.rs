@@ -288,11 +288,11 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             // resolves to the standard font when nothing flows in from above.
             InheritableFont
             BoxShadow::new(
-                Srgba::BLACK.with_alpha(0.7).into(),
+                Srgba::BLACK.with_alpha(0.8).into(),
                 size::GAP / 2.0,
                 size::GAP,
                 size::GAP / 2.0,
-                size::GAP * 2.0,
+                size::GAP / 2.0,
             )
             LayoutConfig {
                 use_rounding: false,

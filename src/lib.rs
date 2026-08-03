@@ -82,7 +82,9 @@ impl Plugin for PlumeCorePlugin {
         // Before the set so it reads the `Inherited<TextFont>` of the previous run.
         app.add_systems(
             PostUpdate,
-            font_styles::resolve_inheritable_font.before(PropagateSet::<TextFont>::default()),
+            font_styles::resolve_inheritable_font
+                .in_set(font_styles::FontStyleSystems)
+                .before(PropagateSet::<TextFont>::default()),
         );
         // `Val::Em` chrome: nodes without an `EmSize` fall back to `RemSize`,
         // so the standard size must be the fallback; the mirror then feeds the
