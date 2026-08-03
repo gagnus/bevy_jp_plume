@@ -22,7 +22,7 @@ use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
 use super::caps::ImmPlumeTooltip;
-use super::{ImmPopup, ImmEntityExt, PlumeCaps, Ui};
+use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible};
 use crate::controls::{
