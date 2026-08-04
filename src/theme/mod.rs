@@ -300,13 +300,18 @@ pub struct ThemeEditablePalette {
 impl ThemeEditablePalette {
     /// A palette on a random hue, usually dark and sometimes complementary-neutral.
     pub fn random() -> Self {
-        let hue = rand::rng().random_range(0.0..360.0);
-        let complementary_neutral = rand::rng().random_bool(0.5);
-        let dark = rand::rng().random_bool(0.666);
-        if dark {
-            dark_theme::dark_palette(hue, complementary_neutral)
-        } else {
-            light_theme::light_palette(hue, complementary_neutral)
+        loop {
+            let hue = rand::rng().random_range(0.0..360.0);
+            let complementary_neutral = rand::rng().random_bool(0.5);
+            let dark = rand::rng().random_bool(0.666);
+            let palette = if dark {
+                dark_theme::dark_palette(hue, complementary_neutral)
+            } else {
+                light_theme::light_palette(hue, complementary_neutral)
+            };
+            if !palette.is_accent_close_to_danger() {
+                return palette;
+            }
         }
     }
 
