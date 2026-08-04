@@ -34,6 +34,7 @@ pub enum ThemeSlot {
 
     /// Disabled control chrome.
     /// - `BUTTON_BG_DISABLED`
+    /// - `BUTTON_DANGER_BG_DISABLED`
     /// - `BUTTON_OUTLINE_BORDER_DISABLED`
     /// - `BUTTON_PRIMARY_BG_DISABLED`
     /// - `CHECKBOX_BORDER_CHECKED_DISABLED`
@@ -109,6 +110,7 @@ pub enum ThemeSlot {
     Text1,
 
     /// Disabled bright text.
+    /// - `BUTTON_DANGER_TEXT_DISABLED`
     /// - `BUTTON_PRIMARY_TEXT_DISABLED`
     /// - `BUTTON_TEXT_DISABLED`
     /// - `OPTION_TEXT_DISABLED`
@@ -149,7 +151,20 @@ pub enum ThemeSlot {
     /// - `TEXT_INPUT_CURSOR`
     Accent3,
 
+    /// Base destructive-action color: the red counterpart to [`Accent0`](Self::Accent0).
+    /// - `BUTTON_DANGER_BG`
+    Danger0,
+
+    /// Destructive-action hover.
+    /// - `BUTTON_DANGER_BG_HOVER`
+    Danger1,
+
+    /// Destructive-action pressed.
+    /// - `BUTTON_DANGER_BG_PRESSED`
+    Danger2,
+
     /// Foreground over accent-filled components.
+    /// - `BUTTON_DANGER_TEXT`
     /// - `BUTTON_PRIMARY_TEXT`
     /// - `CHECKBOX_MARK`
     /// - `RADIO_MARK`
@@ -195,7 +210,7 @@ pub enum ThemeSlot {
 
 impl ThemeSlot {
     /// Every slot, in discriminant order (matches the resolved palette's storage).
-    pub const ALL: [ThemeSlot; 21] = [
+    pub const ALL: [ThemeSlot; 24] = [
         ThemeSlot::Neutral0,
         ThemeSlot::Neutral1,
         ThemeSlot::Neutral2,
@@ -211,6 +226,9 @@ impl ThemeSlot {
         ThemeSlot::Accent1,
         ThemeSlot::Accent2,
         ThemeSlot::Accent3,
+        ThemeSlot::Danger0,
+        ThemeSlot::Danger1,
+        ThemeSlot::Danger2,
         ThemeSlot::Contrast,
         ThemeSlot::FocusRing,
         ThemeSlot::XAxis,
@@ -240,6 +258,9 @@ impl ThemeSlot {
             ThemeSlot::Accent1 => "Accent 1",
             ThemeSlot::Accent2 => "Accent 2",
             ThemeSlot::Accent3 => "Accent 3",
+            ThemeSlot::Danger0 => "Danger 0",
+            ThemeSlot::Danger1 => "Danger 1",
+            ThemeSlot::Danger2 => "Danger 2",
             ThemeSlot::Contrast => "Contrast",
             ThemeSlot::FocusRing => "Focus Ring",
             ThemeSlot::XAxis => "X Axis",
@@ -262,6 +283,15 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::BUTTON_PRIMARY_BG_HOVER, ThemeSlot::Accent1),
     (tokens::BUTTON_PRIMARY_BG_PRESSED, ThemeSlot::Accent2),
     (tokens::BUTTON_PRIMARY_BG_DISABLED, ThemeSlot::Neutral3),
+    (tokens::BUTTON_DANGER_BG, ThemeSlot::Danger0),
+    (tokens::BUTTON_DANGER_BG_HOVER, ThemeSlot::Danger1),
+    (tokens::BUTTON_DANGER_BG_PRESSED, ThemeSlot::Danger2),
+    (tokens::BUTTON_DANGER_BG_DISABLED, ThemeSlot::Neutral3),
+    (tokens::BUTTON_DANGER_TEXT, ThemeSlot::Contrast),
+    (
+        tokens::BUTTON_DANGER_TEXT_DISABLED,
+        ThemeSlot::TextDisabled0,
+    ),
     (tokens::BUTTON_PLAIN_BG, ThemeSlot::Transparent),
     (tokens::BUTTON_PLAIN_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::BUTTON_PLAIN_BG_PRESSED, ThemeSlot::Neutral6),

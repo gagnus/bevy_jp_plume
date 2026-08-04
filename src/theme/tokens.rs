@@ -125,6 +125,25 @@ pub const BUTTON_PRIMARY_TEXT: ThemeToken = ThemeToken::new_static("plume.button
 pub const BUTTON_PRIMARY_TEXT_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.button.primary.txt.disabled");
 
+// Danger buttons (destructive actions)
+
+/// Danger button background
+pub const BUTTON_DANGER_BG: ThemeToken = ThemeToken::new_static("plume.button.danger.bg");
+/// Danger button background (hovered)
+pub const BUTTON_DANGER_BG_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.button.danger.bg.hover");
+/// Danger button background (disabled)
+pub const BUTTON_DANGER_BG_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.danger.bg.disabled");
+/// Danger button background (pressed)
+pub const BUTTON_DANGER_BG_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.button.danger.bg.pressed");
+/// Danger button text
+pub const BUTTON_DANGER_TEXT: ThemeToken = ThemeToken::new_static("plume.button.danger.txt");
+/// Danger button text (disabled)
+pub const BUTTON_DANGER_TEXT_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.danger.txt.disabled");
+
 // Plain buttons (transparent background)
 
 /// Plain button background
@@ -437,6 +456,13 @@ pub mod sets {
         hover: super::BUTTON_PRIMARY_BG_HOVER,
         pressed: super::BUTTON_PRIMARY_BG_PRESSED,
         disabled: super::BUTTON_PRIMARY_BG_DISABLED,
+    };
+    /// Danger button background
+    pub const BUTTON_DANGER_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_DANGER_BG,
+        hover: super::BUTTON_DANGER_BG_HOVER,
+        pressed: super::BUTTON_DANGER_BG_PRESSED,
+        disabled: super::BUTTON_DANGER_BG_DISABLED,
     };
     /// Plain button background
     pub const BUTTON_PLAIN_BG: InteractionTokens = InteractionTokens {

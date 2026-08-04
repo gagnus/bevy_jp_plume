@@ -103,6 +103,7 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
         ui.horizontal(|ui| {
             ui.button("Button").grow().enabled(!disabled);
             ui.button("Primary").primary().grow().enabled(!disabled);
+            ui.button("Danger").danger().grow().enabled(!disabled);
             ui.button("Outline")
                 .variant(ButtonVariant::Outline)
                 .grow()

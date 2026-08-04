@@ -42,6 +42,9 @@ pub enum ButtonVariant {
     /// A button with a more prominent color, this is used for "call to action" buttons,
     /// default buttons for dialog boxes, and so on.
     Primary,
+    /// As prominent as [`Primary`](Self::Primary) but in the theme's fixed red: the
+    /// confirm button for a destructive action (delete, discard, reset).
+    Danger,
     /// Don't display the button background unless hovering or pressed.
     Plain,
     /// A bordered button with no fill at rest: a secondary action that stays legible on any
@@ -341,7 +344,9 @@ fn set_button_styles(
     outline: Option<(Entity, &ThemeBorderToken)>,
     commands: &mut Commands,
 ) {
-    let variant = if checkable && checked {
+    // Checking a checkable button fills it, to read as on. `Danger` already fills, and
+    // its red is the point, so it stays itself rather than flipping to the accent.
+    let variant = if checkable && checked && *variant != ButtonVariant::Danger {
         &ButtonVariant::Primary
     } else {
         variant
@@ -350,6 +355,7 @@ fn set_button_styles(
     let bg_set = match variant {
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
+        ButtonVariant::Danger => tokens::sets::BUTTON_DANGER_BG,
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
         ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BG,
     };
@@ -365,6 +371,8 @@ fn set_button_styles(
     let text_token = match (variant, disabled) {
         (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
         (ButtonVariant::Primary, false) => tokens::BUTTON_PRIMARY_TEXT,
+        (ButtonVariant::Danger, true) => tokens::BUTTON_DANGER_TEXT_DISABLED,
+        (ButtonVariant::Danger, false) => tokens::BUTTON_DANGER_TEXT,
         (_, true) => tokens::BUTTON_TEXT_DISABLED,
         (_, false) => tokens::BUTTON_TEXT,
     };

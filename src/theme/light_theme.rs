@@ -5,7 +5,9 @@ use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 
 /// Default plume light palette editable inputs
 pub fn default_light_palette() -> ThemeEditablePalette {
-    light_palette(0.0, false)
+    // Blue, well clear of the fixed danger hue: a red accent would make a destructive
+    // action indistinguishable from the confirm button next to it.
+    light_palette(250.0, false)
 }
 
 /// Plume light palette editable inputs with given hue

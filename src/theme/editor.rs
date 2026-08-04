@@ -48,6 +48,8 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
         .collapsible(false);
     ui.section("Accent", |ui| ramp_rows(ui, &mut palette.accent, 0.5))
         .collapsible(false);
+    ui.section("Danger", |ui| danger_row(ui, palette))
+        .collapsible(false);
     ui.section("Text", |ui| {
         ramp_rows(ui, &mut palette.text, 0.2);
         param_row(
@@ -61,6 +63,18 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
         );
     })
     .collapsible(false);
+}
+
+// The danger ramp has no editable inputs — fixed hue and chroma over the accent's
+// lightnesses — so it gets swatches only, to show it tracking the accent sliders above.
+fn danger_row(ui: &mut Ui, palette: &ThemeEditablePalette) {
+    ui.horizontal(|ui| {
+        ui.caption("Derived");
+        for stop in 0..3 {
+            ui.color_swatch(palette.danger(stop))
+                .square(size::TEXT_HEIGHT);
+        }
+    });
 }
 
 // Hue, chroma, then one lightness row per stop. `chroma_max` keeps neutral/text

@@ -438,6 +438,12 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         self.variant(ButtonVariant::Primary)
     }
 
+    /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` — the confirm button for a
+    /// destructive action.
+    pub fn danger(self) -> Self {
+        self.variant(ButtonVariant::Danger)
+    }
+
     /// Don't respond to hover and press, so only the checked and disabled
     /// states move it.
     pub fn inert(mut self) -> Self {

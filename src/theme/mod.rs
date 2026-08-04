@@ -264,6 +264,13 @@ impl<const N: usize> OklchaArray<N> {
     }
 }
 
+/// Hue of the danger ramp, pinned across every palette so a destructive action is
+/// always the same red — near the sRGB red primary's Oklch hue.
+pub const DANGER_HUE: f32 = 29.0;
+
+/// Chroma of the danger ramp.
+pub const DANGER_CHROMA: f32 = 0.20;
+
 /// The theme's parametric palette.
 #[derive(Clone, Debug, PartialEq, Reflect)]
 pub struct ThemeEditablePalette {
@@ -271,7 +278,9 @@ pub struct ThemeEditablePalette {
     pub neutrals: OklchaArray<7>,
 
     /// Accent ramp; forms [`ThemeSlot::Accent0`]..=[`ThemeSlot::Accent3`]
-    /// (and [`ThemeSlot::FocusRing`], derived from `accent[0]`).
+    /// (and [`ThemeSlot::FocusRing`], derived from `accent[0]`, plus
+    /// [`ThemeSlot::Danger0`]..=[`ThemeSlot::Danger2`], which borrow its first three
+    /// lightnesses).
     pub accent: OklchaArray<4>,
 
     /// Foreground on accent-filled components (white in most themes); forms [`ThemeSlot::Contrast`].
@@ -308,6 +317,7 @@ impl ThemeEditablePalette {
     pub(crate) fn resolve(&self) -> ThemeResolvedPalette {
         let neutral = self.neutrals.to_array();
         let accent = self.accent.to_array();
+        let danger = self.danger_ramp().to_array();
         let text = self.text.to_array();
         let text_dim = text.map(|c| c.with_alpha(self.disabled_text_alpha_modifier));
         let axes: [Color; 3] = self.axes.map(Into::into);
@@ -318,6 +328,7 @@ impl ThemeEditablePalette {
         c[ThemeSlot::TextDisabled0 as usize..=ThemeSlot::TextDisabled1 as usize]
             .copy_from_slice(&text_dim);
         c[ThemeSlot::Accent0 as usize..=ThemeSlot::Accent3 as usize].copy_from_slice(&accent);
+        c[ThemeSlot::Danger0 as usize..=ThemeSlot::Danger2 as usize].copy_from_slice(&danger);
         c[ThemeSlot::Contrast as usize] = self.contrast.into();
         c[ThemeSlot::FocusRing as usize] = accent[0].with_alpha(0.5);
         c[ThemeSlot::XAxis as usize..=ThemeSlot::ZAxis as usize].copy_from_slice(&axes);
@@ -333,6 +344,10 @@ impl ThemeEditablePalette {
     pub fn accent(&self, index: usize) -> Color {
         self.accent.to_color(index)
     }
+    /// Danger ramp stop `index`.
+    pub fn danger(&self, index: usize) -> Color {
+        self.danger_ramp().to_color(index)
+    }
     /// Text ramp stop `index`.
     pub fn text(&self, index: usize) -> Color {
         self.text.to_color(index)
@@ -345,6 +360,15 @@ impl ThemeEditablePalette {
     /// Axis color `index`, in X, Y, Z order.
     pub fn axis(&self, index: usize) -> Color {
         self.axes[index].into()
+    }
+
+    // The danger ramp is not an editable input: only its lightnesses vary.
+    fn danger_ramp(&self) -> OklchaArray<3> {
+        OklchaArray {
+            hue: DANGER_HUE,
+            chroma: DANGER_CHROMA,
+            l: [self.accent.l[0], self.accent.l[1], self.accent.l[2]],
+        }
     }
 }
 
