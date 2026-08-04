@@ -310,6 +310,11 @@ impl ThemeEditablePalette {
         }
     }
 
+    pub(crate) fn is_accent_close_to_danger(&self) -> bool {
+        (self.accent.hue - DANGER_HUE).abs() < 15.
+            && (self.accent.chroma - DANGER_CHROMA).abs() < 0.05
+    }
+
     // Bake the parametric palette into one resolved color per `ThemeSlot`.
     //
     // The `copy_from_slice` blocks below rely on each ramp's variants being
