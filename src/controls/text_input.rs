@@ -296,6 +296,13 @@ fn text_input_on_set_value(
 #[reflect(Component, Default)]
 struct TextInputPlaceholder;
 
+// Marker for the dim, non-editable text in an input frame: the placeholder and the
+// suffix. They are siblings of the field, not descendants, so nothing reaches them by
+// inheritance and the frame's styler has to color them alongside it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct TextInputDimText;
+
 // Dim hint overlaying the field; absolute with auto vertical insets, so the frame's
 // align_items centers it without displacing the field.
 pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
@@ -307,6 +314,7 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
             left: TEXT_INPUT_PAD_X,
         }
         TextInputPlaceholder
+        TextInputDimText
         Pickable::IGNORE
     }
 }
@@ -319,6 +327,7 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
         Node {
             margin: {UiRect::left(size::GAP_TIGHT)},
         }
+        TextInputDimText
         // Never steal the click that focuses the field.
         Pickable::IGNORE
     }
@@ -354,6 +363,7 @@ fn update_text_input_styles(
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
+    q_dim: Query<(), With<TextInputDimText>>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -369,9 +379,11 @@ fn update_text_input_styles(
             field_ent,
             true,
             false,
+            &q_children,
             &q_bg,
             &q_border,
             &q_text,
+            &q_dim,
             &mut commands,
         );
     }
@@ -384,6 +396,7 @@ fn update_text_input_styles_remove(
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
+    q_dim: Query<(), With<TextInputDimText>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     focus: Res<InputFocus>,
     mut commands: Commands,
@@ -398,9 +411,11 @@ fn update_text_input_styles_remove(
                 field_ent,
                 false,
                 focused,
+                &q_children,
                 &q_bg,
                 &q_border,
                 &q_text,
+                &q_dim,
                 &mut commands,
             );
         }
@@ -415,6 +430,7 @@ fn update_text_input_styles_focus(
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
+    q_dim: Query<(), With<TextInputDimText>>,
     focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
@@ -431,9 +447,11 @@ fn update_text_input_styles_focus(
             field_ent,
             disabled,
             focused,
+            &q_children,
             &q_bg,
             &q_border,
             &q_text,
+            &q_dim,
             &mut commands,
         );
     }
@@ -459,9 +477,11 @@ fn set_text_input_styles(
     field_ent: Entity,
     disabled: bool,
     focused: bool,
+    q_children: &Query<&Children>,
     q_bg: &Query<&ThemeBackgroundToken>,
     q_border: &Query<&ThemeBorderToken>,
     q_text: &Query<&ThemeTextToken>,
+    q_dim: &Query<(), With<TextInputDimText>>,
     commands: &mut Commands,
 ) {
     let (bg_token, font_token, border_token) = match (disabled, focused) {
@@ -508,6 +528,22 @@ fn set_text_input_styles(
         commands
             .entity(field_ent)
             .insert(ThemeTextToken(font_token));
+    }
+
+    // Placeholder and suffix dim with the frame.
+    let dim_token = if disabled {
+        tokens::TEXT_INPUT_TEXT_DISABLED
+    } else {
+        tokens::TEXT_DIM
+    };
+    if let Ok(children) = q_children.get(frame_ent) {
+        for &child in children.iter().filter(|&&child| q_dim.contains(child)) {
+            if !q_text.get(child).is_ok_and(|text| text.0 == dim_token) {
+                commands
+                    .entity(child)
+                    .insert(ThemeTextToken(dim_token.clone()));
+            }
+        }
     }
 
     commands
