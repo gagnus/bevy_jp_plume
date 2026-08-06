@@ -131,6 +131,14 @@ pub mod size {
     /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
     /// so this tracks [`MEDIUM_FONT`].
     pub const ICON_WIDTH: Val = TEXT_HEIGHT;
+
+    /// Get inner f32 from a `Val` you know is em
+    pub const fn em_to_f32(p: Val) -> f32 {
+        match p {
+            Val::Em(v) => v,
+            _ => panic!(),
+        }
+    }
 }
 
 /// The FontAwesome face a glyph is drawn from.
