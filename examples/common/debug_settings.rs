@@ -209,6 +209,7 @@ fn debug_settings_dialog(
                     .show(|ui| {
                         ui.caption("Reset all settings to defaults?").no_wrap();
                         ui.horizontal(|ui| {
+                            ui.flex_spacer();
                             do_reset = ui.button("Reset").primary().clicked;
                             keep = ui.button("Keep").variant(ButtonVariant::Outline).clicked;
                         });

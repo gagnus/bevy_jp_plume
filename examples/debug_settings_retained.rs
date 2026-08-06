@@ -358,6 +358,7 @@ fn reset_confirm_popup() -> impl Scene {
                 (
                     row()
                     Children [
+                        flex_spacer(),
                         (
                             @PlumeButton {
                                 @caption: bsn! { caption("Reset") },
