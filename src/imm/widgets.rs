@@ -193,6 +193,22 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
 
+    /// Hosts a retained scene inside an immediate pass: `f` builds it the frame
+    /// its entity is first spawned and never again, applied to that entity, so
+    /// what the scene spawns belongs to it.
+    ///
+    /// The bridge for content an immediate pass must not rebuild every frame —
+    /// a canvas holding a layout the user drags around, a subtree some other
+    /// plugin owns and reconciles. Only the imm layer's own entities are
+    /// tracked, so a hosted scene is never reconciled against: it persists
+    /// untouched for as long as the call site keeps running, and is despawned
+    /// with its host when that stops. Keep the entity from the response if the
+    /// scene has to be found again.
+    ///
+    /// The host sizes it (`.grow()`, `.width()`, `.height()`); the scene styles
+    /// itself, since an imm pass cannot know what it built.
+    fn scene<S: Scene>(&mut self, f: impl FnOnce() -> S) -> ImmResponse<'_, 'w, 's, kind::Scene>;
+
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
     /// the trailing edge).
     fn flex_spacer(&mut self);
@@ -761,6 +777,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                     .on_spawn_apply_scene(move || scrollbar(viewport));
             });
         respond(entity, false)
+    }
+
+    #[track_caller]
+    fn scene<S: Scene>(&mut self, f: impl FnOnce() -> S) -> ImmResponse<'_, 'w, 's, kind::Scene> {
+        // Identity is the call site, as everywhere else: the builder runs once,
+        // so a scene whose inputs change is *not* rebuilt — that is the point of
+        // hosting one. Key the call site with `push_id` to swap it for another.
+        respond(self.ch_loc(loc_id(())).on_spawn_apply_scene(f), false)
     }
 
     #[track_caller]

@@ -93,6 +93,8 @@ pub mod kind {
     pub struct Screen;
     /// `dialog`
     pub struct Dialog;
+    /// `scene`.
+    pub struct Scene;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -110,6 +112,9 @@ pub mod kind {
     impl Heightable for ScrollArea {}
     impl Heightable for Row {}
     impl Heightable for Column {}
+    // A hosted scene holds whatever size it is handed; what it does with the
+    // room is the scene's own business.
+    impl Heightable for Scene {}
     impl Sizable for Button {}
     impl Sizable for Swatch {}
 }
