@@ -188,6 +188,7 @@ impl PlumePopup {
                 border: size::CONTAINER_BORDER,
                 padding: {props.padding},
                 border_radius: size::CORNER_RADIUS,
+                row_gap: size::GAP,
             }
             PlumePopup
             ThemeBackgroundToken(tokens::MENU_BG)
@@ -216,32 +217,30 @@ impl PlumePopup {
 // Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
 // measures them against the popup's parent — the socket, i.e. the anchor rect.
 fn popover_for(placement: PopupPlacement) -> Popover {
-    let popover = |positions| Popover {
-        positions,
-        window_margin: 10.0,
+    let sides = match placement {
+        PopupPlacement::Below => &[
+            PopoverSide::Bottom,
+            PopoverSide::Top,
+            PopoverSide::Right,
+            PopoverSide::Left,
+        ],
+        PopupPlacement::Beside => &[
+            PopoverSide::Right,
+            PopoverSide::Left,
+            PopoverSide::Bottom,
+            PopoverSide::Top,
+        ],
     };
-    match placement {
-        PopupPlacement::Below => {
-            let below = |side| PopoverPlacement {
-                side,
-                align: PopoverAlign::Start,
-                gap: 2.0,
-            };
-            popover(vec![below(PopoverSide::Bottom), below(PopoverSide::Top)])
-        }
-        PopupPlacement::Beside => {
-            let beside = |side| PopoverPlacement {
-                side,
-                align: PopoverAlign::Center,
-                gap: 8.0,
-            };
-            popover(vec![
-                beside(PopoverSide::Right),
-                beside(PopoverSide::Left),
-                beside(PopoverSide::Top),
-                beside(PopoverSide::Bottom),
-            ])
-        }
+
+    let side_to_position = |side| PopoverPlacement {
+        side,
+        align: PopoverAlign::Center,
+        gap: 8.0,
+    };
+
+    Popover {
+        positions: sides.map(side_to_position).to_vec(),
+        window_margin: 10.0,
     }
 }
 
