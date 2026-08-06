@@ -158,10 +158,14 @@ impl PlumeDialog {
     }
 }
 
-// Set on a dialog or popup root when a close is requested; the surface's owner
-// (the imm layer, or a control's observer) closes it rather than the requester.
+/// Set on a dialog or popup root when a close is requested; the surface's owner
+/// (the imm layer, or a control's observer) closes it rather than the
+/// requester. An app owning a retained [`PlumePopup`](crate::retained::PlumePopup)
+/// observes `On<Add, CloseRequested>` and calls
+/// [`close_popup`](crate::retained::close_popup) — without that, a dismissed
+/// popup is hidden but never despawned.
 #[derive(Component)]
-pub(crate) struct CloseRequested;
+pub struct CloseRequested;
 
 // Chrome-level input for [`dialog_frame`], kept distinct from the public
 // [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,

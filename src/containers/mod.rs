@@ -13,7 +13,8 @@ mod splitter;
 mod tabs;
 
 pub use column::column;
-pub(crate) use dialog::{CloseRequested, DialogChrome, DialogHeader, dialog_frame};
+pub use dialog::CloseRequested;
+pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_frame};
 pub use dialog::{
     PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
 };
