@@ -20,12 +20,13 @@ use bevy_immediate::ui::interaction::ImmUiInteraction;
 use bevy_immediate::{ImmEntity, ImmId, ImmIdBuilder, imm_id};
 
 use super::caps::{
-    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeText, ImmPlumeValue,
-    PlumeOccurrences,
+    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeSplit, ImmPlumeText,
+    ImmPlumeValue, PlumeOccurrences,
 };
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
+    SplitAxis, SplitPane, splitter_divider, splitter_frame, splitter_pane,
     CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
     PopupAnchor, PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket,
     row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body,
@@ -192,6 +193,33 @@ pub trait PlumeImm<'w, 's> {
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
+
+    /// Two panes side by side, with a divider the user drags to re-proportion
+    /// them.
+    ///
+    /// `fraction` is the first pane's share of the width, `0.0..=1.0`, written
+    /// back as the divider moves — so it is the app's to keep and to save.
+    /// `.changed` on the response reports a move. Chain
+    /// [`min_panes`](ImmResponse::min_panes) to stop either pane getting too
+    /// small.
+    ///
+    /// Two closures rather than a collector: a split has exactly two panes, and
+    /// that is worth saying in the signature rather than in the docs.
+    fn split_horizontal(
+        &mut self,
+        fraction: &mut f32,
+        first: impl FnOnce(&mut Ui<'w, 's>),
+        second: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Split>;
+
+    /// [`split_horizontal`](Self::split_horizontal) with the panes stacked and
+    /// the divider across them; `fraction` is the top pane's share of the height.
+    fn split_vertical(
+        &mut self,
+        fraction: &mut f32,
+        first: impl FnOnce(&mut Ui<'w, 's>),
+        second: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Split>;
 
     /// Hosts a retained scene inside an immediate pass: `f` builds it the frame
     /// its entity is first spawned and never again, applied to that entity, so
@@ -780,6 +808,26 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn split_horizontal(
+        &mut self,
+        fraction: &mut f32,
+        first: impl FnOnce(&mut Ui<'w, 's>),
+        second: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Split> {
+        split(self, SplitAxis::Horizontal, fraction, first, second)
+    }
+
+    #[track_caller]
+    fn split_vertical(
+        &mut self,
+        fraction: &mut f32,
+        first: impl FnOnce(&mut Ui<'w, 's>),
+        second: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Split> {
+        split(self, SplitAxis::Vertical, fraction, first, second)
+    }
+
+    #[track_caller]
     fn scene<S: Scene>(&mut self, f: impl FnOnce() -> S) -> ImmResponse<'_, 'w, 's, kind::Scene> {
         // Identity is the call site, as everywhere else: the builder runs once,
         // so a scene whose inputs change is *not* rebuilt — that is the point of
@@ -1362,6 +1410,36 @@ fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
             }
         }
     });
+}
+
+// Both split directions, which differ only in the axis they hand down. The
+// panes are imm children of the splitter's own frame rather than scene props:
+// their contents are immediate, and only a `Ui` can build those.
+#[track_caller]
+fn split<'r, 'w, 's>(
+    ui: &'r mut Ui<'w, 's>,
+    axis: SplitAxis,
+    fraction: &mut f32,
+    first: impl FnOnce(&mut Ui<'w, 's>),
+    second: impl FnOnce(&mut Ui<'w, 's>),
+) -> ImmResponse<'r, 'w, 's, kind::Split> {
+    let initial = *fraction;
+    let mut changed = false;
+    let entity = ui
+        .ch_loc(loc_id(()))
+        .on_spawn_apply_scene(move || splitter_frame(axis, initial))
+        .plume_split(fraction, &mut changed)
+        .add_ui(|ui| {
+            ui.ch_id("split_first")
+                .on_spawn_apply_scene(|| splitter_pane(SplitPane::First))
+                .add_ui(first);
+            ui.ch_id("split_divider")
+                .on_spawn_apply_scene(move || splitter_divider(axis));
+            ui.ch_id("split_second")
+                .on_spawn_apply_scene(|| splitter_pane(SplitPane::Second))
+                .add_ui(second);
+        });
+    respond(entity, changed)
 }
 
 fn respond<'r, 'w, 's, K>(

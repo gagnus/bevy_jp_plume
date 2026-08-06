@@ -37,6 +37,7 @@ use crate::theme::{
     Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
     ThemeBorderSlot, ThemeSlot, control_box_shadow,
 };
+use crate::containers::SplitMin;
 use crate::utils::numeric::Numeric;
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -95,6 +96,8 @@ pub mod kind {
     pub struct Dialog;
     /// `scene`.
     pub struct Scene;
+    /// `split_horizontal` / `split_vertical`.
+    pub struct Split;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -115,6 +118,10 @@ pub mod kind {
     // A hosted scene holds whatever size it is handed; what it does with the
     // room is the scene's own business.
     impl Heightable for Scene {}
+    // A splitter divides whatever room it is given, and picks up the pointer
+    // across the whole of it — so it takes the container builders too.
+    impl Container for Split {}
+    impl Heightable for Split {}
     impl Sizable for Button {}
     impl Sizable for Swatch {}
 }
@@ -692,6 +699,25 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
             self.e
                 .entity_commands()
                 .insert(SectionCollapsible(collapsible));
+        }
+        self
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::Split> {
+    /// How small each pane may get. [`Val::Auto`] — the default — is the pane's
+    /// own content minimum, which the layout enforces even though the divider
+    /// cannot resolve it in advance; any other `Val` also stops the drag.
+    ///
+    /// A splitter too small for both floors gives the first pane its own and
+    /// lets the second give, which is what flexbox does when it runs out of room.
+    pub fn min_panes(mut self, first: Val, second: Val) -> Self {
+        struct MinPanes;
+        // `Val` holds floats, so it is keyed by its `Debug` form, as elsewhere.
+        if self.key_changed::<MinPanes>(format!("{first:?}{second:?}")) {
+            self.e
+                .entity_commands()
+                .insert(SplitMin { first, second });
         }
         self
     }

@@ -96,6 +96,10 @@ impl SceneNode {
 pub struct Inspector {
     pub tab: Tab,
     pub ui_scale: f32,
+    /// The viewport's share of the width; the panel takes the rest. The
+    /// splitter writes it as its divider is dragged, which is what makes the
+    /// layout the app's to save rather than the widget's to remember.
+    pub split: f32,
     pub material: Material,
     pub hierarchy: Hierarchy,
 }
@@ -104,6 +108,7 @@ impl Inspector {
     pub fn initial() -> Self {
         Self {
             ui_scale: 1.0,
+            split: 0.75,
             ..Self::default()
         }
     }
@@ -172,12 +177,17 @@ impl Plugin for InspectorPanelPlugin {
 fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
     let mut s = state.clone();
     root.screen(|ui| {
-        ui.horizontal(|ui| {
-            viewport(ui);
-            panel(ui, &mut s);
-        })
-        .align_items(AlignItems::Stretch)
-        .grow();
+        // Same reason as `tab` below: the split can't stay borrowed from `s`
+        // while the pane bodies edit the rest of it.
+        let mut split = s.split;
+        ui.split_horizontal(&mut split, viewport, |ui| panel(ui, &mut s))
+            // The panel never gets narrower than its controls need; the
+            // viewport takes whatever its own content asks for, which is
+            // nothing, so it can be dragged shut.
+            .min_panes(Val::Auto, px(260))
+            .align_items(AlignItems::Stretch)
+            .grow();
+        s.split = split;
     })
     .background_slot(ThemeSlot::Neutral0);
     state.set_if_neq(s);
@@ -217,8 +227,8 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
         ui.separator();
         footer(ui, s);
     })
-    .width(percent(25))
-    .min_width(px(260))
+    // Width and minimum belong to the splitter now; the panel fills its pane.
+    .grow()
     .background_slot(ThemeSlot::Neutral1)
     .border_slot(UiRect::left(px(1)), ThemeSlot::Neutral3)
     .padding(size::PAD)

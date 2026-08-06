@@ -58,6 +58,7 @@ impl Plugin for PlumeCorePlugin {
             display::TooltipPlugin,
             containers::ScrollAreaPlugin,
             containers::SectionPlugin,
+            containers::SplitterPlugin,
             containers::TabsPlugin,
             CursorIconPlugin,
             ThemePlugin,

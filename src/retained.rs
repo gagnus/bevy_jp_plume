@@ -15,9 +15,10 @@ pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};
 pub use crate::containers::{
     PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
     PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps, PlumeSection,
-    PlumeSectionProps, PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, PopupDismiss,
-    PopupPlacement, PopupSocket, SectionCollapsed, TabTarget, close_popup, column, flex_spacer,
-    popup_socket, row, screen, separator, space, tab_body,
+    PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps, PlumeTabs,
+    PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, SectionCollapsed, SplitAxis,
+    SplitFraction, SplitMin, TabTarget, close_popup, column, flex_spacer, popup_socket, row,
+    screen, separator, space, tab_body,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,

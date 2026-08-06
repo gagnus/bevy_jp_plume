@@ -5,7 +5,8 @@ use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Activate, Checked, ColorSwatchValue, InheritableFont, PlumeColorEdit, PlumeColorPicker,
     PlumeColorSwatch, PlumeDisclosure, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection,
-    PlumeSlider, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+    PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch,
+    PlumeToolButton,
     SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot, ThemeBorderSlot,
     Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon, flex_spacer, row, screen,
     separator, space, tab_body,
@@ -261,12 +262,18 @@ fn root() -> impl Scene {
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         Children [
             (
-                row()
-                Node { flex_grow: 1.0, align_items: AlignItems::Stretch }
-                Children [
-                    viewport(),
-                    panel(),
-                ]
+                // The viewport and the panel, with a divider to re-proportion
+                // them. The panel's old `width: 25%` is the starting fraction
+                // and its `min_width` is now the splitter's floor, so the drag
+                // stops where the layout would have anyway. The viewport's
+                // minimum is `Auto` — whatever its content needs.
+                @PlumeSplitter {
+                    @fraction: 0.75,
+                    @min_second: {px(260)},
+                    @first: bsn_list![ viewport() ],
+                    @second: bsn_list![ panel() ],
+                }
+                Node { flex_grow: 1.0 }
             ),
         ]
     }
@@ -303,11 +310,11 @@ fn panel() -> impl Scene {
     bsn! {
         column()
         InspectorPanel
+        // Width and minimum belong to the splitter now; the panel just fills
+        // the pane it is given.
         Node {
-            width: percent(25),
-            min_width: px(260),
+            flex_grow: 1.0,
             padding: {size::PAD},
-            border: {UiRect::left(px(1))},
         }
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
         template_value(ThemeBorderSlot(ThemeSlot::Neutral3))
