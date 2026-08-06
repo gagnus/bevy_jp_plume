@@ -507,9 +507,12 @@ pub(crate) struct SplitterPlugin;
 
 impl Plugin for SplitterPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_systems(PreUpdate, update_divider_styles.in_set(PickingSystems::Last))
-            .add_systems(PostUpdate, apply_split.before(UiSystems::Layout))
-            // After the layout it is measuring.
-            .add_systems(PostUpdate, snap_split_to_layout.after(UiSystems::Layout));
+        app.add_systems(
+            PreUpdate,
+            update_divider_styles.in_set(PickingSystems::Last),
+        )
+        .add_systems(PostUpdate, apply_split.before(UiSystems::Layout))
+        // After the layout it is measuring.
+        .add_systems(PostUpdate, snap_split_to_layout.after(UiSystems::Layout));
     }
 }

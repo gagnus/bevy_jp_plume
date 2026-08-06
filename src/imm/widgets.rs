@@ -26,11 +26,11 @@ use super::caps::{
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
-    SplitAxis, SplitPane, splitter_divider, splitter_frame, splitter_pane,
     CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-    PopupAnchor, PopupDismiss, PopupPlacement, column, dialog_frame, flex_spacer, popup_socket,
-    row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar, section_body,
-    section_frame, separator, space, tab_body, tab_button, tab_strip, tabs_frame,
+    PopupAnchor, PopupDismiss, PopupPlacement, SplitAxis, SplitPane, column, dialog_frame,
+    flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame, scroll_viewport,
+    scrollbar, section_body, section_frame, separator, space, splitter_divider, splitter_frame,
+    splitter_pane, tab_body, tab_button, tab_strip, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,

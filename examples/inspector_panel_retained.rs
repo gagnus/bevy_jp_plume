@@ -6,10 +6,9 @@ use bevy_jp_plume::retained::{
     Activate, Checked, ColorSwatchValue, InheritableFont, PlumeColorEdit, PlumeColorPicker,
     PlumeColorSwatch, PlumeDisclosure, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection,
     PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch,
-    PlumeToolButton,
-    SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot, ThemeBorderSlot,
-    Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon, flex_spacer, row, screen,
-    separator, space, tab_body,
+    PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot,
+    ThemeBorderSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
+    flex_spacer, row, screen, separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]

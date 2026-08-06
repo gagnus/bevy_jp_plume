@@ -31,9 +31,9 @@ pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub use separator::separator;
 pub use space::space;
-pub use splitter::{
-    PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitFraction, SplitMin,
+pub use splitter::{PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitFraction, SplitMin};
+pub(crate) use splitter::{
+    SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane,
 };
-pub(crate) use splitter::{SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane};
 pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body};
 pub(crate) use tabs::{TabsPlugin, tab_button, tab_strip, tabs_frame};

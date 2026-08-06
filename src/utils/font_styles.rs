@@ -15,6 +15,8 @@ use bevy::text::{
     EditableText, EmSize, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont,
 };
 use bevy::ui::ComputedUiRenderTargetInfo;
+#[cfg(debug_assertions)]
+use bevy::ui::CornerRadius;
 use bevy::ui::widget::Text;
 #[cfg(debug_assertions)]
 use {
@@ -165,6 +167,9 @@ fn em_fields(
     fn val2_is_em(val2: Val2) -> bool {
         is_em(val2.x) || is_em(val2.y)
     }
+    fn corner_radius_is_em(corner_radius: CornerRadius) -> bool {
+        is_em(corner_radius.x) || is_em(corner_radius.y)
+    }
 
     let mut fields = Vec::new();
     let mut check = |present: bool, field| {
@@ -191,10 +196,10 @@ fn em_fields(
     check(rect_is_em(node.border), "border");
     let radius = node.border_radius;
     check(
-        val2_is_em(radius.top_left)
-            || val2_is_em(radius.top_right)
-            || val2_is_em(radius.bottom_right)
-            || val2_is_em(radius.bottom_left),
+        corner_radius_is_em(radius.top_left)
+            || corner_radius_is_em(radius.top_right)
+            || corner_radius_is_em(radius.bottom_right)
+            || corner_radius_is_em(radius.bottom_left),
         "border_radius",
     );
     check(

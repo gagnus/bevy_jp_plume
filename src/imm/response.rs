@@ -24,7 +24,7 @@ use bevy_immediate::{ImmEntity, ImmId, imm_id};
 use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
-use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible};
+use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible, SplitMin};
 use crate::controls::{
     ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
     set_select_max_visible, text_input_placeholder, text_input_suffix,
@@ -37,7 +37,6 @@ use crate::theme::{
     Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
     ThemeBorderSlot, ThemeSlot, control_box_shadow,
 };
-use crate::containers::SplitMin;
 use crate::utils::numeric::Numeric;
 
 /// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
@@ -715,9 +714,7 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
         struct MinPanes;
         // `Val` holds floats, so it is keyed by its `Debug` form, as elsewhere.
         if self.key_changed::<MinPanes>(format!("{first:?}{second:?}")) {
-            self.e
-                .entity_commands()
-                .insert(SplitMin { first, second });
+            self.e.entity_commands().insert(SplitMin { first, second });
         }
         self
     }
