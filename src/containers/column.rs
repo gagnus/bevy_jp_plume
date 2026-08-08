@@ -15,8 +15,10 @@ pub fn column() -> impl Scene {
             align_items: AlignItems::Stretch,
             row_gap: size::GAP,
             // Flex's `auto` minimum refuses to shrink below content, so a nested scroll
-            // area only bounds once every container above it can give. Re-floor with `.min_height()`.
+            // area only bounds once every container above it can give — on both axes.
+            // Re-floor with `.min_height()`/`.min_width()`.
             min_height: Val::ZERO,
+            min_width: Val::ZERO,
         }
         TextStyleRelay
     }

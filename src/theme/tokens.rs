@@ -58,6 +58,21 @@ impl InteractionTokens {
     }
 }
 
+/// The backgrounds a tab container paints with. They move as a set: the selected
+/// tab has to match whatever sits below the strip, and the rest of the strip has
+/// to differ from it, so picking them one at a time gets the relationship wrong.
+#[derive(Clone, Reflect)]
+pub struct TabSurfaceTokens {
+    /// Behind the strip, and so behind every unselected tab.
+    pub strip: ThemeToken,
+    /// The container body below the strip.
+    pub body: ThemeToken,
+    /// The selected tab, which reads as continuous with the body.
+    pub selected: ThemeToken,
+    /// An unselected tab under the pointer.
+    pub hover: ThemeToken,
+}
+
 /// Four tokens keyed by `(checked, disabled)`; see [`CheckedTokens::pick`].
 #[derive(Clone, Reflect)]
 pub struct CheckedTokens {
@@ -397,6 +412,16 @@ pub const TAB_BG: ThemeToken = ThemeToken::new_static("plume.tab.bg");
 pub const TAB_BG_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.bg.selected");
 /// Tab background (hovered)
 pub const TAB_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.tab.bg.hover");
+/// Tab strip background, inverted
+pub const TABS_STRIP_BG_INVERTED: ThemeToken =
+    ThemeToken::new_static("plume.tabs.strip.bg.inverted");
+/// Tab container body background, inverted
+pub const TABS_BODY_BG_INVERTED: ThemeToken = ThemeToken::new_static("plume.tabs.body.bg.inverted");
+/// Tab background (selected), inverted
+pub const TAB_BG_SELECTED_INVERTED: ThemeToken =
+    ThemeToken::new_static("plume.tab.bg.selected.inverted");
+/// Tab background (hovered), inverted
+pub const TAB_BG_HOVER_INVERTED: ThemeToken = ThemeToken::new_static("plume.tab.bg.hover.inverted");
 /// Tab text color
 pub const TAB_TEXT: ThemeToken = ThemeToken::new_static("plume.tab.text");
 /// Tab text color (selected)
@@ -441,7 +466,24 @@ pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("plume.focus-ring");
 /// State groups over the constants above, for
 /// [`InteractionTokens::pick`] and [`CheckedTokens::pick`].
 pub mod sets {
-    use super::{CheckedTokens, InteractionTokens};
+    use super::{CheckedTokens, InteractionTokens, TabSurfaceTokens};
+
+    /// Tabs over a surface: the strip is the window and the selected tab joins the
+    /// body sitting on it.
+    pub const TABS: TabSurfaceTokens = TabSurfaceTokens {
+        strip: super::TABS_STRIP_BG,
+        body: super::TABS_BODY_BG,
+        selected: super::TAB_BG_SELECTED,
+        hover: super::TAB_BG_HOVER,
+    };
+    /// Tabs over the window itself — a document strip above a viewport. The ladder
+    /// is flipped so the selected tab is the one that recedes into what's below.
+    pub const TABS_INVERTED: TabSurfaceTokens = TabSurfaceTokens {
+        strip: super::TABS_STRIP_BG_INVERTED,
+        body: super::TABS_BODY_BG_INVERTED,
+        selected: super::TAB_BG_SELECTED_INVERTED,
+        hover: super::TAB_BG_HOVER_INVERTED,
+    };
 
     /// Regular button background
     pub const BUTTON_BG: InteractionTokens = InteractionTokens {

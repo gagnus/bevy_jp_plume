@@ -332,16 +332,18 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
 
 fn left_panel(ui: &mut Ui, state: &mut Editor) {
     ui.tabs(&mut state.left_tab, |tabs| {
-        tabs.tab(LeftTab::Scene, "Scene", |ui| {
-            for (i, node) in state.tree.iter_mut().enumerate() {
-                ui.push_id(i, |ui| tree_row(ui, node, &mut state.selected, 0));
-            }
-        })
-        .icon(font_awesome::solid::SITEMAP);
-        tabs.tab(LeftTab::Prefabs, "Prefabs", |ui| {
-            ui.caption("Prefab palette — drag a prefab into the scene.");
-        })
-        .icon(font_awesome::solid::CUBES);
+        tabs.tab(LeftTab::Scene, "Scene")
+            .icon(font_awesome::solid::SITEMAP)
+            .body(|ui| {
+                for (i, node) in state.tree.iter_mut().enumerate() {
+                    ui.push_id(i, |ui| tree_row(ui, node, &mut state.selected, 0));
+                }
+            });
+        tabs.tab(LeftTab::Prefabs, "Prefabs")
+            .icon(font_awesome::solid::CUBES)
+            .body(|ui| {
+                ui.caption("Prefab palette — drag a prefab into the scene.");
+            });
     })
     .width(px(280));
 }
@@ -406,21 +408,23 @@ fn center_panel(ui: &mut Ui, state: &mut Editor) {
 
 fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
     ui.tabs(&mut state.bottom_tab, |tabs| {
-        tabs.tab(BottomTab::Output, "Output", |ui| {
-            for line in [
-                "[info] Loaded dungeon seed 0xC0FFEE (42 rooms)",
-                "[info] Baked navmesh in 18.4 ms",
-                "[warn] Cobweb has no collider — skipped",
-                "[info] Play mode ready",
-            ] {
-                ui.caption(line);
-            }
-        })
-        .icon(font_awesome::solid::LIST);
-        tabs.tab(BottomTab::Assets, "Assets", |ui| {
-            ui.caption("Asset browser — imported meshes, textures and materials appear here.");
-        })
-        .icon(font_awesome::solid::FOLDER_OPEN);
+        tabs.tab(BottomTab::Output, "Output")
+            .icon(font_awesome::solid::LIST)
+            .body(|ui| {
+                for line in [
+                    "[info] Loaded dungeon seed 0xC0FFEE (42 rooms)",
+                    "[info] Baked navmesh in 18.4 ms",
+                    "[warn] Cobweb has no collider — skipped",
+                    "[info] Play mode ready",
+                ] {
+                    ui.caption(line);
+                }
+            });
+        tabs.tab(BottomTab::Assets, "Assets")
+            .icon(font_awesome::solid::FOLDER_OPEN)
+            .body(|ui| {
+                ui.caption("Asset browser — imported meshes, textures and materials appear here.");
+            });
     })
     .height(px(180));
 }
@@ -430,14 +434,16 @@ fn right_panel(ui: &mut Ui, state: &mut Editor) {
     // `state` (the whole inspector) without colliding with the tab's `&mut`.
     let mut right_tab = state.right_tab;
     ui.tabs(&mut right_tab, |tabs| {
-        tabs.tab(RightTab::Properties, "Properties", |ui| {
-            inspector(ui, state);
-        })
-        .icon(font_awesome::solid::SLIDERS);
-        tabs.tab(RightTab::Add, "Add", |ui| {
-            ui.caption("Component browser — pick a component to add to the entity.");
-        })
-        .icon(font_awesome::solid::PLUS);
+        tabs.tab(RightTab::Properties, "Properties")
+            .icon(font_awesome::solid::SLIDERS)
+            .body(|ui| {
+                inspector(ui, state);
+            });
+        tabs.tab(RightTab::Add, "Add")
+            .icon(font_awesome::solid::PLUS)
+            .body(|ui| {
+                ui.caption("Component browser — pick a component to add to the entity.");
+            });
     })
     .width(px(320));
     state.right_tab = right_tab;

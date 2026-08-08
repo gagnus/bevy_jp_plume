@@ -1,21 +1,24 @@
 //! Retained (bsn!) twin of the `inspector_panel` example: the same docked panel over
 //! the same `Inspector` resource, bound with `on()` observers instead of imm's `&mut`.
+#![allow(clippy::type_complexity)]
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checked, ColorSwatchValue, InheritableFont, PlumeColorEdit, PlumeColorPicker,
-    PlumeColorSwatch, PlumeDisclosure, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection,
-    PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch,
-    PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot,
-    ThemeBorderSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
-    flex_spacer, row, screen, separator, space, tab_body,
+    Activate, Checked, ColorSwatchValue, Flat, InheritableFont, PlumeColorEdit, PlumeColorPicker,
+    PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
+    PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
+    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
+    TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption,
+    caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
 mod common;
 
 use common::Options;
-use common::inspector_panel::{BASE_FONT_PX, Blend, Cull, Inspector, Material, SceneNode, Tab};
+use common::inspector_panel::{
+    BASE_FONT_PX, Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab,
+};
 
 const GUTTER: Val = Val::Px(78.0);
 
@@ -30,6 +33,7 @@ fn main() {
                 push_material,
                 push_ui_scale,
                 push_tree_rows,
+                push_documents,
             ),
         );
     app.run();
@@ -247,6 +251,107 @@ fn push_tree_rows(
     }
 }
 
+// The strip's pooled tabs and the header parts a system pushes into: retained tabs
+// are spawned once, so opening and closing shows and hides slots.
+#[derive(Component, Clone, Copy)]
+struct DocSlot(usize);
+
+#[derive(Component, Clone, Copy)]
+struct DocName(usize);
+
+#[derive(Component, Clone, Copy)]
+struct DocDirty(usize);
+
+#[derive(Component, Default, Clone)]
+struct DocTabs;
+
+#[derive(Component, Default, Clone)]
+struct ViewportPane;
+
+#[derive(Component, Default, Clone)]
+struct ViewportLabel;
+
+#[derive(Component, Default, Clone)]
+struct HudCount;
+
+#[allow(clippy::too_many_arguments)]
+fn push_documents(
+    state: Res<Inspector>,
+    mut q_slots: Query<(&DocSlot, &mut Node)>,
+    mut q_dots: Query<(&DocDirty, &mut Node), Without<DocSlot>>,
+    mut q_names: Query<(&DocName, &mut Text)>,
+    mut q_labels: Query<&mut Text, (With<ViewportLabel>, Without<DocName>)>,
+    mut q_counts: Query<&mut Text, (With<HudCount>, Without<ViewportLabel>, Without<DocName>)>,
+    q_tabs: Query<Entity, With<DocTabs>>,
+    q_panes: Query<Entity, With<ViewportPane>>,
+    mut commands: Commands,
+) {
+    if !state.is_changed() {
+        return;
+    }
+    let documents = &state.documents;
+
+    let set_display = |node: &mut Node, shown: bool| {
+        let display = if shown { Display::Flex } else { Display::None };
+        if node.display != display {
+            node.display = display;
+        }
+    };
+    for (slot, mut node) in q_slots.iter_mut() {
+        set_display(&mut node, slot.0 < documents.open.len());
+    }
+    for (dot, mut node) in q_dots.iter_mut() {
+        set_display(
+            &mut node,
+            documents.open.get(dot.0).is_some_and(|doc| doc.dirty),
+        );
+    }
+    for (name, mut text) in q_names.iter_mut() {
+        let wanted = documents.open.get(name.0).map_or("", |doc| &doc.name);
+        if text.0 != wanted {
+            text.0 = wanted.to_owned();
+        }
+    }
+    for mut text in q_labels.iter_mut() {
+        let wanted = documents
+            .active_document()
+            .map_or("No documents open", |doc| &doc.name);
+        if text.0 != wanted {
+            text.0 = wanted.to_owned();
+        }
+    }
+
+    for mut text in q_counts.iter_mut() {
+        let wanted = format!("{} open", documents.open.len());
+        if text.0 != wanted {
+            text.0 = wanted;
+        }
+    }
+
+    let empty_slot = if documents.open.is_empty() {
+        ThemeSlot::Neutral3
+    } else {
+        ThemeSlot::Transparent
+    };
+    for entity in q_panes.iter() {
+        commands
+            .entity(entity)
+            .insert(ThemeBackgroundSlot(empty_slot));
+    }
+    if let Some(index) = documents
+        .open
+        .iter()
+        .position(|doc| Some(doc.id) == documents.active)
+    {
+        for entity in q_tabs.iter() {
+            commands.trigger(SetValue {
+                entity,
+                value: index,
+            });
+        }
+    }
+}
+
 // Marks the panel column, the root of the UI-scale font cascade.
 #[derive(Component, Default, Clone)]
 struct InspectorPanel;
@@ -269,7 +374,7 @@ fn root() -> impl Scene {
                 @PlumeSplitter {
                     @fraction: 0.75,
                     @min_second: px(260),
-                    @first: bsn_list![viewport()],
+                    @first: bsn_list![documents()],
                     @second: bsn_list![panel()],
                 }
                 Node { flex_grow: 1.0 }
@@ -278,10 +383,139 @@ fn root() -> impl Scene {
     }
 }
 
+// The strip of open documents over the one viewport they share, the retained twin
+// of the imm example's bodyless tab strip.
+fn documents() -> impl Scene {
+    let tabs: Vec<_> = (0..MAX_DOCUMENTS).map(document_tab).collect();
+    bsn! {
+        column()
+        Node { flex_grow: 1.0, min_height: Val::ZERO, row_gap: Val::ZERO }
+        Children [
+            (
+                row()
+                Node {
+                    column_gap: size::GAP_TIGHT,
+                    padding: UiRect::right(size::GAP_TIGHT),
+                }
+                template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
+                Children [
+                    (
+                        // No `@body`, and no tab names one: a strip that only
+                        // reports which document is showing.
+                        @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
+                        DocTabs
+                        // The strip sits over the viewport, not over a surface.
+                        TabsInverted
+                        Node { width: Val::ZERO, flex_grow: 1.0 }
+                        on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
+                            s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
+                        })
+                    ),
+                    (
+                        @PlumeToolButton {
+                            @caption: bsn! { fa_icon(font_awesome::solid::PLUS) },
+                            @variant: ButtonVariant::Plain,
+                        }
+                        Flat
+                        Tooltip("Open a new document")
+                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
+                    ),
+                ]
+            ),
+            viewport(),
+            viewport_hud(),
+        ]
+    }
+}
+
+fn document_tab(slot: usize) -> impl Scene {
+    bsn! {
+        @PlumeTab {
+            @caption: bsn_list![
+                fa_icon(font_awesome::solid::FILE_CODE),
+                (
+                    // `tab_label`'s box, hand-built because the caption inside it
+                    // has to carry the marker `push_documents` writes through.
+                    row()
+                    Node { min_width: Val::ZERO, overflow: Overflow::clip() }
+                    Children [
+                        (
+                            caption("")
+                            template_value(DocName(slot))
+                            Node { min_width: Val::ZERO }
+                            TextLayout { linebreak: LineBreak::NoWrap }
+                        ),
+                    ]
+                ),
+                (
+                    // Unsaved marker. A plain node rather than a glyph, so its size
+                    // is the dot's own and not the header font's.
+                    Node {
+                        width: px(6),
+                        height: px(6),
+                        border_radius: px(3),
+                        flex_shrink: 0.0,
+                        display: Display::None,
+                    }
+                    template_value(DocDirty(slot))
+                    BackgroundColor(Color::WHITE)
+                ),
+                (
+                    @PlumeToolButton {
+                        @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
+                        @variant: ButtonVariant::Plain,
+                    }
+                    Flat
+                    on(move |_: On<Activate>, mut s: ResMut<Inspector>| {
+                        if let Some(id) = s.documents.open.get(slot).map(|doc| doc.id) {
+                            s.documents.close(id);
+                        }
+                    })
+                ),
+            ],
+        }
+        template_value(DocSlot(slot))
+        Node { display: Display::None, min_width: em(6), }
+    }
+}
+
+// The imm twin's floating HUD. A headerless `PlumeDialog` is the retained panel:
+// absolutely positioned, so the corner it pins to is the pane's own.
+fn viewport_hud() -> impl Scene {
+    bsn! {
+        @PlumeDialog {
+            @header: false,
+            @inset: {Corner::BottomRight.inset(px(16), px(16))},
+            @contents: bsn_list![
+                (
+                    row()
+                    Children [
+                        fa_icon(font_awesome::solid::CUBES),
+                        (caption("") HudCount),
+                        separator(),
+                        (
+                            @PlumeToolButton {
+                                @caption: bsn! { fa_icon(font_awesome::solid::FLOPPY_DISK) },
+                                @variant: ButtonVariant::Plain,
+                            }
+                            Flat
+                            Tooltip("Save the active document")
+                            on(|_: On<Activate>, mut s: ResMut<Inspector>| {
+                                s.documents.save_active();
+                            })
+                        ),
+                    ]
+                ),
+            ],
+        }
+    }
+}
+
 fn viewport() -> impl Scene {
     bsn! {
         column()
-        Node { flex_grow: 1.0 }
+        ViewportPane
+        Node { flex_grow: 1.0, min_height: Val::ZERO }
         Children [
             flex_spacer(),
             (
@@ -289,7 +523,7 @@ fn viewport() -> impl Scene {
                 Children [
                     flex_spacer(),
                     fa_icon(font_awesome::solid::CUBES),
-                    caption("Viewport"),
+                    (caption("") ViewportLabel),
                     flex_spacer(),
                 ]
             ),

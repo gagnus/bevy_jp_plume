@@ -1,22 +1,25 @@
-//! Generic vertical scroll region: a gutter-reserving frame, its scrolling
+//! Generic scroll region on either axis: a gutter-reserving frame, its scrolling
 //! viewport, and the scrollbar that drives it. Shared by the dialog body and the
 //! imm `scroll_area` widget.
 use bevy::app::{App, Plugin, PostUpdate};
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::Children;
+use bevy::ecs::observer::On;
 use bevy::ecs::query::With;
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::{Local, Query};
+use bevy::ecs::system::{Local, Query, Res};
 use bevy::ecs::template::EntityTemplate;
+use bevy::input::mouse::MouseScrollPixelsPerLine;
 use bevy::log::warn_once;
 use bevy::math::Rect;
+use bevy::picking::events::{Pointer, Scroll};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, PositionType,
-    UiGlobalTransform, UiSystems, Val,
+    AlignItems, CalculatedClip, ComputedNode, Display, FlexDirection, Node, Overflow, OverflowAxis,
+    PositionType, ScrollPosition, UiGlobalTransform, UiSystems, Val,
 };
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
@@ -24,64 +27,138 @@ use crate::constants::size;
 use crate::controls::{PlumeScrollbar, ScrollbarGutter};
 use crate::font_styles::TextStyleRelay;
 
+/// The axis a scroll region scrolls along.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum ScrollAxis {
+    /// Scrolls up and down; content stacks in a column.
+    #[default]
+    Vertical,
+    /// Scrolls left and right; content stacks in a row.
+    Horizontal,
+}
+
+impl ScrollAxis {
+    fn flex_direction(self) -> FlexDirection {
+        match self {
+            Self::Vertical => FlexDirection::Column,
+            Self::Horizontal => FlexDirection::Row,
+        }
+    }
+
+    fn orientation(self) -> ControlOrientation {
+        match self {
+            Self::Vertical => ControlOrientation::Vertical,
+            Self::Horizontal => ControlOrientation::Horizontal,
+        }
+    }
+
+    // `auto` resolves to the content size, which stops the region ever bounding.
+    fn min_size(self) -> (Val, Val) {
+        match self {
+            Self::Vertical => (Val::Auto, Val::ZERO),
+            Self::Horizontal => (Val::ZERO, Val::Auto),
+        }
+    }
+}
+
 // Bounded frame holding the scrolling viewport and its scrollbar. Distinct from a
-// plain column because `ScrollbarGutter` assigns `padding.right`, which elsewhere
-// would eat the container's own padding.
-pub(crate) fn scroll_frame() -> impl Scene {
+// plain column because `ScrollbarGutter` assigns padding on the scrollbar's edge,
+// which elsewhere would eat the container's own padding.
+pub(crate) fn scroll_frame(axis: ScrollAxis) -> impl Scene {
+    let (min_width, min_height) = axis.min_size();
+    // A horizontal region hugs its height in the column it sits in; `.grow()` is
+    // the caller's to add.
+    let flex_grow = match axis {
+        ScrollAxis::Vertical => 1.0,
+        ScrollAxis::Horizontal => 0.0,
+    };
     bsn! {
         Node {
             display: Display::Flex,
-            flex_direction: FlexDirection::Column,
+            flex_direction: {axis.flex_direction()},
             align_items: AlignItems::Stretch,
-            flex_grow: 1.0,
-            min_height: Val::ZERO,
+            flex_grow: flex_grow,
+            min_width: min_width,
+            min_height: min_height,
         }
         ScrollbarGutter(size::SCROLLBAR_GUTTER)
         TextStyleRelay
     }
 }
 
-// The scrolling viewport itself. Vertical only — a scroll area is never allowed to
-// scroll sideways. Content goes in the [`scroll_content`] child, not here.
-pub(crate) fn scroll_viewport() -> impl Scene {
+// The scrolling viewport itself. Single-axis — a scroll area never scrolls both
+// ways. Content goes in the [`scroll_content`] child, not here.
+pub(crate) fn scroll_viewport(axis: ScrollAxis) -> impl Scene {
+    let (min_width, min_height) = axis.min_size();
+    let overflow = match axis {
+        ScrollAxis::Vertical => Overflow::scroll_y(),
+        ScrollAxis::Horizontal => Overflow::scroll_x(),
+    };
     bsn! {
         Node {
             display: Display::Flex,
-            flex_direction: FlexDirection::Column,
+            flex_direction: {axis.flex_direction()},
             align_items: AlignItems::Stretch,
             flex_grow: 1.0,
-            min_height: Val::ZERO,
-            overflow: Overflow::scroll_y(),
+            min_width: min_width,
+            min_height: min_height,
+            overflow: overflow,
         }
         ScrollArea
         TextStyleRelay
     }
 }
 
-// Content column inside a [`scroll_viewport`]. Flex shrinks items to fit their
-// container even when it scrolls, and `row()`/`column()` floor `min_height` at zero,
-// so without a `flex_shrink: 0` wrapper to absorb that pressure every row the caller
-// writes gets crushed — centered content spilling out of the clip — instead of
-// overflowing into the scroll.
-pub(crate) fn scroll_content() -> impl Scene {
+// Content stack inside a [`scroll_viewport`]. Flex shrinks items to fit their
+// container even when it scrolls, and `row()`/`column()` floor their minimums at
+// zero, so without a `flex_shrink: 0` wrapper to absorb that pressure every row the
+// caller writes gets crushed — centered content spilling out of the clip — instead
+// of overflowing into the scroll.
+pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
-            flex_direction: FlexDirection::Column,
+            flex_direction: {axis.flex_direction()},
             align_items: AlignItems::Stretch,
             row_gap: size::GAP,
+            column_gap: size::GAP,
             flex_shrink: 0.0,
         }
         TextStyleRelay
     }
 }
 
-// Installs the check for a scroll region that was never given a height to
-// scroll within.
+// A wheel reports its notches on `y`, so a region that only scrolls sideways would
+// never move. Send that delta down its one axis instead, as a browser does.
+fn scroll_sideways_on_wheel(
+    scroll: On<Pointer<Scroll>>,
+    mut query_areas: Query<(&Node, &ComputedNode, &mut ScrollPosition), With<ScrollArea>>,
+    pixels_per_line: Res<MouseScrollPixelsPerLine>,
+) {
+    let Ok((node, computed, mut position)) = query_areas.get_mut(scroll.entity) else {
+        return;
+    };
+    // One that scrolls both ways already reads the wheel the way the user means it.
+    if node.overflow.x != OverflowAxis::Scroll || node.overflow.y == OverflowAxis::Scroll {
+        return;
+    }
+    let delta = scroll.to_pixels(&pixels_per_line);
+    // A tilt wheel or trackpad swipe already arrives on `x`, handled upstream.
+    if delta.x != 0.0 || delta.y == 0.0 {
+        return;
+    }
+    let visible = computed.size() * computed.inverse_scale_factor;
+    let content = computed.content_size() * computed.inverse_scale_factor;
+    position.x = (position.x - delta.y).clamp(0.0, (content.x - visible.x).max(0.0));
+}
+
+// Installs the sideways wheel mapping and the check for a scroll region that was
+// never given a height to scroll within.
 pub(crate) struct ScrollAreaPlugin;
 
 impl Plugin for ScrollAreaPlugin {
     fn build(&self, app: &mut App) {
+        app.add_observer(scroll_sideways_on_wheel);
         // `PostLayout` is where `CalculatedClip` is written.
         app.add_systems(
             PostUpdate,
@@ -131,26 +208,33 @@ fn warn_unbounded_scroll_area(
     }
 }
 
-// Placement shared by every scroll region's scrollbar: pinned down the trailing
+// Placement shared by every scroll region's scrollbar: pinned along the trailing
 // edge of the [`scroll_frame`].
-pub(crate) fn scrollbar_node() -> impl Scene {
+pub(crate) fn scrollbar_node(axis: ScrollAxis) -> impl Scene {
+    // The unpinned side stays `Auto` so the scrollbar keeps its own thickness.
+    let (left, top, width, height) = match axis {
+        ScrollAxis::Vertical => (Val::Auto, Val::ZERO, size::SCROLLBAR_WIDTH, Val::Auto),
+        ScrollAxis::Horizontal => (Val::ZERO, Val::Auto, Val::Auto, size::SCROLLBAR_WIDTH),
+    };
     bsn! {
         Node {
             position_type: PositionType::Absolute,
+            left: left,
             right: Val::ZERO,
-            top: Val::ZERO,
+            top: top,
             bottom: Val::ZERO,
-            width: size::SCROLLBAR_WIDTH,
+            width: width,
+            height: height,
         }
         // An em width needs the chain's `EmSize`.
         TextStyleRelay
     }
 }
 
-/// Vertically scrolling region: `contents` scroll inside a managed viewport with a
-/// self-hiding scrollbar, once they outgrow the height the area is given.
+/// Scrolling region: `contents` scroll inside a managed viewport with a
+/// self-hiding scrollbar, once they outgrow the size the area is given.
 ///
-/// Give it a bounded height (a `max_height`, or a `flex_grow` inside a bounded
+/// Give it a bounded main axis (a `max_height`, or a `flex_grow` inside a bounded
 /// parent) — an unbounded one just grows and never scrolls.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeScrollAreaProps)]
@@ -161,28 +245,31 @@ pub struct PlumeScrollArea;
 pub struct PlumeScrollAreaProps {
     /// The scrolling content.
     pub contents: Box<dyn SceneList>,
+    /// Which way the region scrolls.
+    pub axis: ScrollAxis,
 }
 
 impl Default for PlumeScrollAreaProps {
     fn default() -> Self {
         Self {
             contents: Box::new(bsn_list![]),
+            axis: ScrollAxis::default(),
         }
     }
 }
 
 impl PlumeScrollArea {
     fn scene(props: PlumeScrollAreaProps) -> impl Scene {
-        let contents = props.contents;
+        let PlumeScrollAreaProps { contents, axis } = props;
         bsn! {
-            scroll_frame()
+            scroll_frame(axis)
             Children [
                 (
                     #viewport
-                    scroll_viewport()
+                    scroll_viewport(axis)
                     Children [
                         (
-                            scroll_content()
+                            scroll_content(axis)
                             Children [
                                 {contents},
                             ]
@@ -192,23 +279,23 @@ impl PlumeScrollArea {
                 (
                     @PlumeScrollbar {
                         @target: #viewport,
-                        @orientation: ControlOrientation::Vertical,
+                        @orientation: {axis.orientation()},
                     }
-                    scrollbar_node()
+                    scrollbar_node(axis)
                 ),
             ]
         }
     }
 }
 
-// Vertical scrollbar driving the viewport at `target`. Hidden, and its gutter
-// reclaimed, whenever the content fits — see `update_scrollbar_visibility`.
-pub(crate) fn scrollbar(target: Entity) -> impl Scene {
+// Scrollbar driving the viewport at `target`. Hidden, and its gutter reclaimed,
+// whenever the content fits — see `update_scrollbar_visibility`.
+pub(crate) fn scrollbar(target: Entity, axis: ScrollAxis) -> impl Scene {
     bsn! {
         @PlumeScrollbar {
             @target: EntityTemplate::from(target),
-            @orientation: ControlOrientation::Vertical,
+            @orientation: {axis.orientation()},
         }
-        scrollbar_node()
+        scrollbar_node(axis)
     }
 }

@@ -13,11 +13,11 @@ mod splitter;
 mod tabs;
 
 pub use column::column;
-pub use dialog::CloseRequested;
-pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_frame};
 pub use dialog::{
-    PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose, PlumeDialogProps,
+    CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose,
+    PlumeDialogProps,
 };
+pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_frame};
 pub use flex_spacer::flex_spacer;
 pub(crate) use popup::*;
 pub use popup::{
@@ -27,7 +27,7 @@ pub use popup::{
 pub use row::row;
 pub use screen::screen;
 pub(crate) use scroll_area::*;
-pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps};
+pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub use separator::separator;
@@ -36,5 +36,8 @@ pub use splitter::{PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitFraction, 
 pub(crate) use splitter::{
     SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane,
 };
-pub use tabs::{PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body};
-pub(crate) use tabs::{TabsPlugin, tab_button, tab_strip, tabs_frame};
+pub use tabs::{
+    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, TabsInverted, tab_body,
+    tab_label,
+};
+pub(crate) use tabs::{TabsPlugin, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame};

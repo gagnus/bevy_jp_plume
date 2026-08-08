@@ -16,9 +16,9 @@ pub use crate::containers::{
     CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose,
     PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps,
     PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps,
-    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, SectionCollapsed,
-    SplitAxis, SplitFraction, SplitMin, TabTarget, close_popup, column, flex_spacer, popup_socket,
-    row, screen, separator, space, tab_body,
+    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, ScrollAxis,
+    SectionCollapsed, SplitAxis, SplitFraction, SplitMin, TabTarget, TabsInverted, close_popup,
+    column, flex_spacer, popup_socket, row, screen, separator, space, tab_body, tab_label,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,
@@ -27,7 +27,8 @@ pub use crate::controls::{
     PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup,
     PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps,
     PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch,
-    PlumeToolButton, ScrollbarGutter, SelectedIndex, SetValue, TextInputValue, select_options,
+    PlumeToolButton, ScrollbarGutter, ScrollbarHidden, SelectedIndex, SetValue, TextInputValue,
+    select_options,
 };
 pub use crate::display::{
     Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_slot,

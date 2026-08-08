@@ -16,16 +16,18 @@ use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val,
     ZIndex, px,
 };
-use bevy::ui_widgets::{Activate, Button, ValueChange};
+use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
 use crate::constants::{FaIcon, size};
-use crate::controls::{SelectedIndex, SetValue};
+use crate::containers::{ScrollAxis, scroll_frame, scroll_viewport, scrollbar_node};
+use crate::controls::{PlumeScrollbar, ScrollbarHidden, SelectedIndex, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
 use crate::focus::FocusIndicator;
@@ -88,9 +90,27 @@ impl PlumeTabs {
             tabs_frame(0)
             Children [
                 (
-                    tab_strip()
+                    tab_strip_frame()
                     Children [
-                        {props.header},
+                        (
+                            #strip_viewport
+                            scroll_viewport(ScrollAxis::Horizontal)
+                            Children [
+                                (
+                                    tab_strip()
+                                    Children [
+                                        {props.header},
+                                    ]
+                                ),
+                            ]
+                        ),
+                        (
+                            @PlumeScrollbar {
+                                @target: #strip_viewport,
+                                @orientation: ControlOrientation::Horizontal,
+                            }
+                            scrollbar_node(ScrollAxis::Horizontal)
+                        ),
                     ]
                 ),
                 {props.body},
@@ -110,7 +130,8 @@ pub struct PlumeTab;
 pub struct PlumeTabProps {
     /// Tab label content (e.g. `bsn! { caption("…") }`).
     pub caption: Box<dyn SceneList>,
-    /// The body entity this tab shows, by name (`#video`).
+    /// The body entity this tab shows, by name (`#video`). Omit it for a strip
+    /// that only reports its selection and has no bodies to swap.
     pub target: EntityTemplate,
 }
 
@@ -126,9 +147,13 @@ impl Default for PlumeTabProps {
 impl PlumeTab {
     /// Scene function for a tab.
     pub fn scene(props: PlumeTabProps) -> impl Scene {
+        let target = props.target;
+        // `EntityTemplate::None` is what an omitted `@target` leaves behind, and
+        // building one is an error — a bodyless tab simply carries no `TabTarget`.
+        let has_target = !matches!(target, EntityTemplate::None);
         bsn! {
             tab_chrome()
-            TabTarget({props.target})
+            {has_target.then(|| bsn! { TabTarget({target}) })}
             Children [
                 {props.caption},
             ]
@@ -147,6 +172,12 @@ pub struct TabTarget(pub Entity);
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct TabsRoot;
+
+/// Put this on a [`PlumeTabs`] sitting over the window rather than over a surface,
+/// so the selected tab is the one that joins what is below it, not the rest.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct TabsInverted;
 
 // Set once the root's selection has been reconciled against the tab the app
 // marked `Selected`; until then `seed_tab_selection` owns the first pick.
@@ -184,9 +215,10 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             overflow: Overflow::clip(),
-            // Flex's `auto` minimum refuses to shrink below content, so a nested scroll
-            // area only bounds once every container above it can give. Re-floor with `.min_height()`.
+            // Flex's `auto` minimum refuses to shrink below content, so the strip
+            // only bounds (and so scrolls) once every container above it can give.
             min_height: Val::ZERO,
+            min_width: Val::ZERO,
         }
         TabsRoot
         template_value(SelectedIndex(selected))
@@ -195,8 +227,19 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
     }
 }
 
+// The strip's scrolling frame; the scrollbar stays hidden, since a strip has no
+// room to give it and the wheel is how a crowded one is meant to be moved.
+pub(crate) fn tab_strip_frame() -> impl Scene {
+    bsn! {
+        scroll_frame(ScrollAxis::Horizontal)
+        ScrollbarHidden
+    }
+}
+
 // The header strip. Tabs are appended as children; the indicator overlays the
 // bottom edge, so the strip carries no padding for the two to share an origin.
+// As the content of a horizontal [`scroll_viewport`], `width: 100%` fills that
+// viewport while the flex `auto` minimum holds it open to the tabs' own minimum.
 pub(crate) fn tab_strip() -> impl Scene {
     bsn! {
         Node {
@@ -206,6 +249,8 @@ pub(crate) fn tab_strip() -> impl Scene {
             justify_content: JustifyContent::Start,
             min_height: size::HEADER_HEIGHT,
             padding: UiRect::top(size::GAP_TIGHT),
+            width: Val::Percent(100.0),
+            flex_shrink: 0.0,
         }
         TabStrip
         ThemeBackgroundToken(tokens::TABS_STRIP_BG)
@@ -232,7 +277,8 @@ pub(crate) fn tab_strip() -> impl Scene {
 }
 
 // A tab's chrome, shared by the public [`PlumeTab`] and the imm layer; callers
-// append the label content as children.
+// append the label content as children. The explicit `min_width` is what the strip
+// sums to know how far it may squeeze; `auto` would report the full width instead.
 pub(crate) fn tab_chrome() -> impl Scene {
     bsn! {
         Node {
@@ -243,6 +289,8 @@ pub(crate) fn tab_chrome() -> impl Scene {
             column_gap: size::GAP,
             padding: UiRect::horizontal(size::GAP),
             border_radius: BorderRadius::top(size::CORNER_RADIUS_SMALL),
+            min_width: size::TAB_MIN_WIDTH,
+            overflow: Overflow::clip(),
         }
         Button
         TabButton
@@ -263,8 +311,30 @@ pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
     bsn! {
         tab_chrome()
         Children [
-            {icon.map(|icon| bsn! { fa_icon(icon) })},
-            caption(label),
+            {icon.map(|icon| bsn! { fa_icon(icon) Node { flex_shrink: 0.0 } })},
+            tab_label(label),
+        ]
+    }
+}
+
+/// A tab label for a hand-built header: the part that gives when the strip is
+/// crowded, in a box of its own so it cuts there rather than over its siblings.
+pub fn tab_label(label: impl Into<String>) -> impl Scene {
+    let label = label.into();
+    bsn! {
+        Node {
+            display: Display::Flex,
+            align_items: AlignItems::Center,
+            min_width: Val::ZERO,
+            overflow: Overflow::clip(),
+        }
+        TextStyleRelay
+        Children [
+            (
+                caption(label)
+                Node { min_width: Val::ZERO }
+                TextLayout { linebreak: LineBreak::NoWrap }
+            ),
         ]
     }
 }
@@ -438,10 +508,14 @@ fn apply_tab_selection(
 
 // Selected and hovered are both cheap to recompute, and a strip holds a handful of
 // tabs, so every tab is re-derived each frame and only differences are written back.
+// Driven from the root because the surface a strip paints on is a property of the
+// container, not of the individual tab.
 fn update_tab_styles(
+    q_roots: Query<(Entity, Has<TabsInverted>), With<TabsRoot>>,
+    q_children: Query<&Children>,
+    q_strips: Query<(), With<TabStrip>>,
     q_tabs: Query<
         (
-            Entity,
             Has<Selected>,
             &Hovered,
             Has<InteractionDisabled>,
@@ -450,34 +524,68 @@ fn update_tab_styles(
         ),
         With<TabButton>,
     >,
+    q_backgrounds: Query<&ThemeBackgroundToken>,
     mut commands: Commands,
 ) {
-    for (tab, selected, hovered, disabled, background, text_color) in q_tabs.iter() {
-        let background_token = match (disabled, selected, hovered.0) {
-            (_, true, _) => tokens::TAB_BG_SELECTED,
-            (false, false, true) => tokens::TAB_BG_HOVER,
-            _ => tokens::TAB_BG,
-        };
-        let text_token = match (disabled, selected) {
-            (true, _) => tokens::TAB_TEXT_DISABLED,
-            (false, true) => tokens::TAB_TEXT_SELECTED,
-            (false, false) => tokens::TAB_TEXT,
-        };
-        let cursor = match disabled {
-            true => bevy::window::SystemCursorIcon::NotAllowed,
-            false => bevy::window::SystemCursorIcon::Pointer,
-        };
-        if background.0 != background_token {
-            commands
-                .entity(tab)
-                .insert(ThemeBackgroundToken(background_token));
+    fn set_background(
+        commands: &mut Commands,
+        q_backgrounds: &Query<&ThemeBackgroundToken>,
+        entity: Entity,
+        token: tokens::ThemeToken,
+    ) {
+        if q_backgrounds
+            .get(entity)
+            .is_ok_and(|current| current.0 == token)
+        {
+            return;
         }
-        if text_color.0 != text_token {
-            commands
-                .entity(tab)
-                .insert(InheritableThemeTextToken(text_token));
+        commands.entity(entity).insert(ThemeBackgroundToken(token));
+    }
+
+    for (root, inverted) in q_roots.iter() {
+        let surface = match inverted {
+            true => tokens::sets::TABS_INVERTED,
+            false => tokens::sets::TABS,
+        };
+        set_background(&mut commands, &q_backgrounds, root, surface.body);
+        if let Some(strip) = q_children
+            .iter_descendants(root)
+            .find(|descendant| q_strips.contains(*descendant))
+        {
+            set_background(&mut commands, &q_backgrounds, strip, surface.strip);
         }
-        commands.entity(tab).insert(EntityCursor::System(cursor));
+
+        let tabs = strip_tabs(root, &q_children, &q_strips, |tab| q_tabs.contains(tab));
+        for tab in tabs {
+            let Ok((selected, hovered, disabled, background, text_color)) = q_tabs.get(tab) else {
+                continue;
+            };
+            let background_token = match (disabled, selected, hovered.0) {
+                (_, true, _) => surface.selected.clone(),
+                (false, false, true) => surface.hover.clone(),
+                _ => tokens::TAB_BG,
+            };
+            let text_token = match (disabled, selected) {
+                (true, _) => tokens::TAB_TEXT_DISABLED,
+                (false, true) => tokens::TAB_TEXT_SELECTED,
+                (false, false) => tokens::TAB_TEXT,
+            };
+            let cursor = match disabled {
+                true => bevy::window::SystemCursorIcon::NotAllowed,
+                false => bevy::window::SystemCursorIcon::Pointer,
+            };
+            if background.0 != background_token {
+                commands
+                    .entity(tab)
+                    .insert(ThemeBackgroundToken(background_token));
+            }
+            if text_color.0 != text_token {
+                commands
+                    .entity(tab)
+                    .insert(InheritableThemeTextToken(text_token));
+            }
+            commands.entity(tab).insert(EntityCursor::System(cursor));
+        }
     }
 }
 
@@ -510,12 +618,6 @@ fn update_tab_indicator(
             }
             offset += width;
         }
-        // Zero width means the strip has not been laid out yet; leave the indicator
-        // unsettled rather than easing away from a placeholder.
-        let Some((target_pos, target_width)) = target.filter(|(_, width)| *width > 0.0) else {
-            continue;
-        };
-
         let Some(strip) = q_children
             .iter_descendants(root)
             .find(|descendant| q_strips.contains(*descendant))
@@ -531,6 +633,18 @@ fn update_tab_indicator(
             continue;
         };
         let Ok((mut indicator, mut transform)) = q_indicators.get_mut(indicator_ent) else {
+            continue;
+        };
+
+        // Zero width means the strip has not been laid out yet; no target at all
+        // means the strip is empty. Either way the underline has nothing to mark,
+        // so it collapses and stays unsettled — a tab arriving snaps it into place
+        // rather than sliding it out of the corner.
+        let Some((target_pos, target_width)) = target.filter(|(_, width)| *width > 0.0) else {
+            indicator.settled = false;
+            if transform.scale.x != 0.0 {
+                transform.scale.x = 0.0;
+            }
             continue;
         };
 

@@ -40,7 +40,7 @@ pub use number_input::{NoDrag, PlumeNumberInput, PlumeNumberInputProps};
 use radio::RadioPlugin;
 pub use radio::{PlumeRadio, PlumeRadioGroup, PlumeRadioProps};
 use scrollbar::ScrollbarPlugin;
-pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter};
+pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter, ScrollbarHidden};
 use select::SelectPlugin;
 pub(crate) use select::set_select_max_visible;
 pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, select_options};

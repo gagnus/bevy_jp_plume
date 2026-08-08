@@ -11,7 +11,9 @@ use crate::tokens::{self, ThemeToken};
 pub enum ThemeSlot {
     /// Deepest background: the window, the scrollbar track, and the active text input.
     /// - `SCROLLBAR_BG`
+    /// - `TABS_BODY_BG_INVERTED`
     /// - `TABS_STRIP_BG`
+    /// - `TAB_BG_SELECTED_INVERTED`
     /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
     #[default]
@@ -23,12 +25,14 @@ pub enum ThemeSlot {
     /// - `MENU_BG`
     /// - `SECTION_BODY_BG`
     /// - `TABS_BODY_BG`
+    /// - `TABS_STRIP_BG_INVERTED`
     /// - `TEXT_INPUT_BG`
     /// - `TOOLTIP_BG`
     Neutral1,
 
     /// Raised container chrome: section headers.
     /// - `SECTION_HEADER_BG`
+    /// - `TAB_BG_HOVER_INVERTED`
     /// - `TAB_BG_HOVER`
     /// - `TEXT_INPUT_BORDER`
     Neutral2,
@@ -398,7 +402,11 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TABS_BODY_BG, ThemeSlot::Neutral1),
     (tokens::TAB_BG, ThemeSlot::Transparent),
     (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral1),
-    (tokens::TAB_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::TAB_BG_HOVER, ThemeSlot::Neutral2),
+    (tokens::TABS_STRIP_BG_INVERTED, ThemeSlot::Neutral1),
+    (tokens::TABS_BODY_BG_INVERTED, ThemeSlot::Neutral0),
+    (tokens::TAB_BG_SELECTED_INVERTED, ThemeSlot::Neutral0),
+    (tokens::TAB_BG_HOVER_INVERTED, ThemeSlot::Neutral2),
     (tokens::TAB_TEXT, ThemeSlot::Text1),
     (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::TextDisabled1),

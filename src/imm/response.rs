@@ -24,9 +24,11 @@ use bevy_immediate::{ImmEntity, ImmId, imm_id};
 use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
-use crate::containers::{PopupAnchor, SectionCollapsed, SectionCollapsible, SplitMin};
+use crate::containers::{
+    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitMin, TabsInverted,
+};
 use crate::controls::{
-    ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
+    ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden,
     set_select_max_visible, text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
@@ -83,7 +85,7 @@ pub mod kind {
     pub struct Section;
     /// `tabs`.
     pub struct Tabs;
-    /// `scroll_area`.
+    /// `scroll_area_vertical` / `scroll_area_horizontal`.
     pub struct ScrollArea;
     /// `horizontal`: children flow left-to-right, so its cross axis is vertical.
     pub struct Row;
@@ -720,6 +722,18 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
     }
 }
 
+impl ImmResponse<'_, '_, '_, kind::Tabs> {
+    /// Paint the strip for one sitting over the window — a document strip above a
+    /// viewport — where the default ladder makes the *unselected* tabs look picked.
+    pub fn inverted(mut self) -> Self {
+        struct InvertedKey;
+        if self.key_changed::<InvertedKey>(true) {
+            self.e.entity_commands().insert(TabsInverted);
+        }
+        self
+    }
+}
+
 impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     /// Cap the region's height: it hugs its content until it would exceed
     /// `max_height`, then stops growing and scrolls. The natural bound when the
@@ -729,6 +743,23 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
         self.set_node::<MaxHeightKey, _>(max_height, |node, max_height| {
             node.max_height = max_height
         })
+    }
+
+    /// [`max_height`](Self::max_height) on the other axis — the bound a
+    /// `scroll_area_horizontal` needs in an auto-width surface.
+    pub fn max_width(self, max_width: Val) -> Self {
+        struct MaxWidthKey;
+        self.set_node::<MaxWidthKey, _>(max_width, |node, max_width| node.max_width = max_width)
+    }
+
+    /// Scroll with no scrollbar drawn and no gutter reserved for one, leaving the
+    /// wheel as the only hint that there is more to see. For chrome with no room.
+    pub fn hide_scrollbar(mut self) -> Self {
+        struct HideScrollbarKey;
+        if self.key_changed::<HideScrollbarKey>(true) {
+            self.e.entity_commands().insert(ScrollbarHidden);
+        }
+        self
     }
 }
 

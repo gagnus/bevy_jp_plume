@@ -216,6 +216,10 @@ pub(crate) fn splitter_frame(axis: SplitAxis, fraction: f32) -> impl Scene {
         Node {
             flex_direction: direction,
             align_items: AlignItems::Stretch,
+            // Flex's `auto` minimum refuses to shrink below content, so a scroll
+            // area anywhere in a pane only bounds once the splitter can give too.
+            min_width: Val::ZERO,
+            min_height: Val::ZERO,
         }
         SplitterRoot
         template_value(axis)
@@ -239,6 +243,11 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
             flex_grow: grow,
             flex_shrink: shrink,
             flex_basis: basis,
+            // The pane's own axis is floored by `apply_split` from `SplitMin`;
+            // this is the cross axis, which must give so the pane can't be
+            // propped open by content taller (or wider) than the splitter.
+            min_width: Val::ZERO,
+            min_height: Val::ZERO,
         }
         template_value(pane)
         TextStyleRelay

@@ -1,5 +1,7 @@
 //! Editor inspector as a self-contained feature plugin: a docked side panel whose
-//! two tabs hold a material editor and a scrolling scene tree.
+//! two tabs hold a material editor and a scrolling scene tree, beside a document strip.
+use std::cell::Cell;
+
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 
@@ -9,6 +11,9 @@ use super::{Options, log_on_change};
 pub const BASE_FONT_PX: f32 = 14.0;
 
 const GUTTER: f32 = 78.0;
+
+/// Cap on open documents; the retained twin spawns a fixed tab pool this size.
+pub const MAX_DOCUMENTS: usize = 8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Tab {
@@ -90,6 +95,101 @@ impl SceneNode {
     }
 }
 
+/// One open "document": what a tab in the strip stands for.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Document {
+    pub id: DocId,
+    pub name: String,
+    pub dirty: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DocId(pub u32);
+
+/// The open documents and which one the viewport is showing.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Documents {
+    pub open: Vec<Document>,
+    pub active: Option<DocId>,
+    next_id: u32,
+}
+
+impl Default for Documents {
+    fn default() -> Self {
+        let mut documents = Self {
+            open: Vec::new(),
+            active: None,
+            next_id: 0,
+        };
+        for _ in 0..3 {
+            documents.add();
+        }
+        documents.open[0].dirty = false;
+        documents.open[2].dirty = false;
+        documents.active = documents.open.first().map(|doc| doc.id);
+        documents
+    }
+}
+
+impl Documents {
+    /// Open a fresh, unsaved document and make it the active one.
+    pub fn add(&mut self) {
+        const STEMS: &[&str] = &[
+            "corridor", "vault", "torch", "chest", "spawn", "ramp", "portal", "shrine",
+        ];
+        const EXTENSIONS: &[&str] = &["rs", "wgsl", "ron"];
+        if self.open.len() >= MAX_DOCUMENTS {
+            return;
+        }
+        let id = DocId(self.next_id);
+        self.next_id += 1;
+        let index = id.0 as usize;
+        let name = format!(
+            "{}_{:02}.{}",
+            STEMS[index % STEMS.len()],
+            id.0,
+            EXTENSIONS[index % EXTENSIONS.len()]
+        );
+        self.open.push(Document {
+            id,
+            name,
+            dirty: true,
+        });
+        self.active = Some(id);
+    }
+
+    pub fn close(&mut self, id: DocId) {
+        let Some(index) = self.open.iter().position(|doc| doc.id == id) else {
+            return;
+        };
+        let closed = self.open.remove(index);
+        info!("closed document {}", closed.name);
+        if self.active == Some(id) {
+            // The neighbour that slid into its place, or the new last one.
+            self.active = self
+                .open
+                .get(index)
+                .or_else(|| self.open.last())
+                .map(|doc| doc.id);
+        }
+    }
+
+    pub fn save_active(&mut self) {
+        if let Some(doc) = self.active_mut() {
+            doc.dirty = false;
+        }
+    }
+
+    pub fn active_document(&self) -> Option<&Document> {
+        self.open.iter().find(|doc| Some(doc.id) == self.active)
+    }
+
+    fn active_mut(&mut self) -> Option<&mut Document> {
+        let active = self.active;
+        self.open.iter_mut().find(|doc| Some(doc.id) == active)
+    }
+}
+
 /// Backing state for both the imm panel and its retained twin. One field per tab,
 /// so the boxed tab bodies borrow disjoint parts of it.
 #[derive(Resource, Debug, Clone, PartialEq, Default)]
@@ -100,6 +200,7 @@ pub struct Inspector {
     /// splitter writes it as its divider is dragged, which is what makes the
     /// layout the app's to save rather than the widget's to remember.
     pub split: f32,
+    pub documents: Documents,
     pub material: Material,
     pub hierarchy: Hierarchy,
 }
@@ -177,34 +278,156 @@ impl Plugin for InspectorPanelPlugin {
 fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
     let mut s = state.clone();
     root.screen(|ui| {
-        // Same reason as `tab` below: the split can't stay borrowed from `s`
-        // while the pane bodies edit the rest of it.
+        // Same reason as `tab` below: neither the split nor the documents can stay
+        // borrowed from `s` while the other pane's bodies edit the rest of it.
         let mut split = s.split;
-        ui.split_horizontal(&mut split, viewport, |ui| panel(ui, &mut s))
-            // The panel never gets narrower than its controls need; the
-            // viewport takes whatever its own content asks for, which is
-            // nothing, so it can be dragged shut.
-            .min_panes(Val::Auto, px(260))
-            .align_items(AlignItems::Stretch)
-            .grow();
+        let mut documents = s.documents.clone();
+        ui.split_horizontal(
+            &mut split,
+            |ui| document_pane(ui, &mut documents),
+            |ui| panel(ui, &mut s),
+        )
+        // The panel never gets narrower than its controls need; the document pane
+        // gives down to a couple of squeezed tabs, past which its strip scrolls.
+        .min_panes(px(120), px(260))
+        .align_items(AlignItems::Stretch)
+        .grow();
         s.split = split;
+        s.documents = documents;
     })
     .background_slot(ThemeSlot::Neutral0);
     state.set_if_neq(s);
 }
 
-fn viewport(ui: &mut Ui) {
+// The strip of open documents over the one viewport they share, with the HUD
+// floating in its corner.
+fn document_pane(ui: &mut Ui, documents: &mut Documents) {
+    ui.vertical(|ui| {
+        document_strip(ui, documents);
+        match documents.active_document() {
+            Some(document) => viewport(ui, document),
+            None => empty_viewport(ui),
+        }
+        viewport_hud(ui, documents);
+    })
+    .gap(Val::ZERO)
+    .grow();
+}
+
+fn document_strip(ui: &mut Ui, documents: &mut Documents) {
+    // Every header is built each frame, so the ✕ reports through a shared cell
+    // rather than a `&mut` each; both edits wait for the selection write-back.
+    let closing = Cell::new(None);
+    let opening = Cell::new(false);
+    let mut active = documents.active;
+    ui.horizontal(|ui| {
+        ui.tabs(&mut active, |tabs| {
+            for document in &documents.open {
+                tabs.tab_container(Some(document.id), |ui| {
+                    ui.icon(font_awesome::solid::FILE_CODE).no_shrink();
+                    // Its own clipping box, so a squeezed name is cut at its
+                    // edge instead of running on under the ✕.
+                    ui.horizontal(|ui| {
+                        ui.caption(&document.name).no_wrap();
+                    })
+                    .clip();
+                    if document.dirty {
+                        ui.icon(font_awesome::solid::CIRCLE)
+                            .no_shrink()
+                            .font_size(FontSize::Px(6.0))
+                            .text_color(Color::WHITE);
+                    }
+                    if ui
+                        .tool_button(font_awesome::solid::XMARK)
+                        .no_shrink()
+                        .flat()
+                        .variant(ButtonVariant::Plain)
+                        .clicked
+                    {
+                        closing.set(Some(document.id));
+                    }
+                })
+                // Wide enough that a squeezed tab keeps its ✕ reachable.
+                .min_width(em(6))
+                // The viewport below the strip is shared, not per-tab.
+                .no_body();
+            }
+        })
+        // The strip sits over the viewport, not over a surface.
+        .inverted()
+        .grow();
+        if ui
+            .tool_button(font_awesome::solid::PLUS)
+            .variant(ButtonVariant::Plain)
+            .flat()
+            .tooltip("Open a new document")
+            .clicked
+        {
+            opening.set(true);
+        }
+    })
+    .gap(size::GAP_TIGHT)
+    .padding(UiRect::right(size::GAP_TIGHT))
+    // Matches the inverted strip, so the ✚ shares its band.
+    .background_slot(ThemeSlot::Neutral1);
+    documents.active = active;
+    if let Some(id) = closing.get() {
+        documents.close(id);
+    }
+    if opening.get() {
+        documents.add();
+    }
+}
+
+fn viewport(ui: &mut Ui, document: &Document) {
     ui.vertical(|ui| {
         ui.flex_spacer();
         ui.horizontal(|ui| {
             ui.flex_spacer();
             ui.icon(font_awesome::solid::CUBES);
-            ui.caption("Viewport").text_color_slot(ThemeSlot::Text1);
+            ui.caption(&document.name).text_color_slot(ThemeSlot::Text1);
             ui.flex_spacer();
         });
         ui.flex_spacer();
     })
     .grow();
+}
+
+fn empty_viewport(ui: &mut Ui) {
+    ui.vertical(|ui| {
+        ui.flex_spacer();
+        ui.horizontal(|ui| {
+            ui.flex_spacer();
+            ui.caption("No documents open")
+                .text_color_slot(ThemeSlot::Text1);
+            ui.flex_spacer();
+        });
+        ui.flex_spacer();
+    })
+    .grow()
+    .background_slot(ThemeSlot::Neutral3);
+}
+
+// Declared inside the pane, so its corner is the pane's and it follows the
+// splitter with no anchoring to arrange.
+fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
+    ui.panel()
+        .at_corner(Corner::BottomRight, px(16), px(16))
+        .show(|ui| {
+            ui.horizontal(|ui| {
+                ui.icon(font_awesome::solid::CUBES);
+                ui.caption(&format!("{} open", documents.open.len()));
+                ui.separator();
+                if ui
+                    .tool_button(font_awesome::solid::FLOPPY_DISK)
+                    .flat()
+                    .tooltip("Save the active document")
+                    .clicked
+                {
+                    documents.save_active();
+                }
+            });
+        });
 }
 
 fn panel(ui: &mut Ui, s: &mut Inspector) {
@@ -215,12 +438,12 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
         let mut tab = s.tab;
         ui.tabs(&mut tab, |tabs| {
             let (material, hierarchy) = (&mut s.material, &mut s.hierarchy);
-            tabs.tab(Tab::Material, "Material", |ui| material_tab(ui, material))
-                .icon(font_awesome::solid::PALETTE);
-            tabs.tab(Tab::Hierarchy, "Hierarchy", |ui| {
-                hierarchy_tab(ui, hierarchy)
-            })
-            .icon(font_awesome::solid::SITEMAP);
+            tabs.tab(Tab::Material, "Material")
+                .icon(font_awesome::solid::PALETTE)
+                .body(|ui| material_tab(ui, material));
+            tabs.tab(Tab::Hierarchy, "Hierarchy")
+                .icon(font_awesome::solid::SITEMAP)
+                .body(|ui| hierarchy_tab(ui, hierarchy));
         })
         .grow();
         s.tab = tab;
@@ -257,7 +480,7 @@ fn header(ui: &mut Ui, s: &mut Inspector) {
 }
 
 fn material_tab(ui: &mut Ui, s: &mut Material) {
-    ui.scroll_area(|ui| material_fields(ui, s)).grow();
+    ui.scroll_area_vertical(|ui| material_fields(ui, s)).grow();
 }
 
 fn material_fields(ui: &mut Ui, s: &mut Material) {
@@ -318,7 +541,7 @@ fn hierarchy_tab(ui: &mut Ui, s: &mut Hierarchy) {
                 .is_some_and(|next| next.depth > s.nodes[i].depth)
         })
         .collect();
-    ui.scroll_area(|ui| {
+    ui.scroll_area_vertical(|ui| {
         let mut collapsed_at: Option<usize> = None;
         for (i, parent) in parents.iter().copied().enumerate() {
             let (depth, expanded) = (s.nodes[i].depth, s.nodes[i].expanded);

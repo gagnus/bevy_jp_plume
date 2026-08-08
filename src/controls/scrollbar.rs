@@ -44,11 +44,17 @@ pub struct PlumeScrollbarProps {
 #[reflect(Component, Clone, Default)]
 struct PlumeScrollbarThumb;
 
-/// Put this on a scrollbar's parent: `padding.right` reserved for the scrollbar
-/// while it is visible, reclaimed when the content fits.
+/// Put this on a scrollbar's parent: padding on the scrollbar's own edge reserved
+/// for it while it is visible, reclaimed when the content fits.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct ScrollbarGutter(pub Val);
+
+/// Put this on a scrollbar's parent to keep the scrollbar out of sight: the region
+/// still scrolls, but shows nothing and reserves no gutter.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct ScrollbarHidden;
 
 impl PlumeScrollbar {
     /// Scene function for scrollbar.
@@ -112,17 +118,21 @@ fn update_scrollbar_visibility(
     mut q_scrollbars: Query<(Entity, &Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
     q_scroll_area: Query<&ComputedNode>,
     q_parents: Query<&ChildOf>,
+    q_hidden: Query<(), With<ScrollbarHidden>>,
     mut q_gutters: Query<(&ScrollbarGutter, &mut Node)>,
 ) {
     for (scrollbar_ent, scrollbar, mut visibility) in q_scrollbars.iter_mut() {
         let Ok(area) = q_scroll_area.get(scrollbar.target) else {
             continue;
         };
+        let parent = q_parents.get(scrollbar_ent).map(ChildOf::parent).ok();
         let visible = (area.size() - area.scrollbar_size).max(Vec2::ZERO);
-        let overflows = match scrollbar.orientation {
-            ControlOrientation::Horizontal => area.content_size().x > visible.x,
-            ControlOrientation::Vertical => area.content_size().y > visible.y,
-        };
+        // A hidden scrollbar reads as never overflowing, so its gutter stays shut too.
+        let overflows = !parent.is_some_and(|parent| q_hidden.contains(parent))
+            && match scrollbar.orientation {
+                ControlOrientation::Horizontal => area.content_size().x > visible.x,
+                ControlOrientation::Vertical => area.content_size().y > visible.y,
+            };
         let target = if overflows {
             Visibility::Inherited
         } else {
@@ -131,12 +141,18 @@ fn update_scrollbar_visibility(
         if *visibility != target {
             *visibility = target;
         }
-        if let Ok(child_of) = q_parents.get(scrollbar_ent)
-            && let Ok((gutter, mut node)) = q_gutters.get_mut(child_of.parent())
+        if let Some(parent) = parent
+            && let Ok((gutter, mut node)) = q_gutters.get_mut(parent)
         {
-            let padding = if overflows { gutter.0 } else { Val::ZERO };
-            if node.padding.right != padding {
-                node.padding.right = padding;
+            let reserved = if overflows { gutter.0 } else { Val::ZERO };
+            let mut padding = node.padding;
+            match scrollbar.orientation {
+                ControlOrientation::Horizontal => padding.bottom = reserved,
+                ControlOrientation::Vertical => padding.right = reserved,
+            }
+            // Compared first: writing unconditionally would dirty layout every frame.
+            if node.padding != padding {
+                node.padding = padding;
             }
         }
     }

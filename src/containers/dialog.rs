@@ -20,7 +20,7 @@ use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, R
 
 use crate::constants::{font_awesome, fonts, size};
 use crate::containers::{
-    flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
+    ScrollAxis, flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
 };
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
 use crate::display::fa_icon;
@@ -104,14 +104,14 @@ impl PlumeDialog {
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
             Box::new(bsn_list![
                 (
-                    scroll_frame()
+                    scroll_frame(ScrollAxis::Vertical)
                     Children [
                         (
                             #inner
-                            scroll_viewport()
+                            scroll_viewport(ScrollAxis::Vertical)
                             Children [
                                 (
-                                    scroll_content()
+                                    scroll_content(ScrollAxis::Vertical)
                                     Children [
                                         {contents},
                                     ]
@@ -123,7 +123,7 @@ impl PlumeDialog {
                                 @target: #inner,
                                 @orientation: ControlOrientation::Vertical,
                             }
-                            scrollbar_node()
+                            scrollbar_node(ScrollAxis::Vertical)
                         ),
                     ]
                 ),

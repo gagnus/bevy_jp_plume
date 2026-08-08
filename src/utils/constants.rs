@@ -81,6 +81,11 @@ pub mod size {
     /// text, so it scales with it.
     pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(2.0);
 
+    /// How far a crowded tab is squeezed before its strip scrolls instead — room
+    /// for a leading icon and a stub of label, so an icon tab shrinks to about
+    /// the glyph. A header carrying more than that wants its own, wider floor.
+    pub const TAB_MIN_WIDTH: Val = Val::Em(2.5);
+
     /// Border width of containers (dialog, section header, menu popup, text input)
     pub const CONTAINER_BORDER: Val = Val::Px(HAIRLINE_PX);
 

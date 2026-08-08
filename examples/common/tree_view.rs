@@ -153,7 +153,7 @@ fn tree_view_dialog(
         .icon(font_awesome::solid::SITEMAP)
         .show(|ui| {
             // Only the tree scrolls; the footer below stays pinned.
-            ui.scroll_area(|ui| {
+            ui.scroll_area_vertical(|ui| {
                 for (i, node) in state.roots.iter_mut().enumerate() {
                     ui.push_id(i, |ui| node_row(ui, node, 0));
                 }

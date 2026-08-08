@@ -27,10 +27,11 @@ use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
     CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-    PopupAnchor, PopupDismiss, PopupPlacement, SplitAxis, SplitPane, column, dialog_frame,
-    flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame, scroll_viewport,
-    scrollbar, section_body, section_frame, separator, space, splitter_divider, splitter_frame,
-    splitter_pane, tab_body, tab_button, tab_strip, tabs_frame,
+    PopupAnchor, PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitPane, column,
+    dialog_frame, flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame,
+    scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
+    splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
+    tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -135,14 +136,14 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut ImmSelect<T>),
     ) -> ImmResponse<'_, 'w, 's, kind::Select>;
 
-    /// Movable floating dialog: configure via the returned [`ImmDialog`] and build
-    /// the body with [`ImmDialog::show`]. While `*open`, the dialog exists; the ✕
-    /// writes back through `open`. Dragged position persists.
-    fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's>;
-
-    /// Headerless floating surface — a [`Self::dialog`] with no title bar (and so no
+    /// Headerless floating surface — a
+    /// [`dialog`](crate::imm::PlumeRoot::dialog) with no title bar (and so no
     /// title, ✕ or drag). Positioned chrome only; the caller controls whether it's
-    /// drawn. Floats above a [`Self::screen`] like a dialog does.
+    /// drawn. Unlike the two root surfaces this is useful nested, pinned to the
+    /// container it is declared in — see [`ImmPanel::at_corner`].
+    ///
+    /// Not inside a [`scroll_area_vertical`](Self::scroll_area_vertical), which does not float
+    /// over but scrolls with, stretching the range. Declare it beside one instead.
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
 
     /// Horizontal, center-aligned container (label-beside-control). Children pack
@@ -158,14 +159,11 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
-    /// Full-screen root surface: a transparent, padded column establishing the
-    /// standard font and text color, so bare text works at root scope. It
-    /// overlays the scene behind it and lets picks fall through empty areas.
-    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen>;
-
     /// Tab container: a header strip over a body showing one tab at a time.
     /// `f` declares the tabs on the [`ImmTabs`] collector; only the selected tab's
-    /// body closure runs, so hidden tabs cost nothing.
+    /// `.body()` closure runs, so hidden tabs cost nothing. Tabs that all finish
+    /// with `.no_body()` leave the container a bare strip. A strip with more tabs than room
+    /// squeezes them toward [`size::TAB_MIN_WIDTH`], then scrolls.
     ///
     /// Selection is value-keyed like [`Self::radio`]: each tab names the value it
     /// stands for, and clicking one writes that value into `selected`. A `selected`
@@ -189,7 +187,15 @@ pub trait PlumeImm<'w, 's> {
     /// set via `.max_height()`/`.height()`. Unbounded it just stacks its content
     /// like a [`Self::vertical`]. Use it to scroll one part of a surface while the
     /// rest — headers, footers — stays pinned.
-    fn scroll_area(
+    fn scroll_area_vertical(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
+
+    /// [`scroll_area_vertical`](Self::scroll_area_vertical) on its side: the content stacks
+    /// like a [`Self::horizontal`] and scrolls sideways once it outgrows the width
+    /// set via `.max_width()`/`.width()`.
+    fn scroll_area_horizontal(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
@@ -247,6 +253,51 @@ pub trait PlumeImm<'w, 's> {
     /// Same-id repeats already auto-disambiguate by occurrence index, but that is
     /// positional — use this when entries reorder or a conditional sibling shifts them.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
+}
+
+// The two surfaces that open a pass, handed out by [`PlumeRoot`] alone. Nested
+// they would measure against their parent rather than the viewport, be clipped by
+// any ancestor that clips, and nest a `TabGroup` inside the one they opened in.
+impl<'w, 's> Ui<'w, 's> {
+    #[track_caller]
+    pub(crate) fn screen(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::Screen> {
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(screen)
+            .add_ui(f);
+        respond(entity, false)
+    }
+
+    #[track_caller]
+    pub(crate) fn dialog<'a>(
+        &'a mut self,
+        title: &str,
+        open: &'a mut bool,
+    ) -> ImmDialog<'a, 'w, 's> {
+        ImmDialog {
+            ui: self,
+            caller: Location::caller(),
+            title: title.to_owned(),
+            icon: None,
+            open,
+            layout: DialogLayout {
+                width: Val::Auto,
+                height: Val::Auto,
+                max_height: Val::Auto,
+                inset: UiRect {
+                    left: size::DEFAULT_DIALOG_POS.x,
+                    top: size::DEFAULT_DIALOG_POS.y,
+                    ..UiRect::AUTO
+                },
+                closable: true,
+                movable: true,
+                body_padding: size::PAD.into(),
+            },
+        }
+    }
 }
 
 impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
@@ -644,30 +695,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's> {
-        ImmDialog {
-            ui: self,
-            caller: Location::caller(),
-            title: title.to_owned(),
-            icon: None,
-            open,
-            layout: DialogLayout {
-                width: Val::Auto,
-                height: Val::Auto,
-                max_height: Val::Auto,
-                inset: UiRect {
-                    left: size::DEFAULT_DIALOG_POS.x,
-                    top: size::DEFAULT_DIALOG_POS.y,
-                    ..UiRect::AUTO
-                },
-                closable: true,
-                movable: true,
-                body_padding: size::PAD.into(),
-            },
-        }
-    }
-
-    #[track_caller]
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
         ImmPanel {
             ui: self,
@@ -705,15 +732,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(column)
-            .add_ui(f);
-        respond(entity, false)
-    }
-
-    #[track_caller]
-    fn screen(&mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'_, 'w, 's, kind::Screen> {
-        let entity = self
-            .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(screen)
             .add_ui(f);
         respond(entity, false)
     }
@@ -769,19 +787,25 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(move || tabs_frame(initial))
             .plume_select(&mut index, &mut changed);
 
+        // A bare strip: no body node taking room the caller gave the container.
+        let has_bodies = entries.iter().any(|entry| entry.body.is_some());
         let mut strip_items = Vec::with_capacity(entries.len());
         let mut selected_body = None;
         for (slot, entry) in entries.into_iter().enumerate() {
             let TabEntry {
                 key,
-                label,
-                icon,
+                header,
                 enabled,
+                min_width,
                 body,
             } = entry;
-            strip_items.push((label, icon, enabled));
+            strip_items.push(TabStripItem {
+                header,
+                enabled,
+                min_width,
+            });
             if slot == index {
-                selected_body = Some(body);
+                selected_body = body;
                 if changed {
                     *selected = key;
                 }
@@ -789,17 +813,13 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         }
 
         let entity = entity.add_ui(move |ui| {
-            ui.ch_id("tab_strip")
-                .on_spawn_apply_scene(tab_strip)
-                .add_ui(move |ui| {
-                    for (slot, (label, icon, enabled)) in strip_items.into_iter().enumerate() {
-                        // The label and glyph key the tab: a renamed tab respawns
-                        // rather than keeping the old caption at the same slot.
-                        ui.ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
-                            .on_spawn_apply_scene(move || tab_button(label, icon))
-                            .interactions_enabled(enabled);
-                    }
-                });
+            let strip_frame = ui
+                .ch_id("strip_frame")
+                .on_spawn_apply_scene(tab_strip_frame);
+            tab_strip_body(strip_frame, strip_items);
+            if !has_bodies {
+                return;
+            }
             let body = ui.ch_id("tab_body").on_spawn_apply_scene(tab_body);
             if let Some(selected_body) = selected_body {
                 body.add_ui(selected_body);
@@ -809,29 +829,25 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn scroll_area(
+    fn scroll_area_vertical(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea> {
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(scroll_frame)
-            .add_ui(move |ui| {
-                // The viewport's entity is known before its spawn command flushes,
-                // so the scrollbar can point at the viewport it drives.
-                let viewport = ui
-                    .ch_id("scroll_area")
-                    .on_spawn_apply_scene(scroll_viewport)
-                    .add_ui(move |ui| {
-                        ui.ch_id("scroll_content")
-                            .on_spawn_apply_scene(scroll_content)
-                            .add_ui(f);
-                    })
-                    .entity();
-                ui.ch_id("scrollbar")
-                    .on_spawn_apply_scene(move || scrollbar(viewport));
-            });
-        respond(entity, false)
+            .on_spawn_apply_scene(|| scroll_frame(ScrollAxis::Vertical));
+        scroll_body(entity, ScrollAxis::Vertical, f)
+    }
+
+    #[track_caller]
+    fn scroll_area_horizontal(
+        &mut self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea> {
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(|| scroll_frame(ScrollAxis::Horizontal));
+        scroll_body(entity, ScrollAxis::Horizontal, f)
     }
 
     #[track_caller]
@@ -916,59 +932,102 @@ impl<T> ImmSelectOption<'_, T> {
     }
 }
 
+/// Header kinds for [`ImmTab`]: which per-tab builders the handle carries.
+pub mod tab_header {
+    /// An [`ImmTabs::tab`](super::ImmTabs::tab) header — a label plus an optional icon.
+    pub struct Labeled;
+    /// An [`ImmTabs::tab_container`](super::ImmTabs::tab_container) header — content
+    /// built by a closure, so plume contributes no label or icon of its own.
+    pub struct Custom;
+}
+
 /// Tab collector handed to [`PlumeImm::tabs`]'s closure: declare one
-/// [`tab`](Self::tab) per tab, in strip order.
+/// [`tab`](Self::tab) or [`tab_container`](Self::tab_container) per tab, in strip
+/// order.
 pub struct ImmTabs<'t, 'w, 's, T> {
     entries: Vec<TabEntry<'t, 'w, 's, T>>,
 }
 
-// One declared tab. The body is boxed because every tab's closure is built while
-// only the selected one is called.
+// One declared tab. Header and body are boxed because every tab's closures are
+// built while only the selected one's body is called.
 struct TabEntry<'t, 'w, 's, T> {
     key: T,
-    label: String,
-    icon: Option<FaIcon>,
+    header: TabHeader<'t, 'w, 's>,
     enabled: bool,
-    body: Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>,
+    min_width: Option<Val>,
+    body: Option<Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>>,
+}
+
+enum TabHeader<'t, 'w, 's> {
+    Label { label: String, icon: Option<FaIcon> },
+    Content(Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>),
 }
 
 impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
-    /// Declare a tab standing for `key`, labeled `label`, whose contents `body`
-    /// builds while it is the selected tab. Chain `.icon()`/`.enabled()` on the
-    /// returned handle.
-    pub fn tab(
+    /// Declare a tab standing for `key`, labeled `label`. Chain `.icon()`/
+    /// `.enabled()` on the returned handle, then finish it with `.body()` or
+    /// `.no_body()`.
+    pub fn tab(&mut self, key: T, label: &str) -> ImmTab<'_, 't, 'w, 's, T, tab_header::Labeled> {
+        self.push(
+            key,
+            TabHeader::Label {
+                label: label.to_owned(),
+                icon: None,
+            },
+        )
+    }
+
+    /// Declare a tab standing for `key` whose header `header` builds instead of a
+    /// label — a dirty marker, a badge, a close button, which keeps its own clicks.
+    ///
+    /// Every header is built each frame, so several cannot each hold a `&mut` to
+    /// the same value; share a `Cell` to report back.
+    pub fn tab_container(
         &mut self,
         key: T,
-        label: &str,
-        body: impl FnOnce(&mut Ui<'w, 's>) + 't,
-    ) -> ImmTab<'_, 't, 'w, 's, T> {
+        header: impl FnOnce(&mut Ui<'w, 's>) + 't,
+    ) -> ImmTab<'_, 't, 'w, 's, T, tab_header::Custom> {
+        self.push(key, TabHeader::Content(Box::new(header)))
+    }
+
+    fn push<H>(&mut self, key: T, header: TabHeader<'t, 'w, 's>) -> ImmTab<'_, 't, 'w, 's, T, H> {
         self.entries.push(TabEntry {
             key,
-            label: label.to_owned(),
-            icon: None,
+            header,
             enabled: true,
-            body: Box::new(body),
+            min_width: None,
+            body: None,
         });
         ImmTab {
             entry: self
                 .entries
                 .last_mut()
                 .expect("the entry was just pushed onto entries"),
+            header: PhantomData,
         }
     }
 }
 
-/// Handle to a just-declared tab, for its per-tab options.
-pub struct ImmTab<'a, 't, 'w, 's, T> {
+/// Handle to a just-declared tab, for its per-tab options. `H` is the header's
+/// [`tab_header`] kind, so `.icon()` only exists where plume owns the label.
+///
+/// A tab must end by saying what it shows: [`body`](Self::body) or
+/// [`no_body`](Self::no_body), either of which consumes the handle.
+#[must_use = "a tab has to say what it shows: finish it with .body(…) or .no_body()"]
+pub struct ImmTab<'a, 't, 'w, 's, T, H = tab_header::Labeled> {
     entry: &'a mut TabEntry<'t, 'w, 's, T>,
+    header: PhantomData<H>,
 }
 
-impl<T> ImmTab<'_, '_, '_, '_, T> {
-    /// Leading FontAwesome icon, before the label.
-    pub fn icon(self, icon: FaIcon) -> Self {
-        self.entry.icon = Some(icon);
-        self
+impl<'t, 'w, 's, T, H> ImmTab<'_, 't, 'w, 's, T, H> {
+    /// Contents shown while this is the selected tab.
+    pub fn body(self, body: impl FnOnce(&mut Ui<'w, 's>) + 't) {
+        self.entry.body = Some(Box::new(body));
     }
+
+    /// Finish a tab that shows nothing of its own. A strip whose tabs all say this
+    /// has no body at all, and only reports which tab is picked.
+    pub fn no_body(self) {}
 
     /// Gray the tab out and ignore clicks on it. A disabled tab that is
     /// nonetheless selected still shows its body.
@@ -976,10 +1035,29 @@ impl<T> ImmTab<'_, '_, '_, '_, T> {
         self.entry.enabled = enabled;
         self
     }
+
+    /// How far a crowded strip may squeeze this tab before it scrolls instead
+    /// (default [`size::TAB_MIN_WIDTH`]). What does not fit is clipped, so a header
+    /// holding more than a label wants a floor that keeps the rest reachable.
+    pub fn min_width(self, min_width: Val) -> Self {
+        self.entry.min_width = Some(min_width);
+        self
+    }
 }
 
-/// Deferred dialog configuration returned by [`PlumeImm::dialog`]; the dialog only
-/// exists once [`Self::show`] runs.
+impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
+    /// Leading FontAwesome icon, before the label.
+    pub fn icon(self, icon: FaIcon) -> Self {
+        if let TabHeader::Label { icon: slot, .. } = &mut self.entry.header {
+            *slot = Some(icon);
+        }
+        self
+    }
+}
+
+/// Deferred dialog configuration returned by
+/// [`PlumeRoot::dialog`](crate::imm::PlumeRoot::dialog); it only exists once
+/// [`Self::show`] runs.
 #[must_use = "a dialog does nothing until .show(|ui| …) builds it"]
 pub struct ImmDialog<'a, 'w, 's> {
     ui: &'a mut Ui<'w, 's>,
@@ -1099,7 +1177,8 @@ impl DialogLayout {
     }
 }
 
-/// Viewport corner a panel pins to, via [`ImmPanel::at_corner`].
+/// Corner a floating surface pins to, via [`ImmPanel::at_corner`] or
+/// [`ImmDialog::at_corner`].
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Corner {
     /// Top-left.
@@ -1114,19 +1193,20 @@ pub enum Corner {
 }
 
 impl Corner {
-    /// On the viewport's right edge, so a panel pinned here grows leftwards and
+    /// On the surface's right edge, so a panel pinned here grows leftwards and
     /// the control nearest the corner is the last one added to its row.
     pub fn is_right(self) -> bool {
         matches!(self, Self::TopRight | Self::BottomRight)
     }
 
-    /// On the viewport's bottom edge, so a panel pinned here grows upwards.
+    /// On the surface's bottom edge, so a panel pinned here grows upwards.
     pub fn is_bottom(self) -> bool {
         matches!(self, Self::BottomLeft | Self::BottomRight)
     }
 
-    /// Offsets from each viewport edge placing a frame `x`, `y` in from this
-    /// corner, as [`PlumeDialogProps::inset`](crate::retained::PlumeDialogProps).
+    /// Offsets from each edge of the surrounding surface placing a frame `x`, `y`
+    /// in from this corner, as
+    /// [`PlumeDialogProps::inset`](crate::retained::PlumeDialogProps).
     pub fn inset(self, x: Val, y: Val) -> UiRect {
         let (left, right) = if self.is_right() {
             (Val::Auto, x)
@@ -1176,7 +1256,8 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
         self
     }
 
-    /// Position (the panel is absolutely positioned). Spawn-time only.
+    /// Position, in from the top-left of whatever the panel is declared in — the
+    /// surrounding container, or the viewport at root scope. Spawn-time only.
     pub fn at(mut self, left: Val, top: Val) -> Self {
         self.layout.inset = UiRect {
             left,
@@ -1186,7 +1267,12 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
         self
     }
 
-    /// Pin the panel to a viewport corner, `x` and `y` in from its two edges.
+    /// Pin the panel to a corner of whatever it is declared in — the surrounding
+    /// container, or the viewport at root scope — `x` and `y` in from its edges.
+    /// Inside a pane it follows that pane, a splitter's say, with nothing to wire.
+    ///
+    /// An ordinary absolute child, so a clipping container cuts it off at its own
+    /// edge; insets that keep it inside are unaffected.
     pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
         self.layout.inset = corner.inset(x, y);
         self
@@ -1345,26 +1431,104 @@ fn reconcile_frame_body<'e, 'w, 's>(
             return;
         }
         body.add_ui(move |ui| {
-            ui.ch_id("scroll_frame")
-                .on_spawn_apply_scene(scroll_frame)
-                .add_ui(move |ui| {
-                    // The scroll area's entity is known before its spawn command
-                    // flushes, so the scrollbar can point at the viewport it drives.
-                    let viewport = ui
-                        .ch_id("scroll_area")
-                        .on_spawn_apply_scene(scroll_viewport)
-                        .add_ui(move |ui| {
-                            ui.ch_id("scroll_content")
-                                .on_spawn_apply_scene(scroll_content)
-                                .add_ui(f);
-                        })
-                        .entity();
-                    ui.ch_id("scrollbar")
-                        .on_spawn_apply_scene(move || scrollbar(viewport));
-                });
+            let frame = ui
+                .ch_id("scroll_frame")
+                .on_spawn_apply_scene(|| scroll_frame(ScrollAxis::Vertical));
+            scroll_body(frame, ScrollAxis::Vertical, f);
         });
     });
     respond(entity, false)
+}
+
+// One tab as the strip builder needs it, once the collector's entries have been
+// split between the strip and the selected body.
+struct TabStripItem<'t, 'w, 's> {
+    header: TabHeader<'t, 'w, 's>,
+    enabled: bool,
+    min_width: Option<Val>,
+}
+
+// The strip's tabs inside its already-created [`tab_strip_frame`], so a strip with
+// more tabs than room scrolls instead of putting them out of reach.
+fn tab_strip_body<'w, 's>(
+    frame: ImmEntity<'_, 'w, 's, PlumeCaps>,
+    items: Vec<TabStripItem<'_, 'w, 's>>,
+) {
+    scroll_viewport_with_scrollbar(frame, ScrollAxis::Horizontal, move |ui| {
+        ui.ch_id("tab_strip")
+            .on_spawn_apply_scene(tab_strip)
+            .add_ui(move |ui| {
+                for (slot, item) in items.into_iter().enumerate() {
+                    let TabStripItem {
+                        header,
+                        enabled,
+                        min_width,
+                    } = item;
+                    let mut tab = match header {
+                        // The label and glyph key the tab: a renamed tab
+                        // respawns rather than keeping the old caption at
+                        // the same slot.
+                        TabHeader::Label { label, icon } => ui
+                            .ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
+                            .on_spawn_apply_scene(move || tab_button(label, icon)),
+                        // Keyed on the slot alone; the content reconciles
+                        // itself, as it would anywhere else.
+                        TabHeader::Content(content) => ui
+                            .ch_id(("tab_container", slot))
+                            .on_spawn_apply_scene(tab_chrome)
+                            .add_ui(content),
+                    };
+                    struct TabMinWidth;
+                    if let Some(min_width) = min_width
+                        && tab
+                            .hash_update_typ::<TabMinWidth>(Some(imm_id(format!("{min_width:?}"))))
+                    {
+                        tab.entity_commands()
+                            .queue(move |mut entity: EntityWorldMut| {
+                                if let Some(mut node) = entity.get_mut::<Node>() {
+                                    node.min_width = min_width;
+                                }
+                            });
+                    }
+                    tab.interactions_enabled(enabled);
+                }
+            });
+    });
+}
+
+// The scrolling content and its scrollbar inside an already-created [`scroll_frame`].
+fn scroll_body<'r, 'w, 's>(
+    frame: ImmEntity<'r, 'w, 's, PlumeCaps>,
+    axis: ScrollAxis,
+    f: impl FnOnce(&mut Ui<'w, 's>),
+) -> ImmResponse<'r, 'w, 's, kind::ScrollArea> {
+    let entity = scroll_viewport_with_scrollbar(frame, axis, move |ui| {
+        ui.ch_id("scroll_content")
+            .on_spawn_apply_scene(move || scroll_content(axis))
+            .add_ui(f);
+    });
+    respond(entity, false)
+}
+
+// The scrolling viewport that `content` fills, plus the scrollbar driving it. Built
+// piecewise rather than spawned as one scene because the scrollbar needs the
+// viewport's entity, which `bsn!` names for a retained scene and imm must hand over.
+fn scroll_viewport_with_scrollbar<'r, 'w, 's>(
+    frame: ImmEntity<'r, 'w, 's, PlumeCaps>,
+    axis: ScrollAxis,
+    content: impl FnOnce(&mut Ui<'w, 's>),
+) -> ImmEntity<'r, 'w, 's, PlumeCaps> {
+    frame.add_ui(move |ui| {
+        // The entity is known before its spawn command flushes, so the scrollbar
+        // can point at the viewport it drives.
+        let viewport = ui
+            .ch_id("scroll_viewport")
+            .on_spawn_apply_scene(move || scroll_viewport(axis))
+            .add_ui(content)
+            .entity();
+        ui.ch_id("scrollbar")
+            .on_spawn_apply_scene(move || scrollbar(viewport, axis));
+    })
 }
 
 // Combining the caller location with a key means label/options changes respawn the

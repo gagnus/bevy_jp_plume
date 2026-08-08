@@ -18,7 +18,9 @@ use bevy_immediate::{
 };
 use caps::PlumeOccurrences;
 pub use response::{ImmResponse, kind};
-pub use widgets::{Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm};
+pub use widgets::{
+    Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm, tab_header,
+};
 
 pub use crate::utils::numeric::Numeric;
 
