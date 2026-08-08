@@ -151,8 +151,8 @@ impl Default for PlumeSplitterProps {
             fraction: 0.5,
             min_first: Val::Auto,
             min_second: Val::Auto,
-            first: Box::new(bsn_list!()),
-            second: Box::new(bsn_list!()),
+            first: Box::new(bsn_list![]),
+            second: Box::new(bsn_list![]),
         }
     }
 }
@@ -171,9 +171,19 @@ impl PlumeSplitter {
             splitter_frame(axis, fraction)
             template_value(SplitMin { first: min_first, second: min_second })
             Children [
-                (splitter_pane(SplitPane::First) Children [ {first} ]),
+                (
+                    splitter_pane(SplitPane::First)
+                    Children [
+                        {first},
+                    ]
+                ),
                 splitter_divider(axis),
-                (splitter_pane(SplitPane::Second) Children [ {second} ]),
+                (
+                    splitter_pane(SplitPane::Second)
+                    Children [
+                        {second},
+                    ]
+                ),
             ]
         }
     }
@@ -204,7 +214,7 @@ pub(crate) fn splitter_frame(axis: SplitAxis, fraction: f32) -> impl Scene {
     };
     bsn! {
         Node {
-            flex_direction: {direction},
+            flex_direction: direction,
             align_items: AlignItems::Stretch,
         }
         SplitterRoot
@@ -226,9 +236,9 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
     };
     bsn! {
         Node {
-            flex_grow: {grow},
-            flex_shrink: {shrink},
-            flex_basis: {basis},
+            flex_grow: grow,
+            flex_shrink: shrink,
+            flex_basis: basis,
         }
         template_value(pane)
         TextStyleRelay
@@ -272,30 +282,32 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
     bsn! {
         Node {
             position_type: PositionType::Absolute,
-            width: {width},
-            height: {height},
-            top: {top},
-            bottom: {bottom},
-            left: {left},
-            right: {right},
+            width: width,
+            height: height,
+            top: top,
+            bottom: bottom,
+            left: left,
+            right: right,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
         }
         SplitDivider
         Hovered
         TextStyleRelay
-        EntityCursor::System({cursor})
+        EntityCursor::System(cursor)
         on(drag_divider)
-        Children [(
-            Node {
-                width: {line_width},
-                height: {line_height},
-                align_self: AlignSelf::Stretch,
-            }
-            TextStyleRelay
-            Pickable::IGNORE
-            ThemeBackgroundToken(tokens::SEPARATOR)
-        )]
+        Children [
+            (
+                Node {
+                    width: line_width,
+                    height: line_height,
+                    align_self: AlignSelf::Stretch,
+                }
+                TextStyleRelay
+                Pickable::IGNORE
+                ThemeBackgroundToken(tokens::SEPARATOR)
+            ),
+        ]
     }
 }
 

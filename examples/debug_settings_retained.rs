@@ -192,7 +192,7 @@ fn debug_options_dialog() -> impl Scene {
             @title: bsn! { caption("Debug Options") },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 (
                     row()
                     Node { align_items: AlignItems::Start }
@@ -216,7 +216,7 @@ fn debug_options_dialog() -> impl Scene {
                 ),
                 separator(),
                 footer(),
-            }
+            ],
         }
     }
 }
@@ -227,7 +227,7 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! { caption_small_caps("Rendering") },
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 (
                     checkbox("Wireframe", Bound::Wireframe, wireframe)
                     Tooltip("Draw all meshes as wireframe")
@@ -242,7 +242,7 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
                     slider_row("Gamma", Bound::Gamma, gamma, 0.5, 3.0, 2, None)
                     Tooltip("Display gamma correction")
                 ),
-            },
+            ],
         }
     }
 }
@@ -252,13 +252,13 @@ fn physics_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! { caption_small_caps("Physics") },
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 (
                     checkbox("Pause simulation", Bound::PauseSim, pause_sim)
                     Tooltip("Halt the physics clock; rendering keeps running")
                 ),
                 slider_row("Time scale", Bound::TimeScale, time_scale, 0.5, 2.0, 2, None),
-            },
+            ],
         }
     }
 }
@@ -268,12 +268,12 @@ fn interface_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! { caption_small_caps("Interface") },
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 (
                     slider_row("UI scale", Bound::UiScale, ui_scale, 0.5, 2.0, 2, None)
                     Tooltip("Scales this dialog's text and everything sized from it")
                 ),
-            },
+            ],
         }
     }
 }
@@ -284,12 +284,12 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! { caption_small_caps("Diagnostics") },
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay),
                 toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
                 select_row("Overlay", Bound::Overlay, OverlayCorner::select_options(), overlay, 4),
                 select_row("Log level", Bound::LogLevel, LogLevel::select_options(), log_level, 3),
-            },
+            ],
         }
     }
 }
@@ -299,11 +299,11 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! { caption_small_caps("Cheats") },
-            @contents: bsn_list! {
+            @contents: bsn_list![
                 checkbox("Noclip", Bound::Noclip, noclip),
                 checkbox("Infinite health", Bound::InfiniteHealth, infinite_health),
                 slider_row("Move speed", Bound::MoveSpeed, move_speed, 1.0, 40.0, 0, Some("m/s".into())),
-            },
+            ],
         }
     }
 }
@@ -347,9 +347,9 @@ fn open_reset_confirm(
 fn reset_confirm_popup() -> impl Scene {
     bsn! {
         @PlumePopup {
-            @placement: {PopupPlacement::Below},
+            @placement: PopupPlacement::Below,
             @dismiss: PopupDismiss::OutsideClick,
-            @contents: bsn_list!(
+            @contents: bsn_list![
                 (
                     caption("Reset all settings to defaults?")
                     TextLayout { linebreak: LineBreak::NoWrap }
@@ -385,7 +385,7 @@ fn reset_confirm_popup() -> impl Scene {
                         ),
                     ]
                 ),
-            ),
+            ],
         }
         ResetConfirm
     }
@@ -400,10 +400,10 @@ fn footer() -> impl Scene {
                 Children [
                     (
                         @PlumeButton {
-                            @caption: bsn_list! {
+                            @caption: bsn_list![
                                 fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
-                                caption("Reset to defaults")
-                            },
+                                caption("Reset to defaults"),
+                            ],
                             @variant: ButtonVariant::Outline,
                         }
                         template_value(TooltipContent::new(|| bsn_list![
@@ -499,9 +499,9 @@ fn select_row(
             field_label(label),
             (
                 @PlumeSelect {
-                    @options: {options},
-                    @selected: {selected},
-                    @max_visible: {max_visible},
+                    @options: options,
+                    @selected: selected,
+                    @max_visible: max_visible,
                 }
                 Node { width: Val::ZERO, flex_grow: 1.0 }
                 on_choice(bound)
@@ -525,21 +525,21 @@ fn slider_row(
             field_label(label),
             (
                 @PlumeSlider {
-                    @min: {min},
-                    @max: {max},
+                    @min: min,
+                    @max: max,
                     @precision: {Some(precision as i32)},
                 }
-                SliderValue({value})
+                SliderValue(value)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
                 on_number(bound)
             ),
             (
                 @PlumeNumberInput {
-                    @value: {value},
-                    @precision: {precision},
-                    @min: {min},
-                    @max: {max},
-                    @suffix: {suffix},
+                    @value: value,
+                    @precision: precision,
+                    @min: min,
+                    @max: max,
+                    @suffix: suffix,
                 }
                 on_number(bound)
             ),

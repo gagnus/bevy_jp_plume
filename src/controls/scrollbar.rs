@@ -60,24 +60,26 @@ impl PlumeScrollbar {
                 orientation: {props.orientation},
                 // Logical px in the headless widget — not a `Val`, so it can't
                 // be em; it only bites on very long scroll extents.
-                min_thumb_length: 8.0
+                min_thumb_length: 8.0,
             }
             Node {
-                border_radius: {size::SCROLLBAR_WIDTH / 2.0}
+                border_radius: {size::SCROLLBAR_WIDTH / 2.0},
             }
             // The bar and its thumb are em-sized: they need the chain's `EmSize`.
             TextStyleRelay
             ThemeBackgroundToken(tokens::SCROLLBAR_BG)
-            Children [(
-                Hovered
-                ThemeBackgroundToken(tokens::SCROLLBAR_THUMB)
-                ScrollbarThumb {
-                    border_radius: {size::SCROLLBAR_WIDTH / 2.0}
-                }
-                PlumeScrollbarThumb
-                TextStyleRelay
-                EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            )]
+            Children [
+                (
+                    Hovered
+                    ThemeBackgroundToken(tokens::SCROLLBAR_THUMB)
+                    ScrollbarThumb {
+                        border_radius: {size::SCROLLBAR_WIDTH / 2.0},
+                    }
+                    PlumeScrollbarThumb
+                    TextStyleRelay
+                    EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
+                ),
+            ]
         }
     }
 }

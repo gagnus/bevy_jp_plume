@@ -165,17 +165,13 @@ impl PlumeSelect {
                         flex_grow: 1.0,
                     }
                     Children [
-                        (
-                            Node {
-                                flex_grow: 1.0,
-                            }
-                        ),
+                        Node {
+                            flex_grow: 1.0,
+                        },
                         fa_icon(font_awesome::solid::ANGLE_DOWN),
                     ]
                 ),
-                (
-                    popup_socket()
-                ),
+                popup_socket(),
                 // Ghost rows in a zero-size clipped overlay: laid out (so the labels
                 // get real text measurement) without occupying space or taking picks;
                 // despawned once `measure_select_width` has sized the button.
@@ -193,9 +189,9 @@ impl PlumeSelect {
                     // measured widths bake in the engine default.
                     TextStyleRelay
                     Children [
-                        {ghost_rows}
+                        {ghost_rows},
                     ]
-                )
+                ),
             ]
         }
     }
@@ -206,7 +202,9 @@ impl PlumeSelect {
 fn option_row(label: String) -> impl Scene {
     bsn! {
         @PlumeSelectOption
-        Children [ caption(label) ]
+        Children [
+            caption(label),
+        ]
     }
 }
 
@@ -222,8 +220,8 @@ fn option_rows(options: &[(String, bool)], selected: usize) -> Box<dyn SceneList
                 bsn! {
                     option_row(label)
                     SelectOptionIndex(index)
-                    {disabled.then(|| bsn!(InteractionDisabled))}
-                    {(index == selected).then(|| bsn!(Selected))}
+                    {disabled.then(|| bsn! { InteractionDisabled })}
+                    {(index == selected).then(|| bsn! { Selected })}
                 }
             })
             .collect::<Vec<_>>(),
@@ -245,7 +243,7 @@ struct PlumeSelectOptionsProps {
 impl Default for PlumeSelectOptionsProps {
     fn default() -> Self {
         Self {
-            options: Box::new(bsn_list!()),
+            options: Box::new(bsn_list![]),
         }
     }
 }
@@ -278,21 +276,22 @@ impl PlumeSelectOptions {
                     ScrollArea
                     TextStyleRelay
                     Children [
-                        {props.options}
+                        {props.options},
                     ]
                 ),
-
-                @PlumeScrollbar {
-                    @target: #inner,
-                    @orientation: {ControlOrientation::Vertical}
-                }
-                Node {
-                    position_type: PositionType::Absolute,
-                    right: size::PAD,
-                    top: {size::GAP_TIGHT / 2.0},
-                    bottom: {size::GAP_TIGHT / 2.0},
-                    width: size::SCROLLBAR_WIDTH,
-                }
+                (
+                    @PlumeScrollbar {
+                        @target: #inner,
+                        @orientation: ControlOrientation::Vertical,
+                    }
+                    Node {
+                        position_type: PositionType::Absolute,
+                        right: size::PAD,
+                        top: {size::GAP_TIGHT / 2.0},
+                        bottom: {size::GAP_TIGHT / 2.0},
+                        width: size::SCROLLBAR_WIDTH,
+                    }
+                ),
             ]
         }
     }
@@ -322,15 +321,17 @@ impl PlumeSelectOption {
             TextStyleRelay
             Hovered
             ListItem
-            Children [(
-                // Hidden ticks still occupy layout, so every label shares the gutter.
-                fa_icon(font_awesome::solid::CHECK)
-                Node {
-                    width: size::ICON_WIDTH
-                }
-                SelectOptionCheck
-                Visibility::Hidden
-            )]
+            Children [
+                (
+                    // Hidden ticks still occupy layout, so every label shares the gutter.
+                    fa_icon(font_awesome::solid::CHECK)
+                    Node {
+                        width: size::ICON_WIDTH,
+                    }
+                    SelectOptionCheck
+                    Visibility::Hidden
+                ),
+            ]
         }
     }
 }
@@ -401,25 +402,27 @@ fn open_select_popup(
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
-                @placement: {PopupPlacement::Below},
+                @placement: PopupPlacement::Below,
                 @dismiss: PopupDismiss::FocusOut,
-                @padding: {UiRect::axes(Val::ZERO, size::GAP_TIGHT)},
-                @contents: bsn_list!((
-                    @PlumeSelectOptions {
-                        @options: {rows}
-                    }
-                    on(listbox_update_selection)
-                    on(re_emit_listbox_value)
-                    on(close_popup_on_reselect)
-                    Node {
-                        max_height: {max_height},
-                    }
-                )),
+                @padding: UiRect::axes(Val::ZERO, size::GAP_TIGHT),
+                @contents: bsn_list![
+                    (
+                        @PlumeSelectOptions {
+                            @options: rows,
+                        }
+                        on(listbox_update_selection)
+                        on(re_emit_listbox_value)
+                        on(close_popup_on_reselect)
+                        Node {
+                            max_height: max_height,
+                        }
+                    ),
+                ],
             }
             PlumeSelectPopup
             template_value(MenuFocusState::Opening(nav))
             Node {
-                min_width: {min_width},
+                min_width: min_width,
             }
         })
         .insert(ChildOf(socket));

@@ -343,9 +343,9 @@ fn tooltip_panel(text: String) -> impl Scene {
                     (
                         caption(text)
                         Pickable::IGNORE
-                    )
+                    ),
                 ]
-            )
+            ),
         ]
     }
 }
@@ -357,9 +357,9 @@ fn rich_tooltip_panel(contents: Box<dyn SceneList>) -> impl Scene {
             (
                 tooltip_chrome()
                 Children [
-                    {contents}
+                    {contents},
                 ]
-            )
+            ),
         ]
     }
 }

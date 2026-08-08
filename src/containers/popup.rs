@@ -156,7 +156,7 @@ pub struct PlumePopupProps {
 impl Default for PlumePopupProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list!()),
+            contents: Box::new(bsn_list![]),
             placement: Default::default(),
             dismiss: Default::default(),
             movable: false,
@@ -201,14 +201,14 @@ impl PlumePopup {
             // Parentless socket: resolves to the standard font. Empty braces
             // stop bsn claiming the next interpolation block as a field list.
             InheritableFont {}
-            {(props.dismiss == PopupDismiss::FocusOut).then(|| bsn!(MenuPopup))}
-            {(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn!(DismissOnOutsideClick))}
+            {(props.dismiss == PopupDismiss::FocusOut).then(|| bsn! { MenuPopup })}
+            {(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn! { DismissOnOutsideClick })}
             // A focus-out popup's focus is owned by the menu machinery; the rest
             // scope Tab traversal like a dialog does.
-            {(props.dismiss != PopupDismiss::FocusOut).then(|| bsn!(TabGroup::new(0)))}
-            {props.movable.then(|| bsn!(on(on_popup_drag)))}
+            {(props.dismiss != PopupDismiss::FocusOut).then(|| bsn! { TabGroup::new(0) })}
+            {props.movable.then(|| bsn! { on(on_popup_drag) })}
             Children [
-                {props.contents}
+                {props.contents},
             ]
         }
     }

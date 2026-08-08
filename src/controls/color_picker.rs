@@ -117,22 +117,20 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
         }
         TextStyleRelay
         Children [
-            (
-                space(size::em_from_px(4.0))
-            )
+            space(size::em_from_px(4.0)),
             (
                 caption(label)
-                Node { width: {size::TEXT_HEIGHT}, flex_shrink: 0.0 }
+                Node { width: size::TEXT_HEIGHT, flex_shrink: 0.0 }
             ),
             (
                 @PlumeNumberInput {
-                    @precision: {precision},
-                    @min: {0.0_f32},
-                    @max: {max},
-                    @suffix: {suffix},
+                    @precision: precision,
+                    @min: 0.0_f32,
+                    @max: max,
+                    @suffix: suffix,
                 }
                 Node { flex_grow: 1.0 }
-                ColorPickerChannel({channel})
+                ColorPickerChannel(channel)
             ),
         ]
     }
@@ -161,11 +159,11 @@ impl PlumeColorPicker {
                 // Hue bar: a pad locked to x, so it only moves along the hue axis.
                 (
                     @PlumeXyPad {
-                        @reticle_size: HUE_RETICLE_SIZE
+                        @reticle_size: HUE_RETICLE_SIZE,
                     }
                     Node { width: HUE_BAR_WIDTH, height: PLANE_SIZE }
-                    XyPadLock { x: {Some(0.5)}, y: {None} }
-                    BackgroundGradient({hue_gradient()})
+                    XyPadLock { x: {Some(0.5)}, y: None }
+                    BackgroundGradient(hue_gradient())
                     ColorPickerHue
                 ),
                 // Preview swatch over the numeric fields; the swatch grows to fill
@@ -185,13 +183,13 @@ impl PlumeColorPicker {
                             ColorPickerSwatch
                         ),
                         // sRGB channels, then a gap, then the HSV channels.
-                        (channel_row("R", Channel::R, 3, 1.0)),
-                        (channel_row("G", Channel::G, 3, 1.0)),
-                        (channel_row("B", Channel::B, 3, 1.0)),
-                        (space(size::GAP_TIGHT / 2.0)),
-                        (channel_row("H", Channel::H, 0, 360.0)),
-                        (channel_row("S", Channel::S, 3, 1.0)),
-                        (channel_row("V", Channel::V, 3, 1.0)),
+                        channel_row("R", Channel::R, 3, 1.0),
+                        channel_row("G", Channel::G, 3, 1.0),
+                        channel_row("B", Channel::B, 3, 1.0),
+                        space(size::GAP_TIGHT / 2.0),
+                        channel_row("H", Channel::H, 0, 360.0),
+                        channel_row("S", Channel::S, 3, 1.0),
+                        channel_row("V", Channel::V, 3, 1.0),
                     ]
                 ),
             ]

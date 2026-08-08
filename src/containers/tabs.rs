@@ -75,8 +75,8 @@ pub struct PlumeTabsProps {
 impl Default for PlumeTabsProps {
     fn default() -> Self {
         Self {
-            header: Box::new(bsn_list!()),
-            body: Box::new(bsn_list!()),
+            header: Box::new(bsn_list![]),
+            body: Box::new(bsn_list![]),
         }
     }
 }
@@ -90,10 +90,10 @@ impl PlumeTabs {
                 (
                     tab_strip()
                     Children [
-                        {props.header}
+                        {props.header},
                     ]
                 ),
-                {props.body}
+                {props.body},
             ]
         }
     }
@@ -117,7 +117,7 @@ pub struct PlumeTabProps {
 impl Default for PlumeTabProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list!()),
+            caption: Box::new(bsn_list![]),
             target: EntityTemplate::default(),
         }
     }
@@ -130,7 +130,7 @@ impl PlumeTab {
             tab_chrome()
             TabTarget({props.target})
             Children [
-                {props.caption}
+                {props.caption},
             ]
         }
     }
@@ -216,7 +216,7 @@ pub(crate) fn tab_strip() -> impl Scene {
                     position_type: PositionType::Absolute,
                     left: Val::ZERO,
                     bottom: Val::ZERO,
-                    width: {px(INDICATOR_BASE_WIDTH)},
+                    width: px(INDICATOR_BASE_WIDTH),
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
                 TabIndicator
@@ -226,7 +226,7 @@ pub(crate) fn tab_strip() -> impl Scene {
                 UiTransform::default()
                 Pickable::IGNORE
                 ThemeBackgroundToken(tokens::TAB_INDICATOR)
-            )
+            ),
         ]
     }
 }
@@ -264,7 +264,7 @@ pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
         tab_chrome()
         Children [
             {icon.map(|icon| bsn! { fa_icon(icon) })},
-            caption(label)
+            caption(label),
         ]
     }
 }

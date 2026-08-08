@@ -49,9 +49,9 @@ impl PlumeToggleSwitch {
             Node {
                 width: {size::TOGGLE_SIZE.x},
                 height: {size::TOGGLE_SIZE.y},
-                margin: {UiRect::vertical(
+                margin: UiRect::vertical(
                     size::ROW_HEIGHT.try_sub(size::TOGGLE_SIZE.y).unwrap() / 2.0,
-                )},
+                ),
                 border_radius: {size::TOGGLE_SIZE.y / 2.0},
             }
             Checkbox
@@ -62,7 +62,7 @@ impl PlumeToggleSwitch {
             FocusIndicator
             on(checkbox_self_update)
             ThemeBackgroundToken(tokens::SWITCH_BG)
-            template_value(GradientAmount::STANDARD)
+            GradientAmount::STANDARD
             template_value(control_box_shadow())
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
@@ -89,8 +89,8 @@ impl PlumeToggleSwitch {
                     // `UiTransform` translation so it never triggers a relayout.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: {size::em_from_px(1.0)},
-                        top: {size::em_from_px(1.0)},
+                        left: size::em_from_px(1.0),
+                        top: size::em_from_px(1.0),
                         width: size::KNOB_SIZE,
                         height: size::KNOB_SIZE,
                         border_radius: BorderRadius::MAX,
@@ -102,7 +102,7 @@ impl PlumeToggleSwitch {
                     ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)
                     GradientAmount(SLIDE_GRADIENT_AMOUNT)
                     template_value(control_box_shadow())
-                )
+                ),
             ]
         }
     }

@@ -85,8 +85,8 @@ pub struct PlumeSectionProps {
 impl Default for PlumeSectionProps {
     fn default() -> Self {
         Self {
-            header: Box::new(bsn_list!()),
-            contents: Box::new(bsn_list!()),
+            header: Box::new(bsn_list![]),
+            contents: Box::new(bsn_list![]),
             collapsible: true,
         }
     }
@@ -105,12 +105,14 @@ impl PlumeSection {
                 header,
                 collapsible,
                 // Empty for the imm layer, which reconciles the body itself.
-                bsn_list!((
-                    section_body()
-                    Children [
-                        {contents}
-                    ]
-                )),
+                bsn_list![
+                    (
+                        section_body()
+                        Children [
+                            {contents},
+                        ]
+                    ),
+                ],
             )
         }
     }
@@ -156,11 +158,17 @@ pub(crate) fn section_frame(
                 TextStyleRelay
                 on(toggle_section_collapse)
                 Children [
-                    {collapsible.then(|| bsn! { (fa_icon(font_awesome::solid::ANGLE_DOWN) Node { width: size::ICON_WIDTH } SectionChevron template_value(AnimState::rotation(0.0, -FRAC_PI_2)) UiTransform::default()) })},
-                    {header}
+                    {collapsible.then(|| bsn! {
+                        fa_icon(font_awesome::solid::ANGLE_DOWN)
+                        Node { width: size::ICON_WIDTH }
+                        SectionChevron
+                        template_value(AnimState::rotation(0.0, -FRAC_PI_2))
+                        UiTransform::default()
+                    })},
+                    {header},
                 ]
             ),
-            {body}
+            {body},
         ]
     }
 }

@@ -51,7 +51,7 @@ pub struct PlumeRadioProps {
 impl Default for PlumeRadioProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list!()),
+            caption: Box::new(bsn_list![]),
         }
     }
 }
@@ -76,56 +76,58 @@ impl PlumeRadio {
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextToken(tokens::RADIO_TEXT)
             TextStyleRelay
-            Children [(
-                // Gradient only when checked, since the unchecked fill is transparent.
-                Node {
-                    display: Display::Flex,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    width: size::RADIO_SIZE,
-                    height: size::RADIO_SIZE,
-                    border_radius: BorderRadius::MAX,
-                }
-                RadioBg
-                // Em-sized chrome needs the chain's `EmSize`.
-                TextStyleRelay
-                // Ring hugs the disc, not the label row.
-                FocusIndicator
-                ThemeBackgroundToken(tokens::RADIO_BG)
-                GradientAmount(0.0)
-                Children [
-                    (
-                        // Border ring overlaying the disc; only its color is themed.
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::ZERO,
-                            top: Val::ZERO,
-                            width: percent(100),
-                            height: percent(100),
-                            border: size::CONTROL_BORDER,
-                            border_radius: BorderRadius::MAX,
-                        }
-                        RadioOutline
-                        ThemeBorderToken(tokens::RADIO_BORDER)
-                    ),
-                    (
-                        // Proportioned to the disc so it scales with it.
-                        Node {
-                            width: {size::em_from_px(12.0)},
-                            height: {size::em_from_px(12.0)},
-                            border: {size::em_from_px(2.0)},
-                            border_radius: BorderRadius::MAX,
-                        }
-                        RadioMark
-                        TextStyleRelay
-                        template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
-                        UiTransform::default()
-                        Visibility::Hidden
-                        ThemeBackgroundToken(tokens::RADIO_MARK)
-                        GradientAmount(0.0)
-                    )
-                ]),
-                {props.caption}
+            Children [
+                (
+                    // Gradient only when checked, since the unchecked fill is transparent.
+                    Node {
+                        display: Display::Flex,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        width: size::RADIO_SIZE,
+                        height: size::RADIO_SIZE,
+                        border_radius: BorderRadius::MAX,
+                    }
+                    RadioBg
+                    // Em-sized chrome needs the chain's `EmSize`.
+                    TextStyleRelay
+                    // Ring hugs the disc, not the label row.
+                    FocusIndicator
+                    ThemeBackgroundToken(tokens::RADIO_BG)
+                    GradientAmount(0.0)
+                    Children [
+                        (
+                            // Border ring overlaying the disc; only its color is themed.
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::ZERO,
+                                top: Val::ZERO,
+                                width: percent(100),
+                                height: percent(100),
+                                border: size::CONTROL_BORDER,
+                                border_radius: BorderRadius::MAX,
+                            }
+                            RadioOutline
+                            ThemeBorderToken(tokens::RADIO_BORDER)
+                        ),
+                        (
+                            // Proportioned to the disc so it scales with it.
+                            Node {
+                                width: size::em_from_px(12.0),
+                                height: size::em_from_px(12.0),
+                                border: size::em_from_px(2.0),
+                                border_radius: BorderRadius::MAX,
+                            }
+                            RadioMark
+                            TextStyleRelay
+                            template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
+                            UiTransform::default()
+                            Visibility::Hidden
+                            ThemeBackgroundToken(tokens::RADIO_MARK)
+                            GradientAmount(0.0)
+                        ),
+                    ]
+                ),
+                {props.caption},
             ]
         }
     }

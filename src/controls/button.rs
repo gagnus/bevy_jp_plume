@@ -76,7 +76,7 @@ pub struct PlumeButtonProps {
 impl Default for PlumeButtonProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list!()),
+            caption: Box::new(bsn_list![]),
             variant: ButtonVariant::default(),
             corners: Default::default(),
             checkable: false,
@@ -117,7 +117,7 @@ impl PlumeButton {
             FocusIndicator
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             ThemeBackgroundToken(tokens::BUTTON_BG)
-            template_value(GradientAmount::STANDARD)
+            GradientAmount::STANDARD
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
             TextStyleRelay
             Children [
@@ -140,7 +140,7 @@ impl PlumeButton {
                     Pickable::IGNORE
                     ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
                 ),
-                {props.caption}
+                {props.caption},
             ]
         }
     }
@@ -166,7 +166,7 @@ impl PlumeToolButton {
             @PlumeButton {
                 @caption: {props.caption},
                 @variant: {props.variant},
-                @corners: {props.corners}
+                @corners: {props.corners},
             }
             Node {
                 padding: UiRect::horizontal(size::GAP_TIGHT),

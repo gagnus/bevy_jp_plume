@@ -59,7 +59,7 @@ impl PlumeDisclosure {
                     Pickable::IGNORE
                     template_value(AnimState::rotation(0.0, FRAC_PI_2))
                     UiTransform::default()
-                )
+                ),
             ]
         }
     }

@@ -9,7 +9,7 @@ use crate::font_styles::TextStyleRelay;
 pub fn space(length: Val) -> impl Scene {
     bsn! {
         Node {
-            flex_basis: {length},
+            flex_basis: length,
             flex_grow: 0.0,
             flex_shrink: 0.0,
         }

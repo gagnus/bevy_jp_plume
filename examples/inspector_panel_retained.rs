@@ -268,9 +268,9 @@ fn root() -> impl Scene {
                 // minimum is `Auto` — whatever its content needs.
                 @PlumeSplitter {
                     @fraction: 0.75,
-                    @min_second: {px(260)},
-                    @first: bsn_list![ viewport() ],
-                    @second: bsn_list![ panel() ],
+                    @min_second: px(260),
+                    @first: bsn_list![viewport()],
+                    @second: bsn_list![panel()],
                 }
                 Node { flex_grow: 1.0 }
             ),
@@ -313,7 +313,7 @@ fn panel() -> impl Scene {
         // the pane it is given.
         Node {
             flex_grow: 1.0,
-            padding: {size::PAD},
+            padding: size::PAD,
         }
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
         template_value(ThemeBorderSlot(ThemeSlot::Neutral3))
@@ -356,29 +356,41 @@ fn header() -> impl Scene {
 fn tabs(material: Material, nodes: Vec<SceneNode>) -> impl Scene {
     bsn! {
         @PlumeTabs {
-            @header: bsn_list! {
+            @header: bsn_list![
                 (
                     @PlumeTab {
-                        @caption: bsn_list! {
+                        @caption: bsn_list![
                             fa_icon(font_awesome::solid::PALETTE),
-                            caption("Material")
-                        },
+                            caption("Material"),
+                        ],
                         @target: #material,
                     }
                     Selected
                 ),
                 @PlumeTab {
-                    @caption: bsn_list! {
+                    @caption: bsn_list![
                         fa_icon(font_awesome::solid::SITEMAP),
-                        caption("Hierarchy")
-                    },
+                        caption("Hierarchy"),
+                    ],
                     @target: #hierarchy,
                 },
-            },
-            @body: bsn_list! {
-                (#material tab_body() Children [ material_tab(material) ]),
-                (#hierarchy tab_body() Children [ hierarchy_tab(nodes) ]),
-            },
+            ],
+            @body: bsn_list![
+                (
+                    #material
+                    tab_body()
+                    Children [
+                        material_tab(material),
+                    ]
+                ),
+                (
+                    #hierarchy
+                    tab_body()
+                    Children [
+                        hierarchy_tab(nodes),
+                    ]
+                ),
+            ],
         }
         Node { flex_grow: 1.0, min_height: Val::ZERO }
         on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
@@ -393,55 +405,54 @@ fn material_tab(m: Material) -> impl Scene {
     let (blend, cull) = (m.blend, m.cull);
     bsn! {
         @PlumeScrollArea {
-            @contents: bsn_list! {
-                (
-                    @PlumeSection {
-                        @header: bsn! { caption_small_caps("Surface") },
-                        @contents: bsn_list! {
-                            (
-                                row()
-                                Children [
-                                    field_label("Name"),
-                                    (@PlumeColorSwatch template_value(ColorSwatchValue(base))),
-                                    (
-                                        @PlumeTextInput {
-                                            @value: {name},
-                                            @placeholder: {Some("Material name".to_string())},
-                                        }
-                                        Node { width: Val::ZERO, flex_grow: 1.0 }
-                                        on_text(Bound::Name)
-                                    ),
-                                ]
-                            ),
-                            color_row("Base color", base, Bound::BaseColor),
-                            color_row("Emissive", emissive, Bound::Emissive),
-                        },
-                    }
-                ),
-                (
-                    @PlumeSection {
-                        @header: bsn! { caption_small_caps("Shading") },
-                        @contents: bsn_list! {
-                            radio_row("Blend", blend, Bound::Blend),
-                            radio_row("Cull", cull, Bound::Cull),
-                            slider_row("Metallic", metallic, Bound::Metallic),
-                            slider_row("Roughness", roughness, Bound::Roughness),
-                        },
-                    }
-                ),
+            @contents: bsn_list![
+                @PlumeSection {
+                    @header: bsn! { caption_small_caps("Surface") },
+                    @contents: bsn_list![
+                        (
+                            row()
+                            Children [
+                                field_label("Name"),
+                                (
+                                    @PlumeColorSwatch
+                                    template_value(ColorSwatchValue(base))
+                                ),
+                                (
+                                    @PlumeTextInput {
+                                        @value: name,
+                                        @placeholder: {Some("Material name".to_string())},
+                                    }
+                                    Node { width: Val::ZERO, flex_grow: 1.0 }
+                                    on_text(Bound::Name)
+                                ),
+                            ]
+                        ),
+                        color_row("Base color", base, Bound::BaseColor),
+                        color_row("Emissive", emissive, Bound::Emissive),
+                    ],
+                },
+                @PlumeSection {
+                    @header: bsn! { caption_small_caps("Shading") },
+                    @contents: bsn_list![
+                        radio_row("Blend", blend, Bound::Blend),
+                        radio_row("Cull", cull, Bound::Cull),
+                        slider_row("Metallic", metallic, Bound::Metallic),
+                        slider_row("Roughness", roughness, Bound::Roughness),
+                    ],
+                },
                 (
                     @PlumeSection {
                         @header: bsn! { caption_small_caps("Color picker") },
-                        @contents: bsn_list! {
+                        @contents: bsn_list![
                             (
-                                @PlumeColorPicker { @initial_color: {base} }
+                                @PlumeColorPicker { @initial_color: base }
                                 on_color(Bound::Picker)
                             ),
-                        },
+                        ],
                     }
                     SectionCollapsed
                 ),
-            },
+            ],
         }
     }
 }
@@ -467,9 +478,7 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
                     ),
                 ]
             ),
-            (
-                @PlumeScrollArea { @contents: {Box::new(rows) as Box<dyn SceneList>} }
-            ),
+            @PlumeScrollArea { @contents: {Box::new(rows) as Box<dyn SceneList>} },
         ]
     }
 }
@@ -511,8 +520,12 @@ fn footer(scale: f32) -> impl Scene {
         Children [
             field_label("UI scale"),
             (
-                @PlumeSlider { @min: 0.5, @max: 2.0, @precision: {Some(2)} }
-                SliderValue({scale})
+                @PlumeSlider {
+                    @min: 0.5,
+                    @max: 2.0,
+                    @precision: {Some(2)},
+                }
+                SliderValue(scale)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
                 on_number(Bound::UiScale)
             ),
@@ -534,7 +547,7 @@ fn color_row(label: &str, color: Color, bound: Bound) -> impl Scene {
         Children [
             field_label(label),
             (
-                @PlumeColorEdit { @initial_color: {color} }
+                @PlumeColorEdit { @initial_color: color }
                 on_color(bound)
             ),
         ]
@@ -547,8 +560,12 @@ fn slider_row(label: &str, value: f32, bound: Bound) -> impl Scene {
         Children [
             field_label(label),
             (
-                @PlumeSlider { @min: 0.0, @max: 1.0, @precision: {Some(2)} }
-                SliderValue({value})
+                @PlumeSlider {
+                    @min: 0.0,
+                    @max: 1.0,
+                    @precision: {Some(2)},
+                }
+                SliderValue(value)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
                 on_number(bound)
             ),
@@ -575,10 +592,12 @@ fn radio_row<T: Options>(label: &str, selected: T, bound: Bound) -> impl Scene {
                 @PlumeRadioGroup
                 Node {
                     flex_direction: FlexDirection::Row,
-                    column_gap: {size::GAP},
+                    column_gap: size::GAP,
                 }
                 template_value(bound)
-                Children [ {radios} ]
+                Children [
+                    {radios},
+                ]
                 on_choice(bound)
             ),
         ]

@@ -57,7 +57,7 @@ impl PlumeColorSwatch {
                     }
                     TextStyleRelay
                     ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
-                )
+                ),
             ]
         }
     }

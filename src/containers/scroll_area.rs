@@ -166,7 +166,7 @@ pub struct PlumeScrollAreaProps {
 impl Default for PlumeScrollAreaProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list!()),
+            contents: Box::new(bsn_list![]),
         }
     }
 }
@@ -181,13 +181,18 @@ impl PlumeScrollArea {
                     #viewport
                     scroll_viewport()
                     Children [
-                        (scroll_content() Children [ {contents} ])
+                        (
+                            scroll_content()
+                            Children [
+                                {contents},
+                            ]
+                        ),
                     ]
                 ),
                 (
                     @PlumeScrollbar {
                         @target: #viewport,
-                        @orientation: {ControlOrientation::Vertical},
+                        @orientation: ControlOrientation::Vertical,
                     }
                     scrollbar_node()
                 ),
@@ -201,8 +206,8 @@ impl PlumeScrollArea {
 pub(crate) fn scrollbar(target: Entity) -> impl Scene {
     bsn! {
         @PlumeScrollbar {
-            @target: {EntityTemplate::from(target)},
-            @orientation: {ControlOrientation::Vertical},
+            @target: EntityTemplate::from(target),
+            @orientation: ControlOrientation::Vertical,
         }
         scrollbar_node()
     }

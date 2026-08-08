@@ -51,7 +51,7 @@ pub struct PlumeCheckboxProps {
 impl Default for PlumeCheckboxProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list!()),
+            caption: Box::new(bsn_list![]),
         }
     }
 }
@@ -108,10 +108,10 @@ impl PlumeCheckbox {
                             // proportioned to the box so it scales with it.
                             Node {
                                 position_type: PositionType::Absolute,
-                                left: {size::em_from_px(6.0)},
-                                top: {size::em_from_px(2.0)},
-                                width: {size::em_from_px(6.0)},
-                                height: {size::em_from_px(11.0)},
+                                left: size::em_from_px(6.0),
+                                top: size::em_from_px(2.0),
+                                width: size::em_from_px(6.0),
+                                height: size::em_from_px(11.0),
                                 border: {UiRect {
                                     bottom: size::em_from_px(2.0),
                                     right: size::em_from_px(2.0),
@@ -124,10 +124,10 @@ impl PlumeCheckbox {
                             template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             Visibility::Hidden
                             ThemeBorderToken(tokens::CHECKBOX_MARK)
-                        )
+                        ),
                     ]
                 ),
-                {props.caption}
+                {props.caption},
             ]
         }
     }

@@ -103,16 +103,16 @@ impl PlumeSlider {
             // Default step = 1% of range: arrow keys (and a11y increments) move a
             // continuous slider usefully instead of by the headless default of 1.0.
             SliderStep({props.step.unwrap_or((props.max - props.min) / 100.0)})
-            {props.precision.map(|precision| bsn!(SliderPrecision({precision})))}
+            {props.precision.map(|precision| bsn! { SliderPrecision(precision) })}
             Children [
                 (
                     // Inset half a knob each end so the thumb's sweep, not the bare
                     // track, spans the full width; grown so the inset is subtracted.
                     Node {
                         height: size::SLIDER_TRACK_HEIGHT,
-                        width: {Val::ZERO},
+                        width: Val::ZERO,
                         flex_grow: 1.0,
-                        margin: {UiRect::horizontal(size::KNOB_SIZE / 2.0)},
+                        margin: UiRect::horizontal(size::KNOB_SIZE / 2.0),
                         border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
@@ -158,10 +158,10 @@ impl PlumeSlider {
                             UiTransform::default()
                             on(grab_thumb_on_press)
                             ThemeBackgroundToken(tokens::SLIDER_THUMB)
-                            template_value(GradientAmount::STANDARD)
-                        )
+                            GradientAmount::STANDARD
+                        ),
                     ]
-                )
+                ),
             ]
         }
     }

@@ -293,9 +293,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch> {
         // Identity is the call site, not the color: an animating value reconciles its
         // ColorSwatchValue in place rather than respawning the box every change.
-        let mut entity = self
-            .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || bsn! { @PlumeColorSwatch ColorSwatchValue({color}) });
+        let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(move || {
+            bsn! {
+                @PlumeColorSwatch
+                ColorSwatchValue(color)
+            }
+        });
         struct SwatchColor;
         let lin = color.to_linear();
         let key = (
@@ -335,7 +338,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || bsn! { @PlumeColorPicker { @initial_color: {initial} }})
+            .on_spawn_apply_scene(move || bsn! { @PlumeColorPicker { @initial_color: initial } })
             .plume_color(color, &mut changed);
         respond(entity, changed)
     }
@@ -346,7 +349,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || bsn! { @PlumeColorEdit { @initial_color: {initial} }})
+            .on_spawn_apply_scene(move || bsn! { @PlumeColorEdit { @initial_color: initial } })
             .plume_color(color, &mut changed);
         respond(entity, changed)
     }
@@ -375,7 +378,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut entity = self
             .ch_loc(loc_id((icon.face(), label)))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeButton { @caption: bsn_list! { fa_icon(icon), caption(label_owned) } } }
+                bsn! {
+                    @PlumeButton {
+                        @caption: bsn_list![
+                            fa_icon(icon),
+                            caption(label_owned),
+                        ],
+                    }
+                }
             });
         struct IconButtonGlyph;
         if entity.hash_update_typ::<IconButtonGlyph>(Some(imm_id(icon.glyph())))
@@ -452,7 +462,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(|| {
-                bsn! { @PlumeButton Node { justify_content: JustifyContent::Start } }
+                bsn! {
+                    @PlumeButton
+                    Node { justify_content: JustifyContent::Start }
+                }
             })
             .add_ui(f);
         respond(entity, false)
@@ -534,7 +547,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id((min.to_bits(), max.to_bits())))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeSlider { @min: {min}, @max: {max}, @step: {step}, @precision: {precision} } }
+                bsn! {
+                    @PlumeSlider {
+                        @min: min,
+                        @max: max,
+                        @step: step,
+                        @precision: precision,
+                    }
+                }
             })
             .plume_value(value, &mut changed);
         respond_numeric::<T, _>(entity, changed)
@@ -560,7 +580,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeNumberInput { @value: {initial}, @precision: {precision}, @min: {min}, @max: {max} } }
+                bsn! {
+                    @PlumeNumberInput {
+                        @value: initial,
+                        @precision: precision,
+                        @min: min,
+                        @max: max,
+                    }
+                }
             })
             .plume_value(value, &mut changed);
         respond_numeric::<T, _>(entity, changed)
@@ -572,7 +599,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || bsn! { @PlumeTextInput { @value: {initial} } })
+            .on_spawn_apply_scene(move || bsn! { @PlumeTextInput { @value: initial } })
             .plume_text(text, &mut changed);
         respond(entity, changed)
     }
@@ -607,7 +634,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeSelect { @options: {labels}, @selected: {initial} } }
+                bsn! { @PlumeSelect { @options: labels, @selected: initial } }
             })
             .plume_select(&mut index, &mut changed);
         if changed && let Some(option) = options.into_iter().nth(index) {
@@ -703,9 +730,9 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(move || {
                 bsn! {
                     section_frame(
-                        bsn_list!(caption_small_caps(header_owned)),
+                        bsn_list![caption_small_caps(header_owned)],
                         true,
-                        bsn_list!()
+                        bsn_list![]
                     )
                 }
             })
@@ -1276,9 +1303,9 @@ fn imm_popup_scene(
 ) -> impl Scene {
     bsn! {
         @PlumePopup {
-            @placement: {placement},
-            @dismiss: {dismiss},
-            @movable: {movable},
+            @placement: placement,
+            @dismiss: dismiss,
+            @movable: movable,
         }
         template_value(DismissScope(anchor))
     }
@@ -1488,9 +1515,12 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
         // Empty body: the imm layer reconciles the body itself.
         dialog_frame(DialogChrome {
             name: format!("PlumeDialog({title})").into(),
-            body: Box::new(bsn_list!()),
+            body: Box::new(bsn_list![]),
             header: Some(DialogHeader {
-                title: Box::new(bsn_list![ {icon.map(|icon| bsn! { fa_icon(icon) })}, caption(title)]),
+                title: Box::new(bsn_list![
+                    {icon.map(|icon| bsn! { fa_icon(icon) })},
+                    caption(title),
+                ]),
                 closable,
                 movable,
             }),
@@ -1518,7 +1548,7 @@ fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
     bsn! {
         dialog_frame(DialogChrome {
             name: "PlumePanel".into(),
-            body: Box::new(bsn_list!()),
+            body: Box::new(bsn_list![]),
             header: None,
             width,
             height,

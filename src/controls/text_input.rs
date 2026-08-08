@@ -85,10 +85,12 @@ impl PlumeTextInput {
             Children [
                 (
                     text_input_field(props.visible_width, props.max_characters)
-                    {props.filter.map(|filter| bsn!(template_value(filter)))}
+                    {props.filter.map(|filter| bsn! { template_value(filter) })}
                 ),
-                {props.placeholder.map(|placeholder| bsn_list!(text_input_placeholder(placeholder)))},
-                {props.suffix.map(|suffix| bsn_list!(text_input_suffix(suffix)))}
+                {props.placeholder.map(|placeholder| bsn_list![
+                    text_input_placeholder(placeholder),
+                ])},
+                {props.suffix.map(|suffix| bsn_list![text_input_suffix(suffix)])},
             ]
         }
     }
@@ -106,9 +108,9 @@ pub(crate) fn text_input_frame() -> impl Scene {
             padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, size::em_from_px(1.5), Val::ZERO),
             border: size::CONTAINER_BORDER,
             border_radius: size::CORNER_RADIUS,
-            min_width: {size::em_from_px(40.0)},
+            min_width: size::em_from_px(40.0),
         }
-        DefaultWidth({size::em_from_px(124.0)})
+        DefaultWidth(size::em_from_px(124.0))
         PlumeTextInput
         TextStyleRelay
         ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
@@ -138,8 +140,8 @@ pub(crate) fn text_input_field(
         template_value(TextReadWriteMode::Editable)
         EditableText {
             cursor_width: 0.3,
-            visible_width: {visible_width},
-            max_characters: {max_characters},
+            visible_width: visible_width,
+            max_characters: max_characters,
         }
         ThemedText
         TextLayout {
@@ -325,7 +327,7 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
         Text(text)
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
-            margin: {UiRect::left(size::GAP_TIGHT)},
+            margin: UiRect::left(size::GAP_TIGHT),
         }
         TextInputDimText
         // Never steal the click that focuses the field.

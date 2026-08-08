@@ -149,15 +149,15 @@ impl PlumeNumberInput {
                     on(number_input_on_key)
                     on(number_input_on_focus_lost)
                 ),
-                {props.suffix.map(|suffix| bsn_list!(text_input_suffix(suffix)))},
+                {props.suffix.map(|suffix| bsn_list![text_input_suffix(suffix)])},
                 (
                     // Scrub/click catcher covering the whole frame, field and suffix alike.
                     Node {
                         position_type: PositionType::Absolute,
-                        left: {Val::ZERO},
-                        right: {Val::ZERO},
-                        top: {Val::ZERO},
-                        bottom: {Val::ZERO},
+                        left: Val::ZERO,
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
                     }
                     NumberInputScrubber
                     template_value(Pickable::default())
@@ -168,7 +168,7 @@ impl PlumeNumberInput {
                     on(scrubber_on_drag)
                     on(scrubber_on_drag_end)
                     on(scrubber_on_cancel)
-                )
+                ),
             ]
         }
     }

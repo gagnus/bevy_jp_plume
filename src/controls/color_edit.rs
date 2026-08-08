@@ -89,9 +89,7 @@ impl PlumeColorEdit {
                     EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 ),
                 // The picker popup spawns into this socket while open.
-                (
-                    popup_socket()
-                )
+                popup_socket(),
             ]
         }
     }
@@ -130,29 +128,29 @@ fn on_swatch_click(
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
-                @placement: {PopupPlacement::Beside},
+                @placement: PopupPlacement::Beside,
                 @dismiss: PopupDismiss::OutsideClick,
                 @movable: true,
-                @contents: bsn_list!(
+                @contents: bsn_list![
                     (
-                        row() Node { padding: {UiRect::new(size::PAD, size::PAD, Val::ZERO, size::PAD)} } Children [
-                            (
-                                fa_icon(font_awesome::solid::PALETTE)
-                            ),
+                        row()
+                        Node { padding: UiRect::new(size::PAD, size::PAD, Val::ZERO, size::PAD) }
+                        Children [
+                            fa_icon(font_awesome::solid::PALETTE),
                             (
                                 caption_small_caps("Color Edit")
-                                Node { width: {size::em_from_px(100.0)} }
+                                Node { width: size::em_from_px(100.0) }
                                 ThemeTextToken(tokens::TEXT_MAIN)
-                            )
+                            ),
                         ]
                     ),
                     (
                         @PlumeColorPicker {
-                            @initial_color: {color},
+                            @initial_color: color,
                         }
                         ColorEditPicker
-                    )
-                ),
+                    ),
+                ],
             }
             ColorEditPopup
         })

@@ -106,8 +106,8 @@ impl PlumeXyPad {
             Node {
                 // Small floor so a caller can size the pad down to a thin value
                 // bar; the SV plane sizes itself up explicitly.
-                min_height: {size::em_from_px(16.0)},
-                min_width: {size::em_from_px(16.0)},
+                min_height: size::em_from_px(16.0),
+                min_width: size::em_from_px(16.0),
                 border: size::CONTROL_BORDER,
                 border_radius: size::CORNER_RADIUS_SMALL,
                 padding: UiRect::all(size::CONTROL_BORDER),
@@ -118,40 +118,47 @@ impl PlumeXyPad {
             TextStyleRelay
             ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
-            Children [(
-                Node {
-                    align_self: AlignSelf::Stretch,
-                    flex_grow: 1.0,
-                    border_radius: size::CORNER_RADIUS_SMALL,
-                }
-                XyPadInner
-                TextStyleRelay
-                Children [(
+            Children [
+                (
                     Node {
-                        position_type: PositionType::Absolute,
-                        left: percent(50),
-                        top: percent(50),
-                        width: {props.reticle_size.x},
-                        height: {props.reticle_size.y},
-                        border: RETICLE_BORDER,
-                        border_radius: size::CORNER_RADIUS,
-                        // Half-reticle offsets center the ring on the value position.
-                        margin: UiRect { left: {-props.reticle_size.x / 2.0}, top: {-props.reticle_size.y / 2.0} },
+                        align_self: AlignSelf::Stretch,
+                        flex_grow: 1.0,
+                        border_radius: size::CORNER_RADIUS_SMALL,
                     }
-                    XyPadThumb
+                    XyPadInner
                     TextStyleRelay
-                    // A white ring with a dark outline reads on any background.
-                    bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
-                    bevy::ui::Outline {
-                        width: size::CONTROL_BORDER,
-                        offset: Val::ZERO,
-                        color: bevy::color::Color::BLACK,
-                    }
-                    // Let picks fall through to the inner pad so the reticle never
-                    // eats a drag that starts on top of it.
-                    Pickable::IGNORE
-                )]
-            )]
+                    Children [
+                        (
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: percent(50),
+                                top: percent(50),
+                                width: {props.reticle_size.x},
+                                height: {props.reticle_size.y},
+                                border: RETICLE_BORDER,
+                                border_radius: size::CORNER_RADIUS,
+                                // Half-reticle offsets center the ring on the value position.
+                                margin: UiRect {
+                                    left: {-props.reticle_size.x / 2.0},
+                                    top: {-props.reticle_size.y / 2.0},
+                                },
+                            }
+                            XyPadThumb
+                            TextStyleRelay
+                            // A white ring with a dark outline reads on any background.
+                            bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
+                            bevy::ui::Outline {
+                                width: size::CONTROL_BORDER,
+                                offset: Val::ZERO,
+                                color: bevy::color::Color::BLACK,
+                            }
+                            // Let picks fall through to the inner pad so the reticle never
+                            // eats a drag that starts on top of it.
+                            Pickable::IGNORE
+                        ),
+                    ]
+                ),
+            ]
         }
     }
 }

@@ -60,8 +60,8 @@ pub struct PlumeDialogProps {
 impl Default for PlumeDialogProps {
     fn default() -> Self {
         Self {
-            title: Box::new(bsn_list!()),
-            contents: Box::new(bsn_list!()),
+            title: Box::new(bsn_list![]),
+            contents: Box::new(bsn_list![]),
             width: Val::Auto,
             height: Val::Auto,
             max_height: Val::Auto,
@@ -102,30 +102,32 @@ impl PlumeDialog {
         // A bounded dialog scrolls its body; an unbounded one holds the contents
         // directly and spawns no scroll machinery.
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
-            Box::new(bsn_list!((
-                scroll_frame()
-                Children [
-                    (
-                        #inner
-                        scroll_viewport()
-                        Children [
-                            (
-                                scroll_content()
-                                Children [
-                                    {contents}
-                                ]
-                            )
-                        ]
-                    ),
-                    (
-                        @PlumeScrollbar {
-                            @target: #inner,
-                            @orientation: {ControlOrientation::Vertical},
-                        }
-                        scrollbar_node()
-                    ),
-                ]
-            )))
+            Box::new(bsn_list![
+                (
+                    scroll_frame()
+                    Children [
+                        (
+                            #inner
+                            scroll_viewport()
+                            Children [
+                                (
+                                    scroll_content()
+                                    Children [
+                                        {contents},
+                                    ]
+                                ),
+                            ]
+                        ),
+                        (
+                            @PlumeScrollbar {
+                                @target: #inner,
+                                @orientation: ControlOrientation::Vertical,
+                            }
+                            scrollbar_node()
+                        ),
+                    ]
+                ),
+            ])
         } else {
             contents
         };
@@ -134,12 +136,14 @@ impl PlumeDialog {
                 name: "PlumeDialog".into(),
                 // The public dialog builds its whole body eagerly and hands the
                 // frame a padded `PlumeDialogBody` wrapping it.
-                body: Box::new(bsn_list!((
-                    @PlumeDialogBody { @padding: {body_padding} }
-                    Children [
-                        {body}
-                    ]
-                ))),
+                body: Box::new(bsn_list![
+                    (
+                        @PlumeDialogBody { @padding: body_padding }
+                        Children [
+                            {body},
+                        ]
+                    ),
+                ]),
                 header: header.then(|| DialogHeader {
                     title,
                     closable,
@@ -232,79 +236,77 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                 // Title bar; dragging it moves the window. Same chrome as the section
                 // header; the dialog is distinguished by its drop shadow, not a
                 // different header.
-                (
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Start,
-                        padding: UiRect::horizontal(size::PAD * 2.0),
-                        min_height: size::DIALOG_HEADER_HEIGHT,
-                        column_gap: size::GAP,
-                        border: UiRect::bottom(size::CONTAINER_BORDER),
-                        border_radius: BorderRadius::top(size::DIALOG_RADIUS),
-                    }
-                    {movable.then(|| bsn!(DialogDragHandle))}
-                    InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
-                    ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
-                    ThemeBorderToken(tokens::DIALOG_BORDER)
-                    // Bold face pinned; the size inherits.
-                    InheritableFont {
-                        font: FontSourceTemplate::Handle(fonts::BOLD),
-                    }
-                    Children [
-                        {title},
-                        // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
-                        flex_spacer(),
-                        {closable.then(|| bsn_list!(@PlumeDialogClose))}
-                    ]
-                )
+                Node {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Start,
+                    padding: UiRect::horizontal(size::PAD * 2.0),
+                    min_height: size::DIALOG_HEADER_HEIGHT,
+                    column_gap: size::GAP,
+                    border: UiRect::bottom(size::CONTAINER_BORDER),
+                    border_radius: BorderRadius::top(size::DIALOG_RADIUS),
+                }
+                {movable.then(|| bsn! { DialogDragHandle })}
+                InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
+                ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
+                ThemeBorderToken(tokens::DIALOG_BORDER)
+                // Bold face pinned; the size inherits.
+                InheritableFont {
+                    font: FontSourceTemplate::Handle(fonts::BOLD),
+                }
+                Children [
+                    {title},
+                    // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
+                    flex_spacer(),
+                    {closable.then(|| bsn_list![@PlumeDialogClose])},
+                ]
             }
         },
     );
     bsn! {
-            template_value(name)
-            Node {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Stretch,
-                position_type: PositionType::Absolute,
-                left: {inset.left},
-                top: {inset.top},
-                right: {inset.right},
-                bottom: {inset.bottom},
-                border_radius: size::DIALOG_RADIUS,
-                border: UiRect::all(size::CONTAINER_BORDER),
-                width: {width},
-                height: {height},
-                max_height: {max_height},
-                // Flexbox resolves `min` after `max`, so this floor survives a
-                // `max_height` that would otherwise crush the title bar.
-                min_height: {frame_min_height},
-            }
-            Dialog
-            // Tab-traversal scope for the dialog's fields.
-            TabGroup::new(0)
-            ThemeBackgroundToken(tokens::DIALOG_BG)
-            ThemeBorderToken(tokens::DIALOG_BORDER)
-            InheritableThemeTextToken(tokens::TEXT_DIM)
-            // A genuine UI root, often parentless: the all-inherit default
-            // resolves to the standard font when nothing flows in from above.
-            InheritableFont
-            BoxShadow::new(
-                Srgba::BLACK.with_alpha(0.8).into(),
-                size::GAP / 2.0,
-                size::GAP,
-                size::GAP / 2.0,
-                size::GAP / 2.0,
-            )
-            LayoutConfig {
-                use_rounding: false,
-            }
-            Children [
-                {title_bar},
-                {body}
-            ]
+        template_value(name)
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            position_type: PositionType::Absolute,
+            left: {inset.left},
+            top: {inset.top},
+            right: {inset.right},
+            bottom: {inset.bottom},
+            border_radius: size::DIALOG_RADIUS,
+            border: UiRect::all(size::CONTAINER_BORDER),
+            width: width,
+            height: height,
+            max_height: max_height,
+            // Flexbox resolves `min` after `max`, so this floor survives a
+            // `max_height` that would otherwise crush the title bar.
+            min_height: frame_min_height,
+        }
+        Dialog
+        // Tab-traversal scope for the dialog's fields.
+        TabGroup::new(0)
+        ThemeBackgroundToken(tokens::DIALOG_BG)
+        ThemeBorderToken(tokens::DIALOG_BORDER)
+        InheritableThemeTextToken(tokens::TEXT_DIM)
+        // A genuine UI root, often parentless: the all-inherit default
+        // resolves to the standard font when nothing flows in from above.
+        InheritableFont
+        BoxShadow::new(
+            Srgba::BLACK.with_alpha(0.8).into(),
+            size::GAP / 2.0,
+            size::GAP,
+            size::GAP / 2.0,
+            size::GAP / 2.0,
+        )
+        LayoutConfig {
+            use_rounding: false,
+        }
+        Children [
+            {title_bar},
+            {body},
+        ]
     }
 }
 
@@ -317,15 +319,15 @@ impl PlumeDialogClose {
     /// Scene function for dialog close button.
     pub fn scene() -> impl Scene {
         bsn! {
-        @PlumeToolButton {
-            @variant: ButtonVariant::Plain,
-            @caption: bsn! { fa_icon(font_awesome::solid::XMARK) }
-        }
-        // Keep the ✕'s hover/press fill flat.
-        Flat
-        on(|activate: On<Activate>, mut commands: Commands| {
-            commands.trigger(RequestClose { source: activate.event_target() });
-        })
+            @PlumeToolButton {
+                @variant: ButtonVariant::Plain,
+                @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
+            }
+            // Keep the ✕'s hover/press fill flat.
+            Flat
+            on(|activate: On<Activate>, mut commands: Commands| {
+                commands.trigger(RequestClose { source: activate.event_target() });
+            })
         }
     }
 }
