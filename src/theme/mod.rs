@@ -17,8 +17,10 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::{EditableText, TextColor, TextFont};
 use bevy::ui::BorderColor;
 use bevy::ui::widget::Text;
+use bevy_immediate::ImmediateSystemSet;
 use rand::RngExt;
 
+use crate::imm::PlumeCaps;
 use crate::tokens::ThemeToken;
 
 /// The currently selected user interface theme. Overwriting this resource changes the theme.
@@ -214,7 +216,15 @@ impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UiTheme>()
             .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
-            .add_systems(PostUpdate, (update_theme, resolve_backgrounds))
+            // After the imm reconciler's cleanup despawns, so the repaint commands
+            // `resolve_backgrounds` queues can't target an entity whose despawn is
+            // already in an earlier buffer at the same sync point — the ordering
+            // edge inserts a sync point that applies those despawns first.
+            .add_systems(
+                PostUpdate,
+                (update_theme, resolve_backgrounds)
+                    .after(ImmediateSystemSet::<PlumeCaps>::default()),
+            )
             // After propagation, so text parented this frame has had its chance.
             .add_systems(
                 PostUpdate,
