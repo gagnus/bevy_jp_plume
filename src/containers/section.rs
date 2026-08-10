@@ -17,7 +17,9 @@ use bevy::picking::events::{Click, Pointer};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform, Val};
+use bevy::ui::{
+    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform, Val,
+};
 
 use crate::constants::{font_awesome, size};
 use crate::cursor::EntityCursor;

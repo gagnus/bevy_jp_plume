@@ -145,6 +145,8 @@ pub struct PlumePopupProps {
     pub contents: Box<dyn SceneList>,
     /// Where the popup opens relative to its socket.
     pub placement: PopupPlacement,
+    /// If true popup right next to the control, otherwise a little away (default).
+    pub place_very_close: bool,
     /// What closes the popup besides code.
     pub dismiss: PopupDismiss,
     /// Whether background drags move the popup (a reopen re-anchors it).
@@ -160,6 +162,7 @@ impl Default for PlumePopupProps {
             placement: Default::default(),
             dismiss: Default::default(),
             movable: false,
+            place_very_close: false,
             padding: size::GAP_TIGHT.into(),
         }
     }
@@ -177,7 +180,6 @@ struct DismissOnOutsideClick;
 
 impl PlumePopup {
     fn scene(props: PlumePopupProps) -> impl Scene {
-        let placement = props.placement;
         bsn! {
             Node {
                 position_type: PositionType::Absolute,
@@ -191,11 +193,11 @@ impl PlumePopup {
                 row_gap: size::GAP,
             }
             PlumePopup
-            ThemeBackgroundToken(tokens::MENU_BG)
-            ThemeBorderToken(tokens::MENU_BORDER)
+            ThemeBackgroundToken(tokens::POPUP_BG)
+            ThemeBorderToken(tokens::POPUP_BORDER)
             template_value(control_box_shadow())
             GlobalZIndex(100)
-            template_value(popover_for(placement))
+            template_value(popover_for(props.placement, props.place_very_close))
             OverrideClip
             InheritableThemeTextToken(tokens::TEXT_DIM)
             // Parentless socket: resolves to the standard font. Empty braces
@@ -216,7 +218,7 @@ impl PlumePopup {
 
 // Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
 // measures them against the popup's parent — the socket, i.e. the anchor rect.
-fn popover_for(placement: PopupPlacement) -> Popover {
+fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
     let sides = match placement {
         PopupPlacement::Below => &[
             PopoverSide::Bottom,
@@ -235,7 +237,7 @@ fn popover_for(placement: PopupPlacement) -> Popover {
     let side_to_position = |side| PopoverPlacement {
         side,
         align: PopoverAlign::Center,
-        gap: 8.0,
+        gap: if place_very_close { 2.0 } else { 8.0 },
     };
 
     Popover {

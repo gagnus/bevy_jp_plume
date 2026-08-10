@@ -7,6 +7,7 @@ mod color_picker;
 mod color_swatch;
 mod default_width;
 mod disclosure;
+mod menu;
 mod number_input;
 mod radio;
 mod scrollbar;
@@ -35,6 +36,11 @@ pub use default_width::DefaultWidth;
 use default_width::DefaultWidthPlugin;
 use disclosure::DisclosurePlugin;
 pub use disclosure::PlumeDisclosure;
+use menu::MenuPlugin;
+pub(crate) use menu::{
+    MenuButtonRole, MenuOpen, MenuShortcutText, imm_menu_anchor, imm_menu_frame,
+};
+pub use menu::{PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps};
 use number_input::NumberInputPlugin;
 pub use number_input::{NoDrag, PlumeNumberInput, PlumeNumberInputProps};
 use radio::RadioPlugin;
@@ -75,6 +81,7 @@ impl Plugin for ControlsPlugin {
             DisclosurePlugin,
         ));
         app.add_plugins((
+            MenuPlugin,
             NumberInputPlugin,
             RadioPlugin,
             ScrollbarPlugin,

@@ -9,30 +9,30 @@
 // plume's surface so an app never has to reach into `bevy_ui`/`bevy_ui_widgets`
 // (see the Plume-only surface rule in CLAUDE.md).
 pub use bevy::input_focus::tab_navigation::TabGroup;
-pub use bevy::ui::{Checked, InteractionDisabled, Selected};
+pub use bevy::ui::{Checkable, Checked, InteractionDisabled, Selected};
 pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};
 
 pub use crate::containers::{
     CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose,
-    PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps,
-    PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps,
-    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, ScrollAxis,
-    SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible, SplitDividerAutoHide,
-    SplitFraction, SplitMin, TabTarget, TabsInverted, close_popup, column, flex_spacer,
-    popup_socket, row, screen, separator, space, tab_body, tab_label, PlumeScreen,
+    PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScreen, PlumeScrollArea,
+    PlumeScrollAreaProps, PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps,
+    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket,
+    ScrollAxis, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
+    SplitDividerAutoHide, SplitFraction, SplitMin, TabTarget, TabsInverted, close_popup, column,
+    flex_spacer, popup_socket, row, screen, separator, space, tab_body, tab_label,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,
     NoSelectAllOnFocus, PlumeButton, PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps,
     PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch,
-    PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup,
-    PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps,
-    PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch,
-    PlumeToolButton, ScrollbarGutter, ScrollbarHidden, SelectedIndex, SetValue, TextInputValue,
-    select_options,
+    PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps, PlumeNumberInput,
+    PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar,
+    PlumeScrollbarProps, PlumeSelect, PlumeSelectProps, PlumeSlider, PlumeSliderProps,
+    PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter,
+    ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, select_options,
 };
 pub use crate::display::{
-    Tooltip, TooltipContent, TooltipSettings, caption, caption_large, caption_color, caption_slot,
+    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_large, caption_slot,
     caption_small_caps, fa_icon,
 };
 pub use crate::theme::components::{

@@ -203,6 +203,10 @@ pub struct Inspector {
     pub documents: Documents,
     pub material: Material,
     pub hierarchy: Hierarchy,
+    /// Whether the viewport HUD shows; driven from the View menu.
+    pub show_hud: bool,
+    /// Autosave flag; driven from the View menu, only logged.
+    pub autosave: bool,
 }
 
 impl Inspector {
@@ -210,6 +214,7 @@ impl Inspector {
         Self {
             ui_scale: 1.0,
             split: 0.75,
+            show_hud: true,
             ..Self::default()
         }
     }
@@ -278,13 +283,15 @@ impl Plugin for InspectorPanelPlugin {
 fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
     let mut s = state.clone();
     root.screen(|ui| {
+        menu_bar(ui, &mut s);
         // Same reason as `tab` below: neither the split nor the documents can stay
         // borrowed from `s` while the other pane's bodies edit the rest of it.
         let mut split = s.split;
         let mut documents = s.documents.clone();
+        let show_hud = s.show_hud;
         ui.split_horizontal(
             &mut split,
-            |ui| document_pane(ui, &mut documents),
+            |ui| document_pane(ui, &mut documents, show_hud),
             |ui| panel(ui, &mut s),
         )
         // The panel never gets narrower than its controls need; the document pane
@@ -303,16 +310,47 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
     state.set_if_neq(s);
 }
 
+// The imm twin of the retained example's `menu_bar`: the same File and View
+// menus over the same `Inspector` state, bound with `&mut`s instead of `on()`.
+fn menu_bar(ui: &mut Ui, s: &mut Inspector) {
+    ui.menu_bar(|bar| {
+        bar.menu("File", |menu| {
+            if menu.item("New Document").shortcut("Ctrl+N").clicked {
+                s.documents.add();
+            }
+            if menu.item("Save").shortcut("Ctrl+S").clicked {
+                s.documents.save_active();
+            }
+            menu.separator();
+            menu.submenu("Recent", |menu| {
+                for name in ["corridor_00.rs", "vault_01.wgsl", "torch_02.ron"] {
+                    if menu.item(name).clicked {
+                        info!("open recent {name}");
+                    }
+                }
+            });
+            menu.separator();
+            menu.item("Exit").enabled(false);
+        });
+        bar.menu("View", |menu| {
+            menu.item_toggle("Show HUD", &mut s.show_hud);
+            menu.item_toggle("Autosave", &mut s.autosave);
+        });
+    });
+}
+
 // The strip of open documents over the one viewport they share, with the HUD
 // floating in its corner.
-fn document_pane(ui: &mut Ui, documents: &mut Documents) {
+fn document_pane(ui: &mut Ui, documents: &mut Documents, show_hud: bool) {
     ui.vertical(|ui| {
         document_strip(ui, documents);
         match documents.active_document() {
             Some(document) => viewport(ui, document),
             None => empty_viewport(ui),
         }
-        viewport_hud(ui, documents);
+        if show_hud {
+            viewport_hud(ui, documents);
+        }
     })
     .gap(Val::ZERO)
     .grow();

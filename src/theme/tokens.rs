@@ -338,15 +338,40 @@ pub const SWITCH_SLIDE_BG_CHECKED_DISABLED: ThemeToken =
 
 // Menus
 
-/// Menu background
+/// Menu popup background
 pub const MENU_BG: ThemeToken = ThemeToken::new_static("plume.menu.bg");
-/// Menu border
+/// Menu popup border
 pub const MENU_BORDER: ThemeToken = ThemeToken::new_static("plume.menu.border");
+/// Menu-bar button background (hovered)
+pub const MENU_BUTTON_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.menu.button.bg.hover");
+/// Menu-bar button background (menu open, and while pressed)
+pub const MENU_BUTTON_BG_OPEN: ThemeToken = ThemeToken::new_static("plume.menu.button.bg.open");
+/// Menu-bar button text
+pub const MENU_BUTTON_TEXT: ThemeToken = ThemeToken::new_static("plume.menu.button.text");
+/// Menu-bar button text (disabled)
+pub const MENU_BUTTON_TEXT_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.menu.button.text.disabled");
+/// Menu item background (hovered)
+pub const MENU_ITEM_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.menu.item.bg.hover");
+/// Menu item text
+pub const MENU_ITEM_TEXT: ThemeToken = ThemeToken::new_static("plume.menu.item.text");
+/// Menu item text (disabled)
+pub const MENU_ITEM_TEXT_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.menu.item.text.disabled");
+
+// Popups
+
+/// Popup panel background
+pub const POPUP_BG: ThemeToken = ThemeToken::new_static("plume.popup.bg");
+/// Popup panel border
+pub const POPUP_BORDER: ThemeToken = ThemeToken::new_static("plume.popup.border");
 
 // Tooltip
 
 /// Tooltip background
 pub const TOOLTIP_BG: ThemeToken = ThemeToken::new_static("plume.tooltip.bg");
+/// Tooltip border
+pub const TOOLTIP_BORDER: ThemeToken = ThemeToken::new_static("plume.tooltip.border");
 /// Tooltip text
 pub const TOOLTIP_TEXT: ThemeToken = ThemeToken::new_static("plume.tooltip.text");
 
@@ -431,16 +456,20 @@ pub const TAB_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.tab.text
 /// Underline marking the selected tab
 pub const TAB_INDICATOR: ThemeToken = ThemeToken::new_static("plume.tab.indicator");
 
-// Listview
+// Select
 
-/// Listview row background
-pub const OPTION_BG: ThemeToken = ThemeToken::new_static("plume.option.bg");
-/// Listview row background (hovered)
-pub const OPTION_BG_HOVER: ThemeToken = ThemeToken::new_static("plume.option.bg.hover");
-/// Listview row text
-pub const OPTION_TEXT: ThemeToken = ThemeToken::new_static("plume.option.text");
-/// Listview row text (disabled)
-pub const OPTION_TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.option.text.disabled");
+/// Select popup background
+pub const SELECT_BG: ThemeToken = ThemeToken::new_static("plume.select.bg");
+/// Select popup border
+pub const SELECT_BORDER: ThemeToken = ThemeToken::new_static("plume.select.border");
+/// Select option background (hovered)
+pub const SELECT_OPTION_BG_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.select.option.bg.hover");
+/// Select option text
+pub const SELECT_OPTION_TEXT: ThemeToken = ThemeToken::new_static("plume.select.option.text");
+/// Select option text (disabled)
+pub const SELECT_OPTION_TEXT_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.select.option.text.disabled");
 
 // Modal Dialog
 

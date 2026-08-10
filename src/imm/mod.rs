@@ -19,7 +19,8 @@ use bevy_immediate::{
 use caps::PlumeOccurrences;
 pub use response::{ImmResponse, kind};
 pub use widgets::{
-    Corner, ImmDialog, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs, PlumeImm, tab_header,
+    Corner, ImmDialog, ImmMenu, ImmMenuBar, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs,
+    PlumeImm, tab_header,
 };
 
 pub use crate::utils::numeric::Numeric;
@@ -42,7 +43,8 @@ mod cap_set {
     use super::PlumeCaps;
     use super::caps::{
         CapabilityPlumeChecked, CapabilityPlumeColor, CapabilityPlumeDialog, CapabilityPlumeIds,
-        CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeTooltip, CapabilityPlumeValue,
+        CapabilityPlumeMenu, CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeTooltip,
+        CapabilityPlumeValue,
     };
 
     impl_capability_set!(
@@ -62,6 +64,7 @@ mod cap_set {
             CapabilityPlumeDialog,
             CapabilityPlumeIds,
             CapabilityPlumeTooltip,
+            CapabilityPlumeMenu,
         )
     );
 }

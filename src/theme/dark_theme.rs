@@ -19,7 +19,7 @@ pub fn dark_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePalet
         neutrals: OklchaArray {
             hue: neutral_hue,
             chroma: 0.015,
-            l: [0.18, 0.26, 0.32, 0.38, 0.46, 0.48, 0.50],
+            l: [0.18, 0.26, 0.32, 0.38, 0.46, 0.48, 0.52],
         },
         accent: OklchaArray {
             hue,

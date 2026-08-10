@@ -4,7 +4,13 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checked, ColorSwatchValue, Flat, InheritableFont, PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeFontSize, PlumeRadio, PlumeRadioGroup, PlumeScreen, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
+    Activate, Checkable, Checked, ColorSwatchValue, Flat, InheritableFont, InteractionDisabled,
+    PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure,
+    PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScreen,
+    PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
+    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
+    TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption,
+    caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -29,6 +35,7 @@ fn main() {
                 push_ui_scale,
                 push_tree_rows,
                 push_documents,
+                push_hud_visible,
             ),
         );
     app.run();
@@ -176,7 +183,10 @@ fn push_material(
 // The imm twin's `.font_size()` on the panel, as a retained cascade root.
 fn push_ui_scale(
     state: Res<Inspector>,
-    q_panel: Query<(Entity, Option<&InheritableFont>), Or<(With<PlumeScreen>, With<InspectorPanel>)>>,
+    q_panel: Query<
+        (Entity, Option<&InheritableFont>),
+        Or<(With<PlumeScreen>, With<InspectorPanel>)>,
+    >,
     mut commands: Commands,
 ) {
     if !state.is_changed() {
@@ -360,6 +370,7 @@ fn root() -> impl Scene {
         screen()
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         Children [
+            menu_bar(),
             (
                 // The viewport and the panel, with a divider to re-proportion
                 // them. The panel's old `width: 25%` is the starting fraction
@@ -380,6 +391,95 @@ fn root() -> impl Scene {
         ]
     }
 }
+
+fn menu_bar() -> impl Scene {
+    bsn! {
+        @PlumeMenuBar
+        Children [
+            (
+                @PlumeMenuButton { @label: "File" }
+                Children [
+                    (
+                        @PlumeMenuButton {
+                            @label: "New Document",
+                            @shortcut: {Some("Ctrl+N".to_string())},
+                        }
+                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
+                    ),
+                    (
+                        @PlumeMenuButton {
+                            @label: "Save",
+                            @shortcut: {Some("Ctrl+S".to_string())},
+                        }
+                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.save_active())
+                    ),
+                    separator(),
+                    (
+                        @PlumeMenuButton { @label: "Recent" }
+                        Children [
+                            recent_item("corridor_00.rs"),
+                            recent_item("vault_01.wgsl"),
+                            recent_item("torch_02.ron"),
+                        ]
+                    ),
+                    separator(),
+                    (
+                        @PlumeMenuButton { @label: "Exit" }
+                        InteractionDisabled
+                    ),
+                ]
+            ),
+            (
+                @PlumeMenuButton { @label: "View" }
+                Children [
+                    (
+                        @PlumeMenuButton { @label: "Show HUD" }
+                        Checkable
+                        Checked
+                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                            s.show_hud = ev.value;
+                        })
+                    ),
+                    (
+                        @PlumeMenuButton { @label: "Autosave" }
+                        Checkable
+                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                            s.autosave = ev.value;
+                        })
+                    ),
+                ]
+            ),
+        ]
+    }
+}
+
+fn recent_item(name: &str) -> impl Scene {
+    let name = name.to_string();
+    bsn! {
+        @PlumeMenuButton { @label: {name.clone()} }
+        on(move |_: On<Activate>| info!("open recent {name}"))
+    }
+}
+
+// The View menu's HUD toggle, applied to the retained HUD dialog.
+fn push_hud_visible(state: Res<Inspector>, mut q_hud: Query<&mut Node, With<HudRoot>>) {
+    if !state.is_changed() {
+        return;
+    }
+    for mut node in q_hud.iter_mut() {
+        let wanted = if state.show_hud {
+            Display::Flex
+        } else {
+            Display::None
+        };
+        if node.display != wanted {
+            node.display = wanted;
+        }
+    }
+}
+
+#[derive(Component, Default, Clone)]
+struct HudRoot;
 
 // The strip of open documents over the one viewport they share, the retained twin
 // of the imm example's bodyless tab strip.
@@ -506,6 +606,7 @@ fn viewport_hud() -> impl Scene {
                 ),
             ],
         }
+        HudRoot
     }
 }
 

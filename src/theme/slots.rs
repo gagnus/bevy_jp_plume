@@ -10,6 +10,8 @@ use crate::tokens::{self, ThemeToken};
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Reflect)]
 pub enum ThemeSlot {
     /// Deepest background: the window, the scrollbar track, and the active text input.
+    /// - `MENU_BG`
+    /// - `SELECT_BG`
     /// - `SCROLLBAR_BG`
     /// - `TABS_BODY_BG_INVERTED`
     /// - `TABS_STRIP_BG`
@@ -22,7 +24,7 @@ pub enum ThemeSlot {
     /// Surface bodies sitting on the window.
     /// - `DIALOG_BG`
     /// - `DIALOG_HEADER_BG`
-    /// - `MENU_BG`
+    /// - `POPUP_BG`
     /// - `SECTION_BODY_BG`
     /// - `TABS_BODY_BG`
     /// - `TABS_STRIP_BG_INVERTED`
@@ -30,11 +32,16 @@ pub enum ThemeSlot {
     /// - `TOOLTIP_BG`
     Neutral1,
 
-    /// Raised container chrome: section headers.
+    /// Raised container chrome: section headers, very weak border or hover
+    /// over a Neutral0 bg container.
     /// - `SECTION_HEADER_BG`
     /// - `TAB_BG_HOVER_INVERTED`
     /// - `TAB_BG_HOVER`
+    /// - `MENU_ITEM_BG_HOVER`
+    /// - `SELECT_OPTION_BG_HOVER`
     /// - `TEXT_INPUT_BORDER`
+    /// - `MENU_BORDER`
+    /// - `SELECT_BORDER`
     Neutral2,
 
     /// Disabled control chrome.
@@ -64,10 +71,11 @@ pub enum ThemeSlot {
     /// - `BUTTON_OUTLINE_BORDER`
     /// - `CHECKBOX_BORDER`
     /// - `DIALOG_BORDER`
-    /// - `MENU_BORDER`
+    /// - `POPUP_BORDER`
     /// - `RADIO_BORDER`
     /// - `SCROLLBAR_THUMB`
     /// - `SEPARATOR`
+    /// - `TOOLTIP_BORDER`
     /// - `SLIDER_BG`
     /// - `SLIDER_BG_HOVER`
     /// - `SLIDER_BG_PRESSED`
@@ -79,7 +87,7 @@ pub enum ThemeSlot {
     /// - `BUTTON_OUTLINE_BG_HOVER`
     /// - `BUTTON_OUTLINE_BORDER_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
-    /// - `OPTION_BG_HOVER`
+    /// - `MENU_BUTTON_BG_HOVER`
     /// - `SCROLLBAR_THUMB_HOVER`
     Neutral5,
 
@@ -88,13 +96,16 @@ pub enum ThemeSlot {
     /// - `BUTTON_OUTLINE_BG_PRESSED`
     /// - `BUTTON_OUTLINE_BORDER_PRESSED`
     /// - `BUTTON_PLAIN_BG_PRESSED`
+    /// - `MENU_BUTTON_BG_OPEN`
     /// - `SCROLLBAR_THUMB_PRESSED`
     Neutral6,
 
     /// Bright on-surface text and the unchecked switch knob.
     /// - `BUTTON_TEXT`
     /// - `DIALOG_HEADER_TEXT`
-    /// - `OPTION_TEXT`
+    /// - `MENU_BUTTON_TEXT`
+    /// - `MENU_ITEM_TEXT`
+    /// - `SELECT_OPTION_TEXT`
     /// - `SECTION_HEADER_TEXT`
     /// - `SWITCH_SLIDE_BG`
     /// - `TAB_TEXT_SELECTED`
@@ -117,7 +128,9 @@ pub enum ThemeSlot {
     /// - `BUTTON_DANGER_TEXT_DISABLED`
     /// - `BUTTON_PRIMARY_TEXT_DISABLED`
     /// - `BUTTON_TEXT_DISABLED`
-    /// - `OPTION_TEXT_DISABLED`
+    /// - `MENU_BUTTON_TEXT_DISABLED`
+    /// - `MENU_ITEM_TEXT_DISABLED`
+    /// - `SELECT_OPTION_TEXT_DISABLED`
     TextDisabled0,
 
     /// Disabled body text.
@@ -197,7 +210,6 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_BG`
     /// - `CHECKBOX_BG_CHECKED_DISABLED`
     /// - `CHECKBOX_BG_DISABLED`
-    /// - `OPTION_BG`
     /// - `RADIO_BG`
     /// - `RADIO_BG_CHECKED_DISABLED`
     /// - `RADIO_BG_DISABLED`
@@ -375,9 +387,19 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
         ThemeSlot::Neutral3,
     ),
-    (tokens::MENU_BG, ThemeSlot::Neutral1),
-    (tokens::MENU_BORDER, ThemeSlot::Neutral4),
+    (tokens::MENU_BG, ThemeSlot::Neutral0),
+    (tokens::MENU_BORDER, ThemeSlot::Neutral2),
+    (tokens::MENU_BUTTON_BG_HOVER, ThemeSlot::Neutral5),
+    (tokens::MENU_BUTTON_BG_OPEN, ThemeSlot::Neutral6),
+    (tokens::MENU_BUTTON_TEXT, ThemeSlot::Text0),
+    (tokens::MENU_BUTTON_TEXT_DISABLED, ThemeSlot::TextDisabled0),
+    (tokens::MENU_ITEM_BG_HOVER, ThemeSlot::Neutral2),
+    (tokens::MENU_ITEM_TEXT, ThemeSlot::Text0),
+    (tokens::MENU_ITEM_TEXT_DISABLED, ThemeSlot::TextDisabled0),
+    (tokens::POPUP_BG, ThemeSlot::Neutral1),
+    (tokens::POPUP_BORDER, ThemeSlot::Neutral4),
     (tokens::TOOLTIP_BG, ThemeSlot::Neutral1),
+    (tokens::TOOLTIP_BORDER, ThemeSlot::Neutral4),
     (tokens::TOOLTIP_TEXT, ThemeSlot::Text1),
     (tokens::TEXT_INPUT_BG, ThemeSlot::Neutral0),
     (tokens::TEXT_INPUT_BG_ACTIVE, ThemeSlot::Neutral0),
@@ -412,10 +434,14 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::TextDisabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
-    (tokens::OPTION_BG, ThemeSlot::Transparent),
-    (tokens::OPTION_BG_HOVER, ThemeSlot::Neutral5),
-    (tokens::OPTION_TEXT, ThemeSlot::Text0),
-    (tokens::OPTION_TEXT_DISABLED, ThemeSlot::TextDisabled0),
+    (tokens::SELECT_BG, ThemeSlot::Neutral0),
+    (tokens::SELECT_BORDER, ThemeSlot::Neutral2),
+    (tokens::SELECT_OPTION_BG_HOVER, ThemeSlot::Neutral2),
+    (tokens::SELECT_OPTION_TEXT, ThemeSlot::Text0),
+    (
+        tokens::SELECT_OPTION_TEXT_DISABLED,
+        ThemeSlot::TextDisabled0,
+    ),
     (tokens::DIALOG_BG, ThemeSlot::Neutral1),
     (tokens::DIALOG_BORDER, ThemeSlot::Neutral4),
     (tokens::DIALOG_HEADER_BG, ThemeSlot::Neutral1),

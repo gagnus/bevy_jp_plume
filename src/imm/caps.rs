@@ -4,6 +4,7 @@ use bevy::color::Color;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::resource::Resource;
 use bevy::input_focus::InputFocus;
+use bevy::input_focus::tab_navigation::NavAction;
 use bevy::platform::collections::HashMap;
 use bevy::ui::{Checked, Pressed};
 use bevy::ui_widgets::SliderValue;
@@ -13,7 +14,7 @@ use bevy_immediate::{
 };
 
 use crate::containers::{CloseRequested, SplitCollapsible, SplitFraction};
-use crate::controls::{ColorPickerValue, SelectedIndex, SetValue, TextInputValue};
+use crate::controls::{ColorPickerValue, MenuOpen, SelectedIndex, SetValue, TextInputValue};
 use crate::display::TooltipShowing;
 use crate::utils::numeric::Numeric;
 
@@ -462,6 +463,35 @@ where
 {
     fn close_requested(&self) -> bool {
         self.cap_entity_contains::<CloseRequested>()
+    }
+}
+
+/// Lets the imm layer read a menu button's open state, which the retained menu
+/// systems own (toggle, hover-switch, focus-out close).
+pub struct CapabilityPlumeMenu;
+
+impl ImmCapability for CapabilityPlumeMenu {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        cap_req.request_component_read::<MenuOpen>(app.world_mut());
+    }
+}
+
+/// Widget-side entry point for [`CapabilityPlumeMenu`].
+pub trait ImmPlumeMenu {
+    /// `Some` while this menu button's popup is open; the inner value is where
+    /// keyboard focus should land in it (`None` leaves focus alone).
+    fn menu_open(&self) -> Option<Option<NavAction>>;
+}
+
+impl<Cap> ImmPlumeMenu for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeMenu>,
+{
+    fn menu_open(&self) -> Option<Option<NavAction>> {
+        match self.cap_get_component::<MenuOpen>() {
+            Ok(Some(open)) => Some(open.focus),
+            _ => None,
+        }
     }
 }
 

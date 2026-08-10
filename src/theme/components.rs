@@ -223,6 +223,32 @@ fn paint_background(commands: &mut Commands, entity: Entity, color: Color, amoun
     }
 }
 
+// Point a control's themed background at `wanted`, or clear it for `None`.
+// Removal must blank the fill by hand: `resolve_backgrounds` only repaints
+// entities that still carry a source component.
+pub(crate) fn set_optional_background(
+    commands: &mut Commands,
+    entity: Entity,
+    current: Option<&ThemeBackgroundToken>,
+    wanted: Option<ThemeToken>,
+) {
+    match wanted {
+        Some(token) => {
+            if current.is_none_or(|now| now.0 != token) {
+                commands.entity(entity).insert(ThemeBackgroundToken(token));
+            }
+        }
+        None => {
+            if current.is_some() {
+                commands
+                    .entity(entity)
+                    .remove::<ThemeBackgroundToken>()
+                    .insert(BackgroundColor(Color::NONE));
+            }
+        }
+    }
+}
+
 // Resolve one entity's source components against the theme and paint it.
 fn resolve_background(
     commands: &mut Commands,

@@ -45,7 +45,9 @@ use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
 use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
-use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
+use crate::theme::{
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, set_optional_background,
+};
 use crate::tokens;
 
 /// Select control: a dropdown button over string options.
@@ -316,8 +318,7 @@ impl PlumeSelectOption {
                 padding: UiRect::horizontal(size::GAP),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
-            InheritableThemeTextToken(tokens::OPTION_TEXT)
-            ThemeBackgroundToken(tokens::OPTION_BG)
+            InheritableThemeTextToken(tokens::SELECT_OPTION_TEXT)
             TextStyleRelay
             Hovered
             ListItem
@@ -403,6 +404,7 @@ fn open_select_popup(
         .spawn_scene(bsn! {
             @PlumePopup {
                 @placement: PopupPlacement::Below,
+                @place_very_close: true,
                 @dismiss: PopupDismiss::FocusOut,
                 @padding: UiRect::axes(Val::ZERO, size::GAP_TIGHT),
                 @contents: bsn_list![
@@ -421,6 +423,9 @@ fn open_select_popup(
             }
             PlumeSelectPopup
             template_value(MenuFocusState::Opening(nav))
+            // The select's own chrome tokens, over the generic popup ones.
+            ThemeBackgroundToken(tokens::SELECT_BG)
+            ThemeBorderToken(tokens::SELECT_BORDER)
             Node {
                 min_width: min_width,
             }
@@ -873,7 +878,7 @@ fn update_option_styles(
             Has<InteractionDisabled>,
             Has<Selected>,
             &Hovered,
-            &ThemeBackgroundToken,
+            Option<&ThemeBackgroundToken>,
             &InheritableThemeTextToken,
         ),
         (
@@ -913,7 +918,7 @@ fn update_option_styles_remove(
             Has<InteractionDisabled>,
             Has<Selected>,
             &Hovered,
-            &ThemeBackgroundToken,
+            Option<&ThemeBackgroundToken>,
             &InheritableThemeTextToken,
         ),
         With<PlumeSelectOption>,
@@ -954,19 +959,16 @@ fn set_option_styles(
     disabled: bool,
     selected: bool,
     hovered: bool,
-    bg_color: &ThemeBackgroundToken,
+    bg_color: Option<&ThemeBackgroundToken>,
     font_color: &InheritableThemeTextToken,
     commands: &mut Commands,
 ) {
     // Background shows hover only; selection is the tick.
-    let outline_bg_token = match (disabled, hovered) {
-        (false, true) => tokens::OPTION_BG_HOVER,
-        _ => tokens::OPTION_BG,
-    };
+    let bg_token = (!disabled && hovered).then_some(tokens::SELECT_OPTION_BG_HOVER);
 
     let font_color_token = match disabled {
-        true => tokens::OPTION_TEXT_DISABLED,
-        false => tokens::OPTION_TEXT,
+        true => tokens::SELECT_OPTION_TEXT_DISABLED,
+        false => tokens::SELECT_OPTION_TEXT,
     };
 
     let cursor_shape = match disabled {
@@ -974,11 +976,7 @@ fn set_option_styles(
         false => bevy::window::SystemCursorIcon::Pointer,
     };
 
-    if bg_color.0 != outline_bg_token {
-        commands
-            .entity(option_ent)
-            .insert(ThemeBackgroundToken(outline_bg_token));
-    }
+    set_optional_background(commands, option_ent, bg_color, bg_token);
 
     if font_color.0 != font_color_token {
         commands

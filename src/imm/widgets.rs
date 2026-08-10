@@ -3,6 +3,7 @@ use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
 
+use bevy::camera::visibility::Visibility;
 use bevy::color::Color;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
@@ -20,8 +21,8 @@ use bevy_immediate::ui::interaction::ImmUiInteraction;
 use bevy_immediate::{ImmEntity, ImmId, ImmIdBuilder, imm_id};
 
 use super::caps::{
-    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeSelect, ImmPlumeSplit, ImmPlumeText,
-    ImmPlumeValue, PlumeOccurrences,
+    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeMenu, ImmPlumeSelect, ImmPlumeSplit,
+    ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
 };
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
@@ -34,9 +35,10 @@ use crate::containers::{
     tabs_frame,
 };
 use crate::controls::{
-    ColorSwatchValue, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
-    PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
-    PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+    ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
+    PlumeColorSwatch, PlumeDisclosure, PlumeMenuBar, PlumeNumberInput, PlumeNumberInputProps,
+    PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
+    imm_menu_anchor, imm_menu_frame,
 };
 use crate::display::{caption, caption_large, caption_small_caps, fa_icon};
 use crate::utils::numeric::Numeric;
@@ -137,6 +139,12 @@ pub trait PlumeImm<'w, 's> {
         selected: &mut T,
         f: impl FnOnce(&mut ImmSelect<T>),
     ) -> ImmResponse<'_, 'w, 's, kind::Select>;
+
+    /// Horizontal menu bar strip; `f` declares its drop-down menus on the
+    /// [`ImmMenuBar`] context. Menus open on click, switch on hover while one
+    /// is open, and close themselves when an item is picked, on Escape, or when
+    /// focus leaves — the bodies only run while their menu is open.
+    fn menu_bar(&mut self, f: impl FnOnce(&mut ImmMenuBar<'_, 'w, 's>)) -> ImmResponse<'_, 'w, 's>;
 
     /// Headerless floating surface — a
     /// [`dialog`](crate::imm::PlumeRoot::dialog) with no title bar (and so no
@@ -708,6 +716,15 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn menu_bar(&mut self, f: impl FnOnce(&mut ImmMenuBar<'_, 'w, 's>)) -> ImmResponse<'_, 'w, 's> {
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(|| bsn! { @PlumeMenuBar })
+            .add_ui(|ui| f(&mut ImmMenuBar { ui }));
+        respond(entity, false)
+    }
+
+    #[track_caller]
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
         ImmPanel {
             ui: self,
@@ -943,6 +960,126 @@ impl<T> ImmSelectOption<'_, T> {
         self.option.enabled = enabled;
         self
     }
+}
+
+/// Menu-bar context handed to [`PlumeImm::menu_bar`]'s closure: one
+/// [`menu`](Self::menu) per top-level menu.
+pub struct ImmMenuBar<'a, 'w, 's> {
+    ui: &'a mut Ui<'w, 's>,
+}
+
+impl<'w, 's> ImmMenuBar<'_, 'w, 's> {
+    /// A top-level menu button; `f` builds its drop-down on the [`ImmMenu`]
+    /// context while the menu is open.
+    #[track_caller]
+    pub fn menu(
+        &mut self,
+        label: &str,
+        f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's> {
+        let label_owned = label.to_owned();
+        let anchor = self.ui.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
+            imm_menu_anchor(MenuButtonRole::Bar, label_owned, None, false)
+        });
+        imm_menu_popup(anchor, MenuButtonRole::Bar, f)
+    }
+}
+
+/// Menu context handed to a [`menu`](ImmMenuBar::menu) or
+/// [`submenu`](Self::submenu) closure while that menu is open.
+pub struct ImmMenu<'a, 'w, 's> {
+    ui: &'a mut Ui<'w, 's>,
+}
+
+impl<'w, 's> ImmMenu<'_, 'w, 's> {
+    /// A pickable row; `.clicked` fires once when it is picked (the menu closes
+    /// itself). Chain `.shortcut()`/`.enabled()`.
+    #[track_caller]
+    pub fn item(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::MenuItem> {
+        let label_owned = label.to_owned();
+        let entity = self.ui.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
+            imm_menu_anchor(MenuButtonRole::Item, label_owned, None, false)
+        });
+        respond(entity, false)
+    }
+
+    /// A checkable row bound to `value`: picking it toggles the check (shown in
+    /// the leading gutter) and closes the menu.
+    #[track_caller]
+    pub fn item_toggle(
+        &mut self,
+        label: &str,
+        value: &mut bool,
+    ) -> ImmResponse<'_, 'w, 's, kind::MenuItem> {
+        let label_owned = label.to_owned();
+        let mut changed = false;
+        let entity = self
+            .ui
+            .ch_loc(loc_id(label))
+            .on_spawn_apply_scene(move || {
+                imm_menu_anchor(MenuButtonRole::Item, label_owned, None, true)
+            })
+            .plume_checked(value, &mut changed);
+        respond(entity, changed)
+    }
+
+    /// A row that opens a nested menu beside itself (marked with a ▸); `f`
+    /// builds it while open — on hover, click, or ArrowRight.
+    #[track_caller]
+    pub fn submenu(
+        &mut self,
+        label: &str,
+        f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>),
+    ) -> ImmResponse<'_, 'w, 's, kind::MenuItem> {
+        let label_owned = label.to_owned();
+        let anchor = self.ui.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
+            imm_menu_anchor(MenuButtonRole::Submenu, label_owned, None, false)
+        });
+        imm_menu_popup(anchor, MenuButtonRole::Submenu, f)
+    }
+
+    /// Hairline rule between item groups.
+    #[track_caller]
+    pub fn separator(&mut self) {
+        self.ui.separator();
+    }
+}
+
+// Builds a menu button's popup while its retained `MenuOpen` state says open.
+// The popup is unrooted (see `ImmPopup`); the frame's `MenuAnchorLink` routes
+// events and ancestor walks back to the anchor. After a close, one extra pass
+// builds the popup hidden, so a picked item's pending activation still reaches
+// its imm call site before the subtree is dropped.
+fn imm_menu_popup<'r, 'w, 's, K>(
+    mut anchor: ImmEntity<'r, 'w, 's, PlumeCaps>,
+    role: MenuButtonRole,
+    f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>),
+) -> ImmResponse<'r, 'w, 's, K> {
+    let open = anchor.menu_open();
+    struct MenuWasOpen;
+    let was_open = anchor.hash_get_typ::<MenuWasOpen>() == Some(imm_id(true));
+    anchor.hash_set_typ::<MenuWasOpen>(imm_id(open.is_some()));
+    let grace = open.is_none() && was_open;
+    if open.is_none() && !grace {
+        return respond(anchor, false);
+    }
+    let anchor_entity = anchor.entity();
+    let nav = open.flatten();
+    anchor = anchor.unrooted_ui("menu_popup", |ui| {
+        ui.ch_id("socket")
+            .on_spawn_apply_scene(popup_socket)
+            .on_spawn_insert(move || PopupAnchor(anchor_entity))
+            .add_ui(|ui| {
+                let mut frame = ui
+                    .ch_id("frame")
+                    .on_spawn_apply_scene(move || imm_menu_frame(anchor_entity, role, nav));
+                if grace {
+                    frame.entity_commands().insert(Visibility::Hidden);
+                }
+                frame.add_ui(|ui| f(&mut ImmMenu { ui }));
+            });
+    });
+    respond(anchor, false)
 }
 
 /// Header kinds for [`ImmTab`]: which per-tab builders the handle carries.

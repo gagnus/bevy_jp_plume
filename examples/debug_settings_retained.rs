@@ -3,7 +3,11 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize, PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch, PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, TooltipContent, ValueChange, caption, caption_large, caption_slot, caption_small_caps, close_popup, column, fa_icon, flex_spacer, popup_socket, row, separator,
+    Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize,
+    PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
+    PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip,
+    TooltipContent, ValueChange, caption, caption_large, caption_slot, caption_small_caps,
+    close_popup, column, fa_icon, flex_spacer, popup_socket, row, separator,
 };
 
 #[path = "common/mod.rs"]

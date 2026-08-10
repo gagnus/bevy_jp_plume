@@ -13,9 +13,10 @@ use bevy::ecs::world::{EntityWorldMut, World};
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
+use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
-    UiRect, Val,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Display, Node,
+    Overflow, UiRect, Val,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -29,8 +30,8 @@ use crate::containers::{
     SplitDividerAutoHide, SplitMin, TabsInverted,
 };
 use crate::controls::{
-    ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden,
-    set_select_max_visible, text_input_placeholder, text_input_suffix,
+    ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
+    ScrollbarHidden, set_select_max_visible, text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
@@ -102,6 +103,8 @@ pub mod kind {
     pub struct Scene;
     /// `split_horizontal` / `split_vertical`.
     pub struct Split;
+    /// A menu's rows: `item` / `item_toggle` / `submenu`.
+    pub struct MenuItem;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -694,6 +697,44 @@ impl ImmResponse<'_, '_, '_, kind::Select> {
             self.e.commands().queue(move |world: &mut World| {
                 set_select_max_visible(world, select_ent, max_visible);
             });
+        }
+        self
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::MenuItem> {
+    /// Right-aligned shortcut hint on the item row. Display only — handling the
+    /// key is the app's business.
+    pub fn shortcut(mut self, text: impl Into<String>) -> Self {
+        struct ShortcutKey;
+        let text = text.into();
+        if self.key_changed::<ShortcutKey>(&text) {
+            self.e
+                .entity_commands()
+                .queue(move |mut e: EntityWorldMut| {
+                    let children: Vec<Entity> = e
+                        .get::<Children>()
+                        .map(|children| children.iter().copied().collect())
+                        .unwrap_or_default();
+                    e.world_scope(|world| {
+                        for child in children {
+                            if world.get::<MenuShortcutText>(child).is_none() {
+                                continue;
+                            }
+                            if let Some(mut node) = world.get_mut::<Node>(child) {
+                                node.display = if text.is_empty() {
+                                    Display::None
+                                } else {
+                                    Display::Flex
+                                };
+                            }
+                            if let Some(mut caption) = world.get_mut::<Text>(child) {
+                                caption.0 = text;
+                            }
+                            break;
+                        }
+                    });
+                });
         }
         self
     }

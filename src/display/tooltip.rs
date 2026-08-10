@@ -321,7 +321,7 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
         }
         TooltipPanel
         ThemeBackgroundToken(tokens::TOOLTIP_BG)
-        ThemeBorderToken(tokens::MENU_BORDER)
+        ThemeBorderToken(tokens::TOOLTIP_BORDER)
         template_value(control_box_shadow())
         Pickable::IGNORE
         InheritableThemeTextToken(tokens::TOOLTIP_TEXT)
