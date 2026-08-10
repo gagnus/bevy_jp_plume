@@ -296,12 +296,12 @@ pub struct ThemeEditablePalette {
     /// Foreground on accent-filled components (white in most themes); forms [`ThemeSlot::Contrast`].
     pub contrast: Oklcha,
 
-    /// Text ramp; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`]
-    /// (and [`ThemeSlot::TextDisabled0`]..=[`ThemeSlot::TextDisabled1`], derived).
+    /// Text ramp; forms [`ThemeSlot::Text0`]..=[`ThemeSlot::Text1`].
     pub text: OklchaArray<2>,
 
-    /// Alpha applied to `text` to derive [`ThemeSlot::TextDisabled0`]..=[`ThemeSlot::TextDisabled1`].
-    pub disabled_text_alpha_modifier: f32,
+    /// Disabled ramp; forms [`ThemeSlot::Disabled0`]..=[`ThemeSlot::Disabled1`]:
+    /// text over a disabled fill, then the fill/chrome tone itself.
+    pub disabled: OklchaArray<2>,
 
     /// RGB axis colors; form [`ThemeSlot::XAxis`], [`ThemeSlot::YAxis`], [`ThemeSlot::ZAxis`].
     pub axes: [Oklcha; 3],
@@ -339,14 +339,13 @@ impl ThemeEditablePalette {
         let accent = self.accent.to_array();
         let danger = self.danger_ramp().to_array();
         let text = self.text.to_array();
-        let text_dim = text.map(|c| c.with_alpha(self.disabled_text_alpha_modifier));
+        let disabled = self.disabled.to_array();
         let axes: [Color; 3] = self.axes.map(Into::into);
 
         let mut c = [Color::NONE; ThemeSlot::COUNT];
         c[ThemeSlot::Neutral0 as usize..=ThemeSlot::Neutral6 as usize].copy_from_slice(&neutral);
         c[ThemeSlot::Text0 as usize..=ThemeSlot::Text1 as usize].copy_from_slice(&text);
-        c[ThemeSlot::TextDisabled0 as usize..=ThemeSlot::TextDisabled1 as usize]
-            .copy_from_slice(&text_dim);
+        c[ThemeSlot::Disabled0 as usize..=ThemeSlot::Disabled1 as usize].copy_from_slice(&disabled);
         c[ThemeSlot::Accent0 as usize..=ThemeSlot::Accent3 as usize].copy_from_slice(&accent);
         c[ThemeSlot::Danger0 as usize..=ThemeSlot::Danger2 as usize].copy_from_slice(&danger);
         c[ThemeSlot::Contrast as usize] = self.contrast.into();
@@ -372,10 +371,9 @@ impl ThemeEditablePalette {
     pub fn text(&self, index: usize) -> Color {
         self.text.to_color(index)
     }
-    /// Text stop `index` with the disabled-alpha modifier applied.
-    pub fn text_dim(&self, index: usize) -> Color {
-        self.text(index)
-            .with_alpha(self.disabled_text_alpha_modifier)
+    /// Disabled ramp stop `index`.
+    pub fn disabled(&self, index: usize) -> Color {
+        self.disabled.to_color(index)
     }
     /// Axis color `index`, in X, Y, Z order.
     pub fn axis(&self, index: usize) -> Color {

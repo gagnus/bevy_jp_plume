@@ -31,7 +31,7 @@ pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub(crate) use separator::SeparatorPlugin;
-pub use separator::{SeparatorBleed, separator};
+pub use separator::{Separator, SeparatorBleed, separator};
 pub use space::space;
 pub use splitter::{
     PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide,
@@ -41,7 +41,6 @@ pub(crate) use splitter::{
     SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane,
 };
 pub use tabs::{
-    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, TabsInverted, tab_body,
-    tab_label,
+    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabSlot, TabTarget, tab_body, tab_label,
 };
 pub(crate) use tabs::{TabsPlugin, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame};

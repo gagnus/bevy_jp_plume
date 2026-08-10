@@ -33,8 +33,12 @@ pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePale
             chroma: 0.044,
             l: [0.15, 0.40],
         },
+        disabled: OklchaArray {
+            hue: neutral_hue,
+            chroma: 0.008,
+            l: [0.34, 0.74],
+        },
         contrast: Oklcha::new(1.0, 0.0, 0.0, 1.0),
         axes: default_axis_colors(),
-        disabled_text_alpha_modifier: 0.6,
     }
 }

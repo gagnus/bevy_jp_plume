@@ -58,16 +58,10 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
     .collapsible(false);
     ui.section("Text", |ui| {
         ramp_rows(ui, &mut palette.text, 0.2, false);
-        param_row(
-            ui,
-            "Disable \u{3b1}",
-            &mut palette.disabled_text_alpha_modifier,
-            0.0..=1.0,
-            3,
-            None,
-            None,
-            false,
-        );
+    })
+    .collapsible(false);
+    ui.section("Disabled", |ui| {
+        ramp_rows(ui, &mut palette.disabled, 0.2, false)
     })
     .collapsible(false);
 }

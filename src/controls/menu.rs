@@ -22,10 +22,11 @@ use bevy::picking::hover::Hovered;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
+use bevy::text::{LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, BorderRadius, Checkable, Checked, Display, FlexDirection, GlobalZIndex,
-    InteractionDisabled, Node, OverrideClip, PositionType, Pressed, UiRect,
+    InteractionDisabled, Node, OverrideClip, PositionType, UiRect,
 };
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 use bevy::ui_widgets::{
@@ -34,7 +35,7 @@ use bevy::ui_widgets::{
 };
 
 use crate::constants::{font_awesome, size};
-use crate::containers::{PopupSocket, popup_socket};
+use crate::containers::{PopupSocket, Separator, popup_socket};
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
@@ -156,7 +157,11 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
                 Visibility::Hidden
             ),
             (
+                // The popup's height is first measured inside the narrow anchor
+                // socket; a wrapping label bakes that taller estimate into the
+                // frame. Menu labels never wrap.
                 caption(label)
+                TextLayout { linebreak: LineBreak::NoWrap }
                 MenuChrome
             ),
             (
@@ -166,9 +171,10 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             (
                 caption(shortcut)
                 Node { display: {shortcut_display} }
+                TextLayout { linebreak: LineBreak::NoWrap }
                 MenuChrome
                 MenuShortcutText
-                InheritableThemeTextToken(tokens::MENU_ITEM_TEXT_DISABLED)
+                InheritableThemeTextToken(tokens::TEXT_DIM)
             ),
             (
                 // Submenu caret gutter; only submenus show the glyph.
@@ -892,7 +898,6 @@ fn update_menu_button_styles(
             Entity,
             &MenuButtonRole,
             &Hovered,
-            Has<Pressed>,
             Has<MenuOpen>,
             Has<Checked>,
             Has<InteractionDisabled>,
@@ -904,7 +909,6 @@ fn update_menu_button_styles(
             Or<(
                 Changed<MenuButtonRole>,
                 Changed<Hovered>,
-                Changed<Pressed>,
                 Changed<MenuOpen>,
                 Changed<Checked>,
                 Changed<InteractionDisabled>,
@@ -914,18 +918,15 @@ fn update_menu_button_styles(
     q_children: Query<&Children>,
     q_check: Query<(), With<MenuCheckIcon>>,
     q_caret: Query<(), With<MenuCaretIcon>>,
-    q_shortcut: Query<&Text, With<MenuShortcutText>>,
+    q_shortcut: Query<(&Text, &InheritableThemeTextToken), With<MenuShortcutText>>,
     mut q_nodes: Query<&mut Node>,
     mut commands: Commands,
 ) {
-    for (root, role, hovered, pressed, open, checked, disabled, bg_now, text_now) in
-        q_changed.iter()
-    {
+    for (root, role, hovered, open, checked, disabled, bg_now, text_now) in q_changed.iter() {
         set_menu_button_styles(
             root,
             *role,
             hovered.0,
-            pressed,
             open,
             checked,
             disabled,
@@ -947,7 +948,6 @@ fn update_menu_button_styles_remove(
             Entity,
             &MenuButtonRole,
             &Hovered,
-            Has<Pressed>,
             Has<MenuOpen>,
             Has<Checked>,
             Has<InteractionDisabled>,
@@ -959,28 +959,25 @@ fn update_menu_button_styles_remove(
     q_children: Query<&Children>,
     q_check: Query<(), With<MenuCheckIcon>>,
     q_caret: Query<(), With<MenuCaretIcon>>,
-    q_shortcut: Query<&Text, With<MenuShortcutText>>,
+    q_shortcut: Query<(&Text, &InheritableThemeTextToken), With<MenuShortcutText>>,
     mut q_nodes: Query<&mut Node>,
     mut removed_open: RemovedComponents<MenuOpen>,
-    mut removed_pressed: RemovedComponents<Pressed>,
     mut removed_checked: RemovedComponents<Checked>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut commands: Commands,
 ) {
     removed_open
         .read()
-        .chain(removed_pressed.read())
         .chain(removed_checked.read())
         .chain(removed_disabled.read())
         .for_each(|ent| {
-            if let Ok((root, role, hovered, pressed, open, checked, disabled, bg_now, text_now)) =
+            if let Ok((root, role, hovered, open, checked, disabled, bg_now, text_now)) =
                 q_buttons.get(ent)
             {
                 set_menu_button_styles(
                     root,
                     *role,
                     hovered.0,
-                    pressed,
                     open,
                     checked,
                     disabled,
@@ -1001,7 +998,6 @@ fn set_menu_button_styles(
     root: Entity,
     role: MenuButtonRole,
     hovered: bool,
-    pressed: bool,
     open: bool,
     checked: bool,
     disabled: bool,
@@ -1010,7 +1006,7 @@ fn set_menu_button_styles(
     q_children: &Query<&Children>,
     q_check: &Query<(), With<MenuCheckIcon>>,
     q_caret: &Query<(), With<MenuCaretIcon>>,
-    q_shortcut: &Query<&Text, With<MenuShortcutText>>,
+    q_shortcut: &Query<(&Text, &InheritableThemeTextToken), With<MenuShortcutText>>,
     q_nodes: &mut Query<&mut Node>,
     commands: &mut Commands,
 ) {
@@ -1019,9 +1015,7 @@ fn set_menu_button_styles(
         (
             if disabled {
                 None
-            } else if open || (pressed && hovered) {
-                Some(tokens::MENU_BUTTON_BG_OPEN)
-            } else if hovered {
+            } else if open || hovered {
                 Some(tokens::MENU_BUTTON_BG_HOVER)
             } else {
                 None
@@ -1093,12 +1087,40 @@ fn set_menu_button_styles(
                 MenuButtonRole::Submenu => Visibility::Inherited,
                 _ => Visibility::Hidden,
             });
-        } else if let Ok(text) = q_shortcut.get(child) {
+        } else if let Ok((text, text_now)) = q_shortcut.get(child) {
             let shown = !bar && !text.0.is_empty();
             if let Ok(mut node) = q_nodes.get_mut(child) {
                 set_display(&mut node, if shown { Display::Flex } else { Display::None });
             }
+            // Dim while usable; grayed like the label only when actually disabled.
+            let shortcut_token = match disabled {
+                true => tokens::MENU_ITEM_TEXT_DISABLED,
+                false => tokens::TEXT_DIM,
+            };
+            if text_now.0 != shortcut_token {
+                commands
+                    .entity(child)
+                    .insert(InheritableThemeTextToken(shortcut_token));
+            }
         }
+    }
+}
+
+// Breathing room around a menu's dividers. Keyed on the parent change so both
+// paths are covered once: retained separators when adopted into the frame, imm
+// ones when built inside it.
+fn space_menu_separators(
+    mut q_separators: Query<(Entity, &ChildOf, &mut Node), (With<Separator>, Changed<ChildOf>)>,
+    q_frames: Query<(), With<MenuPopupFrame>>,
+    mut commands: Commands,
+) {
+    for (separator, child_of, mut node) in q_separators.iter_mut() {
+        if !q_frames.contains(child_of.parent()) {
+            continue;
+        }
+        node.margin = UiRect::vertical(size::GAP_TIGHT);
+        // Em margins need the chain's `EmSize`.
+        commands.entity(separator).insert(TextStyleRelay);
     }
 }
 
@@ -1119,6 +1141,7 @@ impl Plugin for MenuPlugin {
                 classify_menu_buttons,
                 bar_hover_switch,
                 submenu_hover,
+                space_menu_separators,
             )
                 .chain(),
         )

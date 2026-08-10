@@ -313,30 +313,33 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
 // The imm twin of the retained example's `menu_bar`: the same File and View
 // menus over the same `Inspector` state, bound with `&mut`s instead of `on()`.
 fn menu_bar(ui: &mut Ui, s: &mut Inspector) {
-    ui.menu_bar(|bar| {
-        bar.menu("File", |menu| {
-            if menu.item("New Document").shortcut("Ctrl+N").clicked {
-                s.documents.add();
-            }
-            if menu.item("Save").shortcut("Ctrl+S").clicked {
-                s.documents.save_active();
-            }
-            menu.separator();
-            menu.submenu("Recent", |menu| {
-                for name in ["corridor_00.rs", "vault_01.wgsl", "torch_02.ron"] {
-                    if menu.item(name).clicked {
-                        info!("open recent {name}");
-                    }
+    ui.horizontal(|ui| {
+        ui.menu_bar(|bar| {
+            bar.menu("File", |menu| {
+                if menu.item("New Document").shortcut("Ctrl+N").clicked {
+                    s.documents.add();
                 }
+                if menu.item("Save").shortcut("Ctrl+S").clicked {
+                    s.documents.save_active();
+                }
+                menu.separator();
+                menu.submenu("Recent", |menu| {
+                    for name in ["corridor_00.rs", "vault_01.wgsl", "torch_02.ron"] {
+                        if menu.item(name).clicked {
+                            info!("open recent {name}");
+                        }
+                    }
+                });
+                menu.separator();
+                menu.item("Exit").enabled(false);
             });
-            menu.separator();
-            menu.item("Exit").enabled(false);
+            bar.menu("View", |menu| {
+                menu.item_toggle("Show HUD", &mut s.show_hud);
+                menu.item_toggle("Autosave", &mut s.autosave);
+            });
         });
-        bar.menu("View", |menu| {
-            menu.item_toggle("Show HUD", &mut s.show_hud);
-            menu.item_toggle("Autosave", &mut s.autosave);
-        });
-    });
+    })
+    .background_slot(ThemeSlot::Neutral1);
 }
 
 // The strip of open documents over the one viewport they share, with the HUD
@@ -396,7 +399,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
             }
         })
         // The strip sits over the viewport, not over a surface.
-        .inverted()
+        .slot(ThemeSlot::Neutral0)
         .grow();
         if ui
             .tool_button(font_awesome::solid::PLUS)
@@ -447,7 +450,7 @@ fn empty_viewport(ui: &mut Ui) {
         ui.flex_spacer();
     })
     .grow()
-    .background_slot(ThemeSlot::Neutral3);
+    .background_slot(ThemeSlot::Neutral2);
 }
 
 // Declared inside the pane, so its corner is the pane's and it follows the

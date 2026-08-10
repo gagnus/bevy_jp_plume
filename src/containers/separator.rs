@@ -29,9 +29,16 @@ pub fn separator() -> impl Scene {
             flex_shrink: 0.0,
             align_self: AlignSelf::Stretch,
         }
+        Separator
         ThemeBackgroundToken(tokens::SEPARATOR)
     }
 }
+
+/// Marker every [`separator`] carries; contexts that restyle their rules (a
+/// menu spacing its dividers) find them by it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct Separator;
 
 /// Put this on a [`separator`] to run it edge to edge: negative margins mirror
 /// the parent container's padding, tracking it if it changes.

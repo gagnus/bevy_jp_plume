@@ -21,6 +21,14 @@ enum RadioChoice {
     B,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum TabChoice {
+    #[default]
+    First,
+    Second,
+    Third,
+}
+
 #[derive(Resource, Debug, Clone, PartialEq)]
 pub struct GalleryState {
     checkbox_a: bool,
@@ -34,6 +42,9 @@ pub struct GalleryState {
     select: SelectChoice,
     text: String,
     number: f32,
+    tab: TabChoice,
+    autosave: bool,
+    color: Color,
 }
 
 impl Default for GalleryState {
@@ -50,6 +61,9 @@ impl Default for GalleryState {
             select: SelectChoice::default(),
             text: String::new(),
             number: 4.0,
+            tab: TabChoice::default(),
+            autosave: true,
+            color: Color::srgb(0.62, 0.31, 0.24),
         }
     }
 }
@@ -101,6 +115,40 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
         ui.caption(if disabled { "Disabled" } else { "Enabled" });
 
         ui.horizontal(|ui| {
+            ui.menu_bar(|bar| {
+                bar.menu("File", |menu| {
+                    menu.item("New").shortcut("Ctrl+N");
+                    menu.item("Save").enabled(false);
+                    menu.separator();
+                    menu.submenu("Recent", |menu| {
+                        menu.item("alpha.scn");
+                        menu.item("beta.scn");
+                    });
+                })
+                .enabled(!disabled);
+                bar.menu("Edit", |menu| {
+                    menu.item("Undo").shortcut("Ctrl+Z");
+                    menu.item_toggle("Autosave", &mut state.autosave);
+                })
+                .enabled(!disabled);
+            });
+            ui.flex_spacer();
+            ui.tabs(&mut state.tab, |tabs| {
+                tabs.tab(TabChoice::First, "First")
+                    .enabled(!disabled)
+                    .no_body();
+                tabs.tab(TabChoice::Second, "Second")
+                    .enabled(!disabled)
+                    .no_body();
+                tabs.tab(TabChoice::Third, "Third")
+                    .enabled(!disabled)
+                    .no_body();
+            })
+            // The selected tab merges into this card's own surface.
+            .slot(bg_slot);
+        });
+
+        ui.horizontal(|ui| {
             ui.button("Button").grow().enabled(!disabled);
             ui.button("Primary").primary().grow().enabled(!disabled);
             ui.button("Danger").danger().grow().enabled(!disabled);
@@ -122,6 +170,7 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
             ui.separator();
             ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
             ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
+            ui.color_edit(&mut state.color).enabled(!disabled);
         });
         ui.horizontal(|ui| {
             ui.toggle(&mut state.toggle_a).enabled(!disabled);

@@ -8,9 +8,9 @@ use bevy_jp_plume::retained::{
     PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure,
     PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScreen,
     PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
-    TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption,
-    caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
+    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, TabSlot,
+    ThemeBackgroundSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
+    flex_spacer, row, screen, separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -334,7 +334,7 @@ fn push_documents(
     }
 
     let empty_slot = if documents.open.is_empty() {
-        ThemeSlot::Neutral3
+        ThemeSlot::Neutral2
     } else {
         ThemeSlot::Transparent
     };
@@ -395,6 +395,7 @@ fn root() -> impl Scene {
 fn menu_bar() -> impl Scene {
     bsn! {
         @PlumeMenuBar
+        ThemeBackgroundSlot(ThemeSlot::Neutral1)
         Children [
             (
                 @PlumeMenuButton { @label: "File" }
@@ -503,7 +504,7 @@ fn documents() -> impl Scene {
                         @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
                         DocTabs
                         // The strip sits over the viewport, not over a surface.
-                        TabsInverted
+                        template_value(TabSlot(ThemeSlot::Neutral0))
                         Node { width: Val::ZERO, flex_grow: 1.0 }
                         on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
                             s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
@@ -649,7 +650,6 @@ fn panel() -> impl Scene {
             padding: size::PAD,
         }
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
-        template_value(ThemeBorderSlot(ThemeSlot::Neutral3))
         Children [
             header(),
             separator(),

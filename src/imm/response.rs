@@ -27,7 +27,7 @@ use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
     PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed, SplitCollapsible,
-    SplitDividerAutoHide, SplitMin, TabsInverted,
+    SplitDividerAutoHide, SplitMin, TabSlot,
 };
 use crate::controls::{
     ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
@@ -805,12 +805,13 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Tabs> {
-    /// Paint the strip for one sitting over the window — a document strip above a
-    /// viewport — where the default ladder makes the *unselected* tabs look picked.
-    pub fn inverted(mut self) -> Self {
-        struct InvertedKey;
-        if self.key_changed::<InvertedKey>(true) {
-            self.e.entity_commands().insert(TabsInverted);
+    /// The surface the selected tab (and the body) merges into — the slot of
+    /// whatever sits below the strip. `Neutral1` is the default; `Neutral0` is a
+    /// document strip over the window, `Neutral2` matches a raised header.
+    pub fn slot(mut self, slot: ThemeSlot) -> Self {
+        struct TabSlotKey;
+        if self.key_changed::<TabSlotKey>(slot) {
+            self.e.entity_commands().insert(TabSlot(slot));
         }
         self
     }
