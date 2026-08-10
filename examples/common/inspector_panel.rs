@@ -289,8 +289,11 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         )
         // The panel never gets narrower than its controls need; the document pane
         // gives down to a couple of squeezed tabs, past which its strip scrolls.
+        // Dragging well past the panel's floor closes it entirely.
         .min_panes(px(120), px(260))
+        .collapsible(false, true)
         .align_items(AlignItems::Stretch)
+        .auto_hide_divider(true)
         .grow();
         s.split = split;
         s.documents = documents;
@@ -450,10 +453,10 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
         ui.separator();
         footer(ui, s);
     })
-    // Width and minimum belong to the splitter now; the panel fills its pane.
+    // Width and minimum belong to the splitter now; the panel fills its pane,
+    // and the seam's line is the splitter's divider rather than a panel border.
     .grow()
     .background_slot(ThemeSlot::Neutral1)
-    .border_slot(UiRect::left(px(1)), ThemeSlot::Neutral3)
     .padding(size::PAD)
     .font_size(FontSize::Px(BASE_FONT_PX * s.ui_scale));
 }

@@ -10,7 +10,7 @@ use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::observer::On;
 use bevy::ecs::query::{Changed, Has, With};
 use bevy::ecs::reflect::ReflectComponent;
-use bevy::ecs::system::{Query, Res};
+use bevy::ecs::system::{Commands, Query, Res};
 use bevy::math::Vec2;
 use bevy::picking::Pickable;
 use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press};
@@ -19,11 +19,11 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType,
-    UiGlobalTransform, UiRect, UiScale, Val, Val2, percent,
+    Pressed, UiGlobalTransform, UiRect, UiScale, Val, Val2, percent,
 };
 
 use crate::constants::size;
-use crate::cursor::EntityCursor;
+use crate::cursor::{CursorLock, EntityCursor};
 use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
@@ -118,6 +118,7 @@ impl PlumeXyPad {
             TextStyleRelay
             ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
+            CursorLock
             Children [
                 (
                     Node {
@@ -281,6 +282,7 @@ fn on_drag_start(
     mut drag_start: On<Pointer<DragStart>>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     mut q_dragging: Query<(&mut XyPadDragging, Has<InteractionDisabled>)>,
+    mut commands: Commands,
 ) {
     if let Ok(parent) = q_inner.get(drag_start.entity)
         && let Ok((mut dragging, disabled)) = q_dragging.get_mut(parent.parent())
@@ -288,6 +290,9 @@ fn on_drag_start(
         drag_start.propagate(false);
         if !disabled {
             dragging.0 = true;
+            // `Pressed` on the root pairs with its `CursorLock`, holding the
+            // crosshair while the drag pins values from outside the pad.
+            commands.entity(parent.parent()).insert(Pressed);
         }
     }
 }
@@ -329,12 +334,14 @@ fn on_drag_end(
     mut drag_end: On<Pointer<DragEnd>>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     mut q_dragging: Query<&mut XyPadDragging>,
+    mut commands: Commands,
 ) {
     if let Ok(parent) = q_inner.get(drag_end.entity)
         && let Ok(mut dragging) = q_dragging.get_mut(parent.parent())
     {
         drag_end.propagate(false);
         dragging.0 = false;
+        commands.entity(parent.parent()).remove::<Pressed>();
     }
 }
 
@@ -342,11 +349,13 @@ fn on_drag_cancel(
     drag_cancel: On<Pointer<Cancel>>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     mut q_dragging: Query<&mut XyPadDragging>,
+    mut commands: Commands,
 ) {
     if let Ok(parent) = q_inner.get(drag_cancel.entity)
         && let Ok(mut dragging) = q_dragging.get_mut(parent.parent())
     {
         dragging.0 = false;
+        commands.entity(parent.parent()).remove::<Pressed>();
     }
 }
 

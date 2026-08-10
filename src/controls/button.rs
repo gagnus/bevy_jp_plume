@@ -359,12 +359,14 @@ fn set_button_styles(
         ButtonVariant::Plain => tokens::sets::BUTTON_PLAIN_BG,
         ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BG,
     };
-    let bg_token = bg_set.pick(disabled, pressed && !inert, hovered && !inert);
+    let bg_token = bg_set.pick(disabled, pressed && hovered && !inert, hovered && !inert);
 
     let border_token = match variant {
-        ButtonVariant::Outline => {
-            tokens::sets::BUTTON_OUTLINE_BORDER.pick(disabled, pressed && !inert, hovered && !inert)
-        }
+        ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BORDER.pick(
+            disabled,
+            pressed && hovered && !inert,
+            hovered && !inert,
+        ),
         _ => tokens::BUTTON_BORDER_NONE,
     };
 

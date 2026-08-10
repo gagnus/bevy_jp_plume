@@ -27,8 +27,8 @@ use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
     CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-    PopupAnchor, PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitPane, column,
-    dialog_frame, flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame,
+    PopupAnchor, PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane,
+    column, dialog_frame, flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame,
     scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
     splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
     tabs_frame,
@@ -1619,17 +1619,32 @@ fn split<'r, 'w, 's>(
     let entity = ui
         .ch_loc(loc_id(()))
         .on_spawn_apply_scene(move || splitter_frame(axis, initial))
-        .plume_split(fraction, &mut changed)
-        .add_ui(|ui| {
-            ui.ch_id("split_first")
-                .on_spawn_apply_scene(|| splitter_pane(SplitPane::First))
-                .add_ui(first);
-            ui.ch_id("split_divider")
-                .on_spawn_apply_scene(move || splitter_divider(axis));
-            ui.ch_id("split_second")
-                .on_spawn_apply_scene(|| splitter_pane(SplitPane::Second))
-                .add_ui(second);
-        });
+        .plume_split(fraction, &mut changed);
+    // A collapsed pane's contents are not built at all: nothing measures, so
+    // nothing can prop the pane back open, and its imm state is released.
+    let collapse = entity
+        .cap_get_component::<SplitCollapsible>()
+        .ok()
+        .flatten()
+        .copied()
+        .unwrap_or_default();
+    let split = *fraction;
+    let entity = entity.add_ui(|ui| {
+        let pane = ui
+            .ch_id("split_first")
+            .on_spawn_apply_scene(|| splitter_pane(SplitPane::First));
+        if !(collapse.first && split == 0.0) {
+            pane.add_ui(first);
+        }
+        ui.ch_id("split_divider")
+            .on_spawn_apply_scene(move || splitter_divider(axis));
+        let pane = ui
+            .ch_id("split_second")
+            .on_spawn_apply_scene(|| splitter_pane(SplitPane::Second));
+        if !(collapse.second && split == 1.0) {
+            pane.add_ui(second);
+        }
+    });
     respond(entity, changed)
 }
 

@@ -33,7 +33,7 @@ use bevy::ui_widgets::{
 
 use crate::constants::size;
 use crate::controls::DefaultWidth;
-use crate::cursor::EntityCursor;
+use crate::cursor::{CursorLock, EntityCursor};
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, UiTheme, control_box_shadow};
@@ -97,6 +97,8 @@ impl PlumeSlider {
             PlumeSlider
             // Em-sized chrome needs the chain's `EmSize`.
             TextStyleRelay
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
+            CursorLock
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
@@ -345,9 +347,12 @@ fn set_slider_styles(
         GradientAmount::STANDARD
     };
 
-    let cursor_shape = match disabled {
-        true => bevy::window::SystemCursorIcon::NotAllowed,
-        false => bevy::window::SystemCursorIcon::Pointer,
+    // Resize arrows only for the grab itself, held by `CursorLock`; at rest the
+    // slider reads as clickable like every other control.
+    let cursor_shape = match (disabled, pressed) {
+        (true, _) => bevy::window::SystemCursorIcon::NotAllowed,
+        (_, true) => bevy::window::SystemCursorIcon::EwResize,
+        _ => bevy::window::SystemCursorIcon::Pointer,
     };
 
     if let [Gradient::Linear(linear_gradient)] = &mut track_background_gradient.0[..] {

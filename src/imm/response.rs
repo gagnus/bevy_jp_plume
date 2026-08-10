@@ -25,7 +25,8 @@ use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
-    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitMin, TabsInverted,
+    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitCollapsible, SplitDividerAutoHide,
+    SplitMin, TabsInverted,
 };
 use crate::controls::{
     ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden,
@@ -717,6 +718,28 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
         // `Val` holds floats, so it is keyed by its `Debug` form, as elsewhere.
         if self.key_changed::<MinPanes>(format!("{first:?}{second:?}")) {
             self.e.entity_commands().insert(SplitMin { first, second });
+        }
+        self
+    }
+
+    /// Let a drag snap a pane fully closed.
+    pub fn collapsible(mut self, first: bool, second: bool) -> Self {
+        struct CollapsibleKey;
+        if self.key_changed::<CollapsibleKey>((first, second)) {
+            self.e
+                .entity_commands()
+                .insert(SplitCollapsible { first, second });
+        }
+        self
+    }
+
+    /// Paint the divider only while it is in use.
+    pub fn auto_hide_divider(mut self, auto_hide: bool) -> Self {
+        struct AutoHideKey;
+        if self.key_changed::<AutoHideKey>(auto_hide) {
+            self.e
+                .entity_commands()
+                .insert(SplitDividerAutoHide(auto_hide));
         }
         self
     }

@@ -11,13 +11,14 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::observer::On;
 use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
 use bevy::math::Vec2;
-use bevy::picking::events::{Drag, Pointer};
+use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press, Release};
 use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
@@ -26,13 +27,13 @@ use bevy::scene::prelude::*;
 use bevy::text::{EmSize, RemSize};
 use bevy::ui::{
     AlignItems, AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, FlexDirection, JustifyContent,
-    Node, PositionType, Pressed, UiSystems, Val,
+    Node, Overflow, PositionType, Pressed, UiSystems, Val,
 };
 use bevy::ui_widgets::ValueChange;
 use bevy::window::SystemCursorIcon;
 
 use crate::constants::size;
-use crate::cursor::EntityCursor;
+use crate::cursor::{CursorLock, EntityCursor};
 use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBackgroundToken;
 use crate::tokens;
@@ -40,6 +41,10 @@ use crate::tokens;
 // Grab width of the divider. The visible line is a hairline; this is the strip
 // the pointer has to land in, which has to be usable without being a gutter.
 const DIVIDER_GRAB: Val = size::em_from_px(7.0);
+
+// The hairline while hovered or dragged: thick enough to read as grabbable. It
+// grows inside the grab strip, so neither pane moves.
+const DIVIDER_LINE_ACTIVE: Val = size::em_from_px(3.0);
 
 // A fraction this far from what the layout actually produced is taken as the
 // layout having clamped it — see `snap_split_to_layout`. Half a physical pixel,
@@ -113,16 +118,26 @@ impl Default for SplitMin {
     }
 }
 
+/// Paint the divider only while it is in use.
+#[derive(Component, Clone, Copy, PartialEq, Eq, Default, Debug, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct SplitDividerAutoHide(pub bool);
+
+/// Opt-in, per pane: dragging the divider well past the pane's floor snaps it
+/// fully closed ([`SplitFraction`] exactly `0.0` or `1.0`).
+#[derive(Component, Clone, Copy, PartialEq, Eq, Default, Debug, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct SplitCollapsible {
+    /// The first pane may collapse, closing to the left/top edge.
+    pub first: bool,
+    /// The second pane may collapse, closing to the right/bottom edge.
+    pub second: bool,
+}
+
 /// Two panes with a divider the user drags to re-proportion them.
 ///
 /// The first pane is sized from [`SplitFraction`]; the second takes what is
 /// left, so the two always fill the splitter. [`SplitMin`] gives each a floor.
-///
-/// A floor stated as a length is enforced twice over: the divider clamps
-/// against it while dragging, and the pane's own `min_width`/`min_height` stops
-/// the layout regardless. A `Val::Auto` floor can only be enforced the second
-/// way — a content minimum is not known until the layout has run — so the
-/// stored fraction is corrected from the layout afterwards instead.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSplitterProps)]
 #[reflect(Component, Clone, Default)]
@@ -138,6 +153,12 @@ pub struct PlumeSplitterProps {
     pub min_first: Val,
     /// Smallest the second pane may be; [`Val::Auto`] for its content minimum.
     pub min_second: Val,
+    /// Paint the divider only while hovered or dragged.
+    pub auto_hide: bool,
+    /// Let a drag snap the first pane fully closed (see [`SplitCollapsible`]).
+    pub collapsible_first: bool,
+    /// Let a drag snap the second pane fully closed (see [`SplitCollapsible`]).
+    pub collapsible_second: bool,
     /// Contents of the first pane — left, or top.
     pub first: Box<dyn SceneList>,
     /// Contents of the second pane — right, or bottom.
@@ -151,6 +172,9 @@ impl Default for PlumeSplitterProps {
             fraction: 0.5,
             min_first: Val::Auto,
             min_second: Val::Auto,
+            auto_hide: false,
+            collapsible_first: false,
+            collapsible_second: false,
             first: Box::new(bsn_list![]),
             second: Box::new(bsn_list![]),
         }
@@ -164,12 +188,17 @@ impl PlumeSplitter {
             fraction,
             min_first,
             min_second,
+            auto_hide,
+            collapsible_first,
+            collapsible_second,
             first,
             second,
         } = props;
         bsn! {
             splitter_frame(axis, fraction)
             template_value(SplitMin { first: min_first, second: min_second })
+            template_value(SplitDividerAutoHide(auto_hide))
+            template_value(SplitCollapsible { first: collapsible_first, second: collapsible_second })
             Children [
                 (
                     splitter_pane(SplitPane::First)
@@ -261,10 +290,13 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
     }
 }
 
-// Marks the grab strip between the panes.
+// Marks the grab strip between the panes. `drag_share` is the pointer's
+// position in share space during a drag.
 #[derive(Component, Clone, Copy, Default, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct SplitDivider;
+struct SplitDivider {
+    drag_share: f32,
+}
 
 // The grab strip, with the hairline centred inside it. The strip is wider than
 // the line it draws, so the divider can be grabbed without being a gutter: it
@@ -304,7 +336,13 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         Hovered
         TextStyleRelay
         EntityCursor::System(cursor)
+        CursorLock
         on(drag_divider)
+        on(drag_start_divider)
+        on(press_divider)
+        on(release_divider)
+        on(drag_end_divider)
+        on(cancel_divider)
         Children [
             (
                 Node {
@@ -325,25 +363,49 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
 // between them. The second pane grows into the rest, so only the first is sized.
 fn apply_split(
     q_splitters: Query<
-        (&Children, &SplitAxis, &SplitFraction, &SplitMin),
+        (
+            &Children,
+            &SplitAxis,
+            &SplitFraction,
+            &SplitMin,
+            Option<&SplitCollapsible>,
+        ),
         Or<(
             Added<SplitterRoot>,
             Changed<SplitFraction>,
             Changed<SplitMin>,
+            Changed<SplitCollapsible>,
             Changed<Children>,
         )>,
     >,
     mut q_panes: Query<(&SplitPane, &mut Node)>,
     mut q_dividers: Query<&mut Node, (With<SplitDivider>, Without<SplitPane>)>,
 ) {
-    for (children, axis, fraction, min) in q_splitters.iter() {
-        let share = Val::Percent(fraction.0.clamp(0.0, 1.0) * 100.0);
+    for (children, axis, fraction, min, collapsible) in q_splitters.iter() {
+        let f = fraction.0.clamp(0.0, 1.0);
+        let share = Val::Percent(f * 100.0);
+        let collapse = collapsible.copied().unwrap_or_default();
         for child in children.iter() {
             if let Ok((pane, mut node)) = q_panes.get_mut(*child) {
-                let floor = match pane {
-                    SplitPane::First => min.first,
-                    SplitPane::Second => min.second,
+                // A collapsed pane must actually reach zero: its floor is
+                // lifted and whatever contents remain are clipped.
+                let collapsed = match pane {
+                    SplitPane::First => collapse.first && f == 0.0,
+                    SplitPane::Second => collapse.second && f == 1.0,
                 };
+                let floor = match (collapsed, pane) {
+                    (true, _) => Val::ZERO,
+                    (false, SplitPane::First) => min.first,
+                    (false, SplitPane::Second) => min.second,
+                };
+                let overflow = if collapsed {
+                    Overflow::clip()
+                } else {
+                    Overflow::visible()
+                };
+                if node.overflow != overflow {
+                    node.overflow = overflow;
+                }
                 match axis {
                     SplitAxis::Horizontal => {
                         // Only the first pane is sized; the second grows.
@@ -387,15 +449,59 @@ fn apply_split(
     }
 }
 
+// The divider has no headless widget behind it, so it keeps its own `Pressed`:
+// press marks the gesture, release/drag-end/cancel end it. While it is on, the
+// active style and the resize cursor hold even when the pointer outruns the
+// strip mid-drag.
+fn press_divider(press: On<Pointer<Press>>, mut commands: Commands) {
+    commands.entity(press.event_target()).insert(Pressed);
+}
+
+fn release_divider(release: On<Pointer<Release>>, mut commands: Commands) {
+    commands.entity(release.event_target()).remove::<Pressed>();
+}
+
+fn drag_end_divider(drag_end: On<Pointer<DragEnd>>, mut commands: Commands) {
+    commands.entity(drag_end.event_target()).remove::<Pressed>();
+}
+
+fn cancel_divider(cancel: On<Pointer<Cancel>>, mut commands: Commands) {
+    commands.entity(cancel.event_target()).remove::<Pressed>();
+}
+
+// A fresh gesture starts from the stored fraction, not whatever share the last
+// drag's pointer ran ahead to.
+fn drag_start_divider(
+    drag_start: On<Pointer<DragStart>>,
+    mut q_dividers: Query<&mut SplitDivider>,
+    q_child_of: Query<&ChildOf>,
+    q_fractions: Query<&SplitFraction>,
+) {
+    let Ok(mut divider) = q_dividers.get_mut(drag_start.event_target()) else {
+        return;
+    };
+    let Ok(parent) = q_child_of.get(drag_start.event_target()) else {
+        return;
+    };
+    if let Ok(fraction) = q_fractions.get(parent.parent()) {
+        divider.drag_share = fraction.0;
+    }
+}
+
 // Drag the divider: the pointer's travel along the axis, as a share of the
-// splitter's length, clamped to what the two minimums leave.
+// splitter's length, clamped to what the two minimums leave. A collapsible
+// pane adds two zones past its floor: down to half the floor the divider holds
+// at the floor, further and it snaps fully closed — and the same halfway
+// point, crossed outward, is where a closed pane snaps back to its floor.
 fn drag_divider(
     mut drag: On<Pointer<Drag>>,
+    mut q_dividers: Query<&mut SplitDivider>,
     q_child_of: Query<&ChildOf>,
     mut q_splitters: Query<(
         &SplitAxis,
         &mut SplitFraction,
         &SplitMin,
+        Option<&SplitCollapsible>,
         &ComputedNode,
         &ComputedUiRenderTargetInfo,
         Option<&EmSize>,
@@ -403,11 +509,16 @@ fn drag_divider(
     rem_size: Res<RemSize>,
     mut commands: Commands,
 ) {
+    let Ok(mut divider) = q_dividers.get_mut(drag.event_target()) else {
+        return;
+    };
     let Ok(parent) = q_child_of.get(drag.event_target()) else {
         return;
     };
     let splitter = parent.parent();
-    let Ok((axis, mut fraction, min, node, target, em_size)) = q_splitters.get_mut(splitter) else {
+    let Ok((axis, mut fraction, min, collapsible, node, target, em_size)) =
+        q_splitters.get_mut(splitter)
+    else {
         return;
     };
     // The splitter owns this gesture; a drag on the divider must never also pan
@@ -439,9 +550,33 @@ fn drag_divider(
     };
     let low = share_of(min.first);
     let high = 1.0 - share_of(min.second);
+    let collapse = collapsible.copied().unwrap_or_default();
+
+    // Within the floors the gesture is based on the live fraction, which is
+    // what keeps the drag free of dead travel; past a collapsible floor it is
+    // based on the pointer's own accumulated share, which the hysteresis needs.
+    let base = if (collapse.first && divider.drag_share < low)
+        || (collapse.second && divider.drag_share > high)
+    {
+        divider.drag_share
+    } else {
+        fraction.0
+    };
+    let pointer = base + travel;
+    divider.drag_share = pointer;
     // An over-constrained splitter cannot honour both floors; the first pane
     // keeps its own and the second gives, which is what flexbox does anyway.
-    let wanted = (fraction.0 + travel).clamp(low, high.max(low));
+    let wanted = if collapse.first && pointer < low * 0.5 {
+        0.0
+    } else if collapse.second && pointer > (high + 1.0) * 0.5 {
+        1.0
+    } else if collapse.first && pointer < low {
+        low
+    } else if collapse.second && pointer > high {
+        high.max(low)
+    } else {
+        pointer.clamp(low, high.max(low))
+    };
 
     fraction.set_if_neq(SplitFraction(wanted));
     commands.trigger(ValueChange {
@@ -496,29 +631,141 @@ fn snap_split_to_layout(
     }
 }
 
-// The hairline brightens under the pointer and while dragging: the divider is
-// chrome you have to find before you can use it. Borrows the scrollbar thumb's
-// tokens, the theme's existing voice for a draggable neutral strip.
+// The hairline brightens and thickens under the pointer and while dragging: the
+// divider is chrome you have to find before you can use it. Borrows the
+// scrollbar thumb's tokens, the theme's existing voice for a draggable neutral
+// strip.
+fn style_divider(
+    children: &Children,
+    axis: SplitAxis,
+    auto_hide: bool,
+    pressed: bool,
+    hovered: bool,
+    q_lines: &mut Query<&mut Node, Without<SplitDivider>>,
+    commands: &mut Commands,
+) {
+    let active = pressed || hovered;
+    let token = if active {
+        tokens::sets::SCROLLBAR_THUMB.pick(false, pressed, hovered)
+    } else if auto_hide {
+        tokens::SEPARATOR_HIDDEN
+    } else {
+        tokens::SEPARATOR
+    };
+    let line = if active {
+        DIVIDER_LINE_ACTIVE
+    } else {
+        size::CONTAINER_BORDER
+    };
+    for child in children.iter() {
+        if let Ok(mut node) = q_lines.get_mut(*child) {
+            match axis {
+                SplitAxis::Horizontal => {
+                    if node.width != line {
+                        node.width = line;
+                    }
+                }
+                SplitAxis::Vertical => {
+                    if node.height != line {
+                        node.height = line;
+                    }
+                }
+            }
+        }
+        commands
+            .entity(*child)
+            .insert(ThemeBackgroundToken(token.clone()));
+    }
+}
+
 fn update_divider_styles(
     q_dividers: Query<
-        (&Children, Has<Pressed>, &Hovered),
+        (Entity, &Children, Has<Pressed>, &Hovered),
         (
             With<SplitDivider>,
             Or<(Added<SplitDivider>, Added<Pressed>, Changed<Hovered>)>,
         ),
     >,
+    q_child_of: Query<&ChildOf>,
+    q_splitters: Query<(&SplitAxis, Option<&SplitDividerAutoHide>), With<SplitterRoot>>,
+    mut q_lines: Query<&mut Node, Without<SplitDivider>>,
     mut commands: Commands,
 ) {
-    for (children, pressed, hovered) in q_dividers.iter() {
-        let token = if pressed || hovered.get() {
-            tokens::sets::SCROLLBAR_THUMB.pick(false, pressed, hovered.get())
-        } else {
-            tokens::SEPARATOR
+    for (divider, children, pressed, hovered) in q_dividers.iter() {
+        let Ok(child_of) = q_child_of.get(divider) else {
+            continue;
         };
+        let Ok((axis, auto_hide)) = q_splitters.get(child_of.parent()) else {
+            continue;
+        };
+        style_divider(
+            children,
+            *axis,
+            auto_hide.is_some_and(|hide| hide.0),
+            pressed,
+            hovered.get(),
+            &mut q_lines,
+            &mut commands,
+        );
+    }
+}
+
+// Releasing away from the strip removes `Pressed` without a `Hovered` change,
+// which only removal detection sees.
+fn update_divider_styles_remove(
+    q_dividers: Query<(&Children, Has<Pressed>, &Hovered), With<SplitDivider>>,
+    mut removed_pressed: RemovedComponents<Pressed>,
+    q_child_of: Query<&ChildOf>,
+    q_splitters: Query<(&SplitAxis, Option<&SplitDividerAutoHide>), With<SplitterRoot>>,
+    mut q_lines: Query<&mut Node, Without<SplitDivider>>,
+    mut commands: Commands,
+) {
+    for divider in removed_pressed.read() {
+        let Ok((children, pressed, hovered)) = q_dividers.get(divider) else {
+            continue;
+        };
+        let Ok(child_of) = q_child_of.get(divider) else {
+            continue;
+        };
+        let Ok((axis, auto_hide)) = q_splitters.get(child_of.parent()) else {
+            continue;
+        };
+        style_divider(
+            children,
+            *axis,
+            auto_hide.is_some_and(|hide| hide.0),
+            pressed,
+            hovered.get(),
+            &mut q_lines,
+            &mut commands,
+        );
+    }
+}
+
+// The flag lives on the splitter root, out of the divider-driven triggers' sight.
+fn update_divider_styles_auto_hide(
+    q_splitters: Query<
+        (&Children, &SplitAxis, &SplitDividerAutoHide),
+        (With<SplitterRoot>, Changed<SplitDividerAutoHide>),
+    >,
+    q_dividers: Query<(&Children, Has<Pressed>, &Hovered), With<SplitDivider>>,
+    mut q_lines: Query<&mut Node, Without<SplitDivider>>,
+    mut commands: Commands,
+) {
+    for (children, axis, auto_hide) in q_splitters.iter() {
         for child in children.iter() {
-            commands
-                .entity(*child)
-                .insert(ThemeBackgroundToken(token.clone()));
+            let Ok((divider_children, pressed, hovered)) = q_dividers.get(*child) else {
+                continue;
+            };
+            style_divider(
+                divider_children,
+                *axis,
+                auto_hide.0,
+                pressed,
+                hovered.get(),
+                &mut q_lines,
+                &mut commands,
+            );
         }
     }
 }
@@ -530,7 +777,12 @@ impl Plugin for SplitterPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
-            update_divider_styles.in_set(PickingSystems::Last),
+            (
+                update_divider_styles,
+                update_divider_styles_remove,
+                update_divider_styles_auto_hide,
+            )
+                .in_set(PickingSystems::Last),
         )
         .add_systems(PostUpdate, apply_split.before(UiSystems::Layout))
         // After the layout it is measuring.

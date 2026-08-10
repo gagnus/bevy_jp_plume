@@ -30,7 +30,7 @@ use crate::controls::{
     DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
     text_input_suffix,
 };
-use crate::cursor::EntityCursor;
+use crate::cursor::{CursorLock, EntityCursor};
 use crate::font_styles::InheritableFont;
 
 // Pointer travel (px) below which a press-and-release is a click (focus the
@@ -161,7 +161,8 @@ impl PlumeNumberInput {
                     }
                     NumberInputScrubber
                     template_value(Pickable::default())
-                    EntityCursor::System(SystemCursorIcon::EwResize)
+                    EntityCursor::System(SystemCursorIcon::Pointer)
+                    CursorLock
                     on(scrubber_on_press)
                     on(scrubber_on_release)
                     on(scrubber_on_drag_start)
@@ -358,6 +359,7 @@ fn scrubber_on_drag_start(
     mut drag_start: On<Pointer<DragStart>>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
     q_frames: Query<(&SliderValue, &SliderRange, &SliderStep), With<PlumeNumberInput>>,
+    mut commands: Commands,
 ) {
     if drag_start.button != PointerButton::Primary {
         return;
@@ -369,6 +371,11 @@ fn scrubber_on_drag_start(
         return;
     };
     drag_start.propagate(false);
+    // Only now is this a scrub rather than a click-to-focus: `Pressed` pairs
+    // with the scrubber's `CursorLock` to hold the resize cursor swapped in here.
+    commands
+        .entity(drag_start.event_target())
+        .insert((Pressed, EntityCursor::System(SystemCursorIcon::EwResize)));
     scrub.base = value.0;
     scrub.offset = 0.0;
 
@@ -447,6 +454,13 @@ fn scrubber_on_drag_end(
         return;
     };
     drag_end.propagate(false);
+    // A scrub usually ends with the pointer off the strip, where `Release` (sent
+    // to the hovered entity) never arrives; only this event comes back here.
+    commands.entity(frame).remove::<Pressed>();
+    commands
+        .entity(drag_end.event_target())
+        .remove::<Pressed>()
+        .insert(EntityCursor::System(SystemCursorIcon::Pointer));
     if scrub.max_distance > DRAG_THRESHOLD_PX {
         commands.trigger(ValueChange {
             source: frame,
@@ -475,6 +489,10 @@ fn scrubber_on_release(
     let frame = child_of.parent();
     release.propagate(false);
     commands.entity(frame).remove::<Pressed>();
+    commands
+        .entity(release.event_target())
+        .remove::<Pressed>()
+        .insert(EntityCursor::System(SystemCursorIcon::Pointer));
     if scrub.max_distance <= DRAG_THRESHOLD_PX
         && let Ok(children) = q_children.get(frame)
         && let Some(field) = children
@@ -501,6 +519,10 @@ fn scrubber_on_cancel(
     let frame = child_of.parent();
     cancel.propagate(false);
     commands.entity(frame).remove::<Pressed>();
+    commands
+        .entity(cancel.event_target())
+        .remove::<Pressed>()
+        .insert(EntityCursor::System(SystemCursorIcon::Pointer));
     if scrub.max_distance > DRAG_THRESHOLD_PX
         && let Ok(value) = q_frames.get(frame)
         && value.0 != scrub.base

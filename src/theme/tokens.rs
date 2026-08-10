@@ -459,6 +459,8 @@ pub const DIALOG_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.dialog.
 
 /// Separator hairline
 pub const SEPARATOR: ThemeToken = ThemeToken::new_static("plume.separator");
+/// Separator hairline while an auto-hidden splitter divider is idle
+pub const SEPARATOR_HIDDEN: ThemeToken = ThemeToken::new_static("plume.separator.hidden");
 
 /// Focus ring outline
 pub const FOCUS_RING: ThemeToken = ThemeToken::new_static("plume.focus-ring");

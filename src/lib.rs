@@ -20,7 +20,7 @@ use bevy::ui::UiSystems;
 // Short crate-internal paths for the modules the public surface re-exports
 // piecemeal through `style`, `retained` and `theme`.
 pub(crate) use theme::tokens;
-pub use utils::cursor::{DefaultCursor, EntityCursor, OverrideCursor};
+pub use utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
 pub(crate) use utils::{constants, cursor, focus, font_styles, rounded_corners};
 
 use crate::controls::ControlsPlugin;

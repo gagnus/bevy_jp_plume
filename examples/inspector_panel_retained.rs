@@ -374,8 +374,11 @@ fn root() -> impl Scene {
                 @PlumeSplitter {
                     @fraction: 0.75,
                     @min_second: px(260),
+                    @collapsible_second: true,
                     @first: bsn_list![documents()],
                     @second: bsn_list![panel()],
+                    @auto_hide: true,
+
                 }
                 Node { flex_grow: 1.0 }
             ),

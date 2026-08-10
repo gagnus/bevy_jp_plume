@@ -201,6 +201,7 @@ pub enum ThemeSlot {
     /// - `RADIO_BG`
     /// - `RADIO_BG_CHECKED_DISABLED`
     /// - `RADIO_BG_DISABLED`
+    /// - `SEPARATOR_HIDDEN`
     /// - `SWITCH_BG_CHECKED_DISABLED`
     /// - `SWITCH_BG_DISABLED`
     /// - `TAB_BG`
@@ -330,8 +331,8 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::SLIDER_THUMB_DISABLED, ThemeSlot::Neutral3),
     (tokens::SCROLLBAR_BG, ThemeSlot::Neutral0),
     (tokens::SCROLLBAR_THUMB, ThemeSlot::Neutral4),
-    (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Neutral5),
-    (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Neutral6),
+    (tokens::SCROLLBAR_THUMB_HOVER, ThemeSlot::Accent1),
+    (tokens::SCROLLBAR_THUMB_PRESSED, ThemeSlot::Accent2),
     (tokens::CHECKBOX_BG, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::CHECKBOX_BG_CHECKED, ThemeSlot::Accent0),
@@ -421,5 +422,6 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::DIALOG_TEXT, ThemeSlot::Text1),
     (tokens::DIALOG_HEADER_TEXT, ThemeSlot::Text0),
     (tokens::SEPARATOR, ThemeSlot::Neutral4),
+    (tokens::SEPARATOR_HIDDEN, ThemeSlot::Transparent),
     (tokens::FOCUS_RING, ThemeSlot::FocusRing),
 ];

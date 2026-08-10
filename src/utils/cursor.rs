@@ -15,6 +15,7 @@ use bevy::picking::pointer::PointerId;
 use bevy::prelude::Deref;
 use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
+use bevy::ui::Pressed;
 #[cfg(feature = "custom_cursor")]
 use bevy::window::CustomCursor;
 use bevy::window::{CursorIcon, SystemCursorIcon, Window};
@@ -48,6 +49,11 @@ pub enum EntityCursor {
 #[derive(Deref, Resource, Debug, Clone, Default, Reflect)]
 #[reflect(Resource, Default, Clone, Debug)]
 pub struct OverrideCursor(pub Option<EntityCursor>);
+
+/// Holds this entity's [`EntityCursor`] while it is `Pressed`.
+#[derive(Component, Debug, Clone, Copy, Default, Reflect)]
+#[reflect(Component, Debug, Default, Clone)]
+pub struct CursorLock;
 
 impl EntityCursor {
     /// Convert the [`EntityCursor`] to a [`CursorIcon`] so that it can be inserted into a
@@ -88,24 +94,29 @@ pub(crate) fn update_cursor(
     hover_map: Option<Res<HoverMap>>,
     parent_query: Query<&ChildOf>,
     cursor_query: Query<&EntityCursor, Without<Window>>,
+    locked_query: Query<&EntityCursor, (With<CursorLock>, With<Pressed>, Without<Window>)>,
     q_windows: Query<(Entity, Option<&CursorIcon>), With<Window>>,
     r_default_cursor: Res<DefaultCursor>,
     r_override_cursor: Res<OverrideCursor>,
 ) {
-    let cursor = r_override_cursor.0.as_ref().unwrap_or_else(|| {
-        hover_map
-            .and_then(|hover_map| match hover_map.get(&PointerId::Mouse) {
-                Some(hover_set) => hover_set.keys().find_map(|entity| {
-                    cursor_query.get(*entity).ok().or_else(|| {
-                        parent_query
-                            .iter_ancestors(*entity)
-                            .find_map(|e| cursor_query.get(e).ok())
-                    })
-                }),
-                None => None,
-            })
-            .unwrap_or(&r_default_cursor)
-    });
+    let cursor = r_override_cursor
+        .0
+        .as_ref()
+        .or_else(|| locked_query.iter().next())
+        .unwrap_or_else(|| {
+            hover_map
+                .and_then(|hover_map| match hover_map.get(&PointerId::Mouse) {
+                    Some(hover_set) => hover_set.keys().find_map(|entity| {
+                        cursor_query.get(*entity).ok().or_else(|| {
+                            parent_query
+                                .iter_ancestors(*entity)
+                                .find_map(|e| cursor_query.get(e).ok())
+                        })
+                    }),
+                    None => None,
+                })
+                .unwrap_or(&r_default_cursor)
+        });
 
     for (entity, prev_cursor) in q_windows.iter() {
         if let Some(prev_cursor) = prev_cursor

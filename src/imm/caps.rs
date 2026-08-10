@@ -12,7 +12,7 @@ use bevy_immediate::{
     CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImmId, ImplCap, imm_id,
 };
 
-use crate::containers::{CloseRequested, SplitFraction};
+use crate::containers::{CloseRequested, SplitCollapsible, SplitFraction};
 use crate::controls::{ColorPickerValue, SelectedIndex, SetValue, TextInputValue};
 use crate::display::TooltipShowing;
 use crate::utils::numeric::Numeric;
@@ -30,6 +30,7 @@ impl ImmCapability for CapabilityPlumeValue {
         cap_req.request_component_write::<NewValueChange<f32>>(app.world_mut());
         cap_req.request_component_read::<SliderValue>(app.world_mut());
         cap_req.request_component_read::<SplitFraction>(app.world_mut());
+        cap_req.request_component_read::<SplitCollapsible>(app.world_mut());
         cap_req.request_component_read::<Pressed>(app.world_mut());
         cap_req.request_component_read::<Children>(app.world_mut());
         cap_req.request_resource_read::<InputFocus>(app.world_mut());
