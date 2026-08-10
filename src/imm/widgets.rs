@@ -1839,9 +1839,7 @@ fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
             name: format!("PlumeDialog({title})").into(),
             body: Box::new(bsn_list![]),
             header: Some(DialogHeader {
-                title: Box::new(bsn_list![
-                    caption_large(title)
-                ]),
+                title: Box::new(bsn_list![caption_large(title)]),
                 closable,
                 movable,
             }),

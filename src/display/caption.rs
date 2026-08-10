@@ -22,7 +22,7 @@ pub fn caption_large(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         InheritableFont {
-            font_size: PlumeFontSize::Em(1.25)
+            font_size: PlumeFontSize::Em(1.25),
         }
         ThemedText
     }

@@ -170,7 +170,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             ),
             (
                 caption(shortcut)
-                Node { display: {shortcut_display} }
+                Node { display: shortcut_display }
                 TextLayout { linebreak: LineBreak::NoWrap }
                 MenuChrome
                 MenuShortcutText

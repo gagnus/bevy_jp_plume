@@ -384,7 +384,6 @@ fn root() -> impl Scene {
                     @first: bsn_list![documents()],
                     @second: bsn_list![panel()],
                     @auto_hide: true,
-
                 }
                 Node { flex_grow: 1.0 }
             ),
@@ -488,7 +487,11 @@ fn documents() -> impl Scene {
     let tabs: Vec<_> = (0..MAX_DOCUMENTS).map(document_tab).collect();
     bsn! {
         column()
-        Node { flex_grow: 1.0, min_height: Val::ZERO, row_gap: Val::ZERO }
+        Node {
+            flex_grow: 1.0,
+            min_height: Val::ZERO,
+            row_gap: Val::ZERO,
+        }
         Children [
             (
                 row()
@@ -574,7 +577,7 @@ fn document_tab(slot: usize) -> impl Scene {
             ],
         }
         template_value(DocSlot(slot))
-        Node { display: Display::None, min_width: em(6), }
+        Node { display: Display::None, min_width: em(6) }
     }
 }
 
@@ -590,7 +593,10 @@ fn viewport_hud() -> impl Scene {
                     row()
                     Children [
                         fa_icon(font_awesome::solid::CUBES),
-                        (caption("") HudCount),
+                        (
+                            caption("")
+                            HudCount
+                        ),
                         separator(),
                         (
                             @PlumeToolButton {
@@ -623,7 +629,10 @@ fn viewport() -> impl Scene {
                 Children [
                     flex_spacer(),
                     fa_icon(font_awesome::solid::CUBES),
-                    (caption("") ViewportLabel),
+                    (
+                        caption("")
+                        ViewportLabel
+                    ),
                     flex_spacer(),
                 ]
             ),

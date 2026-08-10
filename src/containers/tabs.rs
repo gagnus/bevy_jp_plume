@@ -155,7 +155,7 @@ impl PlumeTab {
         let has_target = !matches!(target, EntityTemplate::None);
         bsn! {
             tab_chrome()
-            {has_target.then(|| bsn! { TabTarget({target}) })}
+            {has_target.then(|| bsn! { TabTarget(target) })}
             Children [
                 {props.caption},
             ]
@@ -323,7 +323,10 @@ pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
     bsn! {
         tab_chrome()
         Children [
-            {icon.map(|icon| bsn! { fa_icon(icon) Node { flex_shrink: 0.0 } })},
+            {icon.map(|icon| bsn! {
+                fa_icon(icon)
+                Node { flex_shrink: 0.0 }
+            })},
             tab_label(label),
         ]
     }
