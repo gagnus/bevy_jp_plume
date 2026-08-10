@@ -17,7 +17,7 @@ use bevy::picking::events::{Click, Pointer};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform};
+use bevy::ui::{AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform, Val};
 
 use crate::constants::{font_awesome, size};
 use crate::cursor::EntityCursor;
@@ -290,11 +290,12 @@ fn update_section_header_style(
             let Ok(mut node) = q_headers.get_mut(descendant) else {
                 continue;
             };
-            let (bg_token, text_token, border, cursor) = if !collapsible {
+            let (bg_token, text_token, border, border_radius, cursor) = if !collapsible {
                 (
                     tokens::SECTION_BODY_BG,
                     tokens::SECTION_HEADER_MUTED_TEXT,
                     UiRect::bottom(size::CONTAINER_BORDER),
+                    Val::ZERO,
                     bevy::window::SystemCursorIcon::Default,
                 )
             } else {
@@ -302,10 +303,12 @@ fn update_section_header_style(
                     tokens::SECTION_HEADER_BG,
                     tokens::SECTION_HEADER_TEXT,
                     UiRect::ZERO,
+                    size::CORNER_RADIUS,
                     bevy::window::SystemCursorIcon::Pointer,
                 )
             };
             node.border = border;
+            node.border_radius = border_radius.into();
             commands.entity(descendant).insert((
                 ThemeBackgroundToken(bg_token),
                 InheritableThemeTextToken(text_token),

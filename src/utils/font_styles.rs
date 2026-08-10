@@ -42,6 +42,28 @@ pub struct TextStyleRelay;
 #[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FontStyleSystems;
 
+/// A font size for an [`InheritableFont`]: logical pixels, or a multiple of
+/// the inherited size.
+#[derive(Copy, Clone, Debug, PartialEq, Reflect)]
+pub enum PlumeFontSize {
+    /// This size in logical pixels, replacing the inherited one.
+    Px(f32),
+    /// A multiple of the inherited size — CSS's `em`.
+    Em(f32),
+}
+
+impl Default for PlumeFontSize {
+    fn default() -> Self {
+        Self::Em(1.0)
+    }
+}
+
+impl From<f32> for PlumeFontSize {
+    fn from(px: f32) -> Self {
+        Self::Px(px)
+    }
+}
+
 /// Establishes the font for descendant [`ThemedText`] entities; `None` fields
 /// inherit from the nearest ancestor source (the standard font at a root).
 #[derive(Component, Default, Clone, Debug, Reflect, FromTemplate)]
@@ -53,7 +75,7 @@ pub struct InheritableFont {
     pub font: Option<FontSource>,
     /// The font size; `None` inherits the ancestor's size.
     #[template(built_in)]
-    pub font_size: Option<FontSize>,
+    pub font_size: Option<PlumeFontSize>,
     /// Font features (small caps &c.); `None` inherits the ancestor's.
     #[template(built_in)]
     pub font_features: Option<FontFeatures>,
@@ -281,8 +303,10 @@ pub(crate) fn resolve_inheritable_font(
             if let Some(face) = &inheritable.font {
                 font.font = face.clone();
             }
-            if let Some(font_size) = inheritable.font_size {
-                font.font_size = font_size;
+            match inheritable.font_size {
+                Some(PlumeFontSize::Px(px)) => font.font_size = FontSize::Px(px),
+                Some(PlumeFontSize::Em(factor)) => font.font_size = font.font_size * factor,
+                None => {}
             }
             if let Some(features) = &inheritable.font_features {
                 font.font_features = features.clone();
@@ -360,7 +384,7 @@ mod tests {
             .spawn((
                 ChildOf(root),
                 InheritableFont {
-                    font_size: Some(FontSize::Px(12.0)),
+                    font_size: Some(PlumeFontSize::Px(12.0)),
                     ..Default::default()
                 },
                 Children::spawn_one((
@@ -386,6 +410,57 @@ mod tests {
             app.world().get::<TextFont>(caption).map(|f| f.font_size),
             Some(FontSize::Px(12.0)),
             "caption fell back to the standard font for a frame",
+        );
+    }
+
+    // A relative size multiplies whatever the chain resolves above it, and
+    // nested relatives compound — in the frame they spawn, like the test above.
+    #[test]
+    fn relative_size_multiplies_inherited() {
+        let mut app = font_app();
+        let root = app.world_mut().spawn(InheritableFont::default()).id();
+        app.update();
+        app.update();
+
+        let container = app
+            .world_mut()
+            .spawn((
+                ChildOf(root),
+                InheritableFont {
+                    font_size: Some(PlumeFontSize::Px(20.0)),
+                    ..Default::default()
+                },
+                Children::spawn_one((
+                    Text::new("header"),
+                    ThemedText,
+                    InheritableFont {
+                        font_size: Some(PlumeFontSize::Em(1.25)),
+                        ..Default::default()
+                    },
+                    Children::spawn_one((
+                        Text::new("nested"),
+                        ThemedText,
+                        InheritableFont {
+                            font_size: Some(PlumeFontSize::Em(2.0)),
+                            ..Default::default()
+                        },
+                    )),
+                )),
+            ))
+            .id();
+
+        app.update();
+
+        let header = app.world().get::<Children>(container).unwrap()[0];
+        let nested = app.world().get::<Children>(header).unwrap()[0];
+
+        assert_eq!(
+            app.world().get::<TextFont>(header).map(|f| f.font_size),
+            Some(FontSize::Px(25.0)),
+        );
+        assert_eq!(
+            app.world().get::<TextFont>(nested).map(|f| f.font_size),
+            Some(FontSize::Px(50.0)),
         );
     }
 }

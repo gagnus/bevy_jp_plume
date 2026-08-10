@@ -11,14 +11,13 @@ use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
-use bevy::text::FontSourceTemplate;
 use bevy::ui::{
     AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
     Node, PositionType, UiRect, Val,
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
-use crate::constants::{font_awesome, fonts, size};
+use crate::constants::{font_awesome, size};
 use crate::containers::{
     ScrollAxis, flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
 };
@@ -251,10 +250,6 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                 InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
                 ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
                 ThemeBorderToken(tokens::DIALOG_BORDER)
-                // Bold face pinned; the size inherits.
-                InheritableFont {
-                    font: FontSourceTemplate::Handle(fonts::BOLD),
-                }
                 Children [
                     {title},
                     // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.

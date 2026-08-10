@@ -25,12 +25,13 @@ pub use popup::{
     popup_socket,
 };
 pub use row::row;
-pub use screen::screen;
+pub use screen::{PlumeScreen, screen};
 pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
-pub use separator::separator;
+pub(crate) use separator::SeparatorPlugin;
+pub use separator::{SeparatorBleed, separator};
 pub use space::space;
 pub use splitter::{
     PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide,

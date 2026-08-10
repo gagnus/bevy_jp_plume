@@ -150,7 +150,6 @@ fn tree_view_dialog(
     root.dialog(TITLE, &mut open)
         .width(px(340))
         .at(px(40), px(60))
-        .icon(font_awesome::solid::SITEMAP)
         .show(|ui| {
             // Only the tree scrolls; the footer below stays pinned.
             ui.scroll_area_vertical(|ui| {

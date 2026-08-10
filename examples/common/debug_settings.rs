@@ -173,7 +173,6 @@ fn debug_settings_dialog(
     root.dialog(TITLE, &mut open)
         .width(em(600.0 / BASE_FONT_PX))
         .at_corner(Corner::BottomLeft, px(20), px(20))
-        .icon(font_awesome::solid::BUG)
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
@@ -229,7 +228,7 @@ fn debug_settings_dialog(
                     .tooltip("Apply changes and close");
             });
         })
-        .map(|r| r.font_size(FontSize::Px(BASE_FONT_PX * s.ui_scale)));
+        .map(|r| r.font_size(BASE_FONT_PX * s.ui_scale));
 
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);

@@ -12,7 +12,7 @@ use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::world::{EntityWorldMut, World};
 use bevy::picking::Pickable;
 use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSize, FontSource, LineBreak, TextLayout};
+use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Node, Overflow,
     UiRect, Val,
@@ -25,15 +25,15 @@ use super::caps::ImmPlumeTooltip;
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
-    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitCollapsible, SplitDividerAutoHide,
-    SplitMin, TabsInverted,
+    PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed, SplitCollapsible,
+    SplitDividerAutoHide, SplitMin, TabsInverted,
 };
 use crate::controls::{
     ButtonOutline, ButtonVariant, NoDrag, NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden,
     set_select_max_visible, text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
-use crate::font_styles::InheritableFont;
+use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
 use crate::theme::{
@@ -94,6 +94,8 @@ pub mod kind {
     pub struct Column;
     /// `screen`.
     pub struct Screen;
+    /// `separator`.
+    pub struct Separator;
     /// `dialog`
     pub struct Dialog;
     /// `scene`.
@@ -317,13 +319,21 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self.set_node::<WidthKey, _>(width, |node, width| node.width = width)
     }
 
-    /// Establish the font size for this widget and everything below it.
-    pub fn font_size(mut self, size: FontSize) -> Self {
+    /// Establish the font size for this widget and everything below it: a bare
+    /// `f32` is logical pixels.
+    pub fn font_size(mut self, size: impl Into<PlumeFontSize>) -> Self {
+        let size = size.into();
         struct FontSizeKey;
-        if self.key_changed::<FontSizeKey>(imm_for_font_size(size)) {
+        if self.key_changed::<FontSizeKey>(imm_for_plume_font_size(size)) {
             self.set_inheritable_font(move |font, _| font.font_size = Some(size));
         }
         self
+    }
+
+    /// Establish the font size as a multiple of the inherited size — CSS's `em`.
+    /// `1.25` on a header caption tracks whatever scale its dialog is at.
+    pub fn font_scale(self, factor: f32) -> Self {
+        self.font_size(PlumeFontSize::Em(factor))
     }
 
     /// Establish a one-off text color for this widget and everything below it.
@@ -348,14 +358,10 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     }
 }
 
-fn imm_for_font_size(size: FontSize) -> ImmId {
+fn imm_for_plume_font_size(size: PlumeFontSize) -> ImmId {
     let (str, value) = match size {
-        FontSize::Px(v) => ("px", v),
-        FontSize::Vw(v) => ("vw", v),
-        FontSize::Vh(v) => ("vh", v),
-        FontSize::VMin(v) => ("vmin", v),
-        FontSize::VMax(v) => ("vmax", v),
-        FontSize::Rem(v) => ("rem", v),
+        PlumeFontSize::Px(v) => ("px", v),
+        PlumeFontSize::Em(v) => ("em", v),
     };
     imm_id((str, value.to_bits()))
 }
@@ -662,6 +668,18 @@ impl ImmResponse<'_, '_, '_, kind::Text> {
                     child.insert(ChildOf(parent));
                 }
             });
+        }
+        self
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::Separator> {
+    /// Run the rule edge to edge through the container's padding instead of
+    /// stopping at its content box.
+    pub fn full_bleed(mut self) -> Self {
+        struct FullBleedKey;
+        if self.key_changed::<FullBleedKey>(true) {
+            self.e.entity_commands().insert(SeparatorBleed);
         }
         self
     }

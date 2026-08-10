@@ -93,7 +93,6 @@ fn player_profile_dialog(
     root.dialog(TITLE, &mut open)
         .width(px(380))
         .at(px(450), px(60))
-        .icon(font_awesome::solid::PERSON)
         .show(|ui| {
             ui.section("Profile", |ui| {
                 field(ui, "Name", |ui| {

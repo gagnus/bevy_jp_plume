@@ -6,13 +6,24 @@ use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor};
 use bevy::ui::widget::Text;
 
 use crate::constants::FaIcon;
-use crate::font_styles::InheritableFont;
+use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::theme::{ThemeSlot, ThemeTextSlot, ThemedText};
 
 /// A caption within, say, a button using inherited color.
 pub fn caption(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
+        ThemedText
+    }
+}
+
+/// A caption at 1.25× the inherited size — dialog and pane headers.
+pub fn caption_large(text: impl Into<String>) -> impl Scene {
+    bsn! {
+        Text(text)
+        InheritableFont {
+            font_size: PlumeFontSize::Em(1.25)
+        }
         ThemedText
     }
 }

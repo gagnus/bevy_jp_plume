@@ -27,7 +27,7 @@ use bevy::ui::{
 use crate::constants::{fonts, size};
 use crate::containers::PopupAnchor;
 use crate::display::caption;
-use crate::font_styles::InheritableFont;
+use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
@@ -328,7 +328,7 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
         // Fully specified: tooltips stay standard-sized inside scaled subtrees.
         InheritableFont {
             font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: size::MEDIUM_FONT,
+            font_size: PlumeFontSize::Px(size::MEDIUM_FONT_PX),
         }
     }
 }

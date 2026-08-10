@@ -298,7 +298,8 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         s.split = split;
         s.documents = documents;
     })
-    .background_slot(ThemeSlot::Neutral0);
+    .background_slot(ThemeSlot::Neutral0)
+    .font_size(BASE_FONT_PX * s.ui_scale);
     state.set_if_neq(s);
 }
 
@@ -337,7 +338,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
                     if document.dirty {
                         ui.icon(font_awesome::solid::CIRCLE)
                             .no_shrink()
-                            .font_size(FontSize::Px(6.0))
+                            .font_scale(0.5)
                             .text_color(Color::WHITE);
                     }
                     if ui
@@ -458,7 +459,7 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
     .grow()
     .background_slot(ThemeSlot::Neutral1)
     .padding(size::PAD)
-    .font_size(FontSize::Px(BASE_FONT_PX * s.ui_scale));
+    .font_size(BASE_FONT_PX * s.ui_scale);
 }
 
 fn header(ui: &mut Ui, s: &mut Inspector) {

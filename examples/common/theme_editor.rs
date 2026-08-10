@@ -49,7 +49,6 @@ fn theme_editor_dialog(
         .width(px(320))
         .max_height(px(500))
         .at(px(900), px(90))
-        .icon(font_awesome::solid::PALETTE)
         .show(|ui| theme_editor(ui, &mut local.0));
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);

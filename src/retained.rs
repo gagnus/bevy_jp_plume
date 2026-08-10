@@ -17,9 +17,9 @@ pub use crate::containers::{
     PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps,
     PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps,
     PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, ScrollAxis,
-    SectionCollapsed, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitFraction, SplitMin,
-    TabTarget, TabsInverted, close_popup, column, flex_spacer, popup_socket, row, screen,
-    separator, space, tab_body, tab_label,
+    SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible, SplitDividerAutoHide,
+    SplitFraction, SplitMin, TabTarget, TabsInverted, close_popup, column, flex_spacer,
+    popup_socket, row, screen, separator, space, tab_body, tab_label, PlumeScreen,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,
@@ -32,7 +32,7 @@ pub use crate::controls::{
     select_options,
 };
 pub use crate::display::{
-    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_slot,
+    Tooltip, TooltipContent, TooltipSettings, caption, caption_large, caption_color, caption_slot,
     caption_small_caps, fa_icon,
 };
 pub use crate::theme::components::{
@@ -41,4 +41,6 @@ pub use crate::theme::components::{
 };
 pub use crate::utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};
-pub use crate::utils::font_styles::{FontStyleSystems, InheritableFont, TextStyleRelay};
+pub use crate::utils::font_styles::{
+    FontStyleSystems, InheritableFont, PlumeFontSize, TextStyleRelay,
+};

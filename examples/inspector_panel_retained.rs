@@ -4,12 +4,7 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checked, ColorSwatchValue, Flat, InheritableFont, PlumeColorEdit, PlumeColorPicker,
-    PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
-    PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
-    TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption,
-    caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
+    Activate, Checked, ColorSwatchValue, Flat, InheritableFont, PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeFontSize, PlumeRadio, PlumeRadioGroup, PlumeScreen, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, TabsInverted, ThemeBackgroundSlot, ThemeBorderSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon, flex_spacer, row, screen, separator, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -181,13 +176,13 @@ fn push_material(
 // The imm twin's `.font_size()` on the panel, as a retained cascade root.
 fn push_ui_scale(
     state: Res<Inspector>,
-    q_panel: Query<(Entity, Option<&InheritableFont>), With<InspectorPanel>>,
+    q_panel: Query<(Entity, Option<&InheritableFont>), Or<(With<PlumeScreen>, With<InspectorPanel>)>>,
     mut commands: Commands,
 ) {
     if !state.is_changed() {
         return;
     }
-    let wanted = FontSize::Px(BASE_FONT_PX * state.ui_scale);
+    let wanted = PlumeFontSize::Px(BASE_FONT_PX * state.ui_scale);
     for (entity, font) in q_panel.iter() {
         if font.is_some_and(|font| font.font_size == Some(wanted)) {
             continue;
@@ -454,9 +449,9 @@ fn document_tab(slot: usize) -> impl Scene {
                     // Unsaved marker. A plain node rather than a glyph, so its size
                     // is the dot's own and not the header font's.
                     Node {
-                        width: px(6),
-                        height: px(6),
-                        border_radius: px(3),
+                        width: em(0.5),
+                        height: em(0.5),
+                        border_radius: BorderRadius::MAX_ELLIPTICAL,
                         flex_shrink: 0.0,
                         display: Display::None,
                     }

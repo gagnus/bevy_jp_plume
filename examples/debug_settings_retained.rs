@@ -3,11 +3,7 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeNumberInput,
-    PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch, PopupDismiss,
-    PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip,
-    TooltipContent, ValueChange, caption, caption_slot, caption_small_caps, close_popup, column,
-    fa_icon, flex_spacer, popup_socket, row, separator,
+    Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize, PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch, PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, TooltipContent, ValueChange, caption, caption_large, caption_slot, caption_small_caps, close_popup, column, fa_icon, flex_spacer, popup_socket, row, separator,
 };
 
 #[path = "common/mod.rs"]
@@ -131,7 +127,7 @@ fn push_ui_scale(
     }
     for entity in q_dialog.iter() {
         commands.entity(entity).insert(InheritableFont {
-            font_size: Some(FontSize::Px(BASE_FONT_PX * settings.ui_scale)),
+            font_size: Some(PlumeFontSize::Px(BASE_FONT_PX * settings.ui_scale)),
             ..default()
         });
     }
@@ -189,7 +185,7 @@ fn debug_options_dialog() -> impl Scene {
     let s = DebugSettings::default();
     bsn! {
         @PlumeDialog {
-            @title: bsn! { caption("Debug Options") },
+            @title: bsn! { caption_large("Debug Options") },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
             @contents: bsn_list![

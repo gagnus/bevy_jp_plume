@@ -45,6 +45,8 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
         }
     });
 
+    ui.separator().full_bleed();
+
     ui.section("Neutrals", |ui| {
         ramp_rows(ui, &mut palette.neutrals, 0.2, false)
     })

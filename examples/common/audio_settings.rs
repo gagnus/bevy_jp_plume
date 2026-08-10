@@ -57,7 +57,6 @@ fn audio_settings_dialog(
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
         .at(px(60), px(80))
-        .icon(font_awesome::solid::VOLUME)
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.caption("Volume");

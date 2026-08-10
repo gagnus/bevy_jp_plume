@@ -38,7 +38,7 @@ use crate::controls::{
     PlumeColorSwatch, PlumeDisclosure, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
     PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
 };
-use crate::display::{caption, caption_small_caps, fa_icon};
+use crate::display::{caption, caption_large, caption_small_caps, fa_icon};
 use crate::utils::numeric::Numeric;
 
 /// Widget calls for immediate-mode systems. Implemented by [`Ui`]; import it
@@ -50,8 +50,10 @@ pub trait PlumeImm<'w, 's> {
     fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's, kind::Caption>;
 
     /// Hairline rule across the container: a horizontal line in a
-    /// [`Self::vertical`], a vertical one in a [`Self::horizontal`].
-    fn separator(&mut self);
+    /// [`Self::vertical`], a vertical one in a [`Self::horizontal`]. Spans the
+    /// container's content box; chain `.full_bleed()` to run edge to edge
+    /// through the padding. The response's `clicked`/`changed` are always false.
+    fn separator(&mut self) -> ImmResponse<'_, 'w, 's, kind::Separator>;
 
     /// Non-interactive color preview: a themed, bordered rounded box filled with
     /// `color`. Defaults to a [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT)
@@ -281,7 +283,6 @@ impl<'w, 's> Ui<'w, 's> {
             ui: self,
             caller: Location::caller(),
             title: title.to_owned(),
-            icon: None,
             open,
             layout: DialogLayout {
                 width: Val::Auto,
@@ -336,8 +337,20 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn separator(&mut self) {
-        self.ch_loc(loc_id(())).on_spawn_apply_scene(separator);
+    fn separator(&mut self) -> ImmResponse<'_, 'w, 's, kind::Separator> {
+        let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(separator);
+        let hovered = entity.hovered();
+        let will_be_spawned = entity.will_be_spawned();
+        ImmResponse {
+            clicked: false,
+            changed: false,
+            hovered,
+            entity: entity.entity(),
+            will_be_spawned,
+            integral: false,
+            e: entity,
+            kind: PhantomData,
+        }
     }
 
     #[track_caller]
@@ -1063,7 +1076,6 @@ pub struct ImmDialog<'a, 'w, 's> {
     ui: &'a mut Ui<'w, 's>,
     caller: &'static Location<'static>,
     title: String,
-    icon: Option<FaIcon>,
     open: &'a mut bool,
     layout: DialogLayout,
 }
@@ -1108,12 +1120,6 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self
     }
 
-    /// Leading FontAwesome icon in the title bar, before the title text.
-    pub fn icon(mut self, icon: FaIcon) -> Self {
-        self.icon = Some(icon);
-        self
-    }
-
     /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
     pub fn closable(mut self, closable: bool) -> Self {
         self.layout.closable = closable;
@@ -1142,11 +1148,11 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
             return None;
         }
         let id = ImmIdBuilder::Hierarchy(ImmId::new((self.caller, self.title.as_str())));
-        let (title, icon, layout) = (self.title, self.icon, self.layout);
+        let (title, layout) = (self.title, self.layout);
         let mut entity = self
             .ui
             .ch_loc(id)
-            .on_spawn_apply_scene(move || imm_dialog_scene(title, icon, layout));
+            .on_spawn_apply_scene(move || imm_dialog_scene(title, layout));
         if entity.close_requested() {
             *self.open = false;
             entity.entity_commands().despawn();
@@ -1679,7 +1685,7 @@ fn respond_numeric<'r, 'w, 's, T: Numeric, K>(
     }
 }
 
-fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -> impl Scene {
+fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
     let DialogLayout {
         width,
         height,
@@ -1697,8 +1703,7 @@ fn imm_dialog_scene(title: String, icon: Option<FaIcon>, layout: DialogLayout) -
             body: Box::new(bsn_list![]),
             header: Some(DialogHeader {
                 title: Box::new(bsn_list![
-                    {icon.map(|icon| bsn! { fa_icon(icon) })},
-                    caption(title),
+                    caption_large(title)
                 ]),
                 closable,
                 movable,
