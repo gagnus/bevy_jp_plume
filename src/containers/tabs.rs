@@ -536,6 +536,7 @@ fn update_tab_styles(
             Has<InteractionDisabled>,
             &ThemeBackgroundSlot,
             &InheritableThemeTextToken,
+            &EntityCursor,
         ),
         With<TabButton>,
     >,
@@ -579,7 +580,9 @@ fn update_tab_styles(
         let tabs = strip_tabs(root, &q_children, &q_strips, |tab| q_tabs.contains(tab));
         let mut selected_disabled = false;
         for tab in tabs {
-            let Ok((selected, hovered, disabled, background, text_color)) = q_tabs.get(tab) else {
+            let Ok((selected, hovered, disabled, background, text_color, current_cursor)) =
+                q_tabs.get(tab)
+            else {
                 continue;
             };
             if selected {
@@ -595,10 +598,10 @@ fn update_tab_styles(
                 (false, true) => tokens::TAB_TEXT_SELECTED,
                 (false, false) => tokens::TAB_TEXT,
             };
-            let cursor = match disabled {
+            let cursor = EntityCursor::System(match disabled {
                 true => bevy::window::SystemCursorIcon::NotAllowed,
                 false => bevy::window::SystemCursorIcon::Pointer,
-            };
+            });
             if background.0 != background_slot {
                 commands
                     .entity(tab)
@@ -609,7 +612,9 @@ fn update_tab_styles(
                     .entity(tab)
                     .insert(InheritableThemeTextToken(text_token));
             }
-            commands.entity(tab).insert(EntityCursor::System(cursor));
+            if *current_cursor != cursor {
+                commands.entity(tab).insert(cursor);
+            }
         }
 
         // The accent underline mutes with the selected tab it points at.
