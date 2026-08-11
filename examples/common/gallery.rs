@@ -155,9 +155,7 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
                 tabs.tab(TabChoice::Third, "Third")
                     .enabled(!disabled)
                     .no_body();
-            })
-            // The selected tab merges into this card's own surface.
-            .tab_slot(bg_slot);
+            });
         });
 
         ui.horizontal(|ui| {

@@ -18,8 +18,8 @@ pub use crate::containers::{
     PlumeScrollAreaProps, PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps,
     PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket,
     ScrollAxis, ScrollContentGap, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
-    SplitDividerAutoHide, SplitFraction, SplitMin, TabSlot, TabTarget, close_popup, column,
-    flex_spacer, popup_socket, row, screen, separator, space, tab_body, tab_label,
+    SplitDividerAutoHide, SplitFraction, SplitMin, TabTarget, close_popup, column, flex_spacer,
+    popup_socket, row, screen, separator, space, tab_body, tab_label,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,

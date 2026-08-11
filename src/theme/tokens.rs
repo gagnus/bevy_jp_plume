@@ -451,10 +451,6 @@ pub const SECTION_HEADER_MUTED_TEXT: ThemeToken =
 pub const SECTION_BODY_BG: ThemeToken = ThemeToken::new_static("plume.section.body.bg");
 
 // Tabs
-//
-// Tab backgrounds carry no tokens: which surfaces a strip and its selected tab
-// paint is the container's [`TabSlot`](crate::retained::TabSlot), applied as
-// slots directly.
 
 /// Tab text color
 pub const TAB_TEXT: ThemeToken = ThemeToken::new_static("plume.tab.text");
@@ -467,6 +463,20 @@ pub const TAB_INDICATOR: ThemeToken = ThemeToken::new_static("plume.tab.indicato
 /// Underline when the selected tab is disabled
 pub const TAB_INDICATOR_DISABLED: ThemeToken =
     ThemeToken::new_static("plume.tab.indicator.disabled");
+/// Tab bar bg
+pub const TAB_BAR_BG: ThemeToken = ThemeToken::new_static("plume.tab.bar.bg");
+/// Tab bg
+pub const TAB_BG: ThemeToken = ThemeToken::new_static("plume.tab.bg");
+/// Tab bg when hovered
+pub const TAB_BG_HOVERED: ThemeToken = ThemeToken::new_static("plume.tab.bg.hover");
+/// Tab bg when pressed
+pub const TAB_BG_PRESSED: ThemeToken = ThemeToken::new_static("plume.tab.bg.pressed");
+/// Tab bg when disabled
+pub const TAB_BG_DISABLED: ThemeToken = ThemeToken::new_static("plume.tab.bg.disabled");
+/// Tab bg when selected
+pub const TAB_BG_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.bg.selected");
+/// Background of the container the tab bodies sit in
+pub const TAB_BODY_BG: ThemeToken = ThemeToken::new_static("plume.tab.body.bg");
 
 // Select
 
@@ -609,6 +619,13 @@ pub mod sets {
         pressed: super::SCROLLBAR_THUMB_PRESSED,
         disabled: super::SCROLLBAR_THUMB,
     };
+    /// Unselected tab background; the selected one paints `TAB_BG_SELECTED`.
+    pub const TAB_BG: InteractionTokens = InteractionTokens {
+        base: super::TAB_BG,
+        hover: super::TAB_BG_HOVERED,
+        pressed: super::TAB_BG_PRESSED,
+        disabled: super::TAB_BG_DISABLED,
+    };
 
     /// Checkbox background fill
     pub const CHECKBOX_BG: CheckedTokens = CheckedTokens {
@@ -658,5 +675,12 @@ pub mod sets {
         checked: super::SWITCH_SLIDE_BG_CHECKED,
         disabled: super::SWITCH_SLIDE_BG_DISABLED,
         checked_disabled: super::SWITCH_SLIDE_BG_CHECKED_DISABLED,
+    };
+    /// Tab label, keyed by selection rather than by check.
+    pub const TAB_TEXT: CheckedTokens = CheckedTokens {
+        base: super::TAB_TEXT,
+        checked: super::TAB_TEXT_SELECTED,
+        disabled: super::TAB_TEXT_DISABLED,
+        checked_disabled: super::TAB_TEXT_DISABLED,
     };
 }

@@ -8,7 +8,7 @@ use bevy_jp_plume::retained::{
     PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure,
     PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScreen,
     PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, TabSlot,
+    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
     ThemeBackgroundSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
     flex_spacer, row, screen, separator, space, tab_body,
 };
@@ -394,7 +394,7 @@ fn root() -> impl Scene {
 fn menu_bar() -> impl Scene {
     bsn! {
         @PlumeMenuBar
-        ThemeBackgroundSlot(ThemeSlot::Neutral1)
+        ThemeBackgroundSlot(ThemeSlot::Neutral2)
         Children [
             (
                 @PlumeMenuButton { @label: "File" }
@@ -506,8 +506,6 @@ fn documents() -> impl Scene {
                         // reports which document is showing.
                         @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
                         DocTabs
-                        // The strip sits over the viewport, not over a surface.
-                        template_value(TabSlot(ThemeSlot::Neutral0))
                         Node { width: Val::ZERO, flex_grow: 1.0 }
                         on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
                             s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);

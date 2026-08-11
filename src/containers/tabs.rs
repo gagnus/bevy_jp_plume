@@ -4,8 +4,9 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Has, With, Without};
+use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
@@ -20,7 +21,7 @@ use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
     AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
-    Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
+    Overflow, PositionType, Pressed, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
 };
 use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
@@ -31,9 +32,7 @@ use crate::cursor::EntityCursor;
 use crate::display::{caption, fa_icon};
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
-use crate::theme::{
-    InheritableThemeTextToken, ThemeBackgroundSlot, ThemeBackgroundToken, ThemeSlot,
-};
+use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
 use crate::tokens;
 use crate::utils::anim::{UI_ANIM_RATE, approach};
 
@@ -174,22 +173,6 @@ pub struct TabTarget(pub Entity);
 #[reflect(Component, Clone, Default)]
 pub(crate) struct TabsRoot;
 
-/// The surface the selected tab (and the body below the strip) merges into.
-///
-/// `Neutral1` — the default — is tabs on a dialog surface. `Neutral0` is a
-/// strip sitting over the window, a document strip above a viewport. `Neutral2`
-/// matches a raised header. The strip behind the unselected tabs is derived:
-/// `Neutral0`, or `Neutral1` when the surface itself is `Neutral0`.
-#[derive(Component, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct TabSlot(pub ThemeSlot);
-
-impl Default for TabSlot {
-    fn default() -> Self {
-        Self(ThemeSlot::Neutral1)
-    }
-}
-
 // Set once the root's selection has been reconciled against the tab the app
 // marked `Selected`; until then `seed_tab_selection` owns the first pick.
 #[derive(Component, Default, Clone, Reflect)]
@@ -233,7 +216,7 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
         }
         TabsRoot
         template_value(SelectedIndex(selected))
-        ThemeBackgroundSlot(ThemeSlot::Neutral1)
+        ThemeBackgroundToken(tokens::TAB_BODY_BG)
         TextStyleRelay
     }
 }
@@ -259,19 +242,18 @@ pub(crate) fn tab_strip() -> impl Scene {
             align_items: AlignItems::Stretch,
             justify_content: JustifyContent::Start,
             min_height: size::TAB_BAR_HEIGHT,
-            padding: UiRect::top(size::GAP_TIGHT),
             width: Val::Percent(100.0),
             flex_shrink: 0.0,
         }
         TabStrip
-        ThemeBackgroundSlot(ThemeSlot::Neutral0)
+        ThemeBackgroundToken(tokens::TAB_BAR_BG)
         TextStyleRelay
         Children [
             (
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::ZERO,
-                    top: {size::GAP_TIGHT},
+                    top: Val::ZERO,
                     width: px(INDICATOR_BASE_WIDTH),
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
@@ -309,7 +291,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
         TabIndex(0)
         FocusIndicator
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-        ThemeBackgroundSlot(ThemeSlot::Transparent)
+        ThemeBackgroundToken(tokens::TAB_BG)
         InheritableThemeTextToken(tokens::TAB_TEXT)
         TextStyleRelay
         on(select_tab_on_activate)
@@ -520,124 +502,128 @@ fn apply_tab_selection(
     }
 }
 
-// Selected and hovered are both cheap to recompute, and a strip holds a handful of
-// tabs, so every tab is re-derived each frame and only differences are written back.
-// Driven from the root because the surface a strip paints on is a property of the
-// container, not of the individual tab.
+// What a tab's colors are derived from, and the components they are written to.
+// The strip and the container paint fixed tokens from their own scenes.
+type TabStyle<'w> = (
+    Entity,
+    &'w ChildOf,
+    Has<Selected>,
+    &'w Hovered,
+    Has<Pressed>,
+    Has<InteractionDisabled>,
+    &'w ThemeBackgroundToken,
+    &'w InheritableThemeTextToken,
+    &'w EntityCursor,
+);
+
 fn update_tab_styles(
-    q_roots: Query<(Entity, Option<&TabSlot>), With<TabsRoot>>,
-    q_children: Query<&Children>,
-    q_strips: Query<(), With<TabStrip>>,
     q_tabs: Query<
+        TabStyle,
         (
-            Has<Selected>,
-            &Hovered,
-            Has<InteractionDisabled>,
-            &ThemeBackgroundSlot,
-            &InheritableThemeTextToken,
-            &EntityCursor,
+            With<TabButton>,
+            // Added<TabButton> guarantees the initial style pass on spawn.
+            Or<(
+                Added<TabButton>,
+                Changed<Hovered>,
+                Added<Selected>,
+                Added<Pressed>,
+                Added<InteractionDisabled>,
+            )>,
         ),
-        With<TabButton>,
     >,
-    q_backgrounds: Query<&ThemeBackgroundSlot>,
+    q_children: Query<&Children>,
     q_indicators: Query<&ThemeBackgroundToken, With<TabIndicator>>,
     mut commands: Commands,
 ) {
-    fn set_background(
-        commands: &mut Commands,
-        q_backgrounds: &Query<&ThemeBackgroundSlot>,
-        entity: Entity,
-        slot: ThemeSlot,
-    ) {
-        if q_backgrounds
-            .get(entity)
-            .is_ok_and(|current| current.0 == slot)
-        {
-            return;
-        }
-        commands.entity(entity).insert(ThemeBackgroundSlot(slot));
+    for tab in q_tabs.iter() {
+        set_tab_styles(tab, &q_children, &q_indicators, &mut commands);
+    }
+}
+
+fn update_tab_styles_remove(
+    q_tabs: Query<TabStyle, With<TabButton>>,
+    q_children: Query<&Children>,
+    q_indicators: Query<&ThemeBackgroundToken, With<TabIndicator>>,
+    mut removed_selected: RemovedComponents<Selected>,
+    mut removed_pressed: RemovedComponents<Pressed>,
+    mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    mut commands: Commands,
+) {
+    removed_selected
+        .read()
+        .chain(removed_pressed.read())
+        .chain(removed_disabled.read())
+        .for_each(|ent| {
+            if let Ok(tab) = q_tabs.get(ent) {
+                set_tab_styles(tab, &q_children, &q_indicators, &mut commands);
+            }
+        });
+}
+
+fn set_tab_styles(
+    (tab, child_of, selected, hovered, pressed, disabled, background, text_color, cursor_now): (
+        Entity,
+        &ChildOf,
+        bool,
+        &Hovered,
+        bool,
+        bool,
+        &ThemeBackgroundToken,
+        &InheritableThemeTextToken,
+        &EntityCursor,
+    ),
+    q_children: &Query<&Children>,
+    q_indicators: &Query<&ThemeBackgroundToken, With<TabIndicator>>,
+    commands: &mut Commands,
+) {
+    // The selected tab keeps its surface under hover and press: it reads as the
+    // body's continuation rather than as a button waiting to be pushed.
+    let background_token = match selected {
+        true => tokens::TAB_BG_SELECTED,
+        false => tokens::sets::TAB_BG.pick(disabled, pressed, hovered.0),
+    };
+    if background.0 != background_token {
+        commands
+            .entity(tab)
+            .insert(ThemeBackgroundToken(background_token));
     }
 
-    for (root, slot) in q_roots.iter() {
-        let surface = slot.map_or(ThemeSlot::Neutral1, |slot| slot.0);
-        // The strip differs from the surface the selected tab joins; hover is the
-        // no-background hover rung, like a menu row's.
-        let strip_slot = if surface == ThemeSlot::Neutral0 {
-            ThemeSlot::Neutral1
-        } else {
-            ThemeSlot::Neutral0
-        };
-        let hover_slot = ThemeSlot::Neutral3;
-        set_background(&mut commands, &q_backgrounds, root, surface);
-        let strip = q_children
-            .iter_descendants(root)
-            .find(|descendant| q_strips.contains(*descendant));
-        if let Some(strip) = strip {
-            set_background(&mut commands, &q_backgrounds, strip, strip_slot);
-        }
+    let text_token = tokens::sets::TAB_TEXT.pick(selected, disabled);
+    if text_color.0 != text_token {
+        commands
+            .entity(tab)
+            .insert(InheritableThemeTextToken(text_token));
+    }
 
-        let tabs = strip_tabs(root, &q_children, &q_strips, |tab| q_tabs.contains(tab));
-        let mut selected_disabled = false;
-        for tab in tabs {
-            let Ok((selected, hovered, disabled, background, text_color, current_cursor)) =
-                q_tabs.get(tab)
-            else {
-                continue;
-            };
-            if selected {
-                selected_disabled = disabled;
-            }
-            let background_slot = match (disabled, selected, hovered.0) {
-                (_, true, _) => surface,
-                (false, false, true) => hover_slot,
-                _ => ThemeSlot::Transparent,
-            };
-            let text_token = match (disabled, selected) {
-                (true, _) => tokens::TAB_TEXT_DISABLED,
-                (false, true) => tokens::TAB_TEXT_SELECTED,
-                (false, false) => tokens::TAB_TEXT,
-            };
-            let cursor = EntityCursor::System(match disabled {
-                true => bevy::window::SystemCursorIcon::NotAllowed,
-                false => bevy::window::SystemCursorIcon::Pointer,
-            });
-            if background.0 != background_slot {
-                commands
-                    .entity(tab)
-                    .insert(ThemeBackgroundSlot(background_slot));
-            }
-            if text_color.0 != text_token {
-                commands
-                    .entity(tab)
-                    .insert(InheritableThemeTextToken(text_token));
-            }
-            if *current_cursor != cursor {
-                commands.entity(tab).insert(cursor);
-            }
-        }
+    let cursor = EntityCursor::System(match disabled {
+        true => bevy::window::SystemCursorIcon::NotAllowed,
+        false => bevy::window::SystemCursorIcon::Pointer,
+    });
+    if *cursor_now != cursor {
+        commands.entity(tab).insert(cursor);
+    }
 
-        // The accent underline mutes with the selected tab it points at.
-        let indicator_token = match selected_disabled {
-            true => tokens::TAB_INDICATOR_DISABLED,
-            false => tokens::TAB_INDICATOR,
-        };
-        if let Some(indicator) =
-            strip
-                .and_then(|strip| q_children.get(strip).ok())
-                .and_then(|children| {
-                    children
-                        .iter()
-                        .copied()
-                        .find(|&child| q_indicators.contains(child))
-                })
-            && q_indicators
-                .get(indicator)
-                .is_ok_and(|current| current.0 != indicator_token)
-        {
-            commands
-                .entity(indicator)
-                .insert(ThemeBackgroundToken(indicator_token));
-        }
+    // The accent underline mutes with the tab it points at, so only the selected
+    // one speaks for it — the tab losing `Selected` leaves it to its replacement.
+    if !selected {
+        return;
+    }
+    let indicator_token = match disabled {
+        true => tokens::TAB_INDICATOR_DISABLED,
+        false => tokens::TAB_INDICATOR,
+    };
+    if let Some(indicator) = q_children.get(child_of.parent()).ok().and_then(|children| {
+        children
+            .iter()
+            .copied()
+            .find(|&child| q_indicators.contains(child))
+    }) && q_indicators
+        .get(indicator)
+        .is_ok_and(|current| current.0 != indicator_token)
+    {
+        commands
+            .entity(indicator)
+            .insert(ThemeBackgroundToken(indicator_token));
     }
 }
 
@@ -730,7 +716,11 @@ impl Plugin for TabsPlugin {
         app.add_observer(tabs_on_set_selected_index)
             .add_systems(
                 PreUpdate,
-                (seed_tab_selection, apply_tab_selection, update_tab_styles)
+                (
+                    seed_tab_selection,
+                    apply_tab_selection,
+                    (update_tab_styles, update_tab_styles_remove),
+                )
                     .chain()
                     .in_set(PickingSystems::Last),
             )

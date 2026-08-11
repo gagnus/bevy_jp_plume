@@ -16,6 +16,7 @@ pub enum ThemeSlot {
     /// - `TEXT_INPUT_BG`
     /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
+    /// - `TAB_BAR_BG`
     #[default]
     Neutral0,
 
@@ -24,11 +25,13 @@ pub enum ThemeSlot {
     /// - `DIALOG_HEADER_BG`
     /// - `POPUP_BG`
     /// - `SECTION_BODY_BG`
+    /// - `TAB_BODY_BG`
     /// - `TOOLTIP_BG`
     Neutral1,
 
     /// Raised header background.
     /// - `SECTION_HEADER_BG`
+    /// - `TAB_BG_SELECTED`
     Neutral2,
 
     /// Hover for controls with no background.
@@ -37,6 +40,7 @@ pub enum ThemeSlot {
     /// - `MENU_BUTTON_BG_HOVER`
     /// - `BUTTON_OUTLINE_BG_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
+    /// - `TAB_BG_HOVERED`
     Neutral3,
 
     /// Control body (+ borders + slider track + pressed for Neutral3 hovers).
@@ -59,6 +63,7 @@ pub enum ThemeSlot {
     /// - `SLIDER_BG_PRESSED`
     /// - `BUTTON_OUTLINE_BG_PRESSED`
     /// - `BUTTON_PLAIN_BG_PRESSED`
+    /// - `TAB_BG_PRESSED`
     Neutral4,
 
     /// Control hover
@@ -227,6 +232,8 @@ pub enum ThemeSlot {
     /// - `RADIO_BORDER_CHECKED`
     /// - `SWITCH_BORDER_CHECKED`
     /// - `SWITCH_BORDER`
+    /// - `TAB_BG_DISABLED`
+    /// - `TAB_BG`
     Transparent,
 }
 
@@ -443,6 +450,13 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::Disabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
     (tokens::TAB_INDICATOR_DISABLED, ThemeSlot::Disabled1),
+    (tokens::TAB_BAR_BG, ThemeSlot::Neutral0),
+    (tokens::TAB_BG, ThemeSlot::Transparent),
+    (tokens::TAB_BG_HOVERED, ThemeSlot::Neutral3),
+    (tokens::TAB_BG_PRESSED, ThemeSlot::Neutral4),
+    (tokens::TAB_BG_DISABLED, ThemeSlot::Transparent),
+    (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral2),
+    (tokens::TAB_BODY_BG, ThemeSlot::Neutral1),
     (tokens::SELECT_BG, ThemeSlot::Neutral0),
     (tokens::SELECT_BORDER, ThemeSlot::Neutral4),
     (tokens::SELECT_OPTION_BG_HOVER, ThemeSlot::Neutral3),

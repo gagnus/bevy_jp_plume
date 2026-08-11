@@ -27,7 +27,7 @@ use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
     PopupAnchor, ScrollContentGap, SectionCollapsed, SectionCollapsible, SeparatorBleed,
-    SplitCollapsible, SplitDividerAutoHide, SplitMin, TabSlot,
+    SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
     ButtonOutline, ButtonToggleVariant, ButtonVariant, MenuShortcutText, NoDrag,
@@ -872,19 +872,6 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
             self.e
                 .entity_commands()
                 .insert(SplitDividerAutoHide(auto_hide));
-        }
-        self
-    }
-}
-
-impl ImmResponse<'_, '_, '_, kind::Tabs> {
-    /// The surface the selected tab (and the body) merges into — the slot of
-    /// whatever sits below the strip. `Neutral1` is the default; `Neutral0` is a
-    /// document strip over the window, `Neutral2` matches a raised header.
-    pub fn tab_slot(mut self, slot: ThemeSlot) -> Self {
-        struct TabSlotKey;
-        if self.key_changed::<TabSlotKey>(slot) {
-            self.e.entity_commands().insert(TabSlot(slot));
         }
         self
     }

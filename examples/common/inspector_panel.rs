@@ -399,8 +399,6 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
                 .no_body();
             }
         })
-        // The strip sits over the viewport, not over a surface.
-        .tab_slot(ThemeSlot::Neutral0)
         .grow();
         if ui
             .tool_button(font_awesome::solid::PLUS)
@@ -412,10 +410,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
             opening.set(true);
         }
     })
-    .gap(size::GAP_TIGHT)
-    .padding(UiRect::right(size::GAP_TIGHT))
-    // Matches the inverted strip, so the ✚ shares its band.
-    .background_slot(ThemeSlot::Neutral1);
+    .border_slot(UiRect::vertical(size::HAIRLINE), ThemeSlot::Neutral4);
     documents.active = active;
     if let Some(id) = closing.get() {
         documents.close(id);

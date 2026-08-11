@@ -87,10 +87,10 @@ pub mod size {
 
     /// Thickness of the accent underline marking the selected tab; it sits under
     /// text, so it scales with it.
-    pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(3.0);
+    pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(2.0);
 
     /// Height of a tab bar, a little higher than .
-    pub const TAB_BAR_HEIGHT: Val = em_from_px(32.0);
+    pub const TAB_BAR_HEIGHT: Val = em_from_px(30.0);
 
     /// How far a crowded tab is squeezed before its strip scrolls instead — room
     /// for a leading icon and a stub of label, so an icon tab shrinks to about

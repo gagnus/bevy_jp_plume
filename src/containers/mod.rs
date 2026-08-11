@@ -41,6 +41,6 @@ pub(crate) use splitter::{
     SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane,
 };
 pub use tabs::{
-    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabSlot, TabTarget, tab_body, tab_label,
+    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body, tab_label,
 };
 pub(crate) use tabs::{TabsPlugin, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame};
