@@ -58,6 +58,10 @@ struct ExampleArgs {
     /// open all dialogs at start, ignoring the examples preference
     #[argh(switch)]
     all_open: bool,
+
+    /// default RemSize
+    #[argh(option)]
+    rem_size: Option<f32>,
 }
 
 /// Print the backing resource whenever it changes, to confirm every control
@@ -120,6 +124,10 @@ pub fn apply_args(app: &mut App, default_gallery: bool) {
             .resource_scope(|_, mut registry: Mut<DebugDialogRegistry>| {
                 registry.set_all_open();
             });
+    }
+
+    if let Some(rem_size) = args.rem_size {
+        app.insert_resource(RemSize(rem_size));
     }
 }
 

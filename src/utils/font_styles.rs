@@ -25,7 +25,7 @@ use {
     bevy::ui::{BoxShadow, Node, Outline, UiRect, UiTransform, Val, Val2},
 };
 
-use crate::constants::{fonts, size};
+use crate::constants::fonts;
 use crate::theme::ThemedText;
 
 /// Keeps a structural node on the text-style propagation chain without styling the
@@ -50,11 +50,13 @@ pub enum PlumeFontSize {
     Px(f32),
     /// A multiple of the inherited size — CSS's `em`.
     Em(f32),
+    /// A multiple of the `RemSize` global resource.
+    Rem(f32),
 }
 
 impl Default for PlumeFontSize {
     fn default() -> Self {
-        Self::Em(1.0)
+        Self::Rem(1.0)
     }
 }
 
@@ -293,7 +295,7 @@ pub(crate) fn resolve_inheritable_font(
         // Outermost first, each holder overriding the fields it declares.
         let mut font = base.unwrap_or_else(|| TextFont {
             font: asset_server.load(fonts::REGULAR).into(),
-            font_size: size::MEDIUM_FONT,
+            font_size: FontSize::Rem(1.0),
             ..Default::default()
         });
         for holder in chain.iter().rev() {
@@ -306,6 +308,7 @@ pub(crate) fn resolve_inheritable_font(
             match inheritable.font_size {
                 Some(PlumeFontSize::Px(px)) => font.font_size = FontSize::Px(px),
                 Some(PlumeFontSize::Em(factor)) => font.font_size = font.font_size * factor,
+                Some(PlumeFontSize::Rem(factor)) => font.font_size = FontSize::Rem(factor),
                 None => {}
             }
             if let Some(features) = &inheritable.font_features {
@@ -343,6 +346,7 @@ mod tests {
     use bevy::ui::widget::Text;
 
     use super::*;
+    use crate::style::size;
 
     // The font pipeline as `PlumeCorePlugin` wires it, minus everything that
     // needs a window: resolve, then propagate.

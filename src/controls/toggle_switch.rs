@@ -75,7 +75,7 @@ impl PlumeToggleSwitch {
                         top: Val::ZERO,
                         width: percent(100),
                         height: percent(100),
-                        border: size::CONTROL_BORDER,
+                        border: size::HAIRLINE,
                         border_radius: {size::TOGGLE_SIZE.y / 2.0},
                     }
                     ToggleSwitchOutline

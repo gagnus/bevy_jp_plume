@@ -52,7 +52,7 @@ impl PlumeColorSwatch {
                         top: Val::ZERO,
                         right: Val::ZERO,
                         bottom: Val::ZERO,
-                        border: size::CONTROL_BORDER,
+                        border: size::HAIRLINE,
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     TextStyleRelay

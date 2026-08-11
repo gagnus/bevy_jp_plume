@@ -28,6 +28,7 @@ use bevy::window::SystemCursorIcon;
 use crate::constants::{fonts, size};
 use crate::controls::{
     DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
+    text_input_outline,
     text_input_suffix,
 };
 use crate::cursor::{CursorLock, EntityCursor};
@@ -131,6 +132,7 @@ impl PlumeNumberInput {
             SliderRange::new(props.min, props.max)
             SliderStep({props.step})
             Children [
+                text_input_outline(),
                 (
                     text_input_field(None, None)
                     EditableTextFilter::new(|c| {

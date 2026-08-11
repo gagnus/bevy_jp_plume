@@ -386,6 +386,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
                         .tool_button(font_awesome::solid::XMARK)
                         .no_shrink()
                         .flat()
+                        .font_scale(0.8)
                         .variant(ButtonVariant::Plain)
                         .clicked
                     {

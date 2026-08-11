@@ -8,7 +8,7 @@ use super::log_on_change;
 
 const TITLE: &str = "Player Profile";
 
-const GUTTER: f32 = 76.0;
+const GUTTER: Val = Val::Em(6.0);
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Class {
@@ -76,7 +76,7 @@ impl Plugin for PlayerProfilePlugin {
 
 fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
-        ui.caption(label).width(px(GUTTER));
+        ui.caption(label).width(GUTTER);
         f(ui);
     });
 }
@@ -91,7 +91,7 @@ fn player_profile_dialog(
     // `done` closes from inside the body (the dialog holds `open` until `show` ends).
     let mut done = false;
     root.dialog(TITLE, &mut open)
-        .width(px(380))
+        .width(em(27))
         .at(px(450), px(60))
         .show(|ui| {
             ui.section("Profile", |ui| {
@@ -134,7 +134,7 @@ fn player_profile_dialog(
                 });
                 field(ui, "Music", |ui| {
                     ui.slider(&mut s.music, 0..=100).grow();
-                    ui.caption(&format!("{}%", s.music)).width(px(36));
+                    ui.caption(&format!("{}%", s.music)).width(em(2.5));
                 });
             })
             .collapsible(false);

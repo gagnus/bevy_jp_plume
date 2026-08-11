@@ -158,7 +158,7 @@ impl PlumeButton {
                         right: Val::ZERO,
                         top: Val::ZERO,
                         bottom: Val::ZERO,
-                        border: size::CONTROL_BORDER,
+                        border: size::HAIRLINE,
                         border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
                     }
                     ButtonOutline

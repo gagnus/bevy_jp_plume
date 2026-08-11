@@ -333,7 +333,7 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
     let clicked = ui
         .button_container(|ui| {
             if depth > 0 {
-                ui.space(size::TEXT_HEIGHT * (depth as f32));
+                ui.space(em(depth));
             }
             if has_children {
                 ui.disclosure(&mut node.expanded);

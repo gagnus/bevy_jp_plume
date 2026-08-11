@@ -24,7 +24,7 @@ use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::text::{LineBreak, TextFont, TextLayout};
+use bevy::text::{LineBreak, RemSize, TextFont, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
@@ -789,6 +789,7 @@ fn measure_select_width(
     q_button: Query<(), With<PlumeSelectButton>>,
     q_caption: Query<(), With<SelectCaption>>,
     q_computed: Query<&ComputedNode>,
+    rem_size: Res<RemSize>,
     mut q_nodes: Query<&mut Node>,
     mut commands: Commands,
 ) {
@@ -846,11 +847,13 @@ fn measure_select_width(
         if widest_row > 0.0 {
             // The popup doesn't exist to measure, so its horizontal chrome is
             // reconstructed: border both sides plus the options' scrollbar gutter.
-            // Bevy caches the overlay's resolved em size on its `ComputedNode`.
+            // Bevy caches the overlay's resolved em size on its `ComputedNode`;
+            // before layout has reached it, em falls back to rem exactly as
+            // `Val::Em` resolution would.
             let em_px = q_computed
                 .get(measure_ent)
-                .map_or(size::MEDIUM_FONT_PX, |computed| computed.em_size.0);
-            let chrome = 2.0 * val_px(size::CONTAINER_BORDER, em_px)
+                .map_or(rem_size.0, |computed| computed.em_size.0);
+            let chrome = 2.0 * val_px(size::HAIRLINE, em_px)
                 + val_px(size::SCROLLBAR_GUTTER, em_px)
                 + val_px(size::PAD, em_px);
             let button_target = px((widest_row + chrome).ceil());

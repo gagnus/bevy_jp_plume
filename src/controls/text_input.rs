@@ -34,10 +34,6 @@ use crate::font_styles::TextStyleRelay;
 use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme};
 use crate::tokens;
 
-// Horizontal inset of the field content (border + padding = GAP, aligning the text
-// with button captions); the placeholder overlay must match it.
-const TEXT_INPUT_PAD_X: Val = size::em_from_px(size::GAP_PX - size::HAIRLINE_PX);
-
 /// A single-line text input: a themed frame (background, border, sizing) wrapping an
 /// inner editable field and an optional suffix label.
 ///
@@ -83,6 +79,7 @@ impl PlumeTextInput {
             text_input_frame()
             TextInputValue({props.value})
             Children [
+                text_input_outline(),
                 (
                     text_input_field(props.visible_width, props.max_characters)
                     {props.filter.map(|filter| bsn! { template_value(filter) })}
@@ -100,13 +97,13 @@ impl PlumeTextInput {
 // (and optional suffix) as children.
 pub(crate) fn text_input_frame() -> impl Scene {
     bsn! {
-        // Border + horizontal padding = GAP, so the text aligns with button captions; the row
-        // centers the editable field and suffix on the cross axis.
+        // Horizontal padding = GAP, so the text aligns with button captions; the row
+        // centers the editable field and suffix on the cross axis. The border is a
+        // child overlay, not a node border, so it stays out of this content box.
         Node {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
-            padding: UiRect::new(TEXT_INPUT_PAD_X, TEXT_INPUT_PAD_X, size::em_from_px(1.5), Val::ZERO),
-            border: size::CONTAINER_BORDER,
+            padding: UiRect::new(size::GAP, size::GAP, size::em_from_px(1.5), Val::ZERO),
             border_radius: size::CORNER_RADIUS,
             min_width: size::em_from_px(40.0),
         }
@@ -114,8 +111,36 @@ pub(crate) fn text_input_frame() -> impl Scene {
         PlumeTextInput
         TextStyleRelay
         ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
-        ThemeBorderToken(tokens::TEXT_INPUT_BORDER)
         EntityCursor::System(bevy::window::SystemCursorIcon::Text)
+    }
+}
+
+// Marker for a text-input frame's border overlay; the border tokens are swapped
+// on this, not on the frame.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct TextInputOutline;
+
+// The frame's border, on an absolutely-positioned overlay child (as `PlumeButton`
+// does) rather than on the frame node. A node border insets the content box, so a
+// px hairline inside em padding would shift the text by a font-dependent amount;
+// the field's text now sits at exactly `GAP`, matching a button caption at any size.
+pub(crate) fn text_input_outline() -> impl Scene {
+    bsn! {
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::ZERO,
+            right: Val::ZERO,
+            top: Val::ZERO,
+            bottom: Val::ZERO,
+            border: size::HAIRLINE,
+            border_radius: size::CORNER_RADIUS,
+        }
+        TextInputOutline
+        // Em-sized chrome needs the chain's `EmSize`.
+        TextStyleRelay
+        Pickable::IGNORE
+        ThemeBorderToken(tokens::TEXT_INPUT_BORDER)
     }
 }
 
@@ -313,7 +338,9 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
             position_type: PositionType::Absolute,
-            left: TEXT_INPUT_PAD_X,
+            // Matches `text_input_frame`'s horizontal padding: the hint has to start
+            // exactly where the text it stands in for would.
+            left: size::GAP,
         }
         TextInputPlaceholder
         TextInputDimText
@@ -362,6 +389,7 @@ fn update_text_input_styles(
     q_frames: Query<Entity, (With<PlumeTextInput>, Added<InteractionDisabled>)>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
+    q_is_outline: Query<(), With<TextInputOutline>>,
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
@@ -382,6 +410,7 @@ fn update_text_input_styles(
             true,
             false,
             &q_children,
+            &q_is_outline,
             &q_bg,
             &q_border,
             &q_text,
@@ -395,6 +424,7 @@ fn update_text_input_styles_remove(
     q_frames: Query<(), With<PlumeTextInput>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
+    q_is_outline: Query<(), With<TextInputOutline>>,
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
@@ -414,6 +444,7 @@ fn update_text_input_styles_remove(
                 false,
                 focused,
                 &q_children,
+                &q_is_outline,
                 &q_bg,
                 &q_border,
                 &q_text,
@@ -429,6 +460,7 @@ fn update_text_input_styles_focus(
     q_frames: Query<(Entity, Has<InteractionDisabled>), With<PlumeTextInput>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
+    q_is_outline: Query<(), With<TextInputOutline>>,
     q_bg: Query<&ThemeBackgroundToken>,
     q_border: Query<&ThemeBorderToken>,
     q_text: Query<&ThemeTextToken>,
@@ -450,6 +482,7 @@ fn update_text_input_styles_focus(
             disabled,
             focused,
             &q_children,
+            &q_is_outline,
             &q_bg,
             &q_border,
             &q_text,
@@ -473,6 +506,20 @@ fn get_field_ent(
         .copied()
 }
 
+// The [`TextInputOutline`] child of a frame — the entity carrying the border, so
+// the border tokens go here rather than on the frame.
+fn get_outline_ent(
+    frame_ent: Entity,
+    q_children: &Query<&Children>,
+    q_is_outline: &Query<(), With<TextInputOutline>>,
+) -> Option<Entity> {
+    let children = q_children.get(frame_ent).ok()?;
+    children
+        .iter()
+        .find(|&&child| q_is_outline.contains(child))
+        .copied()
+}
+
 #[allow(clippy::too_many_arguments)]
 fn set_text_input_styles(
     frame_ent: Entity,
@@ -480,6 +527,7 @@ fn set_text_input_styles(
     disabled: bool,
     focused: bool,
     q_children: &Query<&Children>,
+    q_is_outline: &Query<(), With<TextInputOutline>>,
     q_bg: &Query<&ThemeBackgroundToken>,
     q_border: &Query<&ThemeBorderToken>,
     q_text: &Query<&ThemeTextToken>,
@@ -509,19 +557,21 @@ fn set_text_input_styles(
         false => bevy::window::SystemCursorIcon::Text,
     };
 
-    // Background and border chrome live on the frame. Skip redundant re-inserts so a focus
-    // change doesn't churn change detection on inputs that already have the right tokens.
+    // Background lives on the frame, the border on its overlay child. Skip redundant
+    // re-inserts so a focus change doesn't churn change detection on inputs that
+    // already have the right tokens.
     if !q_bg.get(frame_ent).is_ok_and(|bg| bg.0 == bg_token) {
         commands
             .entity(frame_ent)
             .insert(ThemeBackgroundToken(bg_token));
     }
-    if !q_border
-        .get(frame_ent)
-        .is_ok_and(|border| border.0 == border_token)
+    if let Some(outline_ent) = get_outline_ent(frame_ent, q_children, q_is_outline)
+        && !q_border
+            .get(outline_ent)
+            .is_ok_and(|border| border.0 == border_token)
     {
         commands
-            .entity(frame_ent)
+            .entity(outline_ent)
             .insert(ThemeBorderToken(border_token));
     }
 

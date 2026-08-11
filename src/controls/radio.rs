@@ -103,7 +103,7 @@ impl PlumeRadio {
                                 top: Val::ZERO,
                                 width: percent(100),
                                 height: percent(100),
-                                border: size::CONTROL_BORDER,
+                                border: size::HAIRLINE,
                                 border_radius: BorderRadius::MAX,
                             }
                             RadioOutline

@@ -317,8 +317,8 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         SplitAxis::Vertical => (Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
     };
     let (line_width, line_height) = match axis {
-        SplitAxis::Horizontal => (size::CONTAINER_BORDER, Val::Auto),
-        SplitAxis::Vertical => (Val::Auto, size::CONTAINER_BORDER),
+        SplitAxis::Horizontal => (size::HAIRLINE, Val::Auto),
+        SplitAxis::Vertical => (Val::Auto, size::HAIRLINE),
     };
     bsn! {
         Node {
@@ -655,7 +655,7 @@ fn style_divider(
     let line = if active {
         DIVIDER_LINE_ACTIVE
     } else {
-        size::CONTAINER_BORDER
+        size::HAIRLINE
     };
     for child in children.iter() {
         if let Ok(mut node) = q_lines.get_mut(*child) {

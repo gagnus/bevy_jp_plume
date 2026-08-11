@@ -20,17 +20,23 @@ pub mod fonts {
 /// px-at-the-standard-font (via [`size::em_from_px`]), so a container that sets a
 /// bigger font gets chrome, spacing and rounding to match. What stays
 /// [`Val::Px`](bevy::ui::Val::Px) is what should look identical at any size:
-/// hairline borders, the focus ring, and positions measured at runtime.
+/// [`size::HAIRLINE`], the focus ring, and positions measured at runtime.
+///
+/// "Any size" is deliberate in both directions — a px value here tracks neither
+/// the local font nor `RemSize`, so an app that scales its whole UI up still
+/// gets one-pixel borders. That is the point of a hairline: it is a property of
+/// the display, not of the type.
 ///
 /// Anything em-sized needs an `EmSize`, which plume mirrors onto text-chain
 /// nodes only — a node authoring em without one is a bug the debug-build
 /// `warn_em_without_em_size` lint names for you.
 pub mod size {
-    use bevy::text::FontSize;
     use bevy::ui::{Val, Val2};
 
-    /// The standard font size in pixels; [`MEDIUM_FONT`] and [`em_from_px`]
-    /// derive from it, and the `RemSize` resource is set to it at plugin init.
+    /// The standard font size in pixels: the px the em constants were designed
+    /// at (see [`em_from_px`]), and the value the `RemSize` resource is set to
+    /// at plugin init. Runtime sizing reads `RemSize`, not this — an app is free
+    /// to move it, and only the design ratios below stay pinned here.
     pub const MEDIUM_FONT_PX: f32 = 14.0;
 
     /// A length stated in px-at-standard-font but carried as `Val::Em`, so the
@@ -74,20 +80,22 @@ pub mod size {
     /// so they are the one part of the look that never scales.
     pub(crate) const HAIRLINE_PX: f32 = 1.0;
 
-    /// Border width of control chrome (checkbox, radio, toggle)
-    pub const CONTROL_BORDER: Val = Val::Px(HAIRLINE_PX);
+    /// One crisp pixel — every border, divider and rule in the look. Also the
+    /// unit for the odd padding or line width that wants to read as a hairline
+    /// rather than as spacing.
+    pub const HAIRLINE: Val = Val::Px(HAIRLINE_PX);
 
     /// Thickness of the accent underline marking the selected tab; it sits under
     /// text, so it scales with it.
-    pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(2.0);
+    pub const TAB_INDICATOR_HEIGHT: Val = em_from_px(3.0);
+
+    /// Height of a tab bar, a little higher than .
+    pub const TAB_BAR_HEIGHT: Val = em_from_px(32.0);
 
     /// How far a crowded tab is squeezed before its strip scrolls instead — room
     /// for a leading icon and a stub of label, so an icon tab shrinks to about
     /// the glyph. A header carrying more than that wants its own, wider floor.
     pub const TAB_MIN_WIDTH: Val = Val::Em(2.5);
-
-    /// Border width of containers (dialog, section header, menu popup, text input)
-    pub const CONTAINER_BORDER: Val = Val::Px(HAIRLINE_PX);
 
     /// Focus ring thickness; px with the other hairlines, so the ring reads the
     /// same on every control whatever font it sits in.
@@ -127,15 +135,9 @@ pub mod size {
     /// Visible track strip thickness (the full-height node around it is the hit area).
     pub const SLIDER_TRACK_HEIGHT: Val = em_from_px(4.0);
 
-    /// The one font size: every control and container uses this.
-    pub const MEDIUM_FONT: FontSize = FontSize::Px(MEDIUM_FONT_PX);
-
-    /// One line of text, as an em length — tracks the effective font.
-    pub const TEXT_HEIGHT: Val = em_from_px(MEDIUM_FONT_PX);
-
-    /// Width reserved for a FontAwesome glyph icon; glyphs are roughly square,
-    /// so this tracks [`MEDIUM_FONT`].
-    pub const ICON_WIDTH: Val = TEXT_HEIGHT;
+    /// Width reserved for a FontAwesome glyph icon, em(1) so icons
+    /// are square.
+    pub const ICON_WIDTH: Val = Val::Em(1.0);
 
     /// Get inner f32 from a `Val` you know is em
     pub const fn em_to_f32(p: Val) -> f32 {

@@ -29,7 +29,7 @@ use crate::theme::ThemeBorderToken;
 use crate::tokens;
 
 // Ring thickness, proportioned to the reticle so it keeps its weight at any font
-// size (thicker than the hairline [`size::CONTROL_BORDER`], which is its own rule).
+// size — deliberately not a [`size::HAIRLINE`], which is its own rule.
 const RETICLE_BORDER: Val = size::em_from_px(2.0);
 
 /// Props used to construct a [`PlumeXyPad`] scene.
@@ -108,9 +108,9 @@ impl PlumeXyPad {
                 // bar; the SV plane sizes itself up explicitly.
                 min_height: size::em_from_px(16.0),
                 min_width: size::em_from_px(16.0),
-                border: size::CONTROL_BORDER,
+                border: size::HAIRLINE,
                 border_radius: size::CORNER_RADIUS_SMALL,
-                padding: UiRect::all(size::CONTROL_BORDER),
+                padding: UiRect::all(size::HAIRLINE),
             }
             PlumeXyPad
             XyPadValue
@@ -149,7 +149,7 @@ impl PlumeXyPad {
                             // A white ring with a dark outline reads on any background.
                             bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
                             bevy::ui::Outline {
-                                width: size::CONTROL_BORDER,
+                                width: size::HAIRLINE,
                                 offset: Val::ZERO,
                                 color: bevy::color::Color::BLACK,
                             }

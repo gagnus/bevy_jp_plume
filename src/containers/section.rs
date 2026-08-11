@@ -296,7 +296,7 @@ fn update_section_header_style(
                 (
                     tokens::SECTION_BODY_BG,
                     tokens::SECTION_HEADER_MUTED_TEXT,
-                    UiRect::bottom(size::CONTAINER_BORDER),
+                    UiRect::bottom(size::HAIRLINE),
                     Val::ZERO,
                     bevy::window::SystemCursorIcon::Default,
                 )

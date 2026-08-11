@@ -20,8 +20,7 @@ use bevy::scene::prelude::*;
 use bevy::text::FontSourceTemplate;
 use bevy::time::{Real, Time};
 use bevy::ui::{
-    ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex,
-    JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, px,
+    ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex, JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
 };
 
 use crate::constants::{fonts, size};
@@ -282,12 +281,14 @@ pub(crate) struct TooltipPanel;
 #[derive(Component, Default, Clone)]
 pub(crate) struct TooltipBox;
 
-// Tooltips pin the standard font on purpose (see `tooltip_chrome`), so their
-// wrap width is px like the font behind it, not em.
-const TOOLTIP_WIDTH: f32 = 280.0;
+// Tooltips pin the root font on purpose (see `tooltip_chrome`), so the wrap
+// width is rem to match it: em would track the scaled subtree the tooltip
+// happens to hover over, px would stay put while the app's `RemSize` moved
+// the text it has to wrap.
+const TOOLTIP_WIDTH: Val = Val::Rem(20.0);
 
 // Far enough off-screen that an unmeasured tooltip never flashes into view.
-const PARKED_LEFT: f32 = -4000.0;
+const PARKED_LEFT_PX: f32 = -4000.0;
 
 // Invisible fixed-width positioning box; the visual panel centers inside it
 // and hugs its content. A `FixedNode` layout root, so the panel's text wraps
@@ -297,8 +298,8 @@ pub(crate) fn tooltip_box() -> impl Scene {
     bsn! {
         Node {
             position_type: PositionType::Absolute,
-            left: px(PARKED_LEFT),
-            width: px(TOOLTIP_WIDTH),
+            left: px(PARKED_LEFT_PX),
+            width: TOOLTIP_WIDTH,
             justify_content: JustifyContent::Center,
         }
         FixedNode
@@ -316,7 +317,7 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
             flex_direction: FlexDirection::Column,
             row_gap: size::GAP_TIGHT,
             padding: size::GAP_TIGHT,
-            border: size::CONTAINER_BORDER,
+            border: size::HAIRLINE,
             border_radius: size::CORNER_RADIUS_SMALL,
         }
         TooltipPanel
@@ -328,7 +329,7 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
         // Fully specified: tooltips stay standard-sized inside scaled subtrees.
         InheritableFont {
             font: FontSourceTemplate::Handle(fonts::REGULAR),
-            font_size: PlumeFontSize::Px(size::MEDIUM_FONT_PX),
+            font_size: PlumeFontSize::Rem(1.0),
         }
     }
 }

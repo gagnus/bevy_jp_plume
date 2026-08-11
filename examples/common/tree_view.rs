@@ -148,7 +148,7 @@ fn tree_view_dialog(
     let mut set_all: Option<bool> = None;
 
     root.dialog(TITLE, &mut open)
-        .width(px(340))
+        .width(em(24))
         .at(px(40), px(60))
         .show(|ui| {
             // Only the tree scrolls; the footer below stays pinned.

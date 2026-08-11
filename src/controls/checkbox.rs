@@ -96,7 +96,7 @@ impl PlumeCheckbox {
                             Node {
                                 width: size::CHECKBOX_SIZE,
                                 height: size::CHECKBOX_SIZE,
-                                border: size::CONTROL_BORDER,
+                                border: size::HAIRLINE,
                                 border_radius: size::CORNER_RADIUS_SMALL,
                             }
                             CheckboxOutline

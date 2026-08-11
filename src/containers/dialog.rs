@@ -243,7 +243,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     padding: UiRect::horizontal(size::PAD * 2.0),
                     min_height: size::DIALOG_HEADER_HEIGHT,
                     column_gap: size::GAP,
-                    border: UiRect::bottom(size::CONTAINER_BORDER),
+                    border: UiRect::bottom(size::HAIRLINE),
                     border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                 }
                 {movable.then(|| bsn! { DialogDragHandle })}
@@ -271,7 +271,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             right: {inset.right},
             bottom: {inset.bottom},
             border_radius: size::DIALOG_RADIUS,
-            border: UiRect::all(size::CONTAINER_BORDER),
+            border: UiRect::all(size::HAIRLINE),
             width: width,
             height: height,
             max_height: max_height,

@@ -59,8 +59,8 @@ pub use slider::{PlumeSlider, PlumeSliderProps};
 use text_input::TextInputPlugin;
 pub use text_input::{NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue};
 pub(crate) use text_input::{
-    TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_placeholder,
-    text_input_suffix,
+    TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_outline,
+    text_input_placeholder, text_input_suffix,
 };
 pub use toggle_switch::PlumeToggleSwitch;
 use toggle_switch::ToggleSwitchPlugin;

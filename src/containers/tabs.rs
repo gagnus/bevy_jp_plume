@@ -19,7 +19,7 @@ use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_
 use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
-    AlignItems, BorderRadius, ComputedNode, Display, FlexDirection, InteractionDisabled,
+    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Overflow, PositionType, Selected, UiRect, UiSystems, UiTransform, Val,
     ZIndex, px,
 };
@@ -259,7 +259,7 @@ pub(crate) fn tab_strip() -> impl Scene {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Stretch,
             justify_content: JustifyContent::Start,
-            min_height: size::HEADER_HEIGHT,
+            min_height: size::TAB_BAR_HEIGHT,
             padding: UiRect::top(size::GAP_TIGHT),
             width: Val::Percent(100.0),
             flex_shrink: 0.0,
@@ -272,7 +272,7 @@ pub(crate) fn tab_strip() -> impl Scene {
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::ZERO,
-                    bottom: Val::ZERO,
+                    top: {size::GAP_TIGHT},
                     width: px(INDICATOR_BASE_WIDTH),
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
@@ -300,7 +300,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
             justify_content: JustifyContent::Center,
             column_gap: size::GAP,
             padding: UiRect::horizontal(size::GAP),
-            border_radius: BorderRadius::top(size::CORNER_RADIUS_SMALL),
+            //border_radius: BorderRadius::top(size::CORNER_RADIUS_SMALL),
             min_width: size::TAB_MIN_WIDTH,
             overflow: Overflow::clip(),
         }

@@ -18,8 +18,7 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
-    InterpolationColorSpace, LinearGradient, Node, Val, Val2, percent,
+    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient, InterpolationColorSpace, LinearGradient, Node, Val, Val2, em, percent,
 };
 use bevy::ui_widgets::{SliderValue, ValueChange};
 
@@ -120,7 +119,7 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             space(size::em_from_px(4.0)),
             (
                 caption(label)
-                Node { width: size::TEXT_HEIGHT, flex_shrink: 0.0 }
+                Node { width: em(1), flex_shrink: 0.0 }
             ),
             (
                 @PlumeNumberInput {

@@ -187,7 +187,7 @@ impl PlumePopup {
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
-                border: size::CONTAINER_BORDER,
+                border: size::HAIRLINE,
                 padding: {props.padding},
                 border_radius: size::CORNER_RADIUS,
                 row_gap: size::GAP,

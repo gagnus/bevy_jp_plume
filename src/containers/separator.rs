@@ -24,7 +24,7 @@ use crate::tokens;
 pub fn separator() -> impl Scene {
     bsn! {
         Node {
-            flex_basis: size::CONTAINER_BORDER,
+            flex_basis: size::HAIRLINE,
             flex_grow: 0.0,
             flex_shrink: 0.0,
             align_self: AlignSelf::Stretch,

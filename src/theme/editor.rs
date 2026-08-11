@@ -4,9 +4,8 @@
 use core::ops::RangeInclusive;
 
 use bevy::color::Color;
-use bevy::ui::Val;
+use bevy::ui::{Val, em};
 
-use crate::constants::size;
 use crate::controls::ButtonVariant;
 use crate::imm::{PlumeImm, Ui};
 use crate::style::font_awesome;
@@ -123,24 +122,24 @@ fn param_row(
     swatch: Option<Color>,
     is_dangerous: bool,
 ) {
-    let gutter_width = size::TEXT_HEIGHT * 3.5;
+    let gutter_width = em(3.5);
 
     ui.horizontal(|ui| {
         ui.caption(label)
             .width(if swatch.is_none() && !is_dangerous {
-                gutter_width.try_add(size::TEXT_HEIGHT).expect("Add Val")
+                gutter_width.try_add(em(1)).expect("Add Val")
             } else {
                 gutter_width
             });
         match swatch {
             Some(color) => {
-                ui.color_swatch(color).square(size::TEXT_HEIGHT);
+                ui.color_swatch(color).size(em(1).into());
             }
             None => {
                 if is_dangerous {
                     ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
                         .text_color_slot(ThemeSlot::Danger0)
-                        .width(size::TEXT_HEIGHT)
+                        .width(em(1))
                         .tooltip("This hue/chroma is very close to the 'Danger' color");
                 } else {
                     ui.space(Val::ZERO); // keeps the child/gap count

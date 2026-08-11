@@ -15,8 +15,7 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow,
-    UiRect, Val,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow, UiRect, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -399,6 +398,7 @@ fn imm_for_plume_font_size(size: PlumeFontSize) -> ImmId {
     let (str, value) = match size {
         PlumeFontSize::Px(v) => ("px", v),
         PlumeFontSize::Em(v) => ("em", v),
+        PlumeFontSize::Rem(v) => ("rem", v),
     };
     imm_id((str, value.to_bits()))
 }
@@ -424,9 +424,9 @@ impl<K: kind::Heightable> ImmResponse<'_, '_, '_, K> {
 }
 
 impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
-    /// Set both axes to `size` — the natural call for a square swatch or button.
-    pub fn square(self, size: Val) -> Self {
-        self.width(size).height(size)
+    /// Set width and height.
+    pub fn size(self, size: Val2) -> Self {
+        self.width(size.x).height(size.y)
     }
 }
 

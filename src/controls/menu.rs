@@ -198,7 +198,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             min_width: size::em_from_px(160.0),
-            border: size::CONTAINER_BORDER,
+            border: size::HAIRLINE,
             padding: UiRect::vertical(size::GAP_TIGHT),
             border_radius: size::CORNER_RADIUS,
         }

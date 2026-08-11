@@ -46,9 +46,9 @@ fn theme_editor_dialog(
     let mut local = editor.clone();
     let mut open = registry.is_open(TITLE);
     root.dialog(TITLE, &mut open)
-        .width(px(320))
+        .width(em(23))
         .max_height(px(500))
-        .at(px(900), px(90))
+        .at_corner(Corner::BottomRight, px(50), px(50))
         .show(|ui| theme_editor(ui, &mut local.0));
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
