@@ -19,7 +19,7 @@ use crate::theme::{OklchaArray, ThemeEditablePalette, ThemeSlot};
 pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
     ui.horizontal(|ui| {
         if ui
-            .button("Reset Dark")
+            .button("Dark")
             .variant(ButtonVariant::Outline)
             .grow()
             .clicked
@@ -27,7 +27,7 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
             *palette = default_dark_palette();
         }
         if ui
-            .button("Reset Light")
+            .button("Light")
             .variant(ButtonVariant::Outline)
             .grow()
             .clicked
