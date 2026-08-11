@@ -20,7 +20,8 @@ use bevy::scene::prelude::*;
 use bevy::text::FontSourceTemplate;
 use bevy::time::{Real, Time};
 use bevy::ui::{
-    ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex, JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
+    ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex,
+    JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
 };
 
 use crate::constants::{fonts, size};

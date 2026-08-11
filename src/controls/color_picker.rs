@@ -18,7 +18,8 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient, InterpolationColorSpace, LinearGradient, Node, Val, Val2, em, percent,
+    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
+    InterpolationColorSpace, LinearGradient, Node, Val, Val2, em, percent,
 };
 use bevy::ui_widgets::{SliderValue, ValueChange};
 

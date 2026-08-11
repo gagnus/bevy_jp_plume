@@ -27,7 +27,7 @@ pub use popup::{
 pub use row::row;
 pub use screen::{PlumeScreen, screen};
 pub(crate) use scroll_area::*;
-pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
+pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis, ScrollContentGap};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub(crate) use separator::SeparatorPlugin;

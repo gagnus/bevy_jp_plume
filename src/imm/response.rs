@@ -15,7 +15,8 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow, UiRect, Val, Val2,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow,
+    UiRect, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -25,8 +26,8 @@ use super::caps::{ImmPlumeChecked, ImmPlumeTooltip};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
-    PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed, SplitCollapsible,
-    SplitDividerAutoHide, SplitMin, TabSlot,
+    PopupAnchor, ScrollContentGap, SectionCollapsed, SectionCollapsible, SeparatorBleed,
+    SplitCollapsible, SplitDividerAutoHide, SplitMin, TabSlot,
 };
 use crate::controls::{
     ButtonOutline, ButtonToggleVariant, ButtonVariant, MenuShortcutText, NoDrag,
@@ -905,6 +906,16 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     pub fn max_width(self, max_width: Val) -> Self {
         struct MaxWidthKey;
         self.set_node::<MaxWidthKey, _>(max_width, |node, max_width| node.max_width = max_width)
+    }
+
+    /// Set the gap between the items the region stacks.
+    pub fn gap(mut self, gap: Val) -> Self {
+        struct ScrollContentGapKey;
+        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
+        if self.key_changed::<ScrollContentGapKey>(format!("{gap:?}")) {
+            self.e.entity_commands().insert(ScrollContentGap(gap));
+        }
+        self
     }
 
     /// Scroll with no scrollbar drawn and no gutter reserved for one, leaving the

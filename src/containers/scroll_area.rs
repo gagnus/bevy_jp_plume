@@ -2,6 +2,7 @@
 //! viewport, and the scrollbar that drives it. Shared by the dialog body and the
 //! imm `scroll_area` widget.
 use bevy::app::{App, Plugin, PostUpdate};
+use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::observer::On;
@@ -36,6 +37,17 @@ pub enum ScrollAxis {
     /// Scrolls left and right; content stacks in a row.
     Horizontal,
 }
+
+/// Put this on a scroll frame to space the items it stacks. The frame's own children
+/// are its viewport and scrollbar, so a gap set there never reaches the content.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct ScrollContentGap(pub Val);
+
+// The content stack, so [`ScrollContentGap`] on the frame can find it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct ScrollContent;
 
 impl ScrollAxis {
     fn flex_direction(self) -> FlexDirection {
@@ -124,7 +136,34 @@ pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
             column_gap: size::GAP,
             flex_shrink: 0.0,
         }
+        ScrollContent
         TextStyleRelay
+    }
+}
+
+// `ScrollContentGap` is set on the frame, which is what a caller holds, but only the
+// content stack two levels down lays the items out.
+fn relay_scroll_content_gap(
+    q_frames: Query<(&ScrollContentGap, &Children)>,
+    q_children: Query<&Children>,
+    q_content: Query<(), With<ScrollContent>>,
+    mut q_nodes: Query<&mut Node>,
+) {
+    for (gap, viewports) in q_frames.iter() {
+        let content = viewports
+            .iter()
+            .filter_map(|viewport| q_children.get(*viewport).ok())
+            .flat_map(|stacks| stacks.iter())
+            .find(|entity| q_content.contains(**entity));
+        let Some(&content) = content else {
+            continue;
+        };
+        if let Ok(mut node) = q_nodes.get_mut(content)
+            && (node.row_gap != gap.0 || node.column_gap != gap.0)
+        {
+            node.row_gap = gap.0;
+            node.column_gap = gap.0;
+        }
     }
 }
 
@@ -159,6 +198,10 @@ pub(crate) struct ScrollAreaPlugin;
 impl Plugin for ScrollAreaPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(scroll_sideways_on_wheel);
+        app.add_systems(
+            PostUpdate,
+            relay_scroll_content_gap.before(UiSystems::Layout),
+        );
         // `PostLayout` is where `CalculatedClip` is written.
         app.add_systems(
             PostUpdate,

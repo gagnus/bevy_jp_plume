@@ -17,7 +17,7 @@ pub use crate::containers::{
     PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScreen, PlumeScrollArea,
     PlumeScrollAreaProps, PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps,
     PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket,
-    ScrollAxis, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
+    ScrollAxis, ScrollContentGap, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
     SplitDividerAutoHide, SplitFraction, SplitMin, TabSlot, TabTarget, close_popup, column,
     flex_spacer, popup_socket, row, screen, separator, space, tab_body, tab_label,
 };

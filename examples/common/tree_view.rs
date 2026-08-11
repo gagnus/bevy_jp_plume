@@ -157,6 +157,7 @@ fn tree_view_dialog(
                     ui.push_id(i, |ui| node_row(ui, node, 0));
                 }
             })
+            .gap(size::GAP_TIGHT)
             .height(px(300));
 
             ui.separator();
