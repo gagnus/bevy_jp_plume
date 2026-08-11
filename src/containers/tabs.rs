@@ -16,12 +16,11 @@ use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
-    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
-    Overflow, PositionType, Pressed, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
+    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow, PositionType, Pressed, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
 };
 use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
@@ -87,7 +86,8 @@ impl PlumeTabs {
     /// Scene function for a tab container.
     pub fn scene(props: PlumeTabsProps) -> impl Scene {
         bsn! {
-            tabs_frame(0)
+            tabs_frame()
+            SelectedIndex
             Children [
                 (
                     tab_strip_frame()
@@ -200,9 +200,8 @@ pub(crate) struct TabIndicator {
     settled: bool,
 }
 
-// Tab container chrome: a clipped column for [`tab_strip`] and the tab bodies,
-// with the initially selected tab seeded as `selected`. Note this is not rounded.
-pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
+// Tab container chrome: an invisible clipped column for [`tab_strip`] and the tab bodies.
+pub(crate) fn tabs_frame() -> impl Scene {
     bsn! {
         Node {
             display: Display::Flex,
@@ -215,8 +214,6 @@ pub(crate) fn tabs_frame(selected: usize) -> impl Scene {
             min_width: Val::ZERO,
         }
         TabsRoot
-        template_value(SelectedIndex(selected))
-        ThemeBackgroundToken(tokens::TAB_BODY_BG)
         TextStyleRelay
     }
 }

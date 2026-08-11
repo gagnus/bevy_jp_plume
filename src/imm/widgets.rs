@@ -38,7 +38,7 @@ use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
     PlumeColorSwatch, PlumeDisclosure, PlumeMenuBar, PlumeNumberInput, PlumeNumberInputProps,
     PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
-    imm_menu_anchor, imm_menu_frame,
+    SelectedIndex, imm_menu_anchor, imm_menu_frame,
 };
 use crate::display::{caption, caption_large, caption_small_caps, fa_icon};
 use crate::utils::numeric::Numeric;
@@ -814,7 +814,9 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(move || tabs_frame(initial))
+            .on_spawn_apply_scene(
+                move || bsn! { tabs_frame() template_value(SelectedIndex(initial)) },
+            )
             .plume_select(&mut index, &mut changed);
 
         // A bare strip: no body node taking room the caller gave the container.

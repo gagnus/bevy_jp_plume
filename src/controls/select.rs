@@ -60,7 +60,7 @@ use crate::tokens;
 pub struct PlumeSelect;
 
 /// The selected option's index, held on the [`PlumeSelect`] root.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
 #[reflect(Component)]
 pub struct SelectedIndex(pub usize);
 

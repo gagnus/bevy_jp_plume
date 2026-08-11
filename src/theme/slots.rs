@@ -16,7 +16,6 @@ pub enum ThemeSlot {
     /// - `TEXT_INPUT_BG`
     /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
-    /// - `TAB_BAR_BG`
     #[default]
     Neutral0,
 
@@ -25,8 +24,8 @@ pub enum ThemeSlot {
     /// - `DIALOG_HEADER_BG`
     /// - `POPUP_BG`
     /// - `SECTION_BODY_BG`
-    /// - `TAB_BODY_BG`
     /// - `TOOLTIP_BG`
+    /// - `TAB_BAR_BG`
     Neutral1,
 
     /// Raised header background.
@@ -450,13 +449,12 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::Disabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
     (tokens::TAB_INDICATOR_DISABLED, ThemeSlot::Disabled1),
-    (tokens::TAB_BAR_BG, ThemeSlot::Neutral0),
+    (tokens::TAB_BAR_BG, ThemeSlot::Neutral1),
     (tokens::TAB_BG, ThemeSlot::Transparent),
     (tokens::TAB_BG_HOVERED, ThemeSlot::Neutral3),
     (tokens::TAB_BG_PRESSED, ThemeSlot::Neutral4),
     (tokens::TAB_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral2),
-    (tokens::TAB_BODY_BG, ThemeSlot::Neutral1),
     (tokens::SELECT_BG, ThemeSlot::Neutral0),
     (tokens::SELECT_BORDER, ThemeSlot::Neutral4),
     (tokens::SELECT_OPTION_BG_HOVER, ThemeSlot::Neutral3),
