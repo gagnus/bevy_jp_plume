@@ -23,7 +23,9 @@ use bevy::app::Plugin;
 pub use bevy::text::EditableTextFilter;
 pub(crate) use button::ButtonOutline;
 use button::ButtonPlugin;
-pub use button::{ButtonVariant, PlumeButton, PlumeButtonProps, PlumeToolButton};
+pub use button::{
+    ButtonToggleVariant, ButtonVariant, PlumeButton, PlumeButtonProps, PlumeToolButton,
+};
 use checkbox::CheckboxPlugin;
 pub use checkbox::{PlumeCheckbox, PlumeCheckboxProps};
 use color_edit::ColorEditPlugin;

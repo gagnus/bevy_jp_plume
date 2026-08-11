@@ -85,6 +85,8 @@ pub enum ThemeSlot {
     Text0,
 
     /// Body text.
+    /// - `BUTTON_OUTLINE_TEXT_UNCHECKED`
+    /// - `BUTTON_PLAIN_TEXT_UNCHECKED`
     /// - `CHECKBOX_TEXT`
     /// - `DIALOG_TEXT`
     /// - `RADIO_TEXT`
@@ -95,6 +97,7 @@ pub enum ThemeSlot {
     Text1,
 
     /// Disabled text over a [`Disabled1`](Self::Disabled1) control background.
+    /// - `BUTTON_CHECKED_TEXT_DISABLED`
     /// - `BUTTON_DANGER_TEXT_DISABLED`
     /// - `BUTTON_PRIMARY_TEXT_DISABLED`
     /// - `BUTTON_TEXT_DISABLED`
@@ -103,6 +106,7 @@ pub enum ThemeSlot {
 
     /// Disabled control and disabled text sitting straight on background.
     /// - `BUTTON_BG_DISABLED`
+    /// - `BUTTON_CHECKED_BG_DISABLED`
     /// - `BUTTON_DANGER_BG_DISABLED`
     /// - `BUTTON_OUTLINE_BORDER_DISABLED`
     /// - `BUTTON_PRIMARY_BG_DISABLED`
@@ -131,6 +135,10 @@ pub enum ThemeSlot {
     Disabled1,
 
     /// Base call-to-action and checked-state color.
+    /// - `BUTTON_CHECKED_BG`
+    /// - `BUTTON_OUTLINE_BORDER_CHECKED`
+    /// - `BUTTON_OUTLINE_TEXT_CHECKED`
+    /// - `BUTTON_PLAIN_TEXT_CHECKED`
     /// - `BUTTON_PRIMARY_BG`
     /// - `CHECKBOX_BG_CHECKED`
     /// - `RADIO_BG_CHECKED`
@@ -143,6 +151,8 @@ pub enum ThemeSlot {
     Accent0,
 
     /// Call-to-action hover.
+    /// - `BUTTON_CHECKED_BG_HOVER`
+    /// - `BUTTON_OUTLINE_BORDER_CHECKED_HOVER`
     /// - `BUTTON_PRIMARY_BG_HOVER`
     /// - `SLIDER_BAR_HOVER`
     /// - `SLIDER_THUMB_HOVER`
@@ -150,6 +160,8 @@ pub enum ThemeSlot {
     Accent1,
 
     /// Call-to-action pressed.
+    /// - `BUTTON_CHECKED_BG_PRESSED`
+    /// - `BUTTON_OUTLINE_BORDER_CHECKED_PRESSED`
     /// - `BUTTON_PRIMARY_BG_PRESSED`
     /// - `SLIDER_BAR_PRESSED`
     /// - `SLIDER_THUMB_PRESSED`
@@ -173,6 +185,7 @@ pub enum ThemeSlot {
     Danger2,
 
     /// Foreground over accent-filled components, and the switch knob.
+    /// - `BUTTON_CHECKED_TEXT`
     /// - `BUTTON_DANGER_TEXT`
     /// - `BUTTON_PRIMARY_TEXT`
     /// - `CHECKBOX_MARK`
@@ -311,6 +324,25 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::BUTTON_OUTLINE_BORDER_PRESSED, ThemeSlot::Neutral6),
     (tokens::BUTTON_OUTLINE_BORDER_DISABLED, ThemeSlot::Disabled1),
     (tokens::BUTTON_BORDER_NONE, ThemeSlot::Transparent),
+    (tokens::BUTTON_CHECKED_BG, ThemeSlot::Accent0),
+    (tokens::BUTTON_CHECKED_BG_HOVER, ThemeSlot::Accent1),
+    (tokens::BUTTON_CHECKED_BG_PRESSED, ThemeSlot::Accent2),
+    (tokens::BUTTON_CHECKED_BG_DISABLED, ThemeSlot::Disabled1),
+    (tokens::BUTTON_CHECKED_TEXT, ThemeSlot::Contrast),
+    (tokens::BUTTON_CHECKED_TEXT_DISABLED, ThemeSlot::Disabled0),
+    (tokens::BUTTON_PLAIN_TEXT_UNCHECKED, ThemeSlot::Text1),
+    (tokens::BUTTON_PLAIN_TEXT_CHECKED, ThemeSlot::Accent0),
+    (tokens::BUTTON_OUTLINE_TEXT_UNCHECKED, ThemeSlot::Text1),
+    (tokens::BUTTON_OUTLINE_TEXT_CHECKED, ThemeSlot::Accent0),
+    (tokens::BUTTON_OUTLINE_BORDER_CHECKED, ThemeSlot::Accent0),
+    (
+        tokens::BUTTON_OUTLINE_BORDER_CHECKED_HOVER,
+        ThemeSlot::Accent1,
+    ),
+    (
+        tokens::BUTTON_OUTLINE_BORDER_CHECKED_PRESSED,
+        ThemeSlot::Accent2,
+    ),
     (tokens::BUTTON_TEXT, ThemeSlot::Text0),
     (tokens::BUTTON_TEXT_DISABLED, ThemeSlot::Disabled0),
     (tokens::BUTTON_PRIMARY_TEXT, ThemeSlot::Contrast),

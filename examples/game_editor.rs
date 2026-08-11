@@ -270,43 +270,25 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
                 font_awesome::solid::UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER,
             ),
         ] {
-            if ui
-                .tool_button(icon)
-                .checkable()
-                .flat()
-                .checked(state.tool == tool)
-                .clicked
-            {
+            let mut selected = state.tool == tool;
+            if ui.tool_button(icon).checkable(&mut selected).flat().clicked {
                 state.tool = tool;
             }
         }
         ui.separator();
 
-        if ui
-            .tool_button(font_awesome::solid::MAGNET)
-            .checkable()
-            .flat()
-            .checked(state.snap_to_grid)
-            .clicked
-        {
-            state.snap_to_grid = !state.snap_to_grid;
-        }
-        if ui
-            .tool_button(font_awesome::solid::BORDER_ALL)
-            .checkable()
-            .flat()
-            .checked(state.show_grid)
-            .clicked
-        {
-            state.show_grid = !state.show_grid;
-        }
+        ui.tool_button(font_awesome::solid::MAGNET)
+            .checkable(&mut state.snap_to_grid)
+            .flat();
+        ui.tool_button(font_awesome::solid::BORDER_ALL)
+            .checkable(&mut state.show_grid)
+            .flat();
 
         ui.flex_spacer();
         if ui
             .tool_button(font_awesome::solid::PLAY)
-            .checkable()
+            .checkable(&mut state.playing)
             .flat()
-            .checked(state.playing)
             .clicked
         {
             state.playing = true;
@@ -317,14 +299,8 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
 
         ui.separator();
-        if ui
-            .tool_button(font_awesome::solid::PALETTE)
-            .checkable()
-            .checked(*theme_editor_open)
-            .clicked
-        {
-            *theme_editor_open = !*theme_editor_open;
-        }
+        ui.tool_button(font_awesome::solid::PALETTE)
+            .checkable(theme_editor_open);
     })
     .background(bg)
     .padding(size::GAP / 2.0);

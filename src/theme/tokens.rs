@@ -184,6 +184,48 @@ pub const BUTTON_OUTLINE_BORDER_PRESSED: ThemeToken =
 /// Border color for the button variants that paint no outline
 pub const BUTTON_BORDER_NONE: ThemeToken = ThemeToken::new_static("plume.button.border.none");
 
+// Checkable buttons. Checked accents whatever surface the variant already leads
+// with: the fill for `Normal`, the ink (text, and border for `Outline`) for the
+// unfilled variants, which stay unfilled so hover/press keep the fill to themselves.
+
+/// Checked button background
+pub const BUTTON_CHECKED_BG: ThemeToken = ThemeToken::new_static("plume.button.checked.bg");
+/// Checked button background (hovered)
+pub const BUTTON_CHECKED_BG_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.button.checked.bg.hover");
+/// Checked button background (disabled)
+pub const BUTTON_CHECKED_BG_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.checked.bg.disabled");
+/// Checked button background (pressed)
+pub const BUTTON_CHECKED_BG_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.button.checked.bg.pressed");
+/// Checked button text
+pub const BUTTON_CHECKED_TEXT: ThemeToken = ThemeToken::new_static("plume.button.checked.txt");
+/// Checked button text (disabled)
+pub const BUTTON_CHECKED_TEXT_DISABLED: ThemeToken =
+    ThemeToken::new_static("plume.button.checked.txt.disabled");
+/// Plain checkable button text (unchecked)
+pub const BUTTON_PLAIN_TEXT_UNCHECKED: ThemeToken =
+    ThemeToken::new_static("plume.button.plain.txt.unchecked");
+/// Plain checkable button text (checked)
+pub const BUTTON_PLAIN_TEXT_CHECKED: ThemeToken =
+    ThemeToken::new_static("plume.button.plain.txt.checked");
+/// Outline checkable button text (unchecked)
+pub const BUTTON_OUTLINE_TEXT_UNCHECKED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.txt.unchecked");
+/// Outline checkable button text (checked)
+pub const BUTTON_OUTLINE_TEXT_CHECKED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.txt.checked");
+/// Outline checkable button border (checked)
+pub const BUTTON_OUTLINE_BORDER_CHECKED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.checked");
+/// Outline checkable button border (checked, hovered)
+pub const BUTTON_OUTLINE_BORDER_CHECKED_HOVER: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.checked.hover");
+/// Outline checkable button border (checked, pressed)
+pub const BUTTON_OUTLINE_BORDER_CHECKED_PRESSED: ThemeToken =
+    ThemeToken::new_static("plume.button.outline.border.checked.pressed");
+
 // Slider
 
 /// Background for slider
@@ -510,6 +552,34 @@ pub mod sets {
         hover: super::BUTTON_OUTLINE_BORDER_HOVER,
         pressed: super::BUTTON_OUTLINE_BORDER_PRESSED,
         disabled: super::BUTTON_OUTLINE_BORDER_DISABLED,
+    };
+    /// Checked background, for a checked [`ButtonVariant::Normal`](crate::ButtonVariant::Normal)
+    pub const BUTTON_CHECKED_BG: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_CHECKED_BG,
+        hover: super::BUTTON_CHECKED_BG_HOVER,
+        pressed: super::BUTTON_CHECKED_BG_PRESSED,
+        disabled: super::BUTTON_CHECKED_BG_DISABLED,
+    };
+    /// Outline button border while checked
+    pub const BUTTON_OUTLINE_BORDER_CHECKED: InteractionTokens = InteractionTokens {
+        base: super::BUTTON_OUTLINE_BORDER_CHECKED,
+        hover: super::BUTTON_OUTLINE_BORDER_CHECKED_HOVER,
+        pressed: super::BUTTON_OUTLINE_BORDER_CHECKED_PRESSED,
+        disabled: super::BUTTON_OUTLINE_BORDER_DISABLED,
+    };
+    /// Plain checkable button text
+    pub const BUTTON_PLAIN_TEXT: CheckedTokens = CheckedTokens {
+        base: super::BUTTON_PLAIN_TEXT_UNCHECKED,
+        checked: super::BUTTON_PLAIN_TEXT_CHECKED,
+        disabled: super::BUTTON_TEXT_DISABLED,
+        checked_disabled: super::BUTTON_TEXT_DISABLED,
+    };
+    /// Outline checkable button text
+    pub const BUTTON_OUTLINE_TEXT: CheckedTokens = CheckedTokens {
+        base: super::BUTTON_OUTLINE_TEXT_UNCHECKED,
+        checked: super::BUTTON_OUTLINE_TEXT_CHECKED,
+        disabled: super::BUTTON_TEXT_DISABLED,
+        checked_disabled: super::BUTTON_TEXT_DISABLED,
     };
     /// Slider track background
     pub const SLIDER_BG: InteractionTokens = InteractionTokens {

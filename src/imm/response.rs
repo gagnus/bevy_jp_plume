@@ -15,14 +15,14 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Checked, Display, Node,
-    Overflow, UiRect, Val,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow,
+    UiRect, Val,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
-use super::caps::ImmPlumeTooltip;
+use super::caps::{ImmPlumeChecked, ImmPlumeTooltip};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
@@ -30,8 +30,9 @@ use crate::containers::{
     SplitDividerAutoHide, SplitMin, TabSlot,
 };
 use crate::controls::{
-    ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag, NoSelectAllOnFocus, PlumeNumberInput,
-    ScrollbarHidden, set_select_max_visible, text_input_placeholder, text_input_suffix,
+    ButtonOutline, ButtonToggleVariant, ButtonVariant, MenuShortcutText, NoDrag,
+    NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden, set_select_max_visible,
+    text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
@@ -66,6 +67,9 @@ pub mod kind {
     /// Kinds that derive nothing from either axis, so an app may set both: button,
     /// color swatch.
     pub trait Sizable: Heightable {}
+    /// Kinds built on the button frame, checkable or not: they share its chrome
+    /// builders but not its variant, which narrows once the button is checkable.
+    pub trait ButtonLike {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
@@ -73,6 +77,14 @@ pub mod kind {
     pub struct Caption;
     /// `button` / `icon_button` / `tool_button`.
     pub struct Button;
+    /// A button whose variant is set: its emphasis is spent, so it can no longer be
+    /// made [`checkable`](super::ImmResponse::checkable) — a checked state would have
+    /// nothing left to say. Reach a checkable one by calling `checkable` first.
+    pub struct StyledButton;
+    /// A button after [`checkable`](super::ImmResponse::checkable): it carries an
+    /// on/off state, so its variant is narrowed to the ones that have chrome left
+    /// to spend on it.
+    pub struct ToggleButton;
     /// `color_swatch`.
     pub struct Swatch;
     /// `slider`.
@@ -117,6 +129,8 @@ pub mod kind {
     impl Padded for Column {}
     impl Padded for Screen {}
     impl Heightable for Button {}
+    impl Heightable for StyledButton {}
+    impl Heightable for ToggleButton {}
     impl Heightable for Swatch {}
     impl Heightable for Tabs {}
     impl Heightable for ScrollArea {}
@@ -130,7 +144,12 @@ pub mod kind {
     impl Container for Split {}
     impl Heightable for Split {}
     impl Sizable for Button {}
+    impl Sizable for StyledButton {}
+    impl Sizable for ToggleButton {}
     impl Sizable for Swatch {}
+    impl ButtonLike for Button {}
+    impl ButtonLike for StyledButton {}
+    impl ButtonLike for ToggleButton {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -155,6 +174,21 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
 
 /// Anchoring, available on every kind.
 impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
+    // Retype for a builder that narrows what the chain accepts next. Nothing about the
+    // entity changes, only which builders stay in scope.
+    fn into_kind<K2>(self) -> ImmResponse<'r, 'w, 's, K2> {
+        ImmResponse {
+            clicked: self.clicked,
+            changed: self.changed,
+            hovered: self.hovered,
+            entity: self.entity,
+            will_be_spawned: self.will_be_spawned,
+            integral: self.integral,
+            e: self.e,
+            kind: PhantomData,
+        }
+    }
+
     /// Popup floating under this widget (or [`ImmPopup::beside`] it), filled by
     /// [`ImmPopup::show`]. While `*open` the popup exists; a click outside (or
     /// Escape) writes back through `open`.
@@ -446,27 +480,8 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::Button> {
-    /// Set the button's color variant (the styling systems re-style on change).
-    pub fn variant(mut self, variant: ButtonVariant) -> Self {
-        struct VariantKey;
-        if self.key_changed::<VariantKey>(format!("{variant:?}")) {
-            self.e.entity_commands().insert(variant);
-        }
-        self
-    }
-
-    /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` — the confirm button.
-    pub fn primary(self) -> Self {
-        self.variant(ButtonVariant::Primary)
-    }
-
-    /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` — the confirm button for a
-    /// destructive action.
-    pub fn danger(self) -> Self {
-        self.variant(ButtonVariant::Danger)
-    }
-
+/// Builders shared by the button kinds, checkable or not.
+impl<K: kind::ButtonLike> ImmResponse<'_, '_, '_, K> {
     /// Don't respond to hover and press, so only the checked and disabled
     /// states move it.
     pub fn inert(mut self) -> Self {
@@ -477,60 +492,117 @@ impl ImmResponse<'_, '_, '_, kind::Button> {
         self
     }
 
-    /// Which corners the button rounds (fill and border alike).
-    /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
-    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+    // Body of each kind's `corners`, which stays concrete: an inherent `corners` on a
+    // bounded `K` would read as a duplicate of the container one whatever the bounds say.
+    fn corners_impl(mut self, corners: RoundedCorners) -> Self {
+        // Re-round a spawned button: the fill's radius lives on the button node, the
+        // border's on its [`ButtonOutline`] overlay, and both have to agree.
+        fn set_button_corners(button: &mut EntityWorldMut, corners: RoundedCorners) {
+            let radius = corners.to_border_radius(size::CORNER_RADIUS);
+            if let Some(mut node) = button.get_mut::<Node>() {
+                node.border_radius = radius;
+            }
+            let children: Vec<Entity> = button
+                .get::<Children>()
+                .map(|children| children.iter().copied().collect())
+                .unwrap_or_default();
+            button.world_scope(|world| {
+                for child in children {
+                    if world.get::<ButtonOutline>(child).is_some()
+                        && let Some(mut node) = world.get_mut::<Node>(child)
+                    {
+                        node.border_radius = radius;
+                    }
+                }
+            });
+        }
+
         struct CornersKey;
         if self.key_changed::<CornersKey>(format!("{corners:?}")) {
             self.e
                 .entity_commands()
                 .queue(move |mut entity: EntityWorldMut| {
-                    Self::set_button_corners(&mut entity, corners);
+                    set_button_corners(&mut entity, corners);
                 });
         }
         self
     }
+}
 
-    // Re-round a spawned button: the fill's radius lives on the button node, the
-    // border's on its [`ButtonOutline`] overlay, and both have to agree.
-    fn set_button_corners(button: &mut EntityWorldMut, corners: RoundedCorners) {
-        let radius = corners.to_border_radius(size::CORNER_RADIUS);
-        if let Some(mut node) = button.get_mut::<Node>() {
-            node.border_radius = radius;
-        }
-        let children: Vec<Entity> = button
-            .get::<Children>()
-            .map(|children| children.iter().copied().collect())
-            .unwrap_or_default();
-        button.world_scope(|world| {
-            for child in children {
-                if world.get::<ButtonOutline>(child).is_some()
-                    && let Some(mut node) = world.get_mut::<Node>(child)
-                {
-                    node.border_radius = radius;
-                }
-            }
-        });
+impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
+    /// Which corners the button rounds (fill and border alike).
+    /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
+    pub fn corners(self, corners: RoundedCorners) -> Self {
+        self.corners_impl(corners)
     }
 
-    /// Set checked state for a button marked as checkable.
-    pub fn checked(mut self, checked: bool) -> Self {
-        struct CheckedKey;
-        if self.key_changed::<CheckedKey>(format!("{checked:?}")) {
-            if checked {
-                self.e.entity_commands().insert(Checked);
-            } else {
-                self.e.entity_commands().remove::<Checked>();
-            }
+    /// Set the button's color variant (the styling systems re-style on change). This
+    /// spends the button's emphasis, so [`checkable`](Self::checkable) is no longer in
+    /// reach — a toggle picks its chrome through [`ButtonToggleVariant`] instead.
+    pub fn variant(
+        mut self,
+        variant: ButtonVariant,
+    ) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+        struct VariantKey;
+        if self.key_changed::<VariantKey>(format!("{variant:?}")) {
+            self.e.entity_commands().insert(variant);
         }
-        self
+        self.into_kind()
     }
 
-    /// Button is checkable, which will display as primary variant when checked is true.
-    pub fn checkable(mut self) -> Self {
+    /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` — the confirm button.
+    pub fn primary(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+        self.variant(ButtonVariant::Primary)
+    }
+
+    /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` — the confirm button for a
+    /// destructive action.
+    pub fn danger(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+        self.variant(ButtonVariant::Danger)
+    }
+
+    /// Turn the button into a two-state toggle bound to `value`: activating it flips
+    /// `value` and `.changed` fires. Call it before choosing chrome — the result takes
+    /// [`ButtonToggleVariant`], which omits the variants that have no emphasis left to
+    /// spend on a checked state.
+    pub fn checkable(mut self, value: &mut bool) -> ImmResponse<'r, 'w, 's, kind::ToggleButton> {
         struct CheckableKey;
         if self.key_changed::<CheckableKey>(true) {
-            self.e.entity_commands().insert(Checkable);
+            self.e.entity_commands().insert((
+                Checkable,
+                ButtonVariant::from(ButtonToggleVariant::default()),
+            ));
+        }
+        let mut changed = false;
+        self.e = self.e.plume_checked(value, &mut changed);
+        self.changed |= changed;
+        self.into_kind()
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::StyledButton> {
+    /// Which corners the button rounds (fill and border alike).
+    /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
+    pub fn corners(self, corners: RoundedCorners) -> Self {
+        self.corners_impl(corners)
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::ToggleButton> {
+    /// Which corners the toggle rounds (fill and border alike).
+    /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
+    pub fn corners(self, corners: RoundedCorners) -> Self {
+        self.corners_impl(corners)
+    }
+
+    /// Set the toggle's rest-state chrome; the checked state accents whichever
+    /// surface that variant leads with.
+    pub fn variant(mut self, variant: ButtonToggleVariant) -> Self {
+        struct ToggleVariantKey;
+        if self.key_changed::<ToggleVariantKey>(format!("{variant:?}")) {
+            self.e
+                .entity_commands()
+                .insert(ButtonVariant::from(variant));
         }
         self
     }
@@ -808,7 +880,7 @@ impl ImmResponse<'_, '_, '_, kind::Tabs> {
     /// The surface the selected tab (and the body) merges into — the slot of
     /// whatever sits below the strip. `Neutral1` is the default; `Neutral0` is a
     /// document strip over the window, `Neutral2` matches a raised header.
-    pub fn slot(mut self, slot: ThemeSlot) -> Self {
+    pub fn tab_slot(mut self, slot: ThemeSlot) -> Self {
         struct TabSlotKey;
         if self.key_changed::<TabSlotKey>(slot) {
             self.e.entity_commands().insert(TabSlot(slot));

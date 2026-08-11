@@ -94,13 +94,12 @@ fn debug_hub_ui(mut root: PlumeRoot, mut registry: ResMut<DebugDialogRegistry>) 
     let mut toggled: Vec<&'static str> = vec![];
     root.panel().at(px(16), px(16)).show(|ui| {
         ui.horizontal(|ui| {
-            for &(title, (icon, is_open)) in &entries {
+            for &(title, (icon, mut is_open)) in &entries {
                 if ui
                     .tool_button(icon)
                     .flat()
-                    .checkable()
-                    .checked(is_open)
-                    .variant(ButtonVariant::Plain)
+                    .checkable(&mut is_open)
+                    .variant(ButtonToggleVariant::Plain)
                     .tooltip(title)
                     .clicked
                 {

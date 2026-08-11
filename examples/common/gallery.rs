@@ -33,6 +33,12 @@ enum TabChoice {
 pub struct GalleryState {
     checkbox_a: bool,
     checkbox_b: bool,
+    toggle_normal_a: bool,
+    toggle_normal_b: bool,
+    toggle_plain_a: bool,
+    toggle_plain_b: bool,
+    toggle_outline_a: bool,
+    toggle_outline_b: bool,
     disclosure_a: bool,
     disclosure_b: bool,
     toggle_a: bool,
@@ -52,6 +58,12 @@ impl Default for GalleryState {
         Self {
             checkbox_a: false,
             checkbox_b: true,
+            toggle_normal_a: false,
+            toggle_normal_b: true,
+            toggle_plain_a: false,
+            toggle_plain_b: true,
+            toggle_outline_a: false,
+            toggle_outline_b: true,
             disclosure_a: false,
             disclosure_b: true,
             toggle_a: false,
@@ -145,7 +157,7 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
                     .no_body();
             })
             // The selected tab merges into this card's own surface.
-            .slot(bg_slot);
+            .tab_slot(bg_slot);
         });
 
         ui.horizontal(|ui| {
@@ -168,9 +180,34 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
             ui.checkbox(&mut state.checkbox_a, "Off").enabled(!disabled);
             ui.checkbox(&mut state.checkbox_b, "On").enabled(!disabled);
             ui.separator();
-            ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
-            ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
-            ui.color_edit(&mut state.color).enabled(!disabled);
+            ui.tool_button(font_awesome::solid::BOLD)
+                .checkable(&mut state.toggle_normal_a)
+                .tooltip("Normal toggle")
+                .enabled(!disabled);
+            ui.tool_button(font_awesome::solid::BOLD)
+                .checkable(&mut state.toggle_normal_b)
+                .tooltip("Normal toggle")
+                .enabled(!disabled);
+            ui.tool_button(font_awesome::solid::MAGNET)
+                .checkable(&mut state.toggle_plain_a)
+                .variant(ButtonToggleVariant::Plain)
+                .tooltip("Plain toggle")
+                .enabled(!disabled);
+            ui.tool_button(font_awesome::solid::MAGNET)
+                .checkable(&mut state.toggle_plain_b)
+                .variant(ButtonToggleVariant::Plain)
+                .tooltip("Plain toggle")
+                .enabled(!disabled);
+            ui.tool_button(font_awesome::solid::BORDER_ALL)
+                .checkable(&mut state.toggle_outline_a)
+                .variant(ButtonToggleVariant::Outline)
+                .tooltip("Outline toggle")
+                .enabled(!disabled);
+            ui.tool_button(font_awesome::solid::BORDER_ALL)
+                .checkable(&mut state.toggle_outline_b)
+                .variant(ButtonToggleVariant::Outline)
+                .tooltip("Outline toggle")
+                .enabled(!disabled);
         });
         ui.horizontal(|ui| {
             ui.toggle(&mut state.toggle_a).enabled(!disabled);
@@ -180,6 +217,11 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
                 .enabled(!disabled);
             ui.radio(&mut state.radio, RadioChoice::B, "B")
                 .enabled(!disabled);
+            ui.separator();
+            ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
+            ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
+            ui.separator();
+            ui.color_edit(&mut state.color).enabled(!disabled);
         });
 
         ui.slider(&mut state.slider, 0.0..=100.0).enabled(!disabled);

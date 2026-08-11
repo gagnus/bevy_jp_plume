@@ -4,6 +4,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::lifecycle::RemovedComponents;
+use bevy::ecs::observer::On;
 use bevy::ecs::query::{Added, Changed, Has, Or, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
@@ -18,9 +19,10 @@ use bevy::ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
     PositionType, Pressed, UiRect, Val,
 };
-use bevy::ui_widgets::Button;
+use bevy::ui_widgets::{Activate, Button, ValueChange};
 
 use crate::constants::size;
+use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
@@ -50,6 +52,31 @@ pub enum ButtonVariant {
     /// A bordered button with no fill at rest: a secondary action that stays legible on any
     /// surface, where [`Normal`](Self::Normal) would read as gray-on-gray.
     Outline,
+}
+
+/// Rest-state chrome for a checkable button. The loud variants of [`ButtonVariant`] are
+/// absent by construction: they spend their emphasis at rest, leaving checked nothing to
+/// say. Checked accents the surface the variant leads with — fill for
+/// [`Normal`](Self::Normal), ink for the unfilled two.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub enum ButtonToggleVariant {
+    /// Filled at rest; checked swaps the fill to the accent.
+    #[default]
+    Normal,
+    /// Unfilled at rest; checked accents the text.
+    Plain,
+    /// Bordered at rest; checked accents the border and text.
+    Outline,
+}
+
+impl From<ButtonToggleVariant> for ButtonVariant {
+    fn from(variant: ButtonToggleVariant) -> Self {
+        match variant {
+            ButtonToggleVariant::Normal => ButtonVariant::Normal,
+            ButtonToggleVariant::Plain => ButtonVariant::Plain,
+            ButtonToggleVariant::Outline => ButtonVariant::Outline,
+        }
+    }
 }
 
 /// A button, spawnable as a scene component with optional [`PlumeButtonProps`].
@@ -344,15 +371,13 @@ fn set_button_styles(
     outline: Option<(Entity, &ThemeBorderToken)>,
     commands: &mut Commands,
 ) {
-    // Checking a checkable button fills it, to read as on. `Danger` already fills, and
-    // its red is the point, so it stays itself rather than flipping to the accent.
-    let variant = if checkable && checked && *variant != ButtonVariant::Danger {
-        &ButtonVariant::Primary
-    } else {
-        variant
-    };
+    // Checked accents the surface the variant already leads with: the fill for the
+    // filled variants, the ink for the unfilled ones, which stay unfilled so that
+    // hover and press keep the fill to themselves.
+    let on = checkable && checked;
 
     let bg_set = match variant {
+        ButtonVariant::Normal if on => tokens::sets::BUTTON_CHECKED_BG,
         ButtonVariant::Normal => tokens::sets::BUTTON_BG,
         ButtonVariant::Primary => tokens::sets::BUTTON_PRIMARY_BG,
         ButtonVariant::Danger => tokens::sets::BUTTON_DANGER_BG,
@@ -362,6 +387,11 @@ fn set_button_styles(
     let bg_token = bg_set.pick(disabled, pressed && hovered && !inert, hovered && !inert);
 
     let border_token = match variant {
+        ButtonVariant::Outline if on => tokens::sets::BUTTON_OUTLINE_BORDER_CHECKED.pick(
+            disabled,
+            pressed && hovered && !inert,
+            hovered && !inert,
+        ),
         ButtonVariant::Outline => tokens::sets::BUTTON_OUTLINE_BORDER.pick(
             disabled,
             pressed && hovered && !inert,
@@ -370,13 +400,27 @@ fn set_button_styles(
         _ => tokens::BUTTON_BORDER_NONE,
     };
 
-    let text_token = match (variant, disabled) {
-        (ButtonVariant::Primary, true) => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
-        (ButtonVariant::Primary, false) => tokens::BUTTON_PRIMARY_TEXT,
-        (ButtonVariant::Danger, true) => tokens::BUTTON_DANGER_TEXT_DISABLED,
-        (ButtonVariant::Danger, false) => tokens::BUTTON_DANGER_TEXT,
-        (_, true) => tokens::BUTTON_TEXT_DISABLED,
-        (_, false) => tokens::BUTTON_TEXT,
+    let text_token = match variant {
+        // The unfilled variants carry the checked state in their ink, so a checkable
+        // one sits at dim text when off for the accent to read as on against.
+        ButtonVariant::Plain if checkable => tokens::sets::BUTTON_PLAIN_TEXT.pick(on, disabled),
+        ButtonVariant::Outline if checkable => tokens::sets::BUTTON_OUTLINE_TEXT.pick(on, disabled),
+        ButtonVariant::Normal if on => match disabled {
+            true => tokens::BUTTON_CHECKED_TEXT_DISABLED,
+            false => tokens::BUTTON_CHECKED_TEXT,
+        },
+        ButtonVariant::Primary => match disabled {
+            true => tokens::BUTTON_PRIMARY_TEXT_DISABLED,
+            false => tokens::BUTTON_PRIMARY_TEXT,
+        },
+        ButtonVariant::Danger => match disabled {
+            true => tokens::BUTTON_DANGER_TEXT_DISABLED,
+            false => tokens::BUTTON_DANGER_TEXT,
+        },
+        _ => match disabled {
+            true => tokens::BUTTON_TEXT_DISABLED,
+            false => tokens::BUTTON_TEXT,
+        },
     };
 
     // Disabled buttons read as dead: flat fill, no gradient. A `Flat` button is
@@ -431,6 +475,52 @@ fn set_button_styles(
         .insert(EntityCursor::System(cursor_shape));
 }
 
+// Picking a checkable button toggles its check besides the headless `Activate`.
+fn button_toggle_check(
+    ev: On<Activate>,
+    q_buttons: Query<
+        (Has<Checked>, Has<InteractionDisabled>),
+        (With<ButtonVariant>, With<Checkable>),
+    >,
+    mut commands: Commands,
+) {
+    let Ok((checked, disabled)) = q_buttons.get(ev.entity) else {
+        return;
+    };
+    if disabled {
+        return;
+    }
+    if checked {
+        commands.entity(ev.entity).remove::<Checked>();
+    } else {
+        commands.entity(ev.entity).insert(Checked);
+    }
+    commands.trigger(ValueChange {
+        source: ev.entity,
+        value: !checked,
+        is_final: true,
+    });
+}
+
+// Programmatic checked state, the counterpart of the emitted `ValueChange<bool>`.
+fn button_on_set_checked(
+    ev: On<SetValue<bool>>,
+    q_buttons: Query<Has<Checked>, (With<ButtonVariant>, With<Checkable>)>,
+    mut commands: Commands,
+) {
+    let Ok(checked) = q_buttons.get(ev.entity) else {
+        return;
+    };
+    if ev.value == checked {
+        return;
+    }
+    if ev.value {
+        commands.entity(ev.entity).insert(Checked);
+    } else {
+        commands.entity(ev.entity).remove::<Checked>();
+    }
+}
+
 // Plugin which registers the systems for updating the button styles.
 pub(crate) struct ButtonPlugin;
 
@@ -439,6 +529,8 @@ impl Plugin for ButtonPlugin {
         app.add_systems(
             PreUpdate,
             (update_button_styles, update_button_styles_remove).in_set(PickingSystems::Last),
-        );
+        )
+        .add_observer(button_toggle_check)
+        .add_observer(button_on_set_checked);
     }
 }

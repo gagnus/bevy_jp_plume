@@ -399,7 +399,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
             }
         })
         // The strip sits over the viewport, not over a surface.
-        .slot(ThemeSlot::Neutral0)
+        .tab_slot(ThemeSlot::Neutral0)
         .grow();
         if ui
             .tool_button(font_awesome::solid::PLUS)
