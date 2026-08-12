@@ -20,7 +20,8 @@ use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
-    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node, Overflow, PositionType, Pressed, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
+    AlignItems, ComputedNode, Display, FlexDirection, InteractionDisabled, JustifyContent, Node,
+    Overflow, PositionType, Pressed, Selected, UiRect, UiSystems, UiTransform, Val, ZIndex, px,
 };
 use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
