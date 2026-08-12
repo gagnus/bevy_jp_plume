@@ -479,6 +479,22 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
         }
         self
     }
+
+    /// Pin the caption to the bold face; size and features still inherit.
+    pub fn bold(mut self) -> Self {
+        struct BoldKey;
+        if self.key_changed::<BoldKey>(()) {
+            self.set_inheritable_font(|font, assets| {
+                font.font = Some(FontSource::Handle(assets.load(fonts::BOLD)));
+            });
+        }
+        self
+    }
+
+    /// Pin text color to Text0
+    pub fn bright(self) -> Self {
+        self.text_color_slot(ThemeSlot::Text0)
+    }
 }
 
 /// Builders shared by the button kinds, checkable or not.
