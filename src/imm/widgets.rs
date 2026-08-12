@@ -303,7 +303,6 @@ impl<'w, 's> Ui<'w, 's> {
                 },
                 closable: true,
                 movable: true,
-                body_padding: size::PAD.into(),
             },
         }
     }
@@ -740,7 +739,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 },
                 closable: false,
                 movable: false,
-                body_padding: size::PAD.into(),
             },
         }
     }
@@ -1271,12 +1269,6 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self
     }
 
-    /// Set body padding.
-    pub fn padding<T: Into<UiRect>>(mut self, padding: T) -> Self {
-        self.layout.body_padding = padding.into();
-        self
-    }
-
     /// Build the dialog and its body. While `*open` the dialog exists and `f`
     /// fills its body; the ✕ writes back through `open`.
     pub fn show(
@@ -1311,15 +1303,6 @@ struct DialogLayout {
     inset: UiRect,
     closable: bool,
     movable: bool,
-    body_padding: UiRect,
-}
-
-impl DialogLayout {
-    // Whether the body needs the scrolling machinery: either height knob bounds
-    // the dialog, so its content can no longer be assumed to fit.
-    fn scrolls(&self) -> bool {
-        self.height != Val::Auto || self.max_height != Val::Auto
-    }
 }
 
 /// Corner a floating surface pins to, via [`ImmPanel::at_corner`] or
@@ -1566,21 +1549,20 @@ fn reconcile_frame_body<'e, 'w, 's>(
                 }
             });
     }
-    let scrolls = layout.scrolls();
     let entity = entity.add_ui(move |ui| {
         let body = ui
             .ch_id("dialog_body")
-            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody { @padding: {layout.body_padding} } });
-        if !scrolls {
+            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
+        if layout.height == Val::Auto && layout.max_height == Val::Auto {
             body.add_ui(f);
-            return;
+        } else {
+            body.add_ui(move |ui| {
+                let frame = ui
+                    .ch_id("scroll_frame")
+                    .on_spawn_apply_scene(|| scroll_frame(ScrollAxis::Vertical));
+                scroll_body(frame, ScrollAxis::Vertical, f);
+            });
         }
-        body.add_ui(move |ui| {
-            let frame = ui
-                .ch_id("scroll_frame")
-                .on_spawn_apply_scene(|| scroll_frame(ScrollAxis::Vertical));
-            scroll_body(frame, ScrollAxis::Vertical, f);
-        });
     });
     respond(entity, false)
 }
@@ -1832,8 +1814,6 @@ fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
         inset,
         closable,
         movable,
-        // Body padding lives on the reconciled `PlumeDialogBody`, not the frame.
-        body_padding: _,
     } = layout;
     bsn! {
         // Empty body: the imm layer reconciles the body itself.
