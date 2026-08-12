@@ -426,19 +426,25 @@ fn apply_split(
                     }
                 }
             }
-            // Half its own width back, so the grab strip straddles the seam
-            // rather than starting at it.
+
+            // Splitter position (accounting for edges)
             if let Ok(mut node) = q_dividers.get_mut(*child) {
-                let inset = -(DIVIDER_GRAB / 2.0);
+                let inset = if f == 0.0 {
+                    Val::ZERO
+                } else if f == 1.0 {
+                    -DIVIDER_GRAB
+                } else {
+                    -(DIVIDER_GRAB / 2.0)
+                };
                 match axis {
                     SplitAxis::Horizontal => {
-                        if node.left != share {
+                        if node.left != share || node.margin.left != inset {
                             node.left = share;
                             node.margin.left = inset;
                         }
                     }
                     SplitAxis::Vertical => {
-                        if node.top != share {
+                        if node.top != share || node.margin.top != inset {
                             node.top = share;
                             node.margin.top = inset;
                         }
