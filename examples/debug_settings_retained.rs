@@ -5,9 +5,9 @@ use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize,
     PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
-    PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip,
-    TooltipContent, ValueChange, caption, caption_large, caption_slot, caption_small_caps,
-    close_popup, column, fa_icon, flex_spacer, popup_socket, row, separator,
+    PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot,
+    ThemeTextSlot, Tooltip, TooltipContent, ValueChange, caption, close_popup, column, fa_icon,
+    flex_spacer, popup_socket, row, separator, small_caps,
 };
 
 #[path = "common/mod.rs"]
@@ -189,7 +189,7 @@ fn debug_options_dialog() -> impl Scene {
     let s = DebugSettings::default();
     bsn! {
         @PlumeDialog {
-            @title: bsn! { caption_large("Debug Options") },
+            @title: bsn! { caption("Debug Options") InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE } },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
             @contents: bsn_list![
@@ -226,7 +226,7 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
     let (wireframe, show_colliders, freeze) = (s.wireframe, s.show_colliders, s.freeze_culling);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption_small_caps("Rendering") },
+            @header: bsn! { caption("Rendering") small_caps() },
             @contents: bsn_list![
                 (
                     checkbox("Wireframe", Bound::Wireframe, wireframe)
@@ -251,7 +251,7 @@ fn physics_section(s: &DebugSettings) -> impl Scene {
     let (pause_sim, time_scale) = (s.pause_sim, s.time_scale);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption_small_caps("Physics") },
+            @header: bsn! { caption("Physics") small_caps() },
             @contents: bsn_list![
                 (
                     checkbox("Pause simulation", Bound::PauseSim, pause_sim)
@@ -267,7 +267,7 @@ fn interface_section(s: &DebugSettings) -> impl Scene {
     let ui_scale = s.ui_scale;
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption_small_caps("Interface") },
+            @header: bsn! { caption("Interface") small_caps() },
             @contents: bsn_list![
                 (
                     slider_row("UI scale", Bound::UiScale, ui_scale, 0.5, 2.0, 2, None)
@@ -283,7 +283,7 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
     let (overlay, log_level) = (s.overlay.index(), s.log_level.index());
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption_small_caps("Diagnostics") },
+            @header: bsn! { caption("Diagnostics") small_caps() },
             @contents: bsn_list![
                 toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay),
                 toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
@@ -298,7 +298,7 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
     let (noclip, infinite_health, move_speed) = (s.noclip, s.infinite_health, s.move_speed);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption_small_caps("Cheats") },
+            @header: bsn! { caption("Cheats") small_caps() },
             @contents: bsn_list![
                 checkbox("Noclip", Bound::Noclip, noclip),
                 checkbox("Infinite health", Bound::InfiniteHealth, infinite_health),
@@ -411,7 +411,8 @@ fn footer() -> impl Scene {
                                 row()
                                 Children [
                                     fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
-                                    caption_slot("Reset to defaults", ThemeSlot::Text0),
+                                    caption("Reset to defaults")
+                                    template_value(ThemeTextSlot(ThemeSlot::Text0)),
                                 ]
                             ),
                             caption("Every debug option returns to its default value"),

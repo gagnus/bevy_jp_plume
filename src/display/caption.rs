@@ -1,64 +1,17 @@
 //! BSN scene function for displaying a plain text string in the correct font.
-use bevy::app::PropagateOver;
-use bevy::color::Color;
-use bevy::scene::{Scene, bsn, template_value};
-use bevy::text::{FontFeatureTag, FontFeatures, FontSourceTemplate, TextColor};
+use bevy::scene::{Scene, bsn};
+use bevy::text::FontSourceTemplate;
 use bevy::ui::widget::Text;
 
 use crate::constants::FaIcon;
-use crate::font_styles::{InheritableFont, PlumeFontSize};
-use crate::theme::{ThemeSlot, ThemeTextSlot, ThemedText};
+use crate::font_styles::InheritableFont;
+use crate::theme::ThemedText;
 
 /// A caption within, say, a button using inherited color.
 pub fn caption(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         ThemedText
-    }
-}
-
-/// A caption at 1.25× the inherited size — dialog and pane headers.
-pub fn caption_large(text: impl Into<String>) -> impl Scene {
-    bsn! {
-        Text(text)
-        InheritableFont {
-            font_size: PlumeFontSize::Em(1.25),
-        }
-        ThemedText
-    }
-}
-
-/// A caption in a fixed raw color, for one-offs outside the theme.
-pub fn caption_color(text: impl Into<String>, color: Color) -> impl Scene {
-    bsn! {
-        Text(text)
-        ThemedText
-        template_value(TextColor(color))
-        // Keeps the inherited themed color from overwriting it.
-        PropagateOver<TextColor>
-    }
-}
-
-/// A caption colored from a theme slot instead of the inherited color.
-pub fn caption_slot(text: impl Into<String>, slot: ThemeSlot) -> impl Scene {
-    bsn! {
-        Text(text)
-        ThemedText
-        template_value(ThemeTextSlot(slot))
-    }
-}
-
-/// A caption in small-caps, whatever the input casing; face and size inherit.
-pub fn caption_small_caps(text: impl Into<String>) -> impl Scene {
-    bsn! {
-        Text(text)
-        ThemedText
-        InheritableFont {
-            font_features: FontFeatures::from([
-                FontFeatureTag::SMALL_CAPS,
-                FontFeatureTag::CAPS_TO_SMALL_CAPS,
-            ]),
-        }
     }
 }
 
@@ -73,5 +26,47 @@ pub fn fa_icon(icon: FaIcon) -> impl Scene {
         InheritableFont {
             font: FontSourceTemplate::Handle(font_path),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use bevy::MinimalPlugins;
+    use bevy::app::App;
+    use bevy::asset::{AssetApp, AssetPlugin};
+    use bevy::scene::WorldSceneExt;
+
+    use super::*;
+    use crate::font_styles::{PlumeFontSize, small_caps};
+
+    // Both modifiers patch one `InheritableFont`, so bsn has to merge the two
+    // patches rather than let the second replace the first.
+    #[test]
+    fn caption_modifiers_compose() {
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            AssetPlugin::default(),
+            bevy::scene::ScenePlugin,
+        ));
+        app.init_asset::<bevy::text::Font>();
+        let world = app.world_mut();
+        let entity = world
+            .spawn_scene(bsn! {
+                caption("Hello")
+                small_caps()
+                InheritableFont { font_size: PlumeFontSize::Em(1.25) }
+            })
+            .expect("scene spawns")
+            .id();
+        let font = world
+            .get::<InheritableFont>(entity)
+            .expect("InheritableFont present");
+        assert_eq!(
+            font.font_size,
+            Some(PlumeFontSize::Em(1.25)),
+            "size survived"
+        );
+        assert!(font.font_features.is_some(), "features survived");
     }
 }

@@ -9,8 +9,8 @@ use bevy_jp_plume::retained::{
     PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
     PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
     PlumeToggleSwitch, PlumeToolButton, Screen, SectionCollapsed, Selected, SetValue, SliderValue,
-    ThemeBackgroundSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
-    flex_spacer, row, screen, separator, space, tab_body,
+    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, fa_icon, flex_spacer, row, screen,
+    separator, small_caps, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -669,7 +669,8 @@ fn header() -> impl Scene {
         row()
         Children [
             fa_icon(font_awesome::solid::SLIDERS),
-            caption_small_caps("Inspector"),
+            caption("Inspector")
+            small_caps(),
             flex_spacer(),
             (
                 @PlumeToolButton {
@@ -744,7 +745,7 @@ fn material_tab(m: Material) -> impl Scene {
         @PlumeScrollArea {
             @contents: bsn_list![
                 @PlumeSection {
-                    @header: bsn! { caption_small_caps("Surface") },
+                    @header: bsn! { caption("Surface") small_caps() },
                     @contents: bsn_list![
                         (
                             row()
@@ -769,7 +770,7 @@ fn material_tab(m: Material) -> impl Scene {
                     ],
                 },
                 @PlumeSection {
-                    @header: bsn! { caption_small_caps("Shading") },
+                    @header: bsn! { caption("Shading") small_caps() },
                     @contents: bsn_list![
                         radio_row("Blend", blend, Bound::Blend),
                         radio_row("Cull", cull, Bound::Cull),
@@ -779,7 +780,7 @@ fn material_tab(m: Material) -> impl Scene {
                 },
                 (
                     @PlumeSection {
-                        @header: bsn! { caption_small_caps("Color picker") },
+                        @header: bsn! { caption("Color picker") small_caps() },
                         @contents: bsn_list![
                             (
                                 @PlumeColorPicker { @initial_color: base }

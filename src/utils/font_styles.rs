@@ -11,8 +11,10 @@ use bevy::ecs::system::{Commands, Local, Query, Res};
 use bevy::ecs::template::FromTemplate;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
+use bevy::scene::{Scene, bsn};
 use bevy::text::{
-    EditableText, EmSize, FontFeatures, FontSize, FontSource, RemSize, TextColor, TextFont,
+    EditableText, EmSize, FontFeatureTag, FontFeatures, FontSize, FontSource, RemSize, TextColor,
+    TextFont,
 };
 use bevy::ui::ComputedUiRenderTargetInfo;
 #[cfg(debug_assertions)]
@@ -81,6 +83,22 @@ pub struct InheritableFont {
     /// Font features (small caps &c.); `None` inherits the ancestor's.
     #[template(built_in)]
     pub font_features: Option<FontFeatures>,
+}
+
+/// Renders descendant text in small caps, whatever the input casing. Compose it
+/// onto any scene: on a text entity it restyles that text, on a container it
+/// restyles everything under it.
+// Patches the same [`InheritableFont`] a caller may set fields on directly; bsn
+// merges the two patches, so `InheritableFont { font_size }` survives beside it.
+pub fn small_caps() -> impl Scene {
+    bsn! {
+        InheritableFont {
+            font_features: FontFeatures::from([
+                FontFeatureTag::SMALL_CAPS,
+                FontFeatureTag::CAPS_TO_SMALL_CAPS,
+            ]),
+        }
+    }
 }
 
 // Bevy resolves `Val::Em` against a node's own `TextFont`, else its `EmSize`,

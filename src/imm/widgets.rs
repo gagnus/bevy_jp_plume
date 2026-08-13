@@ -38,7 +38,8 @@ use crate::controls::{
     PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
     SelectedIndex, imm_menu_anchor, imm_menu_frame, set_icon_glyph,
 };
-use crate::display::{caption, caption_large, caption_small_caps, fa_icon};
+use crate::display::{caption, fa_icon};
+use crate::font_styles::{InheritableFont, small_caps};
 use crate::utils::numeric::Numeric;
 
 /// Widget calls for immediate-mode systems. Implemented by [`Ui`]; import it
@@ -776,7 +777,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(move || {
                 bsn! {
                     section_frame(
-                        bsn_list![caption_small_caps(header_owned)],
+                        bsn_list![caption(header_owned) small_caps()],
                         true,
                         bsn_list![]
                     )
@@ -1360,7 +1361,9 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
                     name: format!("PlumeDialog({title})").into(),
                     body: Box::new(bsn_list![]),
                     header: Some(DialogHeader {
-                        title: Box::new(bsn_list![caption_large(title)]),
+                        title: Box::new(
+                            bsn_list![caption(title) InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }],
+                        ),
                         closable,
                         movable,
                     }),

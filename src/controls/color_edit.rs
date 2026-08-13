@@ -28,8 +28,8 @@ use crate::containers::{
 };
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
-use crate::display::{caption_small_caps, fa_icon};
-use crate::font_styles::TextStyleRelay;
+use crate::display::{caption, fa_icon};
+use crate::font_styles::{TextStyleRelay, small_caps};
 use crate::theme::ThemeTextToken;
 use crate::tokens;
 use crate::utils::hierarchy::{descendant, nearest_with};
@@ -144,7 +144,8 @@ fn on_swatch_click(
                         Children [
                             fa_icon(font_awesome::solid::PALETTE),
                             (
-                                caption_small_caps("Color Edit")
+                                caption("Color Edit")
+                                small_caps()
                                 Node { width: size::em_from_px(100.0) }
                                 ThemeTextToken(tokens::TEXT_MAIN)
                             ),

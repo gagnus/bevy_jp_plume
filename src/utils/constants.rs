@@ -33,6 +33,8 @@ pub mod fonts {
 pub mod size {
     use bevy::ui::{Val, Val2};
 
+    use crate::font_styles::PlumeFontSize;
+
     /// The standard font size in pixels: the px the em constants were designed
     /// at (see [`em_from_px`]), and the value the `RemSize` resource is set to
     /// at plugin init. Runtime sizing reads `RemSize`, not this — an app is free
@@ -56,6 +58,10 @@ pub mod size {
 
     /// Height for dialog headers
     pub const DIALOG_HEADER_HEIGHT: Val = em_from_px(40.0);
+
+    /// Text size for dialog headers, as a multiple of the inherited
+    /// size — set it as `InheritableFont { font_size: … }`.
+    pub const DIALOG_HEADER_TEXT_SIZE: PlumeFontSize = PlumeFontSize::Em(1.25);
 
     /// Width and height of a radio button
     pub const RADIO_SIZE: Val = em_from_px(18.0);

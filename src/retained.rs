@@ -31,10 +31,7 @@ pub use crate::controls::{
     PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter,
     ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, select_options,
 };
-pub use crate::display::{
-    Tooltip, TooltipContent, TooltipSettings, caption, caption_color, caption_large, caption_slot,
-    caption_small_caps, fa_icon,
-};
+pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, fa_icon};
 pub use crate::theme::components::{
     Flat, GradientAmount, Inert, InheritableTextColor, InheritableThemeTextSlot,
     ThemeBackgroundSlot, ThemeBorderSlot, ThemeTextSlot, ThemedText, control_box_shadow,
@@ -43,5 +40,5 @@ pub use crate::theme::components::{
 pub use crate::utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator};
 pub use crate::utils::font_styles::{
-    FontStyleSystems, InheritableFont, PlumeFontSize, TextStyleRelay,
+    FontStyleSystems, InheritableFont, PlumeFontSize, TextStyleRelay, small_caps,
 };
