@@ -44,7 +44,7 @@ impl PlumeDisclosure {
                 justify_content: JustifyContent::Center,
             }
             Checkbox
-            PlumeDisclosure
+            DisclosureFrame
             TabIndex(0)
             FocusIndicator
             on(checkbox_self_update)
@@ -65,6 +65,13 @@ impl PlumeDisclosure {
     }
 }
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeDisclosure`] — see
+// docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct DisclosureFrame;
+
 // Marker for the rotating chevron glyph inside a [`PlumeDisclosure`].
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -74,10 +81,10 @@ fn update_disclosure_styles(
     q_disclosures: Query<
         (Entity, Has<InteractionDisabled>, Has<Checked>),
         (
-            With<PlumeDisclosure>,
-            // Added<PlumeDisclosure> guarantees the initial style pass on spawn.
+            With<DisclosureFrame>,
+            // Added<DisclosureFrame> guarantees the initial style pass on spawn.
             Or<(
-                Added<PlumeDisclosure>,
+                Added<DisclosureFrame>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
             )>,
@@ -96,7 +103,7 @@ fn update_disclosure_styles(
 }
 
 fn update_disclosure_styles_remove(
-    q_disclosures: Query<(Entity, Has<InteractionDisabled>, Has<Checked>), With<PlumeDisclosure>>,
+    q_disclosures: Query<(Entity, Has<InteractionDisabled>, Has<Checked>), With<DisclosureFrame>>,
     q_children: Query<&Children>,
     mut q_chevron: Query<&mut AnimState, With<DisclosureChevron>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,

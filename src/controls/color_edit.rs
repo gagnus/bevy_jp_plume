@@ -52,8 +52,15 @@ pub struct PlumeColorEditProps {
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeColorEditProps)]
 #[reflect(Component, Clone, Default)]
-#[require(ColorPickerValue)]
 pub struct PlumeColorEdit;
+
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeColorEdit`], and it carries the
+// control's requirements for the same reason — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+#[require(ColorPickerValue)]
+struct ColorEditFrame;
 
 // Marks the swatch shown on the closed control (also the click target that opens it).
 #[derive(Component, Default, Clone, Reflect)]
@@ -76,7 +83,7 @@ impl PlumeColorEdit {
             Node {
                 align_items: AlignItems::Start,
             }
-            PlumeColorEdit
+            ColorEditFrame
             // Without this the swatch below is off the chain — no `EmSize`.
             TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
@@ -102,11 +109,11 @@ fn on_swatch_click(
     mut click: On<Pointer<Press>>,
     q_childof: Query<&ChildOf>,
     q_is_swatch: Query<(), With<ColorEditSwatch>>,
-    q_is_edit: Query<(), With<PlumeColorEdit>>,
+    q_is_edit: Query<(), With<ColorEditFrame>>,
     q_children: Query<&Children>,
     q_popup_marker: Query<(), With<ColorEditPopup>>,
     q_socket: Query<(), With<PopupSocket>>,
-    q_value: Query<&ColorPickerValue, With<PlumeColorEdit>>,
+    q_value: Query<&ColorPickerValue, With<ColorEditFrame>>,
     mut commands: Commands,
 ) {
     // Only react to presses landing on a swatch (its border-overlay child included).
@@ -164,7 +171,7 @@ fn sync_edit_from_picker(
         (With<ColorEditPicker>, Changed<ColorPickerValue>),
     >,
     q_childof: Query<&ChildOf>,
-    q_is_edit: Query<(), With<PlumeColorEdit>>,
+    q_is_edit: Query<(), With<ColorEditFrame>>,
     q_children: Query<&Children>,
     q_swatch_marker: Query<(), With<ColorEditSwatch>>,
     mut q_root_value: Query<&mut ColorPickerValue, Without<ColorEditPicker>>,
@@ -192,13 +199,13 @@ fn sync_edit_from_picker(
 // An external or imm-driven write to the public value: push it into the picker and
 // onto the swatch.
 fn sync_edit_to_picker(
-    q_edit: Query<(Entity, &ColorPickerValue), (With<PlumeColorEdit>, Changed<ColorPickerValue>)>,
+    q_edit: Query<(Entity, &ColorPickerValue), (With<ColorEditFrame>, Changed<ColorPickerValue>)>,
     q_children: Query<&Children>,
     q_picker_marker: Query<(), With<ColorEditPicker>>,
     q_swatch_marker: Query<(), With<ColorEditSwatch>>,
     mut q_picker_value: Query<
         &mut ColorPickerValue,
-        (With<ColorEditPicker>, Without<PlumeColorEdit>),
+        (With<ColorEditPicker>, Without<ColorEditFrame>),
     >,
     mut q_swatch: Query<&mut ColorSwatchValue>,
 ) {

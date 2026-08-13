@@ -69,10 +69,16 @@ pub struct SelectedIndex(pub usize);
 #[reflect(Component, Default)]
 struct SelectCaption;
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeSelect`] — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+struct SelectFrame;
+
 // Marker for the select's dropdown button (hosts the headless `MenuButton`).
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
-struct PlumeSelectButton;
+struct SelectButton;
 
 // The option labels, in popup order; the popup rows are rebuilt from these on
 // every open.
@@ -139,7 +145,7 @@ impl PlumeSelect {
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
             }
-            PlumeSelect
+            SelectFrame
             TextStyleRelay
             template_value(SelectOptions(options))
             template_value(SelectedIndex(selected))
@@ -162,7 +168,7 @@ impl PlumeSelect {
                     }
                     ActivateOnPress
                     MenuButton
-                    PlumeSelectButton
+                    SelectButton
                     Node {
                         flex_grow: 1.0,
                     }
@@ -317,6 +323,7 @@ impl PlumeSelectOption {
                 column_gap: size::SPACE,
                 padding: UiRect::horizontal(size::SPACE),
             }
+            SelectOptionRow
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextToken(tokens::SELECT_OPTION_TEXT)
             TextStyleRelay
@@ -342,6 +349,12 @@ impl PlumeSelectOption {
 #[reflect(Component, Default)]
 struct SelectOptionIndex(usize);
 
+// Plain marker every option row carries. The systems key on this rather than
+// [`PlumeSelectOption`] — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct SelectOptionRow;
+
 // Marker for the selected-row tick.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -351,7 +364,7 @@ struct SelectOptionCheck;
 // existence is the select's open state.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
-struct PlumeSelectPopup;
+struct SelectPopup;
 
 // Marker for the ghost-row overlay awaiting measurement.
 #[derive(Component, Default, Clone, Reflect)]
@@ -381,7 +394,7 @@ fn open_select_popup(
             &SelectMaxVisible,
             &ComputedNode,
         ),
-        With<PlumeSelect>,
+        With<SelectFrame>,
     >,
     commands: &mut Commands,
 ) {
@@ -421,7 +434,7 @@ fn open_select_popup(
                     ),
                 ],
             }
-            PlumeSelectPopup
+            SelectPopup
             template_value(MenuFocusState::Opening(nav))
             // The select's own chrome tokens, over the generic popup ones.
             ThemeBackgroundToken(tokens::SELECT_BG)
@@ -439,8 +452,8 @@ fn close_select_popup(
     popup: Entity,
     q_parents: &Query<&ChildOf>,
     q_children: &Query<&Children>,
-    q_is_select: &Query<(), With<PlumeSelect>>,
-    q_button: &Query<(), With<PlumeSelectButton>>,
+    q_is_select: &Query<(), With<SelectFrame>>,
+    q_button: &Query<(), With<SelectButton>>,
     focus: &mut InputFocus,
     commands: &mut Commands,
 ) {
@@ -467,10 +480,10 @@ fn on_menu_event(
     mut ev: On<MenuEvent>,
     q_children: Query<&Children>,
     q_parents: Query<&ChildOf>,
-    q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_popup: Query<(), With<SelectPopup>>,
     q_socket: Query<(), With<PopupSocket>>,
-    q_buttons: Query<(), With<PlumeSelectButton>>,
-    q_is_select: Query<(), With<PlumeSelect>>,
+    q_buttons: Query<(), With<SelectButton>>,
+    q_is_select: Query<(), With<SelectFrame>>,
     q_select: Query<
         (
             &SelectOptions,
@@ -478,7 +491,7 @@ fn on_menu_event(
             &SelectMaxVisible,
             &ComputedNode,
         ),
-        With<PlumeSelect>,
+        With<SelectFrame>,
     >,
     mut commands: Commands,
     mut focus: ResMut<InputFocus>,
@@ -551,11 +564,11 @@ fn on_menu_event(
 // Event is sent on the options listbox.
 fn close_popup_on_reselect(
     ev: On<ReselectListRow>,
-    q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_popup: Query<(), With<SelectPopup>>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
-    q_is_select: Query<(), With<PlumeSelect>>,
-    q_button: Query<(), With<PlumeSelectButton>>,
+    q_is_select: Query<(), With<SelectFrame>>,
+    q_button: Query<(), With<SelectButton>>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -578,12 +591,12 @@ fn close_popup_on_reselect(
 #[allow(clippy::too_many_arguments)]
 fn re_emit_listbox_value(
     ev: On<ValueChange<Entity>>,
-    q_select: Query<(), With<PlumeSelect>>,
+    q_select: Query<(), With<SelectFrame>>,
     q_option_index: Query<&SelectOptionIndex>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,
-    q_popup: Query<(), With<PlumeSelectPopup>>,
-    q_button: Query<(), With<PlumeSelectButton>>,
+    q_popup: Query<(), With<SelectPopup>>,
+    q_button: Query<(), With<SelectButton>>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -623,12 +636,9 @@ fn re_emit_listbox_value(
 }
 
 fn sync_selected_index(
-    q_newly_selected: Query<
-        (Entity, &SelectOptionIndex),
-        (Added<Selected>, With<PlumeSelectOption>),
-    >,
+    q_newly_selected: Query<(Entity, &SelectOptionIndex), (Added<Selected>, With<SelectOptionRow>)>,
     q_parents: Query<&ChildOf>,
-    mut q_select: Query<&mut SelectedIndex, With<PlumeSelect>>,
+    mut q_select: Query<&mut SelectedIndex, With<SelectFrame>>,
 ) {
     for (row, row_index) in q_newly_selected.iter() {
         let Some(select_ent) = q_parents
@@ -647,7 +657,7 @@ fn sync_selected_index(
 
 fn select_on_set_selected_index(
     ev: On<SetValue<usize>>,
-    mut q_select: Query<(&SelectOptions, &mut SelectedIndex), With<PlumeSelect>>,
+    mut q_select: Query<(&SelectOptions, &mut SelectedIndex), With<SelectFrame>>,
 ) {
     let Ok((options, mut index)) = q_select.get_mut(ev.entity) else {
         return;
@@ -662,7 +672,7 @@ fn sync_caption(
     q_selects: Query<
         (Entity, &SelectedIndex, &SelectOptions),
         (
-            With<PlumeSelect>,
+            With<SelectFrame>,
             Or<(Changed<SelectedIndex>, Changed<SelectOptions>)>,
         ),
     >,
@@ -689,9 +699,9 @@ fn sync_caption(
 // An open popup's `Selected` row follows the root's `SelectedIndex` (covers
 // programmatic writes; row clicks already set both).
 fn sync_rows_from_index(
-    q_changed: Query<(Entity, &SelectedIndex), (With<PlumeSelect>, Changed<SelectedIndex>)>,
+    q_changed: Query<(Entity, &SelectedIndex), (With<SelectFrame>, Changed<SelectedIndex>)>,
     q_children: Query<&Children>,
-    q_rows: Query<(&SelectOptionIndex, Has<Selected>), With<PlumeSelectOption>>,
+    q_rows: Query<(&SelectOptionIndex, Has<Selected>), With<SelectOptionRow>>,
     mut commands: Commands,
 ) {
     for (select_ent, index) in q_changed.iter() {
@@ -716,13 +726,13 @@ fn sync_rows_from_index(
 // select root must be mirrored onto the internal menu button (which also restyles it).
 #[allow(clippy::too_many_arguments)]
 fn sync_select_disabled(
-    q_newly_disabled: Query<Entity, (With<PlumeSelect>, Added<InteractionDisabled>)>,
+    q_newly_disabled: Query<Entity, (With<SelectFrame>, Added<InteractionDisabled>)>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
-    q_is_select: Query<(), With<PlumeSelect>>,
+    q_is_select: Query<(), With<SelectFrame>>,
     q_children: Query<&Children>,
     q_parents: Query<&ChildOf>,
-    q_button: Query<(), With<PlumeSelectButton>>,
-    q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_button: Query<(), With<SelectButton>>,
+    q_popup: Query<(), With<SelectPopup>>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -756,9 +766,9 @@ fn sync_select_disabled(
 
 // Keep an open popup at least as wide as its select.
 fn sync_select_width(
-    q_selects: Query<(Entity, &ComputedNode), With<PlumeSelect>>,
+    q_selects: Query<(Entity, &ComputedNode), With<SelectFrame>>,
     q_children: Query<&Children>,
-    q_popup: Query<(), With<PlumeSelectPopup>>,
+    q_popup: Query<(), With<SelectPopup>>,
     mut q_node: Query<&mut Node>,
 ) {
     for (select_ent, computed) in q_selects.iter() {
@@ -786,7 +796,7 @@ fn measure_select_width(
     q_measures: Query<(Entity, &ChildOf, Option<&Inherited<TextFont>>), With<SelectMeasure>>,
     q_children: Query<&Children>,
     q_labels: Query<(&Text, Option<&TextFont>), Without<SelectOptionCheck>>,
-    q_button: Query<(), With<PlumeSelectButton>>,
+    q_button: Query<(), With<SelectButton>>,
     q_caption: Query<(), With<SelectCaption>>,
     q_computed: Query<&ComputedNode>,
     rem_size: Res<RemSize>,
@@ -885,7 +895,7 @@ fn update_option_styles(
             &InheritableThemeTextToken,
         ),
         (
-            With<PlumeSelectOption>,
+            With<SelectOptionRow>,
             Or<(
                 Changed<Hovered>,
                 Added<Selected>,
@@ -924,7 +934,7 @@ fn update_option_styles_remove(
             Option<&ThemeBackgroundToken>,
             &InheritableThemeTextToken,
         ),
-        With<PlumeSelectOption>,
+        With<SelectOptionRow>,
     >,
     q_children: Query<&Children>,
     q_check: Query<(), With<SelectOptionCheck>>,

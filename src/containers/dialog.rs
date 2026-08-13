@@ -255,7 +255,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     {title},
                     // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
                     flex_spacer(),
-                    {closable.then(|| bsn_list![@PlumeDialogClose])},
+                    {closable.then(|| bsn_list![dialog_close()])},
                 ]
             }
         },
@@ -300,25 +300,19 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
     }
 }
 
-/// Close button for dialog header
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct PlumeDialogClose;
-
-impl PlumeDialogClose {
-    /// Scene function for dialog close button.
-    pub fn scene() -> impl Scene {
-        bsn! {
-            @PlumeToolButton {
-                @variant: ButtonVariant::Plain,
-                @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
-            }
-            // Keep the ✕'s hover/press fill flat.
-            Flat
-            on(|activate: On<Activate>, mut commands: Commands| {
-                commands.trigger(RequestClose { source: activate.event_target() });
-            })
+// The header's ✕. A flat tool button plus a close trigger — no chrome of its
+// own, so it is a scene function rather than a scene component.
+pub(crate) fn dialog_close() -> impl Scene {
+    bsn! {
+        @PlumeToolButton {
+            @variant: ButtonVariant::Plain,
+            @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
         }
+        // Keep the ✕'s hover/press fill flat.
+        Flat
+        on(|activate: On<Activate>, mut commands: Commands| {
+            commands.trigger(RequestClose { source: activate.event_target() });
+        })
     }
 }
 

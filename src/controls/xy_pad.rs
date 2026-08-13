@@ -54,7 +54,6 @@ impl Default for PlumeXyPadProps {
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[scene(PlumeXyPadProps)]
-#[require(XyPadDragging)]
 pub struct PlumeXyPad;
 
 /// The pad's current value: `x` left→right, `y` top→bottom, each `0..=1`.
@@ -100,6 +99,14 @@ struct XyPadInner;
 #[reflect(Component, Clone, Default)]
 struct XyPadThumb;
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeXyPad`] — see docs/plume_rules.md.
+// It carries the pad's requirements for the same reason.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+#[require(XyPadDragging)]
+struct XyPadFrame;
+
 impl PlumeXyPad {
     fn scene(props: PlumeXyPadProps) -> impl Scene {
         bsn! {
@@ -111,7 +118,7 @@ impl PlumeXyPad {
                 border: size::HAIRLINE,
                 border_radius: size::CORNER_RADIUS_SMALL,
             }
-            PlumeXyPad
+            XyPadFrame
             XyPadValue
             // Em-sized chrome needs the chain's `EmSize`.
             TextStyleRelay
@@ -219,7 +226,7 @@ fn apply_pointer(
         ),
         With<XyPadInner>,
     >,
-    q_disabled: &Query<Has<InteractionDisabled>, With<PlumeXyPad>>,
+    q_disabled: &Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_lock: &Query<&XyPadLock>,
     q_value: &mut Query<&mut XyPadValue>,
 ) -> Option<Entity> {
@@ -258,7 +265,7 @@ fn on_pointer_press(
         ),
         With<XyPadInner>,
     >,
-    q_disabled: Query<Has<InteractionDisabled>, With<PlumeXyPad>>,
+    q_disabled: Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_lock: Query<&XyPadLock>,
     mut q_value: Query<&mut XyPadValue>,
     ui_scale: Res<UiScale>,
@@ -307,7 +314,7 @@ fn on_drag(
         ),
         With<XyPadInner>,
     >,
-    q_disabled: Query<Has<InteractionDisabled>, With<PlumeXyPad>>,
+    q_disabled: Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_dragging: Query<&XyPadDragging>,
     q_lock: Query<&XyPadLock>,
     mut q_value: Query<&mut XyPadValue>,

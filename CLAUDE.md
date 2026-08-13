@@ -4,6 +4,7 @@ A bevy_ui control framework for game editors. Forked from `bevy_feathers`
 (bevy fork at `../3rdParty/bevy`, branch `local`) and diverging deliberately.
 
 - Code style + Bevy naming: [docs/code_rules.md](docs/code_rules.md)
+- Scene composition + imm/retained rules: [docs/plume_rules.md](docs/plume_rules.md)
 
 ## Plume rules (non-negotiable)
 

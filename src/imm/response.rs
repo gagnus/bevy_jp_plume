@@ -32,7 +32,7 @@ use crate::containers::{
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag,
-    NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden, set_select_max_visible,
+    NoSelectAllOnFocus, NumberInputFrame, ScrollbarHidden, set_select_max_visible,
     text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
@@ -761,7 +761,7 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
             self.e
                 .entity_commands()
                 .queue(move |mut entity: EntityWorldMut| {
-                    if let Some(mut number) = entity.get_mut::<PlumeNumberInput>() {
+                    if let Some(mut number) = entity.get_mut::<NumberInputFrame>() {
                         number.precision = precision;
                     }
                     // Re-touch the value so the text reformats at the new precision.

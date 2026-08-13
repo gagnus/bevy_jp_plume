@@ -94,7 +94,7 @@ impl PlumeSlider {
                 track_click: TrackClick::Snap,
                 orientation: SliderOrientation::Horizontal,
             }
-            PlumeSlider
+            SliderFrame
             // Em-sized chrome needs the chain's `EmSize`.
             TextStyleRelay
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
@@ -174,14 +174,20 @@ impl PlumeSlider {
 #[reflect(Component, Clone, Default)]
 struct SliderTrack;
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeSlider`] — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct SliderFrame;
+
 fn update_slider_styles(
     q_sliders: Query<
         (Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered),
         (
-            With<PlumeSlider>,
-            // Added<PlumeSlider> guarantees the initial style pass on spawn.
+            With<SliderFrame>,
+            // Added<SliderFrame> guarantees the initial style pass on spawn.
             Or<(
-                Added<PlumeSlider>,
+                Added<SliderFrame>,
                 Added<InteractionDisabled>,
                 Changed<Hovered>,
                 Added<Pressed>,
@@ -212,7 +218,7 @@ fn update_slider_styles(
 }
 
 fn update_slider_styles_remove(
-    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<SliderFrame>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
     q_children: Query<&Children>,
@@ -245,7 +251,7 @@ fn update_slider_styles_remove(
 
 // Re-apply slider styles to every slider when the theme changes.
 fn update_slider_styles_theme(
-    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<PlumeSlider>>,
+    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<SliderFrame>>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
@@ -388,7 +394,7 @@ fn update_slider_pos(
     q_sliders: Query<
         (Entity, &SliderValue, &SliderRange),
         (
-            With<PlumeSlider>,
+            With<SliderFrame>,
             Or<(
                 Changed<SliderValue>,
                 Changed<SliderRange>,
@@ -422,7 +428,7 @@ fn update_slider_pos(
 fn grab_thumb_on_press(
     press: On<Pointer<Press>>,
     q_child_of: Query<&ChildOf>,
-    q_slider: Query<Has<InteractionDisabled>, With<PlumeSlider>>,
+    q_slider: Query<Has<InteractionDisabled>, With<SliderFrame>>,
     mut commands: Commands,
 ) {
     // Thumb → track → slider, which carries the Pressed state.

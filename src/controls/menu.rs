@@ -62,7 +62,7 @@ impl PlumeMenuBar {
                 min_height: size::ROW_HEIGHT,
                 padding: UiRect::horizontal(size::SPACE_TIGHT),
             }
-            PlumeMenuBar
+            MenuBarRoot
             AccessibilityNode(accesskit::Node::new(Role::MenuBar))
             TextStyleRelay
         }
@@ -283,6 +283,12 @@ fn imm_frame_on_menu_event(
         _ => {}
     }
 }
+
+// Plain root marker every menu bar carries, for the same reason
+// [`MenuButtonRow`] exists — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct MenuBarRoot;
 
 // Marker every menu button row carries, retained or imm-built. The systems key
 // on this rather than [`PlumeMenuButton`], which is a scene component and so
@@ -628,7 +634,7 @@ fn bar_hover_switch(
         ),
         (Changed<Hovered>, With<MenuButtonRow>),
     >,
-    q_bar: Query<(), With<PlumeMenuBar>>,
+    q_bar: Query<(), With<MenuBarRoot>>,
     q_children: Query<&Children>,
     q_open: Query<(), (With<MenuOpen>, With<MenuButtonRow>)>,
     mut commands: Commands,
@@ -719,7 +725,7 @@ fn submenu_on_click(
 fn menu_on_key(
     mut ev: On<FocusedInput<KeyboardInput>>,
     q_state: Query<(&MenuButtonRole, Has<MenuOpen>, Has<InteractionDisabled>), With<MenuButtonRow>>,
-    q_bar: Query<(), With<PlumeMenuBar>>,
+    q_bar: Query<(), With<MenuBarRoot>>,
     q_links: Query<&MenuAnchorLink>,
     q_parents: Query<&ChildOf>,
     q_children: Query<&Children>,

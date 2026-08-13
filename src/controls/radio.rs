@@ -151,7 +151,6 @@ impl PlumeRadioGroup {
                 row_gap: size::SPACE_TIGHT,
             }
             RadioGroup
-            PlumeRadioGroup
             TextStyleRelay
             on(radio_group_uncheck_others)
         }

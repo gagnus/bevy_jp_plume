@@ -173,6 +173,12 @@ impl Default for PlumePopupProps {
 #[derive(Component, Clone, Copy)]
 pub(crate) struct DismissScope(pub Entity);
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumePopup`] — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct PopupRoot;
+
 // Marker for popups dismissed by a press outside their anchor control.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
@@ -192,7 +198,7 @@ impl PlumePopup {
                 border_radius: size::CORNER_RADIUS,
                 row_gap: size::SPACE,
             }
-            PlumePopup
+            PopupRoot
             ThemeBackgroundToken(tokens::POPUP_BG)
             ThemeBorderToken(tokens::POPUP_BORDER)
             template_value(control_box_shadow())
@@ -253,8 +259,8 @@ fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
 fn on_popup_drag(
     drag: On<Pointer<Drag>>,
     q_childof: Query<&ChildOf>,
-    q_is_popup: Query<(), With<PlumePopup>>,
-    mut q_popup: Query<(&mut UiTransform, Has<Popover>), With<PlumePopup>>,
+    q_is_popup: Query<(), With<PopupRoot>>,
+    mut q_popup: Query<(&mut UiTransform, Has<Popover>), With<PopupRoot>>,
     mut commands: Commands,
 ) {
     let Some(popup) = nearest_with(drag.entity, &q_childof, &q_is_popup) else {

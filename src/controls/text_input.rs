@@ -108,12 +108,20 @@ pub(crate) fn text_input_frame() -> impl Scene {
             min_width: size::em_from_px(40.0),
         }
         DefaultWidth(size::em_from_px(124.0))
-        PlumeTextInput
+        TextInputFrame
         TextStyleRelay
         ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
         EntityCursor::System(bevy::window::SystemCursorIcon::Text)
     }
 }
+
+// Plain root marker on every frame [`text_input_frame`] builds — the number
+// input's included, since it composes the same frame. The systems key on this
+// rather than [`PlumeTextInput`], which is a scene component and so may not be
+// inserted bare into a shared piece — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+struct TextInputFrame;
 
 // Marker for a text-input frame's border overlay; the border tokens are swapped
 // on this, not on the frame.
@@ -202,8 +210,8 @@ pub struct NoSelectAllOnFocus;
 // Relay the frame's [`NoSelectAllOnFocus`] to its field, in both directions. Running as a system
 // (not at insertion time) means the field is always spawned by the time the marker is read.
 fn sync_select_all_on_focus(
-    q_added: Query<Entity, (With<PlumeTextInput>, Added<NoSelectAllOnFocus>)>,
-    q_frames: Query<(), With<PlumeTextInput>>,
+    q_added: Query<Entity, (With<TextInputFrame>, Added<NoSelectAllOnFocus>)>,
+    q_frames: Query<(), With<TextInputFrame>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
     mut removed: RemovedComponents<NoSelectAllOnFocus>,
@@ -235,7 +243,7 @@ fn seed_text_input_value(
     q_seeded: Query<
         (Entity, &TextInputValue),
         (
-            With<PlumeTextInput>,
+            With<TextInputFrame>,
             Added<TextInputValue>,
             Without<TextInputSeeded>,
         ),
@@ -265,7 +273,7 @@ fn mirror_text_input_value(
         (Entity, &ChildOf, &EditableText),
         (With<TextInputField>, Changed<EditableText>),
     >,
-    q_frames: Query<Option<&TextInputValue>, With<PlumeTextInput>>,
+    q_frames: Query<Option<&TextInputValue>, With<TextInputFrame>>,
     focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
@@ -300,7 +308,7 @@ fn mirror_text_input_value(
 
 fn text_input_on_set_value(
     ev: On<SetValue<String>>,
-    q_frames: Query<(), With<PlumeTextInput>>,
+    q_frames: Query<(), With<TextInputFrame>>,
     q_children: Query<&Children>,
     mut q_fields: Query<&mut EditableText, With<TextInputField>>,
 ) {
@@ -386,7 +394,7 @@ fn update_text_cursor_color(
 }
 
 fn update_text_input_styles(
-    q_frames: Query<Entity, (With<PlumeTextInput>, Added<InteractionDisabled>)>,
+    q_frames: Query<Entity, (With<TextInputFrame>, Added<InteractionDisabled>)>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
     q_is_outline: Query<(), With<TextInputOutline>>,
@@ -421,7 +429,7 @@ fn update_text_input_styles(
 }
 
 fn update_text_input_styles_remove(
-    q_frames: Query<(), With<PlumeTextInput>>,
+    q_frames: Query<(), With<TextInputFrame>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
     q_is_outline: Query<(), With<TextInputOutline>>,
@@ -457,7 +465,7 @@ fn update_text_input_styles_remove(
 
 // Restyle every text input when focus moves, so the edited one gets the active border.
 fn update_text_input_styles_focus(
-    q_frames: Query<(Entity, Has<InteractionDisabled>), With<PlumeTextInput>>,
+    q_frames: Query<(Entity, Has<InteractionDisabled>), With<TextInputFrame>>,
     q_children: Query<&Children>,
     q_is_field: Query<(), With<TextInputField>>,
     q_is_outline: Query<(), With<TextInputOutline>>,

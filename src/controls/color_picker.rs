@@ -57,8 +57,15 @@ pub struct PlumeColorPickerProps {
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[scene(PlumeColorPickerProps)]
-#[require(ColorPickerValue)]
 pub struct PlumeColorPicker;
+
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeColorPicker`], and it carries the
+// picker's requirements for the same reason — see docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+#[require(ColorPickerValue)]
+struct ColorPickerFrame;
 
 /// The picker's current color — the public read/write surface. Setting it (from
 /// an app or the imm layer) retargets the picker; the change is folded into the
@@ -145,7 +152,7 @@ impl PlumeColorPicker {
                 column_gap: size::em_from_px(8.0),
                 align_items: AlignItems::Start,
             }
-            PlumeColorPicker
+            ColorPickerFrame
             TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
             Children [
@@ -367,7 +374,7 @@ fn emit_value_change(root: Entity, color: Color, commands: &mut Commands) {
 fn fold_channel_edits(
     q_changed: Query<(Entity, &SliderValue, &ColorPickerChannel), Changed<SliderValue>>,
     q_childof: Query<&ChildOf>,
-    q_is_picker: Query<(), With<PlumeColorPicker>>,
+    q_is_picker: Query<(), With<ColorPickerFrame>>,
     mut q_color: Query<&mut ColorPickerValue>,
     mut commands: Commands,
 ) {
@@ -421,7 +428,7 @@ fn fold_channel_edits(
 fn find_picker_root(
     mut entity: Entity,
     q_childof: &Query<&ChildOf>,
-    q_is_picker: &Query<(), With<PlumeColorPicker>>,
+    q_is_picker: &Query<(), With<ColorPickerFrame>>,
 ) -> Option<Entity> {
     loop {
         if q_is_picker.contains(entity) {

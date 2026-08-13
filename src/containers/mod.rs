@@ -14,8 +14,7 @@ mod tabs;
 
 pub use column::column;
 pub use dialog::{
-    CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogClose,
-    PlumeDialogProps,
+    CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogProps,
 };
 pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_frame};
 pub use flex_spacer::flex_spacer;
@@ -25,7 +24,7 @@ pub use popup::{
     popup_socket,
 };
 pub use row::row;
-pub use screen::{PlumeScreen, screen};
+pub use screen::{Screen, screen};
 pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis, ScrollContentGap};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};

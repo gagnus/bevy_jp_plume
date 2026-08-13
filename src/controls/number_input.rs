@@ -51,15 +51,22 @@ const DRAG_FINE_FACTOR: f32 = 0.1;
 /// without focusing (opt out with [`NoDrag`]). Typing commits on Enter or focus
 /// loss (clamped and rounded to `precision`); Escape or an unparsable entry
 /// reverts; Up/Down step by [`SliderStep`].
-#[derive(SceneComponent, Clone, Reflect)]
+#[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeNumberInputProps)]
 #[reflect(Component, Default, Clone)]
-pub struct PlumeNumberInput {
-    /// Decimal places used to display and commit the value.
-    pub precision: usize,
+pub struct PlumeNumberInput;
+
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeNumberInput`], and it carries the
+// precision for the same reason — see docs/plume_rules.md.
+#[derive(Component, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+pub(crate) struct NumberInputFrame {
+    // Decimal places used to display and commit the value.
+    pub(crate) precision: usize,
 }
 
-impl Default for PlumeNumberInput {
+impl Default for NumberInputFrame {
     fn default() -> Self {
         Self { precision: 2 }
     }
@@ -126,7 +133,7 @@ impl PlumeNumberInput {
             // A value does measure, but a content-sized field would resize as
             // digits come and go, so it keeps a fixed fallback.
             DefaultWidth(size::em_from_px(60.0))
-            PlumeNumberInput { precision: {props.precision} }
+            NumberInputFrame { precision: {props.precision} }
             SliderValue({props.value})
             SliderRange::new(props.min, props.max)
             SliderStep({props.step})
@@ -249,7 +256,7 @@ fn parse_typed(editable_text: &EditableText) -> Option<f32> {
 fn number_input_on_key(
     key_input: On<FocusedInput<KeyboardInput>>,
     mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
-    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange, &SliderStep)>,
+    query_frames: Query<(&NumberInputFrame, &SliderValue, &SliderRange, &SliderStep)>,
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
@@ -307,7 +314,7 @@ fn number_input_on_key(
 fn number_input_on_focus_lost(
     focus_lost: On<FocusLost>,
     mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
-    query_frames: Query<(&PlumeNumberInput, &SliderValue, &SliderRange)>,
+    query_frames: Query<(&NumberInputFrame, &SliderValue, &SliderRange)>,
     mut commands: Commands,
 ) {
     let field = focus_lost.event_target();
@@ -333,7 +340,7 @@ fn number_input_on_focus_lost(
 fn scrubber_on_press(
     mut press: On<Pointer<Press>>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
-    q_frames: Query<Has<InteractionDisabled>, With<PlumeNumberInput>>,
+    q_frames: Query<Has<InteractionDisabled>, With<NumberInputFrame>>,
     mut commands: Commands,
 ) {
     if press.button != PointerButton::Primary {
@@ -359,7 +366,7 @@ fn scrubber_on_press(
 fn scrubber_on_drag_start(
     mut drag_start: On<Pointer<DragStart>>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
-    q_frames: Query<(&SliderValue, &SliderRange, &SliderStep), With<PlumeNumberInput>>,
+    q_frames: Query<(&SliderValue, &SliderRange, &SliderStep), With<NumberInputFrame>>,
     mut commands: Commands,
 ) {
     if drag_start.button != PointerButton::Primary {
@@ -395,12 +402,12 @@ fn scrubber_on_drag(
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
     q_frames: Query<
         (
-            &PlumeNumberInput,
+            &NumberInputFrame,
             &SliderValue,
             &SliderRange,
             Has<InteractionDisabled>,
         ),
-        With<PlumeNumberInput>,
+        With<NumberInputFrame>,
     >,
     keys: Res<ButtonInput<Key>>,
     mut commands: Commands,
@@ -441,7 +448,7 @@ fn scrubber_on_drag(
 fn scrubber_on_drag_end(
     mut drag_end: On<Pointer<DragEnd>>,
     q_scrubbers: Query<(&ChildOf, &NumberInputScrubber)>,
-    q_frames: Query<&SliderValue, With<PlumeNumberInput>>,
+    q_frames: Query<&SliderValue, With<NumberInputFrame>>,
     mut commands: Commands,
 ) {
     if drag_end.button != PointerButton::Primary {
@@ -511,7 +518,7 @@ fn scrubber_on_release(
 fn scrubber_on_cancel(
     mut cancel: On<Pointer<Cancel>>,
     q_scrubbers: Query<(&ChildOf, &NumberInputScrubber)>,
-    q_frames: Query<&SliderValue, With<PlumeNumberInput>>,
+    q_frames: Query<&SliderValue, With<NumberInputFrame>>,
     mut commands: Commands,
 ) {
     let Ok((child_of, scrub)) = q_scrubbers.get(cancel.event_target()) else {
@@ -542,7 +549,7 @@ fn scrubber_on_cancel(
 // the input is disabled, or the frame opted out via [`NoDrag`].
 fn update_scrubber_pickable(
     mut q_scrubbers: Query<(&ChildOf, &mut Pickable), With<NumberInputScrubber>>,
-    q_frames: Query<(Has<NoDrag>, Has<InteractionDisabled>, &Children), With<PlumeNumberInput>>,
+    q_frames: Query<(Has<NoDrag>, Has<InteractionDisabled>, &Children), With<NumberInputFrame>>,
     q_fields: Query<(), With<TextInputField>>,
     focus: Res<InputFocus>,
 ) {
@@ -566,7 +573,7 @@ fn update_scrubber_pickable(
 
 // Reflect any value write (self-commit or external, e.g. a paired slider) into the field's text.
 fn update_number_input_text(
-    query_frames: Query<(&PlumeNumberInput, &SliderValue, &Children), Changed<SliderValue>>,
+    query_frames: Query<(&NumberInputFrame, &SliderValue, &Children), Changed<SliderValue>>,
     mut query_fields: Query<&mut EditableText, With<TextInputField>>,
 ) {
     for (number_input, value, children) in query_frames.iter() {

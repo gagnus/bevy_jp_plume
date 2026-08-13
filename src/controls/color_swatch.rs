@@ -39,7 +39,6 @@ impl PlumeColorSwatch {
                 width: size::ROW_HEIGHT,
                 border_radius: size::CORNER_RADIUS_SMALL,
             }
-            PlumeColorSwatch
             ColorSwatchValue
             // Em-sized chrome needs the chain's `EmSize`.
             TextStyleRelay

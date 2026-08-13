@@ -43,6 +43,7 @@ pub(crate) use menu::{
     MenuButtonRole, MenuOpen, MenuShortcutText, imm_menu_anchor, imm_menu_frame,
 };
 pub use menu::{PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps};
+pub(crate) use number_input::NumberInputFrame;
 use number_input::NumberInputPlugin;
 pub use number_input::{NoDrag, PlumeNumberInput, PlumeNumberInputProps};
 use radio::RadioPlugin;

@@ -40,9 +40,18 @@ pub struct PlumeScrollbarProps {
     pub orientation: ControlOrientation,
 }
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeScrollbar`] — see
+// docs/plume_rules.md.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-struct PlumeScrollbarThumb;
+struct ScrollbarFrame;
+
+// The themed fill inside the bar. Not named `ScrollbarThumb` — that is
+// `bevy_ui_widgets`' own component, which sits on the same entity.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ThemedThumb;
 
 /// Put this on a scrollbar's parent: padding on the scrollbar's own edge reserved
 /// for it while it is visible, reclaimed when the content fits.
@@ -60,7 +69,7 @@ impl PlumeScrollbar {
     /// Scene function for scrollbar.
     pub fn scene(props: PlumeScrollbarProps) -> impl Scene {
         bsn! {
-            PlumeScrollbar
+            ScrollbarFrame
             Scrollbar {
                 target: {props.target},
                 orientation: {props.orientation},
@@ -81,7 +90,7 @@ impl PlumeScrollbar {
                     ScrollbarThumb {
                         border_radius: {size::SCROLLBAR_WIDTH / 2.0},
                     }
-                    PlumeScrollbarThumb
+                    ThemedThumb
                     TextStyleRelay
                     EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 ),
@@ -94,7 +103,7 @@ fn update_scrollbar_thumb_styles(
     q_thumbs: Query<
         (Entity, &Hovered, &ThemeBackgroundToken, &ScrollbarDragState),
         (
-            With<PlumeScrollbarThumb>,
+            With<ThemedThumb>,
             Or<(Changed<Hovered>, Changed<ScrollbarDragState>)>,
         ),
     >,
@@ -115,7 +124,7 @@ fn update_scrollbar_thumb_styles(
 // the headless widget, which otherwise renders a full-length thumb), and
 // reclaim the parent's [`ScrollbarGutter`] while hidden.
 fn update_scrollbar_visibility(
-    mut q_scrollbars: Query<(Entity, &Scrollbar, &mut Visibility), With<PlumeScrollbar>>,
+    mut q_scrollbars: Query<(Entity, &Scrollbar, &mut Visibility), With<ScrollbarFrame>>,
     q_scroll_area: Query<&ComputedNode>,
     q_parents: Query<&ChildOf>,
     q_hidden: Query<(), With<ScrollbarHidden>>,

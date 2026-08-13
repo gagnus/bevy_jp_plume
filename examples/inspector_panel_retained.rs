@@ -6,9 +6,9 @@ use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Activate, Checkable, Checked, ColorSwatchValue, Flat, InheritableFont, InteractionDisabled,
     PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure,
-    PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScreen,
-    PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue,
+    PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
+    PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
+    PlumeToggleSwitch, PlumeToolButton, Screen, SectionCollapsed, Selected, SetValue, SliderValue,
     ThemeBackgroundSlot, Tooltip, ValueChange, caption, caption_small_caps, column, fa_icon,
     flex_spacer, row, screen, separator, space, tab_body,
 };
@@ -183,10 +183,7 @@ fn push_material(
 // The imm twin's `.font_size()` on the panel, as a retained cascade root.
 fn push_ui_scale(
     state: Res<Inspector>,
-    q_panel: Query<
-        (Entity, Option<&InheritableFont>),
-        Or<(With<PlumeScreen>, With<InspectorPanel>)>,
-    >,
+    q_panel: Query<(Entity, Option<&InheritableFont>), Or<(With<Screen>, With<InspectorPanel>)>>,
     mut commands: Commands,
 ) {
     if !state.is_changed() {

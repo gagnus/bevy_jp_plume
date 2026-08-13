@@ -12,9 +12,9 @@ use crate::font_styles::InheritableFont;
 use crate::theme::InheritableThemeTextToken;
 use crate::tokens;
 
-/// Marker component for screens()
+/// Marker every [`screen`] carries; app systems find the root surface by it.
 #[derive(Clone, Default, Component)]
-pub struct PlumeScreen;
+pub struct Screen;
 
 /// Transparent, full-bleed column filling the viewport.
 ///
@@ -23,8 +23,8 @@ pub struct PlumeScreen;
 /// [`Pickable::IGNORE`], so empty areas don't swallow picks.
 pub fn screen() -> impl Scene {
     bsn! {
-        PlumeScreen
-        Name("PlumeScreen")
+        Screen
+        Name("Screen")
         TabGroup::new(0)
         Node {
             display: Display::Flex,

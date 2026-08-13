@@ -55,7 +55,7 @@ impl PlumeToggleSwitch {
                 border_radius: {size::TOGGLE_SIZE.y / 2.0},
             }
             Checkbox
-            PlumeToggleSwitch
+            ToggleSwitchFrame
             // Em-sized chrome needs the chain's `EmSize`.
             TextStyleRelay
             TabIndex(0)
@@ -108,6 +108,13 @@ impl PlumeToggleSwitch {
     }
 }
 
+// Plain root marker, inserted by the scene on both the retained and imm paths.
+// The systems key on this rather than [`PlumeToggleSwitch`] — see
+// docs/plume_rules.md.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ToggleSwitchFrame;
+
 // Marker for the toggle switch border ring
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -128,10 +135,10 @@ fn update_switch_styles(
             &GradientAmount,
         ),
         (
-            With<PlumeToggleSwitch>,
-            // Added<PlumeToggleSwitch> guarantees the initial style pass on spawn.
+            With<ToggleSwitchFrame>,
+            // Added<ToggleSwitchFrame> guarantees the initial style pass on spawn.
             Or<(
-                Added<PlumeToggleSwitch>,
+                Added<ToggleSwitchFrame>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
             )>,
@@ -170,7 +177,7 @@ fn update_switch_styles_remove(
             &ThemeBackgroundToken,
             &GradientAmount,
         ),
-        With<PlumeToggleSwitch>,
+        With<ToggleSwitchFrame>,
     >,
     q_children: Query<&Children>,
     q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
