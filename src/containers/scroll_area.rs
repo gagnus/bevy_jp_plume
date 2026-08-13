@@ -9,9 +9,9 @@ use bevy::ecs::observer::On;
 use bevy::ecs::query::With;
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::{Local, Query, Res};
+use bevy::ecs::system::{Local, Query};
 use bevy::ecs::template::EntityTemplate;
-use bevy::input::mouse::MouseScrollPixelsPerLine;
+use bevy::input::mouse::MouseScrollUnit;
 use bevy::log::warn_once;
 use bevy::math::Rect;
 use bevy::picking::events::{Pointer, Scroll};
@@ -172,7 +172,6 @@ fn relay_scroll_content_gap(
 fn scroll_sideways_on_wheel(
     scroll: On<Pointer<Scroll>>,
     mut query_areas: Query<(&Node, &ComputedNode, &mut ScrollPosition), With<ScrollArea>>,
-    pixels_per_line: Res<MouseScrollPixelsPerLine>,
 ) {
     let Ok((node, computed, mut position)) = query_areas.get_mut(scroll.entity) else {
         return;
@@ -181,14 +180,19 @@ fn scroll_sideways_on_wheel(
     if node.overflow.x != OverflowAxis::Scroll || node.overflow.y == OverflowAxis::Scroll {
         return;
     }
-    let delta = scroll.to_pixels(&pixels_per_line);
+    let delta_y = if scroll.unit == MouseScrollUnit::Line {
+        scroll.y * 16. // note hard coded for my setup, much smaller than the MouseScrollPixelsPerLine 100
+    } else {
+        scroll.y
+    };
+    
     // A tilt wheel or trackpad swipe already arrives on `x`, handled upstream.
-    if delta.x != 0.0 || delta.y == 0.0 {
+    if delta_y == 0.0 {
         return;
     }
     let visible = computed.size() * computed.inverse_scale_factor;
     let content = computed.content_size() * computed.inverse_scale_factor;
-    position.x = (position.x - delta.y).clamp(0.0, (content.x - visible.x).max(0.0));
+    position.x = (position.x - delta_y).clamp(0.0, (content.x - visible.x).max(0.0));
 }
 
 // Installs the sideways wheel mapping and the check for a scroll region that was
