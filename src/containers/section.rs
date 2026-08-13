@@ -23,7 +23,7 @@ use bevy::ui::{
 
 use crate::constants::{font_awesome, size};
 use crate::cursor::EntityCursor;
-use crate::display::fa_icon;
+use crate::display::icon;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
 use crate::tokens;
@@ -161,7 +161,7 @@ pub(crate) fn section_frame(
                 on(toggle_section_collapse)
                 Children [
                     {collapsible.then(|| bsn! {
-                        fa_icon(font_awesome::solid::ANGLE_DOWN)
+                        icon(font_awesome::solid::ANGLE_DOWN)
                         Node { width: size::ICON_WIDTH }
                         SectionChevron
                         template_value(AnimState::rotation(0.0, -FRAC_PI_2))

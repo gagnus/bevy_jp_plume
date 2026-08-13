@@ -28,7 +28,7 @@ use crate::containers::{
 };
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
-use crate::display::{caption, fa_icon};
+use crate::display::{caption, icon};
 use crate::font_styles::{TextStyleRelay, small_caps};
 use crate::theme::ThemeTextToken;
 use crate::tokens;
@@ -142,7 +142,7 @@ fn on_swatch_click(
                     (
                         row()
                         Children [
-                            fa_icon(font_awesome::solid::PALETTE),
+                            icon(font_awesome::solid::PALETTE),
                             (
                                 caption("Color Edit")
                                 small_caps()

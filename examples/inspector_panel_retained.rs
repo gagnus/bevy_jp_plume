@@ -9,7 +9,7 @@ use bevy_jp_plume::retained::{
     PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
     PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
     PlumeToggleSwitch, PlumeToolButton, Screen, SectionCollapsed, Selected, SetValue, SliderValue,
-    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, fa_icon, flex_spacer, row, screen,
+    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, row, screen,
     separator, small_caps, space, tab_body,
 };
 
@@ -510,7 +510,7 @@ fn documents() -> impl Scene {
                     ),
                     (
                         @PlumeToolButton {
-                            @caption: bsn! { fa_icon(font_awesome::solid::PLUS) },
+                            @caption: bsn! { icon(font_awesome::solid::PLUS) },
                             @variant: ButtonVariant::Plain,
                         }
                         Flat
@@ -529,7 +529,7 @@ fn document_tab(slot: usize) -> impl Scene {
     bsn! {
         @PlumeTab {
             @caption: bsn_list![
-                fa_icon(font_awesome::solid::FILE_CODE),
+                icon(font_awesome::solid::FILE_CODE),
                 (
                     // `tab_label`'s box, hand-built because the caption inside it
                     // has to carry the marker `push_documents` writes through.
@@ -559,7 +559,7 @@ fn document_tab(slot: usize) -> impl Scene {
                 ),
                 (
                     @PlumeToolButton {
-                        @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
+                        @caption: bsn! { icon(font_awesome::solid::XMARK) },
                         @variant: ButtonVariant::Plain,
                     }
                     Flat
@@ -587,7 +587,7 @@ fn viewport_hud() -> impl Scene {
                 (
                     row()
                     Children [
-                        fa_icon(font_awesome::solid::CUBES),
+                        icon(font_awesome::solid::CUBES),
                         (
                             caption("")
                             HudCount
@@ -595,7 +595,7 @@ fn viewport_hud() -> impl Scene {
                         separator(),
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { fa_icon(font_awesome::solid::FLOPPY_DISK) },
+                                @caption: bsn! { icon(font_awesome::solid::FLOPPY_DISK) },
                                 @variant: ButtonVariant::Plain,
                             }
                             Flat
@@ -623,7 +623,7 @@ fn viewport() -> impl Scene {
                 row()
                 Children [
                     flex_spacer(),
-                    fa_icon(font_awesome::solid::CUBES),
+                    icon(font_awesome::solid::CUBES),
                     (
                         caption("")
                         ViewportLabel
@@ -668,19 +668,19 @@ fn header() -> impl Scene {
     bsn! {
         row()
         Children [
-            fa_icon(font_awesome::solid::SLIDERS),
+            icon(font_awesome::solid::SLIDERS),
             caption("Inspector")
             small_caps(),
             flex_spacer(),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { fa_icon(font_awesome::solid::FLOPPY_DISK) },
+                    @caption: bsn! { icon(font_awesome::solid::FLOPPY_DISK) },
                 }
                 Tooltip("Save material")
             ),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
+                    @caption: bsn! { icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
                 }
                 Tooltip("Revert to the last saved values")
                 on(|_: On<Activate>, mut s: ResMut<Inspector>| {
@@ -698,7 +698,7 @@ fn tabs(material: Material, nodes: Vec<SceneNode>) -> impl Scene {
                 (
                     @PlumeTab {
                         @caption: bsn_list![
-                            fa_icon(font_awesome::solid::PALETTE),
+                            icon(font_awesome::solid::PALETTE),
                             caption("Material"),
                         ],
                         @target: #material,
@@ -707,7 +707,7 @@ fn tabs(material: Material, nodes: Vec<SceneNode>) -> impl Scene {
                 ),
                 @PlumeTab {
                     @caption: bsn_list![
-                        fa_icon(font_awesome::solid::SITEMAP),
+                        icon(font_awesome::solid::SITEMAP),
                         caption("Hierarchy"),
                     ],
                     @target: #hierarchy,
@@ -808,7 +808,7 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
             (
                 row()
                 Children [
-                    fa_icon(font_awesome::solid::MAGNIFYING_GLASS),
+                    icon(font_awesome::solid::MAGNIFYING_GLASS),
                     (
                         @PlumeTextInput { @placeholder: {Some("Filter…".to_string())} }
                         Node { width: Val::ZERO, flex_grow: 1.0 }
@@ -822,7 +822,7 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
 }
 
 fn node_row(index: usize, node: SceneNode) -> impl Scene {
-    let (name, icon, depth) = (node.name, node.icon, node.depth);
+    let (name, glyph, depth) = (node.name, node.icon, node.depth);
     let parent_of_next = node.expanded;
     bsn! {
         row()
@@ -837,7 +837,7 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
                     s.hierarchy.nodes[index].expanded = ev.value;
                 })
             ),
-            fa_icon(icon),
+            icon(glyph),
             caption(name),
             flex_spacer(),
             (

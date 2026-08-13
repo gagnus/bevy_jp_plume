@@ -22,7 +22,7 @@ use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 
 use crate::constants::{font_awesome, size};
 use crate::cursor::EntityCursor;
-use crate::display::fa_icon;
+use crate::display::icon;
 use crate::focus::FocusIndicator;
 use crate::theme::InheritableThemeTextToken;
 use crate::tokens;
@@ -53,7 +53,7 @@ impl PlumeDisclosure {
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
             Children [
                 (
-                    fa_icon(font_awesome::solid::ANGLE_RIGHT)
+                    icon(font_awesome::solid::ANGLE_RIGHT)
                     DisclosureChevron
                     // The glyph is the pick target's decoration, not a target itself.
                     Pickable::IGNORE

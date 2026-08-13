@@ -31,7 +31,7 @@ pub use crate::controls::{
     PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter,
     ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, select_options,
 };
-pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, fa_icon};
+pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, icon};
 pub use crate::theme::components::{
     Flat, GradientAmount, Inert, InheritableTextColor, InheritableThemeTextSlot,
     ThemeBackgroundSlot, ThemeBorderSlot, ThemeTextSlot, ThemedText, control_box_shadow,

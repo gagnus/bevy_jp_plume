@@ -42,7 +42,7 @@ use crate::containers::{
 };
 use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter, SetValue};
 use crate::cursor::EntityCursor;
-use crate::display::{caption, fa_icon};
+use crate::display::{caption, icon};
 use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
 use crate::theme::{
@@ -176,7 +176,7 @@ impl PlumeSelect {
                         Node {
                             flex_grow: 1.0,
                         },
-                        fa_icon(font_awesome::solid::ANGLE_DOWN),
+                        icon(font_awesome::solid::ANGLE_DOWN),
                     ]
                 ),
                 popup_socket(),
@@ -332,7 +332,7 @@ impl PlumeSelectOption {
             Children [
                 (
                     // Hidden ticks still occupy layout, so every label shares the gutter.
-                    fa_icon(font_awesome::solid::CHECK)
+                    icon(font_awesome::solid::CHECK)
                     Node {
                         width: size::ICON_WIDTH,
                     }

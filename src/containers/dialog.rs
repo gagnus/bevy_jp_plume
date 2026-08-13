@@ -21,7 +21,7 @@ use crate::containers::{
     ScrollAxis, flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
 };
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
-use crate::display::fa_icon;
+use crate::display::icon;
 use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
     Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
@@ -306,7 +306,7 @@ pub(crate) fn dialog_close() -> impl Scene {
     bsn! {
         @PlumeToolButton {
             @variant: ButtonVariant::Plain,
-            @caption: bsn! { fa_icon(font_awesome::solid::XMARK) },
+            @caption: bsn! { icon(font_awesome::solid::XMARK) },
         }
         // Keep the ✕'s hover/press fill flat.
         Flat

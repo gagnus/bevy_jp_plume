@@ -38,7 +38,8 @@ use crate::controls::{
     PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
     SelectedIndex, imm_menu_anchor, imm_menu_frame, set_icon_glyph,
 };
-use crate::display::{caption, fa_icon};
+use crate::display;
+use crate::display::caption;
 use crate::font_styles::{InheritableFont, small_caps};
 use crate::utils::numeric::Numeric;
 
@@ -453,7 +454,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 bsn! {
                     @PlumeButton {
                         @caption: bsn_list![
-                            fa_icon(icon),
+                            display::icon(icon),
                             caption(label_owned),
                         ],
                     }
@@ -478,7 +479,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeToolButton { @caption: bsn! { fa_icon(icon) } } }
+                bsn! { @PlumeToolButton { @caption: bsn! { display::icon(icon) } } }
             });
         struct ToolGlyph;
         if entity.hash_update_typ::<ToolGlyph>(Some(imm_id(icon.glyph())))
@@ -497,7 +498,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         // glyph within a face reconciles in place rather than respawning — as tool_button does.
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
-            .on_spawn_apply_scene(move || fa_icon(icon));
+            .on_spawn_apply_scene(move || display::icon(icon));
         struct IconGlyph;
         if entity.hash_update_typ::<IconGlyph>(Some(imm_id(icon.glyph())))
             && !entity.will_be_spawned()
@@ -1776,7 +1777,7 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
     }
 }
 
-// Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
+// Set the `glyph` on a tool button's `icon` `Text` child. The font stays as
 // spawned, since the face keys the button's identity.
 
 // Both split directions, which differ only in the axis they hand down. The

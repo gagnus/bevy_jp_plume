@@ -38,7 +38,7 @@ use crate::constants::{font_awesome, size};
 use crate::containers::{PopupSocket, Separator, popup_socket};
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
-use crate::display::{caption, fa_icon};
+use crate::display::{caption, icon};
 use crate::focus::FocusIndicator;
 use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
@@ -150,7 +150,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
         Children [
             (
                 // Check gutter: reserved on every item so labels align.
-                fa_icon(font_awesome::solid::CHECK)
+                icon(font_awesome::solid::CHECK)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCheckIcon
@@ -178,7 +178,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             ),
             (
                 // Submenu caret gutter; only submenus show the glyph.
-                fa_icon(font_awesome::solid::ANGLE_RIGHT)
+                icon(font_awesome::solid::ANGLE_RIGHT)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCaretIcon

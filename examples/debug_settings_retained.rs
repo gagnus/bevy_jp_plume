@@ -6,8 +6,8 @@ use bevy_jp_plume::retained::{
     Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize,
     PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
     PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot,
-    ThemeTextSlot, Tooltip, TooltipContent, ValueChange, caption, close_popup, column, fa_icon,
-    flex_spacer, popup_socket, row, separator, small_caps,
+    ThemeTextSlot, Tooltip, TooltipContent, ValueChange, caption, close_popup, column, flex_spacer,
+    icon, popup_socket, row, separator, small_caps,
 };
 
 #[path = "common/mod.rs"]
@@ -401,7 +401,7 @@ fn footer() -> impl Scene {
                     (
                         @PlumeButton {
                             @caption: bsn_list![
-                                fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
+                                icon(font_awesome::solid::ARROW_ROTATE_LEFT),
                                 caption("Reset to defaults"),
                             ],
                             @variant: ButtonVariant::Outline,
@@ -410,7 +410,7 @@ fn footer() -> impl Scene {
                             (
                                 row()
                                 Children [
-                                    fa_icon(font_awesome::solid::ARROW_ROTATE_LEFT),
+                                    icon(font_awesome::solid::ARROW_ROTATE_LEFT),
                                     caption("Reset to defaults")
                                     template_value(ThemeTextSlot(ThemeSlot::Text0)),
                                 ]

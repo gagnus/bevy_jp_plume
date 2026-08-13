@@ -29,12 +29,12 @@ use crate::constants::{FaIcon, size};
 use crate::containers::{ScrollAxis, scroll_frame, scroll_viewport, scrollbar_node};
 use crate::controls::{PlumeScrollbar, ScrollbarHidden, SelectedIndex, SetValue};
 use crate::cursor::EntityCursor;
-use crate::display::{caption, fa_icon};
+use crate::display::caption;
 use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
-use crate::tokens;
 use crate::utils::anim::{UI_ANIM_RATE, approach};
+use crate::{display, tokens};
 
 // Width the indicator node is spawned at; it is scaled to the selected tab's
 // width from there, so the slide is a transform and never a relayout.
@@ -304,8 +304,8 @@ pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
     bsn! {
         tab_chrome()
         Children [
-            {icon.map(|icon| bsn! {
-                fa_icon(icon)
+            {icon.map(|glyph| bsn! {
+                display::icon(glyph)
                 Node { flex_shrink: 0.0 }
             })},
             tab_label(label),

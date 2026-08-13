@@ -21,7 +21,7 @@ Write a **scene function** (`fn x() -> impl Scene`) when either:
 
 - It is one flat entity of layout or styling with no chrome of its own:
   `column`, `row`, `space`, `separator`, `flex_spacer`, `caption`,
-  `fa_icon`. Arguments are fine; a scene function taking a `String` or a
+  `icon`. Arguments are fine; a scene function taking a `String` or a
   `Val` is still a scene function.
 - It is a *piece* of a composite (next rule).
 
@@ -91,10 +91,13 @@ them.
 ## imm and retained are separate dialects
 
 The two surfaces name things alike where there is no reason to differ —
-`caption`, `separator`, `space`, `flex_spacer` are the same word on both.
-Where they already diverge (`row`/`column` vs `horizontal`/`vertical`,
-`fa_icon` vs `icon`) that is settled and deliberate: each surface reads
-naturally on its own terms. Do not rename one side to match the other.
+`caption`, `separator`, `space`, `flex_spacer`, `icon` are the same word
+on both, and a new pair should match unless it reads badly.
+
+One divergence is settled and deliberate: containers are `row`/`column`
+retained, `horizontal`/`vertical` in imm. Leave it. It also frees
+`horizontal`/`vertical` to mean an *axis* everywhere else
+(`split_horizontal`, `scroll_area_vertical`).
 
 ## Never write a scene component as a bare component
 
