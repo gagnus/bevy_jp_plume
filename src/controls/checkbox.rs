@@ -64,7 +64,7 @@ impl PlumeCheckbox {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                column_gap: size::GAP,
+                column_gap: size::SPACE,
                 min_height: size::ROW_HEIGHT,
             }
             Checkbox

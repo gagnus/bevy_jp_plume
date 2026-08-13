@@ -13,7 +13,7 @@ pub fn row() -> impl Scene {
             display: Display::Flex,
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
-            column_gap: size::GAP,
+            column_gap: size::SPACE,
             // Flex's `auto` minimum refuses to shrink below content, so a nested scroll
             // area only bounds once every container above it can give — on both axes.
             // Re-floor with `.min_height()`/`.min_width()`.

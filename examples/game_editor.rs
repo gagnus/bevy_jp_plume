@@ -303,7 +303,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             .checkable(theme_editor_open);
     })
     .background(bg)
-    .padding(size::GAP / 2.0);
+    .padding(size::SPACE_TIGHT);
 }
 
 fn left_panel(ui: &mut Ui, state: &mut Editor) {
@@ -335,14 +335,13 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
             if depth > 0 {
                 ui.space(em(depth));
             }
-            if has_children {
-                ui.disclosure(&mut node.expanded);
-            } else {
-                ui.space(size::ROW_HEIGHT);
-            }
+            ui.disclosure(&mut node.expanded).visible(has_children);
             ui.icon(node.icon);
             ui.caption(&node.label);
             ui.flex_spacer();
+            // Shown on row hover, and whenever it is hiding something, so a hidden
+            // node still reads as hidden with the pointer elsewhere.
+            let show_eye = ui.hovered() || !node.visible;
             if ui
                 .tool_button(if node.visible {
                     font_awesome::solid::EYE
@@ -350,11 +349,12 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
                     font_awesome::solid::EYE_SLASH
                 })
                 .variant(ButtonVariant::Plain)
+                .inert()
+                .visible(show_eye)
                 .clicked
             {
                 node.visible = !node.visible;
             }
-            ui.space(em(0)); // force gap
         })
         .variant(if is_selected {
             ButtonVariant::Primary

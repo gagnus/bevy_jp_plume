@@ -163,7 +163,7 @@ impl Default for PlumePopupProps {
             dismiss: Default::default(),
             movable: false,
             place_very_close: false,
-            padding: size::GAP_TIGHT.into(),
+            padding: size::SPACE_TIGHT.into(),
         }
     }
 }
@@ -190,7 +190,7 @@ impl PlumePopup {
                 border: size::HAIRLINE,
                 padding: {props.padding},
                 border_radius: size::CORNER_RADIUS,
-                row_gap: size::GAP,
+                row_gap: size::SPACE,
             }
             PlumePopup
             ThemeBackgroundToken(tokens::POPUP_BG)

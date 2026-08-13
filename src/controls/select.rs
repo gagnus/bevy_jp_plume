@@ -259,7 +259,7 @@ impl PlumeSelectOptions {
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
             }
-            template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::PAD).unwrap()))
+            template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::SPACE).unwrap()))
             ListBox
             TextStyleRelay
             // Focusable for arrow-key selection.
@@ -288,9 +288,9 @@ impl PlumeSelectOptions {
                     }
                     Node {
                         position_type: PositionType::Absolute,
-                        right: size::PAD,
-                        top: {size::GAP_TIGHT / 2.0},
-                        bottom: {size::GAP_TIGHT / 2.0},
+                        right: size::SPACE,
+                        top: {size::SPACE_TIGHT / 2.0},
+                        bottom: {size::SPACE_TIGHT / 2.0},
                         width: size::SCROLLBAR_WIDTH,
                     }
                 ),
@@ -314,8 +314,8 @@ impl PlumeSelectOption {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                column_gap: size::GAP,
-                padding: UiRect::horizontal(size::GAP),
+                column_gap: size::SPACE,
+                padding: UiRect::horizontal(size::SPACE),
             }
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextToken(tokens::SELECT_OPTION_TEXT)
@@ -406,7 +406,7 @@ fn open_select_popup(
                 @placement: PopupPlacement::Below,
                 @place_very_close: true,
                 @dismiss: PopupDismiss::FocusOut,
-                @padding: UiRect::vertical(size::GAP_TIGHT),
+                @padding: UiRect::vertical(size::SPACE_TIGHT),
                 @contents: bsn_list![
                     (
                         @PlumeSelectOptions {
@@ -855,7 +855,7 @@ fn measure_select_width(
                 .map_or(rem_size.0, |computed| computed.em_size.0);
             let chrome = 2.0 * val_px(size::HAIRLINE, em_px)
                 + val_px(size::SCROLLBAR_GUTTER, em_px)
-                + val_px(size::PAD, em_px);
+                + val_px(size::SPACE, em_px);
             let button_target = px((widest_row + chrome).ceil());
             let caption_target = px(widest_label.ceil());
             for descendant in q_children.iter_descendants(child_of.parent()) {

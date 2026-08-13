@@ -147,9 +147,9 @@ pub(crate) fn section_frame(
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::PAD),
+                    padding: UiRect::horizontal(size::SPACE),
                     min_height: size::HEADER_HEIGHT,
-                    column_gap: size::GAP,
+                    column_gap: size::SPACE,
                     border_radius: size::CORNER_RADIUS,
                 }
                 SectionHeader
@@ -183,8 +183,8 @@ pub(crate) fn section_body() -> impl Scene {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            row_gap: size::GAP_TIGHT,
-            padding: size::PAD,
+            row_gap: size::SPACE_TIGHT,
+            padding: size::SPACE,
         }
         SectionBody
         TextStyleRelay

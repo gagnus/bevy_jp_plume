@@ -131,8 +131,8 @@ impl PlumeButton {
                 height: size::ROW_HEIGHT,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                column_gap: size::GAP,
-                padding: UiRect::horizontal(size::GAP),
+                column_gap: size::SPACE,
+                padding: UiRect::horizontal(size::SPACE),
                 border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
             }
             Button
@@ -196,7 +196,7 @@ impl PlumeToolButton {
                 @corners: {props.corners},
             }
             Node {
-                padding: UiRect::horizontal(size::GAP_TIGHT),
+                padding: UiRect::horizontal(size::SPACE_TIGHT),
                 min_width: size::ROW_HEIGHT,
             }
         }

@@ -157,7 +157,7 @@ fn tree_view_dialog(
                     ui.push_id(i, |ui| node_row(ui, node, 0));
                 }
             })
-            .gap(size::GAP_TIGHT)
+            .gap(size::SPACE_TIGHT)
             .height(px(300));
 
             ui.separator();
@@ -199,12 +199,8 @@ fn node_row(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
         if depth > 0 {
             ui.space(px(depth as f32 * INDENT));
         }
-        // A twisty toggles the fold; a leaf reserves the same width so labels align.
-        if has_children {
-            ui.disclosure(&mut node.expanded);
-        } else {
-            ui.space(size::ROW_HEIGHT);
-        }
+        // Hidden on a leaf rather than skipped, so labels stay aligned.
+        ui.disclosure(&mut node.expanded).visible(has_children);
         ui.checkbox(&mut node.checked, &node.label);
     });
 

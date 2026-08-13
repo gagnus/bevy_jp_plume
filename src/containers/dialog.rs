@@ -1,5 +1,4 @@
 //! Movable floating dialog with a draggable title bar and close button.
-use bevy::color::{Alpha, Srgba};
 use bevy::ecs::component::Component;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::Children;
@@ -12,8 +11,8 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::ui::{
-    AlignItems, BorderRadius, BoxShadow, Display, FlexDirection, JustifyContent, LayoutConfig,
-    Node, PositionType, UiRect, Val,
+    AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, LayoutConfig, Node,
+    PositionType, UiRect, Val,
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
@@ -24,7 +23,9 @@ use crate::containers::{
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
 use crate::display::fa_icon;
 use crate::font_styles::{InheritableFont, TextStyleRelay};
-use crate::theme::{Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
+use crate::theme::{
+    Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
+};
 use crate::tokens;
 
 /// Props used to construct a [`PlumeDialog`] scene.
@@ -72,7 +73,7 @@ impl Default for PlumeDialogProps {
             closable: true,
             movable: true,
             header: true,
-            body_padding: UiRect::all(size::PAD),
+            body_padding: UiRect::all(size::SPACE),
         }
     }
 }
@@ -240,9 +241,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::PAD),
+                    padding: UiRect::horizontal(size::SPACE),
                     min_height: size::DIALOG_HEADER_HEIGHT,
-                    column_gap: size::GAP,
+                    column_gap: size::SPACE,
                     border: UiRect::bottom(size::HAIRLINE),
                     border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                 }
@@ -288,13 +289,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
         // A genuine UI root, often parentless: the all-inherit default
         // resolves to the standard font when nothing flows in from above.
         InheritableFont
-        BoxShadow::new(
-            Srgba::BLACK.with_alpha(0.8).into(),
-            size::GAP / 2.0,
-            size::GAP,
-            size::GAP / 2.0,
-            size::GAP / 2.0,
-        )
+        template_value(dialog_box_shadow())
         LayoutConfig {
             use_rounding: false,
         }
@@ -336,7 +331,7 @@ pub struct PlumeDialogBodyProps {
 impl Default for PlumeDialogBodyProps {
     fn default() -> Self {
         Self {
-            padding: UiRect::all(size::PAD),
+            padding: UiRect::all(size::SPACE),
         }
     }
 }
@@ -355,7 +350,7 @@ impl PlumeDialogBody {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Stretch,
-                row_gap: size::GAP,
+                row_gap: size::SPACE,
                 padding: {props.padding},
                 // Shrinking below the content size lets a bounded dialog scroll
                 // instead of pushing content out the bottom. Inert while `Auto`.

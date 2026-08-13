@@ -6,6 +6,7 @@ use core::ops::RangeInclusive;
 use core::panic::Location;
 
 use bevy::asset::AssetServer;
+use bevy::camera::visibility::Visibility;
 use bevy::color::Color;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
@@ -30,7 +31,7 @@ use crate::containers::{
     SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
-    ButtonOutline, ButtonCheckableVariant, ButtonVariant, MenuShortcutText, NoDrag,
+    ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag,
     NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden, set_select_max_visible,
     text_input_placeholder, text_input_suffix,
 };
@@ -49,16 +50,25 @@ use crate::utils::numeric::Numeric;
 /// (`ui.button(…).step(…)` doesn't exist). [`kind::Any`] is the default for widgets
 /// with only the universal builders.
 pub mod kind {
+    use core::marker::PhantomData;
+
     /// Kinds whose value is a stepped/rounded number: slider, number input.
     pub trait Numeric {}
     /// Kinds built on the text-input frame: number input, text edit.
     pub trait Field {}
+    /// Kinds spacing children the app supplied, so the gap between them is the
+    /// app's to set.
+    pub trait Gapped {}
     /// Kinds that lay out direct children on a flex axis: row, column.
     /// Excludes frames with nested bodies (section, dialog).
-    pub trait Container {}
+    pub trait Container: Gapped {}
     /// Kinds whose padding is layout rather than theming, so an app may set it:
     /// Excludes the themed containers (section, dialog).
     pub trait Padded {}
+    /// Padded kinds that paint nothing of their own, leaving the fill, border,
+    /// corners and shadow to the app as well. Excludes the controls that theme
+    /// their own surface (button).
+    pub trait Surface: Padded {}
     /// Kinds an app may give a height: they either center their content (button,
     /// swatch) or hold whatever size they are handed (tabs, scroll area). Excludes
     /// controls whose height is font-driven or fixed geometry (caption, toggle,
@@ -75,16 +85,22 @@ pub mod kind {
     pub struct Any;
     /// `caption`.
     pub struct Caption;
-    /// `button` / `icon_button` / `tool_button`.
-    pub struct Button;
+    /// What fills a button: its own label, laid out by the control.
+    pub struct Label;
+    /// What fills a button: children the app supplied, so their padding and gap
+    /// are the app's to set.
+    pub struct Content;
+    /// `button` / `icon_button` / `tool_button`; `Button<Content>` for
+    /// `button_container`.
+    pub struct Button<C = Label>(PhantomData<C>);
     /// A button whose variant is set: its emphasis is spent, so it can no longer be
     /// made [`checkable`](super::ImmResponse::checkable) — a checked state would have
     /// nothing left to say. Reach a checkable one by calling `checkable` first.
-    pub struct StyledButton;
+    pub struct StyledButton<C = Label>(PhantomData<C>);
     /// A button after [`checkable`](super::ImmResponse::checkable): it carries an
     /// on/off state, so its variant is narrowed to the ones that have chrome left
     /// to spend on it.
-    pub struct CheckableButton;
+    pub struct CheckableButton<C = Label>(PhantomData<C>);
     /// `color_swatch`.
     pub struct Swatch;
     /// `slider`.
@@ -122,6 +138,13 @@ pub mod kind {
     impl Numeric for Number {}
     impl Field for Number {}
     impl Field for Text {}
+    impl Gapped for Row {}
+    impl Gapped for Column {}
+    impl Gapped for Screen {}
+    impl Gapped for Split {}
+    impl Gapped for Button<Content> {}
+    impl Gapped for StyledButton<Content> {}
+    impl Gapped for CheckableButton<Content> {}
     impl Container for Row {}
     impl Container for Column {}
     impl Container for Screen {}
@@ -129,9 +152,15 @@ pub mod kind {
     impl Padded for Row {}
     impl Padded for Column {}
     impl Padded for Screen {}
-    impl Heightable for Button {}
-    impl Heightable for StyledButton {}
-    impl Heightable for CheckableButton {}
+    impl Padded for Button<Content> {}
+    impl Padded for StyledButton<Content> {}
+    impl Padded for CheckableButton<Content> {}
+    impl Surface for Row {}
+    impl Surface for Column {}
+    impl Surface for Screen {}
+    impl<C> Heightable for Button<C> {}
+    impl<C> Heightable for StyledButton<C> {}
+    impl<C> Heightable for CheckableButton<C> {}
     impl Heightable for Swatch {}
     impl Heightable for Tabs {}
     impl Heightable for ScrollArea {}
@@ -139,13 +168,13 @@ pub mod kind {
     impl Heightable for Column {}
     impl Heightable for Scene {}
     impl Heightable for Split {}
-    impl Sizable for Button {}
-    impl Sizable for StyledButton {}
-    impl Sizable for CheckableButton {}
+    impl<C> Sizable for Button<C> {}
+    impl<C> Sizable for StyledButton<C> {}
+    impl<C> Sizable for CheckableButton<C> {}
     impl Sizable for Swatch {}
-    impl ButtonLike for Button {}
-    impl ButtonLike for StyledButton {}
-    impl ButtonLike for CheckableButton {}
+    impl<C> ButtonLike for Button<C> {}
+    impl<C> ButtonLike for StyledButton<C> {}
+    impl<C> ButtonLike for CheckableButton<C> {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -280,6 +309,37 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
+    /// Paint the widget, or hide it while it holds its place in the layout — so
+    /// revealing it moves nothing. Hidden, it takes no clicks and leaves the Tab
+    /// order, itself and everything under it.
+    pub fn visible(mut self, visible: bool) -> Self {
+        struct VisibleKey;
+        if self.key_changed::<VisibleKey>(visible) {
+            self.e.entity_commands().insert(visibility(visible));
+        }
+        self
+    }
+
+    /// [`visible`](Self::visible), except a hidden widget also gives up its
+    /// space and the container closes up around it.
+    pub fn displayed(mut self, displayed: bool) -> Self {
+        struct DisplayedKey;
+        if self.key_changed::<DisplayedKey>(displayed) {
+            self.e
+                .entity_commands()
+                .queue(move |mut entity: EntityWorldMut| {
+                    if let Some(mut node) = entity.get_mut::<Node>() {
+                        node.display = match displayed {
+                            true => Display::Flex,
+                            false => Display::None,
+                        };
+                    }
+                    entity.insert(visibility(displayed));
+                });
+        }
+        self
+    }
+
     /// Tooltip shown after hovering the widget (or any descendant) for a delay.
     pub fn tooltip(mut self, text: impl Into<String>) -> Self {
         struct TooltipKey;
@@ -388,6 +448,13 @@ impl<K> ImmResponse<'_, '_, '_, K> {
                 .insert(InheritableThemeTextSlot(slot));
         }
         self
+    }
+}
+
+fn visibility(visible: bool) -> Visibility {
+    match visible {
+        true => Visibility::Inherited,
+        false => Visibility::Hidden,
     }
 }
 
@@ -542,7 +609,7 @@ impl<K: kind::ButtonLike> ImmResponse<'_, '_, '_, K> {
     }
 }
 
-impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
+impl<'r, 'w, 's, C> ImmResponse<'r, 'w, 's, kind::Button<C>> {
     /// Which corners the button rounds (fill and border alike).
     /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
     pub fn corners(self, corners: RoundedCorners) -> Self {
@@ -555,7 +622,7 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
     pub fn variant(
         mut self,
         variant: ButtonVariant,
-    ) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+    ) -> ImmResponse<'r, 'w, 's, kind::StyledButton<C>> {
         struct VariantKey;
         if self.key_changed::<VariantKey>(format!("{variant:?}")) {
             self.e.entity_commands().insert(variant);
@@ -564,13 +631,13 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
     }
 
     /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` — the confirm button.
-    pub fn primary(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+    pub fn primary(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton<C>> {
         self.variant(ButtonVariant::Primary)
     }
 
     /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` — the confirm button for a
     /// destructive action.
-    pub fn danger(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton> {
+    pub fn danger(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton<C>> {
         self.variant(ButtonVariant::Danger)
     }
 
@@ -578,7 +645,10 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
     /// `value` and `.changed` fires. Call it before choosing chrome — the result takes
     /// [`ButtonCheckableVariant`], which omits the variants that have no emphasis left to
     /// spend on a checked state.
-    pub fn checkable(mut self, value: &mut bool) -> ImmResponse<'r, 'w, 's, kind::CheckableButton> {
+    pub fn checkable(
+        mut self,
+        value: &mut bool,
+    ) -> ImmResponse<'r, 'w, 's, kind::CheckableButton<C>> {
         struct CheckableKey;
         if self.key_changed::<CheckableKey>(true) {
             self.e.entity_commands().insert((
@@ -593,7 +663,7 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::StyledButton> {
+impl<C> ImmResponse<'_, '_, '_, kind::StyledButton<C>> {
     /// Which corners the button rounds (fill and border alike).
     /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
     pub fn corners(self, corners: RoundedCorners) -> Self {
@@ -601,7 +671,7 @@ impl ImmResponse<'_, '_, '_, kind::StyledButton> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::CheckableButton> {
+impl<C> ImmResponse<'_, '_, '_, kind::CheckableButton<C>> {
     /// Which corners the toggle rounds (fill and border alike).
     /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
     pub fn corners(self, corners: RoundedCorners) -> Self {
@@ -963,7 +1033,10 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         }
         self
     }
+}
 
+/// Builders for kinds spacing app-supplied children.
+impl<K: kind::Gapped> ImmResponse<'_, '_, '_, K> {
     /// Set the gap between children, overriding the container's default. Both
     /// `row_gap` and `column_gap` are set; plume containers are single-axis and
     /// don't wrap, so only the main-axis gap has any effect.
@@ -976,7 +1049,7 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
     }
 }
 
-/// Builders for containers whose padding is layout, not theming.
+/// Builders for kinds whose padding is layout, not theming.
 impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
     /// Set the container's padding; `UiRect::ZERO` for a flush, full-bleed
     /// surface such as a menu bar.
@@ -985,7 +1058,10 @@ impl<K: kind::Padded> ImmResponse<'_, '_, '_, K> {
         let padding = padding.into();
         self.set_node::<PadKey, _>(padding, |node, padding| node.padding = padding)
     }
+}
 
+/// Builders for containers that paint no chrome of their own.
+impl<K: kind::Surface> ImmResponse<'_, '_, '_, K> {
     /// Paint the container's background; a plain row, column or screen has no
     /// fill of its own, unlike a section.
     pub fn background(mut self, color: Color) -> Self {

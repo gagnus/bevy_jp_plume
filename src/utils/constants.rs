@@ -68,10 +68,10 @@ pub mod size {
 
     /// Standard corner radius for controls and containers; em, so a scaled
     /// control keeps its rounding in proportion rather than looking sharper.
-    pub const CORNER_RADIUS: Val = em_from_px(6.0);
+    pub const CORNER_RADIUS: Val = em_from_px(4.0);
 
     /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS_SMALL: Val = em_from_px(4.0);
+    pub const CORNER_RADIUS_SMALL: Val = em_from_px(3.0);
 
     /// Increased corner radius for dialogs
     pub const DIALOG_RADIUS: Val = em_from_px(8.0);
@@ -104,18 +104,15 @@ pub mod size {
     /// Clearance between a control's edge and its focus ring.
     pub const FOCUS_RING_OFFSET: Val = Val::Px(2.0);
 
-    /// Tight vertical gap for dense section interiors (section, radio group)
-    pub const GAP_TIGHT: Val = em_from_px(GAP_TIGHT_PX);
-    pub(crate) const GAP_TIGHT_PX: f32 = 4.0;
+    /// Tight spacing for dense chrome: tooltips, popups, menu strips, tool
+    /// buttons, and the interiors of sections and radio groups.
+    pub const SPACE_TIGHT: Val = em_from_px(3.0);
 
-    /// Standard gap: every horizontal gap (rows, caption slots) and page-level
-    /// column gap; also buttons' and list rows' horizontal padding
-    pub const GAP: Val = em_from_px(GAP_PX);
-    pub(crate) const GAP_PX: f32 = 8.0;
-
-    /// Container body padding (dialog, section)
-    pub const PAD: Val = em_from_px(PAD_PX);
-    pub(crate) const PAD_PX: f32 = 6.0;
+    /// Standard spacing, gap and padding alike: between controls, inside a
+    /// control (a button caption, a field's text, an option row, a tab label),
+    /// and around a container's body. One step, so a row of controls is spaced
+    /// the way its controls are inset.
+    pub const SPACE: Val = em_from_px(8.0);
 
     /// Knob diameter (slider thumb, toggle knob)
     pub const KNOB_SIZE: Val = em_from_px(16.0);
@@ -138,14 +135,6 @@ pub mod size {
     /// Width reserved for a FontAwesome glyph icon, em(1) so icons
     /// are square.
     pub const ICON_WIDTH: Val = Val::Em(1.0);
-
-    /// Get inner f32 from a `Val` you know is em
-    pub const fn em_to_f32(p: Val) -> f32 {
-        match p {
-            Val::Em(v) => v,
-            _ => panic!(),
-        }
-    }
 }
 
 /// The FontAwesome face a glyph is drawn from.

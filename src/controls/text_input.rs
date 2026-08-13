@@ -97,13 +97,13 @@ impl PlumeTextInput {
 // (and optional suffix) as children.
 pub(crate) fn text_input_frame() -> impl Scene {
     bsn! {
-        // Horizontal padding = GAP, so the text aligns with button captions; the row
+        // Horizontal padding = SPACE, so the text aligns with button captions; the row
         // centers the editable field and suffix on the cross axis. The border is a
         // child overlay, not a node border, so it stays out of this content box.
         Node {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
-            padding: UiRect::new(size::GAP, size::GAP, size::em_from_px(1.5), Val::ZERO),
+            padding: UiRect::new(size::SPACE, size::SPACE, size::em_from_px(1.5), Val::ZERO),
             border_radius: size::CORNER_RADIUS,
             min_width: size::em_from_px(40.0),
         }
@@ -124,7 +124,7 @@ pub(crate) struct TextInputOutline;
 // The frame's border, on an absolutely-positioned overlay child (as `PlumeButton`
 // does) rather than on the frame node. A node border insets the content box, so a
 // px hairline inside em padding would shift the text by a font-dependent amount;
-// the field's text now sits at exactly `GAP`, matching a button caption at any size.
+// the field's text now sits at exactly `SPACE`, matching a button caption at any size.
 pub(crate) fn text_input_outline() -> impl Scene {
     bsn! {
         Node {
@@ -340,7 +340,7 @@ pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
             position_type: PositionType::Absolute,
             // Matches `text_input_frame`'s horizontal padding: the hint has to start
             // exactly where the text it stands in for would.
-            left: size::GAP,
+            left: size::SPACE,
         }
         TextInputPlaceholder
         TextInputDimText
@@ -354,7 +354,7 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
         Text(text)
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
-            margin: UiRect::left(size::GAP_TIGHT),
+            margin: UiRect::left(size::SPACE_TIGHT),
         }
         TextInputDimText
         // Never steal the click that focuses the field.

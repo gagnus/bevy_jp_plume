@@ -132,8 +132,8 @@ pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
             display: Display::Flex,
             flex_direction: {axis.flex_direction()},
             align_items: AlignItems::Stretch,
-            row_gap: size::GAP,
-            column_gap: size::GAP,
+            row_gap: size::SPACE,
+            column_gap: size::SPACE,
             flex_shrink: 0.0,
         }
         ScrollContent

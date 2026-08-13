@@ -186,7 +186,7 @@ impl PlumeColorPicker {
                         channel_row("R", Channel::R, 3, 1.0),
                         channel_row("G", Channel::G, 3, 1.0),
                         channel_row("B", Channel::B, 3, 1.0),
-                        space(size::GAP_TIGHT / 2.0),
+                        space(size::SPACE_TIGHT / 2.0),
                         channel_row("H", Channel::H, 0, 360.0),
                         channel_row("S", Channel::S, 3, 1.0),
                         channel_row("V", Channel::V, 3, 1.0),

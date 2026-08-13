@@ -220,18 +220,22 @@ pub(crate) fn tabs_frame() -> impl Scene {
 }
 
 // The strip's scrolling frame; the scrollbar stays hidden, since a strip has no
-// room to give it and the wheel is how a crowded one is meant to be moved.
+// room to give it and the wheel is how a crowded one is meant to be moved. The
+// bar's fill sits here rather than on the strip, which a crowded strip's tabs
+// overflow.
 pub(crate) fn tab_strip_frame() -> impl Scene {
     bsn! {
         scroll_frame(ScrollAxis::Horizontal)
         ScrollbarHidden
+        ThemeBackgroundToken(tokens::TAB_BAR_BG)
     }
 }
 
 // The header strip. Tabs are appended as children; the indicator overlays the
 // bottom edge, so the strip carries no padding for the two to share an origin.
 // As the content of a horizontal [`scroll_viewport`], `width: 100%` fills that
-// viewport while the flex `auto` minimum holds it open to the tabs' own minimum.
+// viewport; the tabs of a crowded strip overflow it, so the bar's fill belongs on
+// [`tab_strip_frame`] instead.
 pub(crate) fn tab_strip() -> impl Scene {
     bsn! {
         Node {
@@ -244,7 +248,6 @@ pub(crate) fn tab_strip() -> impl Scene {
             flex_shrink: 0.0,
         }
         TabStrip
-        ThemeBackgroundToken(tokens::TAB_BAR_BG)
         TextStyleRelay
         Children [
             (
@@ -277,8 +280,8 @@ pub(crate) fn tab_chrome() -> impl Scene {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            column_gap: size::GAP,
-            padding: UiRect::horizontal(size::GAP),
+            column_gap: size::SPACE,
+            padding: UiRect::horizontal(size::SPACE),
             min_width: size::TAB_MIN_WIDTH,
             overflow: Overflow::clip(),
         }
@@ -340,8 +343,8 @@ pub fn tab_body() -> impl Scene {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            row_gap: size::GAP_TIGHT,
-            padding: size::PAD,
+            row_gap: size::SPACE_TIGHT,
+            padding: size::SPACE,
             // Fills the height the strip leaves when the container is bounded
             // (no-op when it hugs its content), and `min_height` lets a
             // `scroll_area` inside shrink below its content instead of clipping.

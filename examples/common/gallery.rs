@@ -109,7 +109,7 @@ fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>) {
         ui.flex_spacer();
     })
     .background_slot(ThemeSlot::Neutral0)
-    .padding(size::PAD * 4.0);
+    .padding(size::SPACE * 4.0);
     state.set_if_neq(s);
 }
 
@@ -251,6 +251,6 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
         });
     })
     .background_slot(bg_slot)
-    .padding(size::PAD * 2.0)
+    .padding(size::SPACE * 2.0)
     .corners(RoundedCorners::All);
 }

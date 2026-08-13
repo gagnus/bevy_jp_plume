@@ -496,8 +496,8 @@ fn documents() -> impl Scene {
             (
                 row()
                 Node {
-                    column_gap: size::GAP_TIGHT,
-                    padding: UiRect::right(size::GAP_TIGHT),
+                    column_gap: size::SPACE_TIGHT,
+                    padding: UiRect::right(size::SPACE_TIGHT),
                 }
                 template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
                 Children [
@@ -654,7 +654,7 @@ fn panel() -> impl Scene {
         // the pane it is given.
         Node {
             flex_grow: 1.0,
-            padding: size::PAD,
+            padding: size::SPACE,
         }
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
         Children [
@@ -932,7 +932,7 @@ fn radio_row<T: Options>(label: &str, selected: T, bound: Bound) -> impl Scene {
                 @PlumeRadioGroup
                 Node {
                     flex_direction: FlexDirection::Row,
-                    column_gap: size::GAP,
+                    column_gap: size::SPACE,
                 }
                 template_value(bound)
                 Children [

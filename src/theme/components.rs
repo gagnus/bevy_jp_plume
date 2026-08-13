@@ -90,10 +90,21 @@ fn theme_background_gradient(base: Color, amount: f32) -> BackgroundGradient {
 pub fn control_box_shadow() -> BoxShadow {
     BoxShadow::new(
         Srgba::BLACK.with_alpha(0.5).into(),
-        size::GAP / 4.0,
-        size::GAP / 4.0,
-        size::GAP / 8.0,
-        size::GAP / 4.0,
+        size::em_from_px(2.0),
+        size::em_from_px(2.0),
+        size::em_from_px(1.0),
+        size::em_from_px(2.0),
+    )
+}
+
+/// The standard drop shadow under a dialog.
+pub fn dialog_box_shadow() -> BoxShadow {
+    BoxShadow::new(
+        Srgba::BLACK.with_alpha(0.8).into(),
+        size::em_from_px(4.0),
+        size::em_from_px(8.0),
+        size::em_from_px(4.0),
+        size::em_from_px(4.0),
     )
 }
 

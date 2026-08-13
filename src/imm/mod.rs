@@ -13,6 +13,7 @@ use bevy::ecs::query::FilteredAccessSet;
 use bevy::ecs::system::{SystemMeta, SystemParam, SystemParamValidationError};
 use bevy::ecs::world::World;
 use bevy::ecs::world::unsafe_world_cell::UnsafeWorldCell;
+use bevy::picking::hover::Hovered;
 use bevy_immediate::{
     BevyImmediatePlugin, Imm, ImmCtx, ImmEntity, ImmId, ImmIdBuilder, ImmScopeGuard,
 };
@@ -78,6 +79,31 @@ mod cap_set {
 pub struct Ui<'w, 's>(pub(crate) Imm<'w, 's, PlumeCaps>);
 
 impl<'w, 's> Ui<'w, 's> {
+    /// Is the pointer over the container this scope is filling, or anything
+    /// inside it. Stays true over the container's own children, so chrome
+    /// revealed by it — `ui.tool_button(EYE).visible(hovered)` — doesn't
+    /// vanish as the pointer arrives.
+    pub fn hovered(&mut self) -> bool {
+        let Some(parent) = self.0.current_entity() else {
+            return false;
+        };
+        if let Ok(entity) = self.0.ctx().cap_entities.get(parent) {
+            if let Some(hovered) = entity.get::<Hovered>() {
+                return hovered.get();
+            }
+        } else {
+            return false;
+        }
+        // Containers that never ask about hover don't carry `Hovered`; seed it so
+        // picking starts tracking, answered from the next frame on.
+        self.0
+            .ctx_mut()
+            .commands
+            .entity(parent)
+            .insert(Hovered::default());
+        false
+    }
+
     // The reconciler hands closures a `&mut Imm`; `repr(transparent)` makes the
     // reference cast to the wrapper layout-identical, which is the only reason
     // container bodies can take a `&mut Ui`.

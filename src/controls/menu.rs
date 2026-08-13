@@ -60,7 +60,7 @@ impl PlumeMenuBar {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Stretch,
                 min_height: size::ROW_HEIGHT,
-                padding: UiRect::horizontal(size::GAP_TIGHT),
+                padding: UiRect::horizontal(size::SPACE_TIGHT),
             }
             PlumeMenuBar
             AccessibilityNode(accesskit::Node::new(Role::MenuBar))
@@ -134,9 +134,9 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             display: Display::Flex,
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
-            column_gap: size::GAP,
+            column_gap: size::SPACE,
             min_height: size::ROW_HEIGHT,
-            padding: UiRect::left(size::GAP),
+            padding: UiRect::left(size::SPACE),
             border_radius: size::CORNER_RADIUS_SMALL,
         }
         MenuButtonRow
@@ -199,7 +199,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
             align_items: AlignItems::Stretch,
             min_width: size::em_from_px(160.0),
             border: size::HAIRLINE,
-            padding: UiRect::vertical(size::GAP_TIGHT),
+            padding: UiRect::vertical(size::SPACE_TIGHT),
             border_radius: size::CORNER_RADIUS,
         }
         MenuPopupFrame
@@ -1118,7 +1118,7 @@ fn space_menu_separators(
         if !q_frames.contains(child_of.parent()) {
             continue;
         }
-        node.margin = UiRect::vertical(size::GAP_TIGHT);
+        node.margin = UiRect::vertical(size::SPACE_TIGHT);
         // Em margins need the chain's `EmSize`.
         commands.entity(separator).insert(TextStyleRelay);
     }

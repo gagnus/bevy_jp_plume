@@ -13,7 +13,7 @@ pub const BASE_FONT_PX: f32 = 14.0;
 const GUTTER: f32 = 78.0;
 
 /// Cap on open documents; the retained twin spawns a fixed tab pool this size.
-pub const MAX_DOCUMENTS: usize = 8;
+pub const MAX_DOCUMENTS: usize = 16;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Tab {
@@ -121,7 +121,7 @@ impl Default for Documents {
             active: None,
             next_id: 0,
         };
-        for _ in 0..3 {
+        for _ in 0..MAX_DOCUMENTS {
             documents.add();
         }
         documents.open[0].dirty = false;
@@ -376,24 +376,27 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
                         ui.caption(&document.name).no_wrap();
                     })
                     .clip();
-                    if document.dirty {
-                        ui.icon(font_awesome::solid::CIRCLE)
-                            .no_shrink()
-                            .font_scale(0.5)
-                            .text_color(Color::WHITE);
-                    }
+                    ui.flex_spacer();
+                    let hover = ui.hovered();
+                    ui.icon(font_awesome::solid::CIRCLE)
+                        .no_shrink()
+                        .font_scale(0.5)
+                        .text_color(Color::WHITE)
+                        .displayed(document.dirty && !hover);
                     if ui
                         .tool_button(font_awesome::solid::XMARK)
                         .no_shrink()
                         .flat()
                         .font_scale(0.8)
                         .variant(ButtonVariant::Plain)
+                        .displayed(hover)
                         .clicked
                     {
                         closing.set(Some(document.id));
                     }
                 })
                 // Wide enough that a squeezed tab keeps its ✕ reachable.
+                .width(em(10))
                 .min_width(em(6))
                 // The viewport below the strip is shared, not per-tab.
                 .no_body();
@@ -495,7 +498,7 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
     // and the seam's line is the splitter's divider rather than a panel border.
     .grow()
     .background_slot(ThemeSlot::Neutral1)
-    .padding(size::PAD)
+    .padding(size::SPACE)
     .font_size(BASE_FONT_PX * s.ui_scale);
 }
 
@@ -605,11 +608,7 @@ fn hierarchy_tab(ui: &mut Ui, s: &mut Hierarchy) {
 fn node_row(ui: &mut Ui, node: &mut SceneNode, parent: bool) {
     ui.horizontal(|ui| {
         ui.space(px(node.depth as f32 * 14.0));
-        if parent {
-            ui.disclosure(&mut node.expanded);
-        } else {
-            ui.space(size::ROW_HEIGHT);
-        }
+        ui.disclosure(&mut node.expanded).visible(parent);
         ui.icon(node.icon);
         ui.caption(&node.name).no_wrap();
         ui.flex_spacer();

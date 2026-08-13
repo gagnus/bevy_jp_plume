@@ -91,10 +91,12 @@ pub trait PlumeImm<'w, 's> {
     fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's>;
 
     /// A push button whose content is built by `f` instead of a single label.
+    /// The row it lays that content out in is the app's: chain `.padding()` and
+    /// `.gap()`, which a labelled button doesn't take.
     fn button_container(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Button>;
+    ) -> ImmResponse<'_, 'w, 's, kind::Button<kind::Content>>;
 
     /// Labeled checkbox bound to `value`.
     fn checkbox(&mut self, value: &mut bool, label: &str) -> ImmResponse<'_, 'w, 's>;
@@ -527,7 +529,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn button_container(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
-    ) -> ImmResponse<'_, 'w, 's, kind::Button> {
+    ) -> ImmResponse<'_, 'w, 's, kind::Button<kind::Content>> {
         // Empty caption in the scene; the row's content comes from `f`. Left-aligned
         // so content packs from the leading edge rather than centering like a label.
         let entity = self
@@ -535,7 +537,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(|| {
                 bsn! {
                     @PlumeButton
-                    Node { padding: Val::ZERO, justify_content: JustifyContent::Start }
+                    Node { justify_content: JustifyContent::Start }
                 }
             })
             .add_ui(f);
@@ -827,12 +829,14 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 header,
                 enabled,
                 min_width,
+                width,
                 body,
             } = entry;
             strip_items.push(TabStripItem {
                 header,
                 enabled,
                 min_width,
+                width,
             });
             if slot == index {
                 selected_body = body;
@@ -1105,6 +1109,7 @@ struct TabEntry<'t, 'w, 's, T> {
     header: TabHeader<'t, 'w, 's>,
     enabled: bool,
     min_width: Option<Val>,
+    width: Option<Val>,
     body: Option<Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>>,
 }
 
@@ -1146,6 +1151,7 @@ impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
             header,
             enabled: true,
             min_width: None,
+            width: None,
             body: None,
         });
         ImmTab {
@@ -1191,6 +1197,14 @@ impl<'t, 'w, 's, T, H> ImmTab<'_, 't, 'w, 's, T, H> {
     /// holding more than a label wants a floor that keeps the rest reachable.
     pub fn min_width(self, min_width: Val) -> Self {
         self.entry.min_width = Some(min_width);
+        self
+    }
+
+    /// Fix the tab's width. On its own it is absolute — a crowded strip scrolls
+    /// rather than squeezing the tab; with [`min_width`](Self::min_width) the tab
+    /// squeezes to that floor first.
+    pub fn width(self, width: Val) -> Self {
+        self.entry.width = Some(width);
         self
     }
 }
@@ -1573,6 +1587,7 @@ struct TabStripItem<'t, 'w, 's> {
     header: TabHeader<'t, 'w, 's>,
     enabled: bool,
     min_width: Option<Val>,
+    width: Option<Val>,
 }
 
 // The strip's tabs inside its already-created [`tab_strip_frame`], so a strip with
@@ -1590,6 +1605,7 @@ fn tab_strip_body<'w, 's>(
                         header,
                         enabled,
                         min_width,
+                        width,
                     } = item;
                     let mut tab = match header {
                         // The label and glyph key the tab: a renamed tab
@@ -1605,15 +1621,23 @@ fn tab_strip_body<'w, 's>(
                             .on_spawn_apply_scene(tab_chrome)
                             .add_ui(content),
                     };
-                    struct TabMinWidth;
-                    if let Some(min_width) = min_width
-                        && tab
-                            .hash_update_typ::<TabMinWidth>(Some(imm_id(format!("{min_width:?}"))))
-                    {
+                    // Both sizes in one command: guarded separately, a change to
+                    // either would keep the other's last write.
+                    struct TabSizing;
+                    if tab.hash_update_typ::<TabSizing>(Some(imm_id(format!(
+                        "{width:?}{min_width:?}"
+                    )))) {
                         tab.entity_commands()
                             .queue(move |mut entity: EntityWorldMut| {
                                 if let Some(mut node) = entity.get_mut::<Node>() {
-                                    node.min_width = min_width;
+                                    node.width = width.unwrap_or(Val::Auto);
+                                    node.min_width = min_width.unwrap_or(size::TAB_MIN_WIDTH);
+                                    // A width with no floor under it is absolute:
+                                    // the strip scrolls instead of squeezing.
+                                    node.flex_shrink = match (width, min_width) {
+                                        (Some(_), None) => 0.0,
+                                        _ => 1.0,
+                                    };
                                 }
                             });
                     }

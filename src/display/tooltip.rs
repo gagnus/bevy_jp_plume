@@ -316,8 +316,8 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
     bsn! {
         Node {
             flex_direction: FlexDirection::Column,
-            row_gap: size::GAP_TIGHT,
-            padding: size::GAP_TIGHT,
+            row_gap: size::SPACE_TIGHT,
+            padding: size::SPACE_TIGHT,
             border: size::HAIRLINE,
             border_radius: size::CORNER_RADIUS_SMALL,
         }
