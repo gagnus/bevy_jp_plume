@@ -279,7 +279,6 @@ pub(crate) fn tab_chrome() -> impl Scene {
             justify_content: JustifyContent::Center,
             column_gap: size::GAP,
             padding: UiRect::horizontal(size::GAP),
-            //border_radius: BorderRadius::top(size::CORNER_RADIUS_SMALL),
             min_width: size::TAB_MIN_WIDTH,
             overflow: Overflow::clip(),
         }
@@ -349,6 +348,7 @@ pub fn tab_body() -> impl Scene {
             flex_grow: 1.0,
             min_height: Val::ZERO,
         }
+        ThemeBackgroundToken(tokens::TAB_BODY_BG)
         TextStyleRelay
     }
 }

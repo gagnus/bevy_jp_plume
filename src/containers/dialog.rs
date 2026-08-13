@@ -240,7 +240,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::PAD * 2.0),
+                    padding: UiRect::horizontal(size::PAD),
                     min_height: size::DIALOG_HEADER_HEIGHT,
                     column_gap: size::GAP,
                     border: UiRect::bottom(size::HAIRLINE),

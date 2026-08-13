@@ -406,7 +406,7 @@ fn open_select_popup(
                 @placement: PopupPlacement::Below,
                 @place_very_close: true,
                 @dismiss: PopupDismiss::FocusOut,
-                @padding: UiRect::axes(Val::ZERO, size::GAP_TIGHT),
+                @padding: UiRect::vertical(size::GAP_TIGHT),
                 @contents: bsn_list![
                     (
                         @PlumeSelectOptions {

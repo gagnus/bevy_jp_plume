@@ -99,7 +99,7 @@ fn debug_hub_ui(mut root: PlumeRoot, mut registry: ResMut<DebugDialogRegistry>) 
                     .tool_button(icon)
                     .flat()
                     .checkable(&mut is_open)
-                    .variant(ButtonToggleVariant::Plain)
+                    .variant(ButtonCheckableVariant::Plain)
                     .tooltip(title)
                     .clicked
                 {

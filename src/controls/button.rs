@@ -59,7 +59,7 @@ pub enum ButtonVariant {
 /// say. Checked accents the surface the variant leads with — fill for
 /// [`Normal`](Self::Normal), ink for the unfilled two.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
-pub enum ButtonToggleVariant {
+pub enum ButtonCheckableVariant {
     /// Filled at rest; checked swaps the fill to the accent.
     #[default]
     Normal,
@@ -69,12 +69,12 @@ pub enum ButtonToggleVariant {
     Outline,
 }
 
-impl From<ButtonToggleVariant> for ButtonVariant {
-    fn from(variant: ButtonToggleVariant) -> Self {
+impl From<ButtonCheckableVariant> for ButtonVariant {
+    fn from(variant: ButtonCheckableVariant) -> Self {
         match variant {
-            ButtonToggleVariant::Normal => ButtonVariant::Normal,
-            ButtonToggleVariant::Plain => ButtonVariant::Plain,
-            ButtonToggleVariant::Outline => ButtonVariant::Outline,
+            ButtonCheckableVariant::Normal => ButtonVariant::Normal,
+            ButtonCheckableVariant::Plain => ButtonVariant::Plain,
+            ButtonCheckableVariant::Outline => ButtonVariant::Outline,
         }
     }
 }

@@ -110,7 +110,6 @@ impl PlumeXyPad {
                 min_width: size::em_from_px(16.0),
                 border: size::HAIRLINE,
                 border_radius: size::CORNER_RADIUS_SMALL,
-                padding: UiRect::all(size::HAIRLINE),
             }
             PlumeXyPad
             XyPadValue

@@ -188,22 +188,22 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
                 .enabled(!disabled);
             ui.tool_button(font_awesome::solid::MAGNET)
                 .checkable(&mut state.toggle_plain_a)
-                .variant(ButtonToggleVariant::Plain)
+                .variant(ButtonCheckableVariant::Plain)
                 .tooltip("Plain toggle")
                 .enabled(!disabled);
             ui.tool_button(font_awesome::solid::MAGNET)
                 .checkable(&mut state.toggle_plain_b)
-                .variant(ButtonToggleVariant::Plain)
+                .variant(ButtonCheckableVariant::Plain)
                 .tooltip("Plain toggle")
                 .enabled(!disabled);
             ui.tool_button(font_awesome::solid::BORDER_ALL)
                 .checkable(&mut state.toggle_outline_a)
-                .variant(ButtonToggleVariant::Outline)
+                .variant(ButtonCheckableVariant::Outline)
                 .tooltip("Outline toggle")
                 .enabled(!disabled);
             ui.tool_button(font_awesome::solid::BORDER_ALL)
                 .checkable(&mut state.toggle_outline_b)
-                .variant(ButtonToggleVariant::Outline)
+                .variant(ButtonCheckableVariant::Outline)
                 .tooltip("Outline toggle")
                 .enabled(!disabled);
         });

@@ -475,6 +475,8 @@ pub const TAB_BG_PRESSED: ThemeToken = ThemeToken::new_static("plume.tab.bg.pres
 pub const TAB_BG_DISABLED: ThemeToken = ThemeToken::new_static("plume.tab.bg.disabled");
 /// Tab bg when selected
 pub const TAB_BG_SELECTED: ThemeToken = ThemeToken::new_static("plume.tab.bg.selected");
+/// Tab body bg
+pub const TAB_BODY_BG: ThemeToken = ThemeToken::new_static("plume.tab.body.bg");
 
 // Select
 

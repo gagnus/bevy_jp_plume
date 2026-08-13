@@ -18,7 +18,7 @@ use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::ui::{AlignItems, Node, UiRect, Val};
+use bevy::ui::{AlignItems, Node};
 use bevy::ui_widgets::ValueChange;
 
 use crate::constants::{font_awesome, size};
@@ -134,7 +134,6 @@ fn on_swatch_click(
                 @contents: bsn_list![
                     (
                         row()
-                        Node { padding: UiRect::new(size::PAD, size::PAD, Val::ZERO, size::PAD) }
                         Children [
                             fa_icon(font_awesome::solid::PALETTE),
                             (

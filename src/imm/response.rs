@@ -30,7 +30,7 @@ use crate::containers::{
     SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
-    ButtonOutline, ButtonToggleVariant, ButtonVariant, MenuShortcutText, NoDrag,
+    ButtonOutline, ButtonCheckableVariant, ButtonVariant, MenuShortcutText, NoDrag,
     NoSelectAllOnFocus, PlumeNumberInput, ScrollbarHidden, set_select_max_visible,
     text_input_placeholder, text_input_suffix,
 };
@@ -84,7 +84,7 @@ pub mod kind {
     /// A button after [`checkable`](super::ImmResponse::checkable): it carries an
     /// on/off state, so its variant is narrowed to the ones that have chrome left
     /// to spend on it.
-    pub struct ToggleButton;
+    pub struct CheckableButton;
     /// `color_swatch`.
     pub struct Swatch;
     /// `slider`.
@@ -125,31 +125,27 @@ pub mod kind {
     impl Container for Row {}
     impl Container for Column {}
     impl Container for Screen {}
+    impl Container for Split {}
     impl Padded for Row {}
     impl Padded for Column {}
     impl Padded for Screen {}
     impl Heightable for Button {}
     impl Heightable for StyledButton {}
-    impl Heightable for ToggleButton {}
+    impl Heightable for CheckableButton {}
     impl Heightable for Swatch {}
     impl Heightable for Tabs {}
     impl Heightable for ScrollArea {}
     impl Heightable for Row {}
     impl Heightable for Column {}
-    // A hosted scene holds whatever size it is handed; what it does with the
-    // room is the scene's own business.
     impl Heightable for Scene {}
-    // A splitter divides whatever room it is given, and picks up the pointer
-    // across the whole of it — so it takes the container builders too.
-    impl Container for Split {}
     impl Heightable for Split {}
     impl Sizable for Button {}
     impl Sizable for StyledButton {}
-    impl Sizable for ToggleButton {}
+    impl Sizable for CheckableButton {}
     impl Sizable for Swatch {}
     impl ButtonLike for Button {}
     impl ButtonLike for StyledButton {}
-    impl ButtonLike for ToggleButton {}
+    impl ButtonLike for CheckableButton {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -555,7 +551,7 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
 
     /// Set the button's color variant (the styling systems re-style on change). This
     /// spends the button's emphasis, so [`checkable`](Self::checkable) is no longer in
-    /// reach — a toggle picks its chrome through [`ButtonToggleVariant`] instead.
+    /// reach — a toggle picks its chrome through [`ButtonCheckableVariant`] instead.
     pub fn variant(
         mut self,
         variant: ButtonVariant,
@@ -580,14 +576,14 @@ impl<'r, 'w, 's> ImmResponse<'r, 'w, 's, kind::Button> {
 
     /// Turn the button into a two-state toggle bound to `value`: activating it flips
     /// `value` and `.changed` fires. Call it before choosing chrome — the result takes
-    /// [`ButtonToggleVariant`], which omits the variants that have no emphasis left to
+    /// [`ButtonCheckableVariant`], which omits the variants that have no emphasis left to
     /// spend on a checked state.
-    pub fn checkable(mut self, value: &mut bool) -> ImmResponse<'r, 'w, 's, kind::ToggleButton> {
+    pub fn checkable(mut self, value: &mut bool) -> ImmResponse<'r, 'w, 's, kind::CheckableButton> {
         struct CheckableKey;
         if self.key_changed::<CheckableKey>(true) {
             self.e.entity_commands().insert((
                 Checkable,
-                ButtonVariant::from(ButtonToggleVariant::default()),
+                ButtonVariant::from(ButtonCheckableVariant::default()),
             ));
         }
         let mut changed = false;
@@ -605,7 +601,7 @@ impl ImmResponse<'_, '_, '_, kind::StyledButton> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::ToggleButton> {
+impl ImmResponse<'_, '_, '_, kind::CheckableButton> {
     /// Which corners the toggle rounds (fill and border alike).
     /// [`RoundedCorners::None`] squares it off for window chrome or a segmented group.
     pub fn corners(self, corners: RoundedCorners) -> Self {
@@ -614,7 +610,7 @@ impl ImmResponse<'_, '_, '_, kind::ToggleButton> {
 
     /// Set the toggle's rest-state chrome; the checked state accents whichever
     /// surface that variant leads with.
-    pub fn variant(mut self, variant: ButtonToggleVariant) -> Self {
+    pub fn variant(mut self, variant: ButtonCheckableVariant) -> Self {
         struct ToggleVariantKey;
         if self.key_changed::<ToggleVariantKey>(format!("{variant:?}")) {
             self.e

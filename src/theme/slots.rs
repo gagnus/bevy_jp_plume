@@ -26,6 +26,7 @@ pub enum ThemeSlot {
     /// - `SECTION_BODY_BG`
     /// - `TOOLTIP_BG`
     /// - `TAB_BAR_BG`
+    /// - `TAB_BODY_BG`
     Neutral1,
 
     /// Raised header background.
@@ -455,6 +456,7 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_BG_PRESSED, ThemeSlot::Neutral4),
     (tokens::TAB_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral2),
+    (tokens::TAB_BODY_BG, ThemeSlot::Neutral1),
     (tokens::SELECT_BG, ThemeSlot::Neutral0),
     (tokens::SELECT_BORDER, ThemeSlot::Neutral4),
     (tokens::SELECT_OPTION_BG_HOVER, ThemeSlot::Neutral3),
