@@ -9,12 +9,14 @@ use bevy::ecs::query::{Added, Changed, Has, Or, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query};
+use bevy::ecs::world::EntityWorldMut;
 use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
+use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
     PositionType, Pressed, UiRect, Val,
@@ -171,6 +173,25 @@ impl PlumeButton {
             ]
         }
     }
+}
+
+// Rewrites the glyph of a button's icon, so the imm layer can toggle it without
+// respawning the button. Finds the first `Text` among the direct children, which
+// is the icon only because [`ButtonOutline`] below carries none — put a `Text` on
+// the outline and this silently rewrites that instead.
+pub(crate) fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
+    let children: Vec<Entity> = button
+        .get::<Children>()
+        .map(|children| children.iter().copied().collect())
+        .unwrap_or_default();
+    button.world_scope(|world| {
+        for child in children {
+            if let Some(mut text) = world.get_mut::<Text>(child) {
+                text.0 = glyph.to_owned();
+                break;
+            }
+        }
+    });
 }
 
 // Marker for a button's border overlay. Every button carries one; only

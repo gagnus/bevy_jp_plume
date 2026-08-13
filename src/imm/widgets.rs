@@ -5,9 +5,7 @@ use core::panic::Location;
 
 use bevy::camera::visibility::Visibility;
 use bevy::color::Color;
-use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
-use bevy::ecs::hierarchy::Children;
 use bevy::ecs::observer::On;
 use bevy::ecs::system::Commands;
 use bevy::ecs::world::EntityWorldMut;
@@ -27,9 +25,9 @@ use super::caps::{
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
-    CloseRequested, DialogChrome, DialogHeader, DismissScope, PlumeDialogBody, PlumePopup,
-    PopupAnchor, PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane,
-    column, dialog_frame, flex_spacer, popup_socket, row, screen, scroll_content, scroll_frame,
+    CloseRequested, DialogChrome, DialogHeader, PlumeDialogBody, PopupAnchor, PopupDismiss,
+    PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_frame,
+    flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content, scroll_frame,
     scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
     splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
     tabs_frame,
@@ -38,7 +36,7 @@ use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
     PlumeColorSwatch, PlumeDisclosure, PlumeMenuBar, PlumeNumberInput, PlumeNumberInputProps,
     PlumeRadio, PlumeSelect, PlumeSlider, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton,
-    SelectedIndex, imm_menu_anchor, imm_menu_frame,
+    SelectedIndex, imm_menu_anchor, imm_menu_frame, set_icon_glyph,
 };
 use crate::display::{caption, caption_large, caption_small_caps, fa_icon};
 use crate::utils::numeric::Numeric;
@@ -798,6 +796,64 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         selected: &mut T,
         f: impl FnOnce(&mut ImmTabs<'t, 'w, 's, T>),
     ) -> ImmResponse<'_, 'w, 's, kind::Tabs> {
+        // The strip's tabs inside its already-created [`tab_strip_frame`], so a strip with
+        // more tabs than room scrolls instead of putting them out of reach.
+        fn tab_strip_body<'w, 's>(
+            frame: ImmEntity<'_, 'w, 's, PlumeCaps>,
+            items: Vec<TabStripItem<'_, 'w, 's>>,
+        ) {
+            scroll_viewport_with_scrollbar(frame, ScrollAxis::Horizontal, move |ui| {
+                ui.ch_id("tab_strip")
+                    .on_spawn_apply_scene(tab_strip)
+                    .add_ui(move |ui| {
+                        for (slot, item) in items.into_iter().enumerate() {
+                            let TabStripItem {
+                                header,
+                                enabled,
+                                min_width,
+                                width,
+                            } = item;
+                            let mut tab = match header {
+                                // The label and glyph key the tab: a renamed tab
+                                // respawns rather than keeping the old caption at
+                                // the same slot.
+                                TabHeader::Label { label, icon } => ui
+                                    .ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
+                                    .on_spawn_apply_scene(move || tab_button(label, icon)),
+                                // Keyed on the slot alone; the content reconciles
+                                // itself, as it would anywhere else.
+                                TabHeader::Content(content) => ui
+                                    .ch_id(("tab_container", slot))
+                                    .on_spawn_apply_scene(tab_chrome)
+                                    .add_ui(content),
+                            };
+                            // Both sizes in one command: guarded separately, a change to
+                            // either would keep the other's last write.
+                            struct TabSizing;
+                            if tab.hash_update_typ::<TabSizing>(Some(imm_id(format!(
+                                "{width:?}{min_width:?}"
+                            )))) {
+                                tab.entity_commands()
+                                    .queue(move |mut entity: EntityWorldMut| {
+                                        if let Some(mut node) = entity.get_mut::<Node>() {
+                                            node.width = width.unwrap_or(Val::Auto);
+                                            node.min_width =
+                                                min_width.unwrap_or(size::TAB_MIN_WIDTH);
+                                            // A width with no floor under it is absolute:
+                                            // the strip scrolls instead of squeezing.
+                                            node.flex_shrink = match (width, min_width) {
+                                                (Some(_), None) => 0.0,
+                                                _ => 1.0,
+                                            };
+                                        }
+                                    });
+                            }
+                            tab.interactions_enabled(enabled);
+                        }
+                    });
+            });
+        }
+
         let mut collector = ImmTabs {
             entries: Vec::new(),
         };
@@ -1289,6 +1345,36 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
+        fn dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
+            let DialogLayout {
+                width,
+                height,
+                max_height,
+                inset,
+                closable,
+                movable,
+            } = layout;
+            bsn! {
+                // Empty body: the imm layer reconciles the body itself.
+                dialog_frame(DialogChrome {
+                    name: format!("PlumeDialog({title})").into(),
+                    body: Box::new(bsn_list![]),
+                    header: Some(DialogHeader {
+                        title: Box::new(bsn_list![caption_large(title)]),
+                        closable,
+                        movable,
+                    }),
+                    width,
+                    height,
+                    max_height,
+                    inset,
+                })
+                on(|close: On<RequestClose>, mut commands: Commands| {
+                    commands.entity(close.event_target()).insert(CloseRequested);
+                })
+            }
+        }
+
         if !*self.open {
             return None;
         }
@@ -1297,7 +1383,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         let mut entity = self
             .ui
             .ch_loc(id)
-            .on_spawn_apply_scene(move || imm_dialog_scene(title, layout));
+            .on_spawn_apply_scene(move || dialog_scene(title, layout));
         if entity.close_requested() {
             *self.open = false;
             entity.entity_commands().despawn();
@@ -1422,12 +1508,35 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
 
     /// Build the panel and its body.
     pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
+        // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
+        // and there is no `RequestClose` observer, since a panel has no ✕.
+        fn panel_scene(layout: DialogLayout) -> impl Scene {
+            let DialogLayout {
+                width,
+                height,
+                max_height,
+                inset,
+                ..
+            } = layout;
+            bsn! {
+                dialog_frame(DialogChrome {
+                    name: "PlumePanel".into(),
+                    body: Box::new(bsn_list![]),
+                    header: None,
+                    width,
+                    height,
+                    max_height,
+                    inset,
+                })
+            }
+        }
+
         let id = ImmIdBuilder::Hierarchy(ImmId::new(self.caller));
         let layout = self.layout;
         let entity = self
             .ui
             .ch_loc(id)
-            .on_spawn_apply_scene(move || imm_panel_scene(layout));
+            .on_spawn_apply_scene(move || panel_scene(layout));
         reconcile_frame_body(entity, layout, f)
     }
 }
@@ -1523,22 +1632,6 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
     }
 }
 
-fn imm_popup_scene(
-    anchor: Entity,
-    placement: PopupPlacement,
-    dismiss: PopupDismiss,
-    movable: bool,
-) -> impl Scene {
-    bsn! {
-        @PlumePopup {
-            @placement: placement,
-            @dismiss: dismiss,
-            @movable: movable,
-        }
-        template_value(DismissScope(anchor))
-    }
-}
-
 // Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
 // content in the scrolling machinery when a height knob bounds it. Position is not
 // re-applied — the user's dragging owns it after spawn.
@@ -1588,63 +1681,6 @@ struct TabStripItem<'t, 'w, 's> {
     enabled: bool,
     min_width: Option<Val>,
     width: Option<Val>,
-}
-
-// The strip's tabs inside its already-created [`tab_strip_frame`], so a strip with
-// more tabs than room scrolls instead of putting them out of reach.
-fn tab_strip_body<'w, 's>(
-    frame: ImmEntity<'_, 'w, 's, PlumeCaps>,
-    items: Vec<TabStripItem<'_, 'w, 's>>,
-) {
-    scroll_viewport_with_scrollbar(frame, ScrollAxis::Horizontal, move |ui| {
-        ui.ch_id("tab_strip")
-            .on_spawn_apply_scene(tab_strip)
-            .add_ui(move |ui| {
-                for (slot, item) in items.into_iter().enumerate() {
-                    let TabStripItem {
-                        header,
-                        enabled,
-                        min_width,
-                        width,
-                    } = item;
-                    let mut tab = match header {
-                        // The label and glyph key the tab: a renamed tab
-                        // respawns rather than keeping the old caption at
-                        // the same slot.
-                        TabHeader::Label { label, icon } => ui
-                            .ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
-                            .on_spawn_apply_scene(move || tab_button(label, icon)),
-                        // Keyed on the slot alone; the content reconciles
-                        // itself, as it would anywhere else.
-                        TabHeader::Content(content) => ui
-                            .ch_id(("tab_container", slot))
-                            .on_spawn_apply_scene(tab_chrome)
-                            .add_ui(content),
-                    };
-                    // Both sizes in one command: guarded separately, a change to
-                    // either would keep the other's last write.
-                    struct TabSizing;
-                    if tab.hash_update_typ::<TabSizing>(Some(imm_id(format!(
-                        "{width:?}{min_width:?}"
-                    )))) {
-                        tab.entity_commands()
-                            .queue(move |mut entity: EntityWorldMut| {
-                                if let Some(mut node) = entity.get_mut::<Node>() {
-                                    node.width = width.unwrap_or(Val::Auto);
-                                    node.min_width = min_width.unwrap_or(size::TAB_MIN_WIDTH);
-                                    // A width with no floor under it is absolute:
-                                    // the strip scrolls instead of squeezing.
-                                    node.flex_shrink = match (width, min_width) {
-                                        (Some(_), None) => 0.0,
-                                        _ => 1.0,
-                                    };
-                                }
-                            });
-                    }
-                    tab.interactions_enabled(enabled);
-                }
-            });
-    });
 }
 
 // The scrolling content and its scrollbar inside an already-created [`scroll_frame`].
@@ -1739,20 +1775,6 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
 
 // Set the `glyph` on a tool button's `fa_icon` `Text` child. The font stays as
 // spawned, since the face keys the button's identity.
-fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
-    let children: Vec<Entity> = button
-        .get::<Children>()
-        .map(|children| children.iter().copied().collect())
-        .unwrap_or_default();
-    button.world_scope(|world| {
-        for child in children {
-            if let Some(mut text) = world.get_mut::<Text>(child) {
-                text.0 = glyph.to_owned();
-                break;
-            }
-        }
-    });
-}
 
 // Both split directions, which differ only in the axis they hand down. The
 // panes are imm children of the splitter's own frame rather than scene props:
@@ -1830,63 +1852,11 @@ fn respond_numeric<'r, 'w, 's, T: Numeric, K>(
     }
 }
 
-fn imm_dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
-    let DialogLayout {
-        width,
-        height,
-        max_height,
-        inset,
-        closable,
-        movable,
-    } = layout;
-    bsn! {
-        // Empty body: the imm layer reconciles the body itself.
-        dialog_frame(DialogChrome {
-            name: format!("PlumeDialog({title})").into(),
-            body: Box::new(bsn_list![]),
-            header: Some(DialogHeader {
-                title: Box::new(bsn_list![caption_large(title)]),
-                closable,
-                movable,
-            }),
-            width,
-            height,
-            max_height,
-            inset,
-        })
-        on(|close: On<RequestClose>, mut commands: Commands| {
-            commands.entity(close.event_target()).insert(CloseRequested);
-        })
-    }
-}
-
-fn imm_panel_scene(layout: DialogLayout) -> impl Scene {
-    let DialogLayout {
-        width,
-        height,
-        max_height,
-        inset,
-        ..
-    } = layout;
-    // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
-    // and there is no `RequestClose` observer, since a panel has no ✕.
-    bsn! {
-        dialog_frame(DialogChrome {
-            name: "PlumePanel".into(),
-            body: Box::new(bsn_list![]),
-            header: None,
-            width,
-            height,
-            max_height,
-            inset,
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use bevy::MinimalPlugins;
     use bevy::app::{App, Update};
+    use bevy::ecs::entity::Entity;
     use bevy::ecs::resource::Resource;
     use bevy::ecs::system::ResMut;
 

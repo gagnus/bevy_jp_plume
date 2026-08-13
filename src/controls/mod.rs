@@ -21,11 +21,11 @@ mod xy_pad;
 use bevy::app::Plugin;
 // Prop type on `PlumeTextInputProps`; re-exported so apps stay on the plume surface.
 pub use bevy::text::EditableTextFilter;
-pub(crate) use button::ButtonOutline;
 use button::ButtonPlugin;
 pub use button::{
     ButtonCheckableVariant, ButtonVariant, PlumeButton, PlumeButtonProps, PlumeToolButton,
 };
+pub(crate) use button::{ButtonOutline, set_icon_glyph};
 use checkbox::CheckboxPlugin;
 pub use checkbox::{PlumeCheckbox, PlumeCheckboxProps};
 use color_edit::ColorEditPlugin;

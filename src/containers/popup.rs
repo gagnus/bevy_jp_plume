@@ -171,7 +171,26 @@ impl Default for PlumePopupProps {
 // Outside-press dismissal scope for an imm popup: presses on the anchor don't
 // dismiss. Retained popups omit this and scope to their control root instead.
 #[derive(Component, Clone, Copy)]
-pub(crate) struct DismissScope(pub Entity);
+struct DismissScope(pub Entity);
+
+// The imm layer's popup: the same chrome the retained path spawns, scoped to the
+// anchor it opens from. Lives here rather than in `imm` so `DismissScope` stays
+// private to this module — as `imm_menu_frame` does for the menu.
+pub(crate) fn imm_popup_scene(
+    anchor: Entity,
+    placement: PopupPlacement,
+    dismiss: PopupDismiss,
+    movable: bool,
+) -> impl Scene {
+    bsn! {
+        @PlumePopup {
+            @placement: placement,
+            @dismiss: dismiss,
+            @movable: movable,
+        }
+        template_value(DismissScope(anchor))
+    }
+}
 
 // Plain root marker, inserted by the scene on both the retained and imm paths.
 // The systems key on this rather than [`PlumePopup`] — see docs/plume_rules.md.
