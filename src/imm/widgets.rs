@@ -535,7 +535,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(|| {
                 bsn! {
                     @PlumeButton
-                    Node { justify_content: JustifyContent::Start }
+                    Node { padding: Val::ZERO, justify_content: JustifyContent::Start }
                 }
             })
             .add_ui(f);

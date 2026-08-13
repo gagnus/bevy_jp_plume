@@ -354,6 +354,7 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
             {
                 node.visible = !node.visible;
             }
+            ui.space(em(0)); // force gap
         })
         .variant(if is_selected {
             ButtonVariant::Primary
