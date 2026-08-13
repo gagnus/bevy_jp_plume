@@ -9,11 +9,8 @@
 
 extern crate alloc;
 
-use bevy::app::{
-    HierarchyPropagatePlugin, Plugin, PluginGroup, PluginGroupBuilder, PostUpdate, PropagateSet,
-};
+use bevy::app::{Plugin, PluginGroup, PluginGroupBuilder, PostUpdate, PropagateSet};
 use bevy::asset::embedded_asset;
-use bevy::ecs::query::With;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::text::TextFont;
 use bevy::ui::UiSystems;
@@ -24,7 +21,7 @@ pub use utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor}
 pub(crate) use utils::{constants, cursor, focus, font_styles, rounded_corners};
 
 use crate::controls::ControlsPlugin;
-use crate::theme::{ThemePlugin, ThemedText, on_themed_text_inserted};
+use crate::theme::ThemePlugin;
 use crate::utils::anim::UiAnimPlugin;
 use crate::utils::cursor::CursorIconPlugin;
 
@@ -67,15 +64,7 @@ impl Plugin for PlumeCorePlugin {
             // entities need a `TabGroup` ancestor, which `PlumeDialog` provides.
             bevy::input_focus::tab_navigation::TabNavigationPlugin,
             focus::FocusPlugin,
-            HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
         ));
-
-        // Fonts must be current before `measure_text_system` and
-        // `detect_text_needs_rerender` run in `UiSystems::Content`.
-        app.configure_sets(
-            PostUpdate,
-            PropagateSet::<TextFont>::default().in_set(UiSystems::Propagate),
-        );
 
         app.insert_resource(DefaultCursor(EntityCursor::System(
             bevy::window::SystemCursorIcon::Default,
@@ -104,8 +93,6 @@ impl Plugin for PlumeCorePlugin {
             PostUpdate,
             font_styles::warn_em_without_em_size.after(font_styles::mirror_em_size),
         );
-        // Companion to the `TextColor` registration in `ThemePlugin`.
-        app.add_observer(on_themed_text_inserted::<TextFont>);
     }
 }
 

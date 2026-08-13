@@ -15,8 +15,8 @@ use bevy::platform::collections::HashMap;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::text::{EditableText, TextColor, TextFont};
-use bevy::ui::BorderColor;
 use bevy::ui::widget::Text;
+use bevy::ui::{BorderColor, UiSystems};
 use bevy_immediate::ImmediateSystemSet;
 use rand::RngExt;
 
@@ -208,14 +208,24 @@ fn warn_unstyled_themed_text(
     *font_suspect_last_frame = no_font;
 }
 
-// Installs the [`UiTheme`] resource, the theme refresh system, the themed
-// text-color propagation, and the token-change observers.
+// Installs the [`UiTheme`] resource, the theme refresh system, both themed
+// text-style propagation channels, and the token-change observers.
 pub(crate) struct ThemePlugin;
 
 impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
+        // Both text-style channels, filtered by the one `ThemedText` opt-in.
         app.init_resource::<UiTheme>()
-            .add_plugins(HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate))
+            .add_plugins((
+                HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate),
+                HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
+            ))
+            // Fonts must be current before `measure_text_system` and
+            // `detect_text_needs_rerender` run in `UiSystems::Content`.
+            .configure_sets(
+                PostUpdate,
+                PropagateSet::<TextFont>::default().in_set(UiSystems::Propagate),
+            )
             // After the imm reconciler's cleanup despawns, so the repaint commands
             // `resolve_backgrounds` queues can't target an entity whose despawn is
             // already in an earlier buffer at the same sync point — the ordering
@@ -239,7 +249,8 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_inheritable_text_color)
             .add_observer(on_changed_text_token)
             .add_observer(on_changed_text_slot)
-            .add_observer(on_themed_text_inserted::<TextColor>);
+            .add_observer(on_themed_text_inserted::<TextColor>)
+            .add_observer(on_themed_text_inserted::<TextFont>);
     }
 }
 
