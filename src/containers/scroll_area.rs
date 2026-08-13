@@ -185,7 +185,7 @@ fn scroll_sideways_on_wheel(
     } else {
         scroll.y
     };
-    
+
     // A tilt wheel or trackpad swipe already arrives on `x`, handled upstream.
     if delta_y == 0.0 {
         return;
