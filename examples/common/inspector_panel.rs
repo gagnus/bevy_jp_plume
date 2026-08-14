@@ -10,7 +10,7 @@ use super::{Options, log_on_change};
 /// Base font size the panel scales from.
 pub const BASE_FONT_PX: f32 = 14.0;
 
-const GUTTER: f32 = 78.0;
+const GUTTER: Val = Val::Em(6.0);
 
 /// Cap on open documents; the retained twin spawns a fixed tab pool this size.
 pub const MAX_DOCUMENTS: usize = 16;
@@ -297,7 +297,7 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         // The panel never gets narrower than its controls need; the document pane
         // gives down to a couple of squeezed tabs, past which its strip scrolls.
         // Dragging well past the panel's floor closes it entirely.
-        .min_panes(px(120), px(260))
+        .min_panes(em(9), em(20))
         .collapsible(false, true)
         .auto_hide_divider(true)
         .grow();
@@ -455,7 +455,7 @@ fn empty_viewport(ui: &mut Ui) {
 // splitter with no anchoring to arrange.
 fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
     ui.panel()
-        .at_corner(Corner::BottomRight, px(16), px(16))
+        .at_corner(Corner::BottomRight, em(1), em(1))
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.icon(font_awesome::solid::CUBES);
@@ -606,7 +606,7 @@ fn hierarchy_tab(ui: &mut Ui, s: &mut Hierarchy) {
 
 fn node_row(ui: &mut Ui, node: &mut SceneNode, parent: bool) {
     ui.horizontal(|ui| {
-        ui.space(px(node.depth as f32 * 14.0));
+        ui.space(em(node.depth));
         ui.disclosure(&mut node.expanded).visible(parent);
         ui.icon(node.icon);
         ui.caption(&node.name).no_wrap();
@@ -617,26 +617,26 @@ fn node_row(ui: &mut Ui, node: &mut SceneNode, parent: bool) {
 
 fn footer(ui: &mut Ui, s: &mut Inspector) {
     ui.horizontal(|ui| {
-        ui.caption("UI scale").width(px(GUTTER));
+        ui.caption("UI scale").width(GUTTER);
         ui.slider(&mut s.ui_scale, 0.5..=2.0)
             .grow()
             .step(0.05)
             .precision(2);
         ui.caption(&format!("{:.0}%", s.ui_scale * 100.0))
-            .width(px(44));
+            .width(em(3));
     });
 }
 
 fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
-        ui.caption(label).width(px(GUTTER));
+        ui.caption(label).width(GUTTER * 0.6);
         f(ui);
     });
 }
 
 fn modified_row(ui: &mut Ui, label: &str, modified: bool, f: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {
-        let caption = ui.caption(label).width(px(GUTTER));
+        let caption = ui.caption(label).width(GUTTER);
         if modified {
             caption.text_color_slot(ThemeSlot::Accent1);
         }

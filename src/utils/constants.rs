@@ -118,7 +118,7 @@ pub mod size {
     /// control (a button caption, a field's text, an option row, a tab label),
     /// and around a container's body. One step, so a row of controls is spaced
     /// the way its controls are inset.
-    pub const SPACE: Val = em_from_px(8.0);
+    pub const SPACE: Val = em_from_px(6.0);
 
     /// Knob diameter (slider thumb, toggle knob)
     pub const KNOB_SIZE: Val = em_from_px(16.0);
