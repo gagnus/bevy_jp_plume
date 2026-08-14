@@ -16,8 +16,8 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, Node, Overflow,
-    UiRect, Val, Val2,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, GlobalZIndex, Node,
+    Overflow, UiRect, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -80,6 +80,11 @@ pub mod kind {
     /// Kinds built on the button frame, checkable or not: they share its chrome
     /// builders but not its variant, which narrows once the button is checkable.
     pub trait ButtonLike {}
+    /// Kinds an app may lift out of the pick path: containers, whose empty area
+    /// has no business swallowing picks, and the decorations that report
+    /// nothing anyway. Excludes controls, where it would kill the interaction
+    /// while leaving the control looking live.
+    pub trait PickThrough {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
@@ -173,6 +178,11 @@ pub mod kind {
     impl<C> ButtonLike for Button<C> {}
     impl<C> ButtonLike for StyledButton<C> {}
     impl<C> ButtonLike for CheckableButton<C> {}
+    impl PickThrough for Row {}
+    impl PickThrough for Column {}
+    impl PickThrough for Screen {}
+    impl PickThrough for Caption {}
+    impl PickThrough for Separator {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
@@ -830,6 +840,22 @@ impl ImmResponse<'_, '_, '_, kind::Text> {
     }
 }
 
+impl ImmResponse<'_, '_, '_, kind::Screen> {
+    /// Where this screen sits in the window's stack, back to front.
+    ///
+    /// Bevy orders root nodes by their `GlobalZIndex` and breaks ties on
+    /// archetype order rather than creation order, so an app drawing more than
+    /// one screen says so here — no amount of system sequencing decides it.
+    /// Plume's own popups (100) and tooltips (200) stay above.
+    pub fn z_index(mut self, z: i32) -> Self {
+        struct ZIndexKey;
+        if self.key_changed::<ZIndexKey>(z) {
+            self.e.entity_commands().insert(GlobalZIndex(z));
+        }
+        self
+    }
+}
+
 impl ImmResponse<'_, '_, '_, kind::Separator> {
     /// Run the rule edge to edge through the container's padding instead of
     /// stopping at its content box.
@@ -1072,10 +1098,15 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         struct ClipKey;
         self.set_node::<ClipKey, _>((), |node, ()| node.overflow = Overflow::clip())
     }
+}
 
-    /// Is this container pickable (`true`) or does it let pointer events fall
-    /// through to whatever is behind (`false`). Default `true` for all containers
-    /// except `screen`.
+/// Builders for the kinds that need not take pointer events.
+impl<K: kind::PickThrough> ImmResponse<'_, '_, '_, K> {
+    /// Does this take pointer events (`true`) or let them fall through to
+    /// whatever is behind (`false`). Default `true` everywhere but `screen`.
+    ///
+    /// Per-entity and depth-based, so it says nothing about the children: a row
+    /// lifted out of the path still hands its buttons their picks.
     pub fn pickable(mut self, pickable: bool) -> Self {
         struct PickableKey;
         if self.key_changed::<PickableKey>(pickable) {
@@ -1122,7 +1153,10 @@ impl<K: kind::Surface> ImmResponse<'_, '_, '_, K> {
     pub fn background(mut self, color: Color) -> Self {
         struct BackgroundKey;
         if self.key_changed::<BackgroundKey>(format!("{color:?}")) {
-            self.e.entity_commands().insert(BackgroundColor(color));
+            self.e
+                .entity_commands()
+                .insert(BackgroundColor(color))
+                .remove::<ThemeBackgroundSlot>();
         }
         self
     }

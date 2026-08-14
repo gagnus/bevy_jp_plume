@@ -22,7 +22,7 @@ use super::caps::{
     ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeMenu, ImmPlumeSelect, ImmPlumeSplit,
     ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
 };
-use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
+use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
@@ -231,11 +231,16 @@ pub trait PlumeImm<'w, 's> {
     ///
     /// Two closures rather than a collector: a split has exactly two panes, and
     /// that is worth saying in the signature rather than in the docs.
+    ///
+    /// Each pane gets a [`PaneUi`] rather than a bare [`Ui`]: it is a `Ui`
+    /// throughout, and adds the settled fraction, which `fraction` itself
+    /// cannot supply while it is on loan to this call. What a pane usually asks
+    /// it is whether the other one has [collapsed](ImmResponse::collapsible).
     fn split_horizontal(
         &mut self,
         fraction: &mut f32,
-        first: impl FnOnce(&mut Ui<'w, 's>),
-        second: impl FnOnce(&mut Ui<'w, 's>),
+        first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
+        second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split>;
 
     /// [`split_horizontal`](Self::split_horizontal) with the panes stacked and
@@ -243,8 +248,8 @@ pub trait PlumeImm<'w, 's> {
     fn split_vertical(
         &mut self,
         fraction: &mut f32,
-        first: impl FnOnce(&mut Ui<'w, 's>),
-        second: impl FnOnce(&mut Ui<'w, 's>),
+        first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
+        second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split>;
 
     /// Hosts a retained scene inside an immediate pass: `f` builds it the frame
@@ -956,8 +961,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn split_horizontal(
         &mut self,
         fraction: &mut f32,
-        first: impl FnOnce(&mut Ui<'w, 's>),
-        second: impl FnOnce(&mut Ui<'w, 's>),
+        first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
+        second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split> {
         split(self, SplitAxis::Horizontal, fraction, first, second)
     }
@@ -966,8 +971,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn split_vertical(
         &mut self,
         fraction: &mut f32,
-        first: impl FnOnce(&mut Ui<'w, 's>),
-        second: impl FnOnce(&mut Ui<'w, 's>),
+        first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
+        second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split> {
         split(self, SplitAxis::Vertical, fraction, first, second)
     }
@@ -1875,8 +1880,8 @@ fn split<'r, 'w, 's>(
     ui: &'r mut Ui<'w, 's>,
     axis: SplitAxis,
     fraction: &mut f32,
-    first: impl FnOnce(&mut Ui<'w, 's>),
-    second: impl FnOnce(&mut Ui<'w, 's>),
+    first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
+    second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
 ) -> ImmResponse<'r, 'w, 's, kind::Split> {
     let initial = *fraction;
     let mut changed = false;
@@ -1898,7 +1903,12 @@ fn split<'r, 'w, 's>(
             .ch_id("split_first")
             .on_spawn_apply_scene(|| splitter_pane(SplitPane::First));
         if !(collapse.first && split == 0.0) {
-            pane.add_ui(first);
+            pane.add_ui(|ui| {
+                first(&mut PaneUi {
+                    ui,
+                    fraction: split,
+                })
+            });
         }
         ui.ch_id("split_divider")
             .on_spawn_apply_scene(move || splitter_divider(axis));
@@ -1906,7 +1916,12 @@ fn split<'r, 'w, 's>(
             .ch_id("split_second")
             .on_spawn_apply_scene(|| splitter_pane(SplitPane::Second));
         if !(collapse.second && split == 1.0) {
-            pane.add_ui(second);
+            pane.add_ui(|ui| {
+                second(&mut PaneUi {
+                    ui,
+                    fraction: split,
+                })
+            });
         }
     });
     respond(entity, changed)

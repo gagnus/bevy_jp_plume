@@ -207,6 +207,42 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     }
 }
 
+/// The [`Ui`] a splitter hands each of its panes: a `Ui` in every respect, plus
+/// the divider's settled [`fraction`](Self::fraction).
+///
+/// A pane cannot read that off the app's own binding, which is on loan to the
+/// [`split_horizontal`](PlumeImm::split_horizontal) call for as long as the
+/// pane is being built — and a distinct type is how the reading stays
+/// unavailable everywhere it would mean nothing.
+pub struct PaneUi<'a, 'w, 's> {
+    pub(crate) ui: &'a mut Ui<'w, 's>,
+    pub(crate) fraction: f32,
+}
+
+impl PaneUi<'_, '_, '_> {
+    /// The *first* pane's share of the splitter, `0.0..=1.0` — the same number
+    /// both panes are handed, and the same one the app's binding will hold once
+    /// the call returns. A pane that has
+    /// [collapsed](ImmResponse::collapsible) is exactly `0.0` or `1.0`.
+    pub fn fraction(&self) -> f32 {
+        self.fraction
+    }
+}
+
+impl<'w, 's> core::ops::Deref for PaneUi<'_, 'w, 's> {
+    type Target = Ui<'w, 's>;
+
+    fn deref(&self) -> &Self::Target {
+        self.ui
+    }
+}
+
+impl core::ops::DerefMut for PaneUi<'_, '_, '_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.ui
+    }
+}
+
 type CtxStatic = ImmCtx<'static, 'static, PlumeCaps>;
 
 /// State for [`PlumeRoot`]: the inner context state plus a unique per-system root id.
