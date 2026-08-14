@@ -88,7 +88,7 @@ pub trait PlumeImm<'w, 's> {
 
     /// A non-interactive FontAwesome glyph in the current text color — the icon
     /// counterpart to [`Self::caption`].
-    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's>;
+    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Icon>;
 
     /// A push button whose content is built by `f` instead of a single label.
     /// The row it lays that content out in is the app's: chain `.padding()` and
@@ -507,7 +507,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's> {
+    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Icon> {
         // Keyed on the face (a runtime font handle), not the glyph, so toggling the
         // glyph within a face reconciles in place rather than respawning — as tool_button does.
         let mut entity = self

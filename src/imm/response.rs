@@ -90,6 +90,10 @@ pub mod kind {
     pub struct Any;
     /// `caption`.
     pub struct Caption;
+    /// `icon`. Its own kind rather than [`Any`], which it shares nothing with:
+    /// the others there are controls, and a decoration's builders must not
+    /// reach them.
+    pub struct Icon;
     /// What fills a button: its own label, laid out by the control.
     pub struct Label;
     /// What fills a button: children the app supplied, so their padding and gap
@@ -182,6 +186,7 @@ pub mod kind {
     impl PickThrough for Column {}
     impl PickThrough for Screen {}
     impl PickThrough for Caption {}
+    impl PickThrough for Icon {}
     impl PickThrough for Separator {}
 }
 
