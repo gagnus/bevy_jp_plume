@@ -51,6 +51,7 @@ impl Plugin for PlumeCorePlugin {
             ControlsPlugin,
             imm::ImmPlugin,
             UiAnimPlugin,
+            containers::DialogPlugin,
             containers::PopupPlugin,
             display::TooltipPlugin,
             containers::ScrollAreaPlugin,

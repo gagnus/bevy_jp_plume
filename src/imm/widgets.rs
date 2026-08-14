@@ -25,12 +25,12 @@ use super::caps::{
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
-    CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss, PopupPlacement,
-    ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_body, dialog_frame,
-    flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content, scroll_frame,
-    scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
-    splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
-    tabs_frame,
+    BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
+    PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_body,
+    dialog_frame, flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content,
+    scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
+    splitter_divider, splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip,
+    tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -306,6 +306,7 @@ impl<'w, 's> Ui<'w, 's> {
                 closable: true,
                 movable: true,
             },
+            spacing: BodySpacing::default(),
         }
     }
 }
@@ -742,6 +743,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 closable: false,
                 movable: false,
             },
+            spacing: BodySpacing::default(),
         }
     }
 
@@ -1287,6 +1289,7 @@ pub struct ImmDialog<'a, 'w, 's> {
     title: String,
     open: &'a mut bool,
     layout: DialogLayout,
+    spacing: BodySpacing,
 }
 
 impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
@@ -1338,6 +1341,20 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
     /// `false` omits the drag handle, pinning the dialog in place.
     pub fn movable(mut self, movable: bool) -> Self {
         self.layout.movable = movable;
+        self
+    }
+
+    /// Set the gap between the items the body stacks, overriding the default
+    /// [`size::SPACE`].
+    pub fn gap(mut self, gap: Val) -> Self {
+        self.spacing.gap = Some(gap);
+        self
+    }
+
+    /// Set the body's padding, overriding the default [`size::SPACE`]. A dialog
+    /// whose content is one full-bleed surface takes [`Val::ZERO`] here.
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        self.spacing.padding = Some(padding.into());
         self
     }
 
@@ -1393,7 +1410,36 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
             entity.entity_commands().despawn();
             return None;
         }
-        Some(reconcile_frame_body(entity, layout, f))
+        Some(reconcile_frame_body(entity, layout, self.spacing, f))
+    }
+}
+
+// A floating surface's body spacing, as its builder chain collected it. Applied to
+// the surface's own frame; the widget's relay is what puts it on the right node.
+#[derive(Clone, Copy, Default)]
+pub(crate) struct BodySpacing {
+    gap: Option<Val>,
+    padding: Option<UiRect>,
+}
+
+impl BodySpacing {
+    // Insert whichever the caller set onto `entity`; an unset one is left absent, so
+    // the scene's own value stands. One guard for the pair, keyed on both: guarded
+    // separately, a change to either would re-run only its own insert.
+    fn apply(self, entity: &mut ImmEntity<'_, '_, '_, PlumeCaps>) {
+        struct BodySpacingKey;
+        let Self { gap, padding } = self;
+        if (gap.is_some() || padding.is_some())
+            && entity.hash_update_typ::<BodySpacingKey>(Some(imm_id(format!("{gap:?}{padding:?}"))))
+        {
+            let mut commands = entity.entity_commands();
+            if let Some(gap) = gap {
+                commands.insert(BodyGap(gap));
+            }
+            if let Some(padding) = padding {
+                commands.insert(BodyPadding(padding));
+            }
+        }
     }
 }
 
@@ -1466,6 +1512,7 @@ pub struct ImmPanel<'a, 'w, 's> {
     ui: &'a mut Ui<'w, 's>,
     caller: &'static Location<'static>,
     layout: DialogLayout,
+    spacing: BodySpacing,
 }
 
 impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
@@ -1510,6 +1557,20 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
         self
     }
 
+    /// Set the gap between the items the body stacks, overriding the default
+    /// [`size::SPACE`].
+    pub fn gap(mut self, gap: Val) -> Self {
+        self.spacing.gap = Some(gap);
+        self
+    }
+
+    /// Set the body's padding, overriding the default [`size::SPACE`]. Nested
+    /// chrome that has to sit tight against its surroundings wants this.
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        self.spacing.padding = Some(padding.into());
+        self
+    }
+
     /// Build the panel and its body.
     pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
         // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
@@ -1541,7 +1602,7 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
             .ui
             .ch_loc(id)
             .on_spawn_apply_scene(move || panel_scene(layout));
-        reconcile_frame_body(entity, layout, f)
+        reconcile_frame_body(entity, layout, self.spacing, f)
     }
 }
 
@@ -1555,6 +1616,7 @@ pub struct ImmPopup<'r, 'a, 'w, 's, K> {
     pub(crate) placement: PopupPlacement,
     pub(crate) movable: bool,
     pub(crate) close_on_click_outside: bool,
+    pub(crate) spacing: BodySpacing,
 }
 
 impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
@@ -1578,6 +1640,19 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
         self
     }
 
+    /// Set the gap between the items the popup stacks, overriding the default
+    /// [`size::SPACE`].
+    pub fn gap(mut self, gap: Val) -> Self {
+        self.spacing.gap = Some(gap);
+        self
+    }
+
+    /// Set the popup's padding, overriding the default [`size::SPACE_TIGHT`].
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        self.spacing.padding = Some(padding.into());
+        self
+    }
+
     /// Toggle `open` when the anchor is clicked. Safe as a toggle because the anchor
     /// is exempt from outside-press dismissal, so its click only lands here.
     pub fn toggle_on_click(self) -> Self {
@@ -1597,6 +1672,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
             placement,
             movable,
             close_on_click_outside,
+            spacing,
         } = self;
         if !*open {
             return anchor;
@@ -1625,6 +1701,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
                         closed = true;
                         popup.entity_commands().despawn();
                     } else {
+                        spacing.apply(&mut popup);
                         popup.add_ui(f);
                     }
                 });
@@ -1642,6 +1719,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
 fn reconcile_frame_body<'e, 'w, 's>(
     mut entity: ImmEntity<'e, 'w, 's, PlumeCaps>,
     layout: DialogLayout,
+    spacing: BodySpacing,
     f: impl FnOnce(&mut Ui<'w, 's>),
 ) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
     struct FrameSizeKey;
@@ -1660,6 +1738,9 @@ fn reconcile_frame_body<'e, 'w, 's>(
                 }
             });
     }
+    // On the frame, not the body: `relay_dialog_body_style` is what knows which node
+    // stacks the content, and that changes with the height knobs above.
+    spacing.apply(&mut entity);
     let entity = entity.add_ui(move |ui| {
         let body = ui.ch_id("dialog_body").on_spawn_apply_scene(dialog_body);
         if layout.height == Val::Auto && layout.max_height == Val::Auto {

@@ -26,7 +26,10 @@ use bevy::ui::{
 use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
 use crate::constants::{FaIcon, size};
-use crate::containers::{ScrollAxis, scroll_frame, scroll_viewport, scrollbar_node};
+use crate::containers::{
+    BodyGap, BodyPadding, ScrollAxis, apply_body_style, scroll_frame, scroll_viewport,
+    scrollbar_node,
+};
 use crate::controls::{PlumeScrollbar, ScrollbarHidden, SelectedIndex, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::caption;
@@ -184,6 +187,12 @@ struct TabsSeeded;
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct TabStrip;
+
+// A body a tab shows, so [`BodyGap`] / [`BodyPadding`] on the frame can find it.
+// Both are container-wide, so the relay writes every body, not just the shown one.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct TabBody;
 
 // Plain tab marker, inserted by `tab_chrome` in both paths.
 #[derive(Component, Default, Clone, Reflect)]
@@ -351,6 +360,7 @@ pub fn tab_body() -> impl Scene {
             flex_grow: 1.0,
             min_height: Val::ZERO,
         }
+        TabBody
         ThemeBackgroundToken(tokens::TAB_BODY_BG)
         TextStyleRelay
     }
@@ -709,6 +719,29 @@ fn update_tab_indicator(
     }
 }
 
+// `BodyGap` / `BodyPadding` sit on the frame, which is what a caller holds, but the
+// bodies are what lay the content out.
+fn relay_tab_body_style(
+    q_frames: Query<
+        (Option<&BodyGap>, Option<&BodyPadding>, &Children),
+        (With<TabsRoot>, Or<(With<BodyGap>, With<BodyPadding>)>),
+    >,
+    q_bodies: Query<(), With<TabBody>>,
+    mut q_nodes: Query<&mut Node>,
+) {
+    for (gap, padding, children) in q_frames.iter() {
+        for body in children
+            .iter()
+            .copied()
+            .filter(|&child| q_bodies.contains(child))
+        {
+            if let Ok(mut node) = q_nodes.get_mut(body) {
+                apply_body_style(&mut node, gap, padding);
+            }
+        }
+    }
+}
+
 // Plugin which registers the tab selection, styling and indicator systems.
 pub(crate) struct TabsPlugin;
 
@@ -725,6 +758,12 @@ impl Plugin for TabsPlugin {
                     .chain()
                     .in_set(PickingSystems::Last),
             )
-            .add_systems(PostUpdate, update_tab_indicator.after(UiSystems::Layout));
+            .add_systems(
+                PostUpdate,
+                (
+                    relay_tab_body_style.before(UiSystems::Layout),
+                    update_tab_indicator.after(UiSystems::Layout),
+                ),
+            );
     }
 }

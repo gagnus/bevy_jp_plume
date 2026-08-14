@@ -27,8 +27,8 @@ use super::caps::{ImmPlumeChecked, ImmPlumeTooltip};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
-    PopupAnchor, ScrollContentGap, SectionBodyGap, SectionBodyPadding, SectionCollapsed,
-    SectionCollapsible, SeparatorBleed, SplitCollapsible, SplitDividerAutoHide, SplitMin,
+    BodyGap, BodyPadding, PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed,
+    SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag,
@@ -226,6 +226,7 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
             placement: Default::default(),
             movable: false,
             close_on_click_outside: true,
+            spacing: Default::default(),
         }
     }
 
@@ -925,7 +926,7 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
         struct SectionBodyGapKey;
         // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
         if self.key_changed::<SectionBodyGapKey>(format!("{gap:?}")) {
-            self.e.entity_commands().insert(SectionBodyGap(gap));
+            self.e.entity_commands().insert(BodyGap(gap));
         }
         self
     }
@@ -935,7 +936,31 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
         struct SectionBodyPadKey;
         let padding = padding.into();
         if self.key_changed::<SectionBodyPadKey>(format!("{padding:?}")) {
-            self.e.entity_commands().insert(SectionBodyPadding(padding));
+            self.e.entity_commands().insert(BodyPadding(padding));
+        }
+        self
+    }
+}
+
+impl ImmResponse<'_, '_, '_, kind::Tabs> {
+    /// Set the gap between the items the body stacks, overriding the default
+    /// [`size::SPACE`]. Container-wide: every tab's body reads as the same surface.
+    pub fn gap(mut self, gap: Val) -> Self {
+        struct TabBodyGapKey;
+        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
+        if self.key_changed::<TabBodyGapKey>(format!("{gap:?}")) {
+            self.e.entity_commands().insert(BodyGap(gap));
+        }
+        self
+    }
+
+    /// Set the body's padding, overriding the default [`size::SPACE`]. A tab wanting
+    /// none of it takes [`Val::ZERO`] here and pads the others' content from inside.
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        struct TabBodyPadKey;
+        let padding = padding.into();
+        if self.key_changed::<TabBodyPadKey>(format!("{padding:?}")) {
+            self.e.entity_commands().insert(BodyPadding(padding));
         }
         self
     }
@@ -1003,7 +1028,18 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
         struct ScrollContentGapKey;
         // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
         if self.key_changed::<ScrollContentGapKey>(format!("{gap:?}")) {
-            self.e.entity_commands().insert(ScrollContentGap(gap));
+            self.e.entity_commands().insert(BodyGap(gap));
+        }
+        self
+    }
+
+    /// Set the content's padding, which scrolls with it rather than framing the
+    /// region — so it also spaces the two ends of the scroll.
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        struct ScrollContentPadKey;
+        let padding = padding.into();
+        if self.key_changed::<ScrollContentPadKey>(format!("{padding:?}")) {
+            self.e.entity_commands().insert(BodyPadding(padding));
         }
         self
     }

@@ -6,7 +6,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::observer::On;
-use bevy::ecs::query::With;
+use bevy::ecs::query::{Or, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Local, Query};
@@ -25,6 +25,7 @@ use bevy::ui::{
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
 use crate::constants::size;
+use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::controls::{PlumeScrollbar, ScrollbarGutter};
 use crate::font_styles::TextStyleRelay;
 
@@ -38,13 +39,7 @@ pub enum ScrollAxis {
     Horizontal,
 }
 
-/// Put this on a scroll frame to space the items it stacks. The frame's own children
-/// are its viewport and scrollbar, so a gap set there never reaches the content.
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct ScrollContentGap(pub Val);
-
-// The content stack, so [`ScrollContentGap`] on the frame can find it.
+// The content stack, so [`BodyGap`] on the frame can find it.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct ScrollContent;
@@ -141,28 +136,38 @@ pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
     }
 }
 
-// `ScrollContentGap` is set on the frame, which is what a caller holds, but only the
-// content stack two levels down lays the items out.
-fn relay_scroll_content_gap(
-    q_frames: Query<(&ScrollContentGap, &Children)>,
+// The content stack under a scroll frame, two levels down past the viewport. Also
+// how a dialog finds the stack its own body scrolls when a height knob bounds it.
+pub(crate) fn scroll_content_of(
+    frame: &Children,
+    q_children: &Query<&Children>,
+    q_content: &Query<(), With<ScrollContent>>,
+) -> Option<Entity> {
+    frame
+        .iter()
+        .filter_map(|viewport| q_children.get(*viewport).ok())
+        .flat_map(|stacks| stacks.iter())
+        .find(|entity| q_content.contains(**entity))
+        .copied()
+}
+
+// `BodyGap` / `BodyPadding` are set on the frame, which is what a caller holds, but
+// only the content stack lays the items out.
+fn relay_scroll_content_style(
+    q_frames: Query<
+        (Option<&BodyGap>, Option<&BodyPadding>, &Children),
+        Or<(With<BodyGap>, With<BodyPadding>)>,
+    >,
     q_children: Query<&Children>,
     q_content: Query<(), With<ScrollContent>>,
     mut q_nodes: Query<&mut Node>,
 ) {
-    for (gap, viewports) in q_frames.iter() {
-        let content = viewports
-            .iter()
-            .filter_map(|viewport| q_children.get(*viewport).ok())
-            .flat_map(|stacks| stacks.iter())
-            .find(|entity| q_content.contains(**entity));
-        let Some(&content) = content else {
+    for (gap, padding, children) in q_frames.iter() {
+        let Some(content) = scroll_content_of(children, &q_children, &q_content) else {
             continue;
         };
-        if let Ok(mut node) = q_nodes.get_mut(content)
-            && (node.row_gap != gap.0 || node.column_gap != gap.0)
-        {
-            node.row_gap = gap.0;
-            node.column_gap = gap.0;
+        if let Ok(mut node) = q_nodes.get_mut(content) {
+            apply_body_style(&mut node, gap, padding);
         }
     }
 }
@@ -204,7 +209,7 @@ impl Plugin for ScrollAreaPlugin {
         app.add_observer(scroll_sideways_on_wheel);
         app.add_systems(
             PostUpdate,
-            relay_scroll_content_gap.before(UiSystems::Layout),
+            relay_scroll_content_style.before(UiSystems::Layout),
         );
         // `PostLayout` is where `CalculatedClip` is written.
         app.add_systems(

@@ -22,6 +22,7 @@ use bevy::ui::{
 };
 
 use crate::constants::{font_awesome, size};
+use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::cursor::EntityCursor;
 use crate::display::icon;
 use crate::font_styles::TextStyleRelay;
@@ -61,17 +62,6 @@ impl Default for SectionCollapsible {
         Self(true)
     }
 }
-
-/// Put this on a section frame to space the items its body stacks. The frame's own
-/// children are its header and body, so a gap set there never reaches the content.
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct SectionBodyGap(pub Val);
-
-/// Put this on a section frame to override its body's padding.
-#[derive(Component, Default, Clone, Reflect)]
-#[reflect(Component, Clone, Default)]
-pub struct SectionBodyPadding(pub UiRect);
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -331,19 +321,12 @@ fn update_section_header_style(
     }
 }
 
-// `SectionBodyGap` / `SectionBodyPadding` sit on the frame, which is what a caller
-// holds, but the body child is what lays the content out.
+// `BodyGap` / `BodyPadding` sit on the frame, which is what a caller holds, but the
+// body child is what lays the content out.
 fn relay_section_body_style(
     q_frames: Query<
-        (
-            Option<&SectionBodyGap>,
-            Option<&SectionBodyPadding>,
-            &Children,
-        ),
-        (
-            With<SectionRoot>,
-            Or<(With<SectionBodyGap>, With<SectionBodyPadding>)>,
-        ),
+        (Option<&BodyGap>, Option<&BodyPadding>, &Children),
+        (With<SectionRoot>, Or<(With<BodyGap>, With<BodyPadding>)>),
     >,
     q_bodies: Query<(), With<SectionBody>>,
     mut q_nodes: Query<&mut Node>,
@@ -352,18 +335,8 @@ fn relay_section_body_style(
         let Some(&body) = children.iter().find(|entity| q_bodies.contains(**entity)) else {
             continue;
         };
-        let Ok(mut node) = q_nodes.get_mut(body) else {
-            continue;
-        };
-        if let Some(gap) = gap
-            && node.row_gap != gap.0
-        {
-            node.row_gap = gap.0;
-        }
-        if let Some(padding) = padding
-            && node.padding != padding.0
-        {
-            node.padding = padding.0;
+        if let Ok(mut node) = q_nodes.get_mut(body) {
+            apply_body_style(&mut node, gap, padding);
         }
     }
 }

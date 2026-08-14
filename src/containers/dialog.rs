@@ -1,24 +1,28 @@
 //! Movable floating dialog with a draggable title bar and close button.
+use bevy::app::{Plugin, PostUpdate};
 use bevy::ecs::component::Component;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::Children;
 use bevy::ecs::name::Name;
 use bevy::ecs::observer::On;
+use bevy::ecs::query::{Or, With};
 use bevy::ecs::reflect::ReflectComponent;
-use bevy::ecs::system::Commands;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::ui::{
     AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, LayoutConfig, Node,
-    PositionType, UiRect, Val,
+    PositionType, UiRect, UiSystems, Val,
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
 use crate::constants::{font_awesome, size};
 use crate::containers::{
-    ScrollAxis, flex_spacer, scroll_content, scroll_frame, scroll_viewport, scrollbar_node,
+    BodyGap, BodyPadding, ScrollAxis, ScrollContent, apply_body_style, flex_spacer, scroll_content,
+    scroll_content_of, scroll_frame, scroll_viewport, scrollbar_node,
 };
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
 use crate::display::icon;
@@ -296,6 +300,61 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
     }
 }
 
+// `BodyGap` / `BodyPadding` sit on the frame, which is what a caller holds, but the
+// body child is what lays the content out.
+//
+// Padding is the body's either way. The gap is not: a dialog bounded by a height
+// knob wraps its contents in the scroll machinery, leaving the body holding that
+// frame alone — with nothing to space — while the stack inside the viewport is what
+// carries the items. So the gap follows the content down when it moves.
+fn relay_dialog_body_style(
+    q_frames: Query<
+        (Option<&BodyGap>, Option<&BodyPadding>, &Children),
+        (With<Dialog>, Or<(With<BodyGap>, With<BodyPadding>)>),
+    >,
+    q_bodies: Query<(), With<DialogBody>>,
+    q_children: Query<&Children>,
+    q_content: Query<(), With<ScrollContent>>,
+    mut q_nodes: Query<&mut Node>,
+) {
+    for (gap, padding, children) in q_frames.iter() {
+        let Some(&body) = children.iter().find(|entity| q_bodies.contains(**entity)) else {
+            continue;
+        };
+        let scrolled = q_children
+            .get(body)
+            .ok()
+            .and_then(|frames| frames.iter().next().copied())
+            .and_then(|frame| q_children.get(frame).ok())
+            .and_then(|frame| scroll_content_of(frame, &q_children, &q_content));
+        let (gap_target, body_gap) = match scrolled {
+            Some(content) => (content, None),
+            None => (body, gap),
+        };
+        if let Ok(mut node) = q_nodes.get_mut(body) {
+            apply_body_style(&mut node, body_gap, padding);
+        }
+        if let Some(gap) = gap
+            && gap_target != body
+            && let Ok(mut node) = q_nodes.get_mut(gap_target)
+        {
+            apply_body_style(&mut node, Some(gap), None);
+        }
+    }
+}
+
+// Registers the dialog and panel body-spacing relay.
+pub(crate) struct DialogPlugin;
+
+impl Plugin for DialogPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_systems(
+            PostUpdate,
+            relay_dialog_body_style.before(UiSystems::Layout),
+        );
+    }
+}
+
 // The header's ✕. A flat tool button plus a close trigger — no chrome of its
 // own, so it is a scene function rather than a scene component.
 pub(crate) fn dialog_close() -> impl Scene {
@@ -312,9 +371,15 @@ pub(crate) fn dialog_close() -> impl Scene {
     }
 }
 
+// The body, so [`BodyGap`] / [`BodyPadding`] on the frame can find it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct DialogBody;
+
 // The dialog's central body: the padded column the contents sit in.
 pub(crate) fn dialog_body() -> impl Scene {
     bsn! {
+        DialogBody
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,

@@ -6,7 +6,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Has, With, Without};
+use bevy::ecs::query::{Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
@@ -28,6 +28,7 @@ use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, Popover
 
 use super::dialog::CloseRequested;
 use crate::constants::size;
+use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
@@ -378,6 +379,20 @@ fn close_popups_on_escape(
     }
 }
 
+// A popup is its own body — it has no frame wrapping one — so the pair every other
+// container relays to a child lands here on the entity that already carries it.
+// Still a relay rather than a direct write, so the vocabulary is the same one.
+fn relay_popup_style(
+    mut q_popups: Query<
+        (Option<&BodyGap>, Option<&BodyPadding>, &mut Node),
+        (With<PopupRoot>, Or<(With<BodyGap>, With<BodyPadding>)>),
+    >,
+) {
+    for (gap, padding, mut node) in q_popups.iter_mut() {
+        apply_body_style(&mut node, gap, padding);
+    }
+}
+
 // Registers socket anchor tracking, popup dismissal (outside press, Escape) and
 // the end-of-frame despawn.
 pub(crate) struct PopupPlugin;
@@ -394,6 +409,7 @@ impl Plugin for PopupPlugin {
                 PostUpdate,
                 bridge_socket_text_style.before(crate::font_styles::resolve_inheritable_font),
             )
+            .add_systems(PostUpdate, relay_popup_style.before(UiSystems::Layout))
             .add_systems(Last, despawn_closing_popups);
     }
 }
