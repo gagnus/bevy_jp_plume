@@ -495,7 +495,7 @@ where
     }
 }
 
-/// Lets `tooltip_ui` ask whether the tooltip state machine is showing for its
+/// Lets `tooltip_container` ask whether the tooltip state machine is showing for its
 /// control.
 pub struct CapabilityPlumeTooltip;
 

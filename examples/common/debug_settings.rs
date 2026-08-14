@@ -195,7 +195,7 @@ fn debug_settings_dialog(
                 let (mut do_reset, mut keep) = (false, false);
                 ui.icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
                     .variant(ButtonVariant::Outline)
-                    .tooltip_ui(|ui| {
+                    .tooltip_container(|ui| {
                         ui.horizontal(|ui| {
                             ui.icon(font_awesome::solid::ARROW_ROTATE_LEFT);
                             ui.caption("Reset to defaults")

@@ -221,6 +221,14 @@ pub trait PlumeImm<'w, 's> {
     /// [`min_panes`](ImmResponse::min_panes) to stop either pane getting too
     /// small.
     ///
+    /// Give each pane one container of its own — a [`vertical`](Self::vertical), a
+    /// [`scroll_area_vertical`](Self::scroll_area_vertical), a
+    /// [`tabs`](Self::tabs). A pane is bare layout with no direction or spacing of
+    /// its own, so a second child lands beside the first with nothing between them.
+    ///
+    /// The splitter itself takes no spacing or alignment: the gap between the panes
+    /// is the divider, and the panes must stretch for the divider to line up.
+    ///
     /// Two closures rather than a collector: a split has exactly two panes, and
     /// that is worth saying in the signature rather than in the docs.
     fn split_horizontal(

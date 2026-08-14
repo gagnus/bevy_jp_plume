@@ -141,14 +141,12 @@ pub mod kind {
     impl Gapped for Row {}
     impl Gapped for Column {}
     impl Gapped for Screen {}
-    impl Gapped for Split {}
     impl Gapped for Button<Content> {}
     impl Gapped for StyledButton<Content> {}
     impl Gapped for CheckableButton<Content> {}
     impl Container for Row {}
     impl Container for Column {}
     impl Container for Screen {}
-    impl Container for Split {}
     impl Padded for Row {}
     impl Padded for Column {}
     impl Padded for Screen {}
@@ -233,7 +231,7 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
     /// Rich tooltip: `content` builds the panel body each frame while the
     /// tooltip is showing. Takes precedence over [`tooltip`](Self::tooltip) text.
     #[track_caller]
-    pub fn tooltip_ui(mut self, content: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+    pub fn tooltip_container(mut self, content: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
         struct TooltipUiKey;
         if self.key_changed::<TooltipUiKey>(true) {
             self.e.entity_commands().insert(TooltipUi);

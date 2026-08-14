@@ -299,7 +299,6 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         // Dragging well past the panel's floor closes it entirely.
         .min_panes(px(120), px(260))
         .collapsible(false, true)
-        .align_items(AlignItems::Stretch)
         .auto_hide_divider(true)
         .grow();
         s.split = split;

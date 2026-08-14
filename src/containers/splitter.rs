@@ -256,6 +256,11 @@ pub(crate) fn splitter_frame(axis: SplitAxis, fraction: f32) -> impl Scene {
         SplitMin
         // `Val::Em` minimums need the chain's `EmSize` to resolve.
         TextStyleRelay
+        // `Pickable` is per-entity and depth-based, so the frame is its own hit over
+        // the same area as the panes: without this it swallows picks the panes let
+        // through, and their `IGNORE` buys nothing. The divider sets no `Pickable`
+        // of its own, and per-entity means this never reaches it, so drags survive.
+        Pickable::IGNORE
     }
 }
 
@@ -280,12 +285,10 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
         }
         template_value(pane)
         TextStyleRelay
-        // A pane is pure layout, like `screen`, so it lets picks fall through
-        // its empty parts — whatever the app puts in it does its own blocking.
-        // It has to default this way round: the app can reach the splitter to
-        // say `.pickable()`, but never the panes inside it, so a pane that
-        // blocked would be a pane nothing could stop blocking. Content over a
-        // 3d viewport is the case that needs it.
+        // A pane is pure layout, like `screen`, so it lets picks fall through its
+        // empty parts — whatever the app puts in it does its own blocking. Content
+        // over a 3d viewport is the case that needs it, and it needs the frame to
+        // ignore picks too, since a pane's own `IGNORE` does not speak for it.
         Pickable::IGNORE
     }
 }

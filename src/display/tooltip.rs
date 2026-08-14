@@ -55,7 +55,7 @@ impl TooltipContent {
 }
 
 // Marks a control whose tooltip contents are built by the imm layer
-// (`tooltip_ui`); the tick system runs the state machine but spawns nothing.
+// (`tooltip_container`); the tick system runs the state machine but spawns nothing.
 #[derive(Component, Default, Clone)]
 pub(crate) struct TooltipUi;
 
