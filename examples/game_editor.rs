@@ -436,7 +436,8 @@ fn inspector(ui: &mut Ui, state: &mut Editor) {
         vec3_row(ui, "Position", &mut state.position);
         vec3_row(ui, "Rotation", &mut state.rotation);
         vec3_row(ui, "Scale", &mut state.scale);
-    });
+    })
+    .padding(px(state.metallic * 32.));
 
     ui.section("Mesh", |ui| {
         ui.horizontal(|ui| {
@@ -450,7 +451,8 @@ fn inspector(ui: &mut Ui, state: &mut Editor) {
             .grow();
         });
         ui.checkbox(&mut state.cast_shadows, "Cast shadows");
-    });
+    })
+    .gap(px(state.metallic * 32.));
 
     ui.section("Material", |ui| {
         ui.horizontal(|ui| {

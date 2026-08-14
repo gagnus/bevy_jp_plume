@@ -343,7 +343,7 @@ pub fn tab_body() -> impl Scene {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            row_gap: size::SPACE_TIGHT,
+            row_gap: size::SPACE,
             padding: size::SPACE,
             // Fills the height the strip leaves when the container is bounded
             // (no-op when it hugs its content), and `min_height` lets a

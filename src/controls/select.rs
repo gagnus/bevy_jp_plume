@@ -419,7 +419,6 @@ fn open_select_popup(
                 @placement: PopupPlacement::Below,
                 @place_very_close: true,
                 @dismiss: PopupDismiss::FocusOut,
-                @padding: UiRect::vertical(size::SPACE_TIGHT),
                 @contents: bsn_list![
                     (
                         @PlumeSelectOptions {
@@ -441,6 +440,9 @@ fn open_select_popup(
             ThemeBorderToken(tokens::SELECT_BORDER)
             Node {
                 min_width: min_width,
+                // Rows carry their own horizontal padding, so the list only
+                // insets top and bottom.
+                padding: UiRect::vertical(size::SPACE_TIGHT),
             }
         })
         .insert(ChildOf(socket));

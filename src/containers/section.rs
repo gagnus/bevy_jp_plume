@@ -1,14 +1,14 @@
 //! Collapsible section container with a header bar.
 use core::f32::consts::FRAC_PI_2;
 
-use bevy::app::{Plugin, PreUpdate};
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Added, Changed, Has, With};
+use bevy::ecs::query::{Added, Changed, Has, Or, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query};
@@ -18,7 +18,7 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
 use bevy::ui::{
-    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiTransform, Val,
+    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
 };
 
 use crate::constants::{font_awesome, size};
@@ -61,6 +61,17 @@ impl Default for SectionCollapsible {
         Self(true)
     }
 }
+
+/// Put this on a section frame to space the items its body stacks. The frame's own
+/// children are its header and body, so a gap set there never reaches the content.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct SectionBodyGap(pub Val);
+
+/// Put this on a section frame to override its body's padding.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct SectionBodyPadding(pub UiRect);
 
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -320,6 +331,43 @@ fn update_section_header_style(
     }
 }
 
+// `SectionBodyGap` / `SectionBodyPadding` sit on the frame, which is what a caller
+// holds, but the body child is what lays the content out.
+fn relay_section_body_style(
+    q_frames: Query<
+        (
+            Option<&SectionBodyGap>,
+            Option<&SectionBodyPadding>,
+            &Children,
+        ),
+        (
+            With<SectionRoot>,
+            Or<(With<SectionBodyGap>, With<SectionBodyPadding>)>,
+        ),
+    >,
+    q_bodies: Query<(), With<SectionBody>>,
+    mut q_nodes: Query<&mut Node>,
+) {
+    for (gap, padding, children) in q_frames.iter() {
+        let Some(&body) = children.iter().find(|entity| q_bodies.contains(**entity)) else {
+            continue;
+        };
+        let Ok(mut node) = q_nodes.get_mut(body) else {
+            continue;
+        };
+        if let Some(gap) = gap
+            && node.row_gap != gap.0
+        {
+            node.row_gap = gap.0;
+        }
+        if let Some(padding) = padding
+            && node.padding != padding.0
+        {
+            node.padding = padding.0;
+        }
+    }
+}
+
 // Plugin which registers the section collapse systems.
 pub(crate) struct SectionPlugin;
 
@@ -333,6 +381,10 @@ impl Plugin for SectionPlugin {
                 update_section_header_style,
             )
                 .in_set(PickingSystems::Last),
+        );
+        app.add_systems(
+            PostUpdate,
+            relay_section_body_style.before(UiSystems::Layout),
         );
     }
 }

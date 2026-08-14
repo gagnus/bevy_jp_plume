@@ -21,7 +21,7 @@ use bevy::scene::prelude::*;
 use bevy::text::TextFont;
 use bevy::ui::{
     AlignItems, ComputedNode, Display, FixedNode, FlexDirection, GlobalZIndex, JustifyContent,
-    Node, OverrideClip, PositionType, UiGlobalTransform, UiRect, UiSystems, UiTransform, Val, Val2,
+    Node, OverrideClip, PositionType, UiGlobalTransform, UiSystems, UiTransform, Val, Val2,
 };
 use bevy::ui_widgets::MenuPopup;
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
@@ -151,8 +151,6 @@ pub struct PlumePopupProps {
     pub dismiss: PopupDismiss,
     /// Whether background drags move the popup (a reopen re-anchors it).
     pub movable: bool,
-    /// Padding inside the chrome.
-    pub padding: UiRect,
 }
 
 impl Default for PlumePopupProps {
@@ -163,7 +161,6 @@ impl Default for PlumePopupProps {
             dismiss: Default::default(),
             movable: false,
             place_very_close: false,
-            padding: size::SPACE_TIGHT.into(),
         }
     }
 }
@@ -213,7 +210,7 @@ impl PlumePopup {
                 justify_content: JustifyContent::Stretch,
                 align_items: AlignItems::Stretch,
                 border: size::HAIRLINE,
-                padding: {props.padding},
+                padding: size::SPACE_TIGHT,
                 border_radius: size::CORNER_RADIUS,
                 row_gap: size::SPACE,
             }

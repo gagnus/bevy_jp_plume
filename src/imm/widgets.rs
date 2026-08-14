@@ -25,8 +25,8 @@ use super::caps::{
 use super::{ImmEntityExt, ImmResponse, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
-    CloseRequested, DialogChrome, DialogHeader, PlumeDialogBody, PopupAnchor, PopupDismiss,
-    PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_frame,
+    CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss, PopupPlacement,
+    ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_body, dialog_frame,
     flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content, scroll_frame,
     scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
     splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
@@ -1661,9 +1661,7 @@ fn reconcile_frame_body<'e, 'w, 's>(
             });
     }
     let entity = entity.add_ui(move |ui| {
-        let body = ui
-            .ch_id("dialog_body")
-            .on_spawn_apply_scene(|| bsn! { @PlumeDialogBody });
+        let body = ui.ch_id("dialog_body").on_spawn_apply_scene(dialog_body);
         if layout.height == Val::Auto && layout.max_height == Val::Auto {
             body.add_ui(f);
         } else {

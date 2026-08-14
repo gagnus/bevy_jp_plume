@@ -13,10 +13,8 @@ mod splitter;
 mod tabs;
 
 pub use column::column;
-pub use dialog::{
-    CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogProps,
-};
-pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_frame};
+pub use dialog::{CloseRequested, PlumeDialog, PlumeDialogProps};
+pub(crate) use dialog::{DialogChrome, DialogHeader, dialog_body, dialog_frame};
 pub use flex_spacer::flex_spacer;
 pub(crate) use popup::*;
 pub use popup::{
@@ -27,7 +25,9 @@ pub use row::row;
 pub use screen::{Screen, screen};
 pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis, ScrollContentGap};
-pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
+pub use section::{
+    PlumeSection, PlumeSectionProps, SectionBodyGap, SectionBodyPadding, SectionCollapsed,
+};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
 pub(crate) use separator::SeparatorPlugin;
 pub use separator::{Separator, SeparatorBleed, separator};

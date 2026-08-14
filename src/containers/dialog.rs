@@ -53,8 +53,6 @@ pub struct PlumeDialogProps {
     /// `false` omits the whole title bar (with it, the title, ✕ and drag), leaving a
     /// bare floating panel — see the imm `panel`. Also drops the header-height floor.
     pub header: bool,
-    /// Body padding
-    pub body_padding: UiRect,
 }
 
 impl Default for PlumeDialogProps {
@@ -73,7 +71,6 @@ impl Default for PlumeDialogProps {
             closable: true,
             movable: true,
             header: true,
-            body_padding: UiRect::all(size::SPACE),
         }
     }
 }
@@ -97,7 +94,6 @@ impl PlumeDialog {
             closable,
             movable,
             header,
-            body_padding,
         } = props;
         // A bounded dialog scrolls its body; an unbounded one holds the contents
         // directly and spawns no scroll machinery.
@@ -135,10 +131,10 @@ impl PlumeDialog {
             dialog_frame(DialogChrome {
                 name: "PlumeDialog".into(),
                 // The public dialog builds its whole body eagerly and hands the
-                // frame a padded `PlumeDialogBody` wrapping it.
+                // frame a padded `dialog_body` wrapping it.
                 body: Box::new(bsn_list![
                     (
-                        @PlumeDialogBody { @padding: body_padding }
+                        dialog_body()
                         Children [
                             {body},
                         ]
@@ -174,12 +170,12 @@ pub struct CloseRequested;
 // Chrome-level input for [`dialog_frame`], kept distinct from the public
 // [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,
 // inserted verbatim — and body padding never reaches the frame (it lives on the
-// body's [`PlumeDialogBody`]).
+// body's [`dialog_body`]).
 pub(crate) struct DialogChrome {
     /// Debug name to give the entity
     pub name: Name,
     /// Finished body slot, inserted into the frame verbatim. The public dialog hands
-    /// over a padded [`PlumeDialogBody`]; the imm layer hands over an empty slot and
+    /// over a padded [`dialog_body`]; the imm layer hands over an empty slot and
     /// reconciles the body itself.
     pub body: Box<dyn SceneList>,
     /// The title bar, or `None` for a bare floating panel — no ✕, no drag, and no
@@ -316,42 +312,20 @@ pub(crate) fn dialog_close() -> impl Scene {
     }
 }
 
-/// Props used to construct a [`PlumeDialogBody`] scene.
-pub struct PlumeDialogBodyProps {
-    /// Padding inside the body, around the content.
-    pub padding: UiRect,
-}
-
-impl Default for PlumeDialogBodyProps {
-    fn default() -> Self {
-        Self {
-            padding: UiRect::all(size::SPACE),
+// The dialog's central body: the padded column the contents sit in.
+pub(crate) fn dialog_body() -> impl Scene {
+    bsn! {
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: size::SPACE,
+            padding: size::SPACE,
+            // Shrinking below the content size lets a bounded dialog scroll
+            // instead of pushing content out the bottom. Inert while `Auto`.
+            flex_grow: 1.0,
+            min_height: Val::ZERO,
         }
-    }
-}
-
-/// Central body section for a dialog
-#[derive(SceneComponent, Default, Clone, Reflect)]
-#[scene(PlumeDialogBodyProps)]
-#[reflect(Component, Clone, Default)]
-pub struct PlumeDialogBody;
-
-impl PlumeDialogBody {
-    /// Scene function for dialog body.
-    pub fn scene(props: PlumeDialogBodyProps) -> impl Scene {
-        bsn! {
-            Node {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Stretch,
-                row_gap: size::SPACE,
-                padding: {props.padding},
-                // Shrinking below the content size lets a bounded dialog scroll
-                // instead of pushing content out the bottom. Inert while `Auto`.
-                flex_grow: 1.0,
-                min_height: Val::ZERO,
-            }
-            TextStyleRelay
-        }
+        TextStyleRelay
     }
 }

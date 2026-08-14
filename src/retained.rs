@@ -13,13 +13,13 @@ pub use bevy::ui::{Checkable, Checked, InteractionDisabled, Selected};
 pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};
 
 pub use crate::containers::{
-    CloseRequested, PlumeDialog, PlumeDialogBody, PlumeDialogBodyProps, PlumeDialogProps,
-    PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps, PlumeSection,
-    PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps, PlumeTabs,
-    PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, Screen, ScrollAxis,
-    ScrollContentGap, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
-    SplitDividerAutoHide, SplitFraction, SplitMin, TabTarget, close_popup, column, flex_spacer,
-    popup_socket, row, screen, separator, space, tab_body, tab_label,
+    CloseRequested, PlumeDialog, PlumeDialogProps, PlumePopup, PlumePopupProps, PlumeScrollArea,
+    PlumeScrollAreaProps, PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps,
+    PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket,
+    Screen, ScrollAxis, ScrollContentGap, SectionBodyGap, SectionBodyPadding, SectionCollapsed,
+    SeparatorBleed, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitFraction, SplitMin,
+    TabTarget, close_popup, column, flex_spacer, popup_socket, row, screen, separator, space,
+    tab_body, tab_label,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,

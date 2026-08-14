@@ -27,8 +27,8 @@ use super::caps::{ImmPlumeChecked, ImmPlumeTooltip};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
-    PopupAnchor, ScrollContentGap, SectionCollapsed, SectionCollapsible, SeparatorBleed,
-    SplitCollapsible, SplitDividerAutoHide, SplitMin,
+    PopupAnchor, ScrollContentGap, SectionBodyGap, SectionBodyPadding, SectionCollapsed,
+    SectionCollapsible, SeparatorBleed, SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag,
@@ -915,6 +915,27 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
             self.e
                 .entity_commands()
                 .insert(SectionCollapsible(collapsible));
+        }
+        self
+    }
+
+    /// Set the gap between the items the body stacks, overriding the default
+    /// [`size::SPACE_TIGHT`].
+    pub fn gap(mut self, gap: Val) -> Self {
+        struct SectionBodyGapKey;
+        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
+        if self.key_changed::<SectionBodyGapKey>(format!("{gap:?}")) {
+            self.e.entity_commands().insert(SectionBodyGap(gap));
+        }
+        self
+    }
+
+    /// Set the body's padding, overriding the default [`size::SPACE`].
+    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
+        struct SectionBodyPadKey;
+        let padding = padding.into();
+        if self.key_changed::<SectionBodyPadKey>(format!("{padding:?}")) {
+            self.e.entity_commands().insert(SectionBodyPadding(padding));
         }
         self
     }
