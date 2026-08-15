@@ -252,5 +252,5 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
     })
     .background_slot(bg_slot)
     .padding(size::SPACE * 2.0)
-    .corners(RoundedCorners::All);
+    .border_radius(size::CORNER_RADIUS);
 }

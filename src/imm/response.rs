@@ -16,8 +16,7 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, Checkable, Display, GlobalZIndex, Node,
-    Overflow, UiRect, Val, Val2,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, BorderRadius, Checkable, Display, GlobalZIndex, Node, Overflow, UiRect, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -1211,10 +1210,11 @@ impl<K: kind::Surface> ImmResponse<'_, '_, '_, K> {
     }
 
     /// Round the container's corners; the background and border follow it.
-    pub fn corners(self, corners: RoundedCorners) -> Self {
-        struct CornersKey;
-        self.set_node::<CornersKey, _>(corners, |node, corners| {
-            node.border_radius = corners.to_border_radius(size::CORNER_RADIUS);
+    pub fn border_radius<T: Into<BorderRadius>>(self, border_radius: T) -> Self {
+        let border_radius = border_radius.into();
+        struct BorderRadiusKey;
+        self.set_node::<BorderRadiusKey, _>(border_radius, |node, border_radius| {
+            node.border_radius = border_radius;
         })
     }
 
