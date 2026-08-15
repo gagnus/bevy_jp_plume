@@ -9,8 +9,8 @@ use bevy_jp_plume::retained::{
     PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
     PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
     PlumeToggleSwitch, PlumeToolButton, Screen, SectionCollapsed, Selected, SetValue, SliderValue,
-    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, row, screen,
-    separator, small_caps, space, tab_body,
+    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, menu_anchor,
+    row, screen, separator, small_caps, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -686,6 +686,35 @@ fn header() -> impl Scene {
                 on(|_: On<Activate>, mut s: ResMut<Inspector>| {
                     (s.material, s.hierarchy) = Default::default();
                 })
+            ),
+            // The imm twin's `.menu()`: a menu hung off the app's own button,
+            // which keeps its tool-button look. Rows are the menu bar's.
+            (
+                @PlumeToolButton {
+                    @caption: bsn! { icon(font_awesome::solid::ELLIPSIS_VERTICAL) },
+                }
+                Tooltip("More material actions")
+                menu_anchor(bsn_list![
+                    (
+                        @PlumeMenuButton {
+                            @label: "Copy Values",
+                            @shortcut: {Some("Ctrl+C".to_string())},
+                        }
+                        on(|_: On<Activate>| info!("copy material values"))
+                    ),
+                    (
+                        @PlumeMenuButton { @label: "Paste Values" }
+                        InteractionDisabled
+                    ),
+                    separator(),
+                    (
+                        @PlumeMenuButton { @label: "Autosave" }
+                        Checkable
+                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                            s.autosave = ev.value;
+                        })
+                    ),
+                ])
             ),
         ]
     }

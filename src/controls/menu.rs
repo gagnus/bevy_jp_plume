@@ -227,12 +227,57 @@ pub(crate) fn imm_menu_anchor(
     let submenu = role == MenuButtonRole::Submenu;
     bsn! {
         menu_button_row(label, shortcut)
-        ImmMenuManaged
+        MenuSelfManaged
         template_value(role)
         {bar.then(|| bsn! { MenuButton })}
         {item.then(|| bsn! { MenuItem })}
         {submenu.then(|| bsn! { AccessibilityNode(accesskit::Node::new(Role::MenuItem)) })}
         {checkable.then(|| bsn! { Checkable })}
+    }
+}
+
+// What makes a control the app built itself open a menu: the marker the menu
+// systems key on, the role no classifier can derive here (the popup is not a
+// declared child), and the event routing [`menu_button_row`] carries as `on(…)`.
+// Both paths' standalone dropdowns start here.
+pub(crate) fn menu_anchor_base() -> impl Scene {
+    bsn! {
+        MenuButtonRow
+        MenuAnchorHost
+        MenuSelfManaged
+        template_value(MenuButtonRole::Bar)
+        MenuButton
+        on(menu_root_on_menu_event)
+    }
+}
+
+/// Drops `items` into a menu the app's own control opens — a `⋯` overflow button
+/// or any other, which keeps its own look.
+/// Imm twin: [`ImmResponse::menu`](crate::imm::ImmResponse::menu).
+pub fn menu_anchor(items: impl SceneList) -> impl Scene {
+    bsn! {
+        menu_anchor_base()
+        Children [
+            (
+                popup_socket()
+                MenuChrome
+                Children [
+                    (
+                        // Pre-rendered like [`PlumeMenuButton`]'s, and wired here
+                        // rather than by the classifier, which this anchor opts out
+                        // of along with the child adoption that would swallow the
+                        // control's own children.
+                        menu_frame_chrome()
+                        MenuChrome
+                        MenuPopup
+                        template_value(popover_for(MenuButtonRole::Bar))
+                        Node { display: Display::None }
+                        Visibility::Hidden
+                        Children [ {items} ]
+                    ),
+                ]
+            ),
+        ]
     }
 }
 
@@ -342,11 +387,18 @@ pub(crate) struct MenuOpen {
     pub(crate) focus: Option<NavAction>,
 }
 
-// Marks menu buttons whose popups the imm layer builds and tears down itself:
-// the classifier and the child-adoption step leave them alone.
+// Marks menu buttons whose popups are wired by whoever built them — the imm
+// layer frame by frame, [`menu_anchor`] in its own scene: the classifier and the
+// child-adoption step leave them alone.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
-pub(crate) struct ImmMenuManaged;
+pub(crate) struct MenuSelfManaged;
+
+// Marks an anchor that is the app's own control rather than a plume menu row, so
+// the style systems leave its fill, ink and corners to whatever built it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct MenuAnchorHost;
 
 // On an imm popup frame: the menu button it belongs to. The frame is unrooted
 // (not a descendant of its anchor), so event routing and ancestor walks jump
@@ -383,7 +435,7 @@ fn own_frame(
 // Move declared children (items, separators) into the hidden popup frame, so
 // apps write `Children [ … ]` while observers stay on the entities they declared.
 fn adopt_menu_children(
-    q_roots: Query<(Entity, &Children), (With<MenuButtonRow>, Without<ImmMenuManaged>)>,
+    q_roots: Query<(Entity, &Children), (With<MenuButtonRow>, Without<MenuSelfManaged>)>,
     q_chrome: Query<(), With<MenuChrome>>,
     q_socket: Query<(), With<PopupSocket>>,
     q_frame: Query<(), With<MenuPopupFrame>>,
@@ -409,7 +461,10 @@ fn adopt_menu_children(
 }
 
 // Popover placements: a bar menu drops below its button, edges flush; a submenu
-// opens beside its row, top edges flush.
+// opens beside its row, top edges flush. The solver takes the least-occluded
+// candidate and ties go to the first, so each side offers the flush alignment
+// first and the opposite one after — an anchor at the far edge of the window
+// (a `⋯` button in a panel header) has nothing to flush against otherwise.
 fn popover_for(role: MenuButtonRole) -> Popover {
     let sides: &[PopoverSide] = match role {
         MenuButtonRole::Submenu => &[PopoverSide::Right, PopoverSide::Left],
@@ -418,10 +473,12 @@ fn popover_for(role: MenuButtonRole) -> Popover {
     Popover {
         positions: sides
             .iter()
-            .map(|&side| PopoverPlacement {
-                side,
-                align: PopoverAlign::Start,
-                gap: 2.0,
+            .flat_map(|&side| {
+                [PopoverAlign::Start, PopoverAlign::End].map(|align| PopoverPlacement {
+                    side,
+                    align,
+                    gap: 2.0,
+                })
             })
             .collect(),
         window_margin: 10.0,
@@ -434,7 +491,7 @@ fn popover_for(role: MenuButtonRole) -> Popover {
 fn classify_menu_buttons(
     q_buttons: Query<
         (Entity, Option<&MenuButtonRole>, Option<&ChildOf>),
-        (With<MenuButtonRow>, Without<ImmMenuManaged>),
+        (With<MenuButtonRow>, Without<MenuSelfManaged>),
     >,
     q_is_button: Query<(), With<MenuButtonRow>>,
     q_frame: Query<(), With<MenuPopupFrame>>,
@@ -912,6 +969,9 @@ fn update_menu_button_styles(
         ),
         (
             With<MenuButtonRow>,
+            // An app's own control is styled by whatever built it; taking its
+            // background token here would drop it out of that system's query.
+            Without<MenuAnchorHost>,
             Or<(
                 Changed<MenuButtonRole>,
                 Changed<Hovered>,
@@ -960,7 +1020,7 @@ fn update_menu_button_styles_remove(
             Option<&ThemeBackgroundToken>,
             &InheritableThemeTextToken,
         ),
-        With<MenuButtonRow>,
+        (With<MenuButtonRow>, Without<MenuAnchorHost>),
     >,
     q_children: Query<&Children>,
     q_check: Query<(), With<MenuCheckIcon>>,

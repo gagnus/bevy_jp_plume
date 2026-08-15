@@ -16,13 +16,15 @@ use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundColor, BorderColor, BorderRadius, Checkable, Display, GlobalZIndex, Node, Overflow, UiRect, Val, Val2,
+    AlignItems, AlignSelf, BackgroundColor, BorderColor, BorderRadius, Checkable, Display,
+    GlobalZIndex, Node, Overflow, UiRect, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
-use super::caps::{ImmPlumeChecked, ImmPlumeTooltip};
+use super::caps::{ImmPlumeChecked, ImmPlumeMenu, ImmPlumeTooltip};
+use super::widgets::{ImmMenu, imm_menu_popup_on};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
@@ -30,9 +32,9 @@ use crate::containers::{
     SplitCollapsible, SplitDividerAutoHide, SplitMin,
 };
 use crate::controls::{
-    ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuShortcutText, NoDrag,
-    NoSelectAllOnFocus, NumberInputFrame, ScrollbarHidden, set_select_max_visible,
-    text_input_placeholder, text_input_suffix,
+    ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuButtonRole, MenuShortcutText, NoDrag,
+    NoSelectAllOnFocus, NumberInputFrame, ScrollbarHidden, menu_anchor_base,
+    set_select_max_visible, text_input_placeholder, text_input_suffix,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
@@ -240,6 +242,36 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
             close_on_click_outside: true,
             spacing: Default::default(),
         }
+    }
+
+    /// Drop-down menu anchored to this widget, filled by `f` — the standalone
+    /// form of the menus [`menu_bar`](super::PlumeImm::menu_bar) holds, for a
+    /// `⋯` overflow or any other button that opens one. The rows are the same
+    /// [`ImmMenu`] items, so shortcuts, checks and submenus all work here.
+    ///
+    /// The menu owns its open state, so unlike [`popup`](Self::popup) there is
+    /// no `&mut bool` to keep. Anchoring makes the widget activate on press
+    /// rather than release — opening the menu moves focus, which would have
+    /// closed it again before a release ever landed; its own `clicked` still
+    /// fires on that press.
+    #[track_caller]
+    pub fn menu(mut self, f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>)) -> Self {
+        struct MenuAnchor;
+        if self.key_changed::<MenuAnchor>(true) {
+            self.e.entity_commands().apply_scene(menu_anchor_base());
+        }
+        self.e = imm_menu_popup_on(self.e, MenuButtonRole::Bar, Location::caller(), f);
+        self
+    }
+
+    /// Whether the [`menu`](Self::menu) hung off this widget is open. Builders
+    /// take effect whatever order they run in, so a row that reveals controls
+    /// on hover can read this after its `menu` call and feed it back into their
+    /// own [`displayed`](Self::displayed) — the row keeps its controls while
+    /// the menu it opened is still up, and the pointer is over the popup rather
+    /// than the row.
+    pub fn menu_open(&self) -> bool {
+        self.e.menu_open().is_some()
     }
 
     /// Rich tooltip: `content` builds the panel body each frame while the

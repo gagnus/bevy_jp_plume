@@ -1122,27 +1122,42 @@ impl<'w, 's> ImmMenu<'_, 'w, 's> {
     }
 }
 
+// The anchors plume builds itself, which have no response of their own yet. One
+// menu per anchor here, so they all share the one popup id.
+fn imm_menu_popup<'r, 'w, 's, K>(
+    anchor: ImmEntity<'r, 'w, 's, PlumeCaps>,
+    role: MenuButtonRole,
+    f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>),
+) -> ImmResponse<'r, 'w, 's, K> {
+    respond(imm_menu_popup_on(anchor, role, "menu_popup", f), false)
+}
+
 // Builds a menu button's popup while its retained `MenuOpen` state says open.
 // The popup is unrooted (see `ImmPopup`); the frame's `MenuAnchorLink` routes
 // events and ancestor walks back to the anchor. After a close, one extra pass
 // builds the popup hidden, so a picked item's pending activation still reaches
 // its imm call site before the subtree is dropped.
-fn imm_menu_popup<'r, 'w, 's, K>(
+//
+// Takes and returns the anchor entity rather than a response, so
+// [`ImmResponse::menu`] can hang a menu off a widget that already built one —
+// which is also why the popup's id is the caller's, not a fixed one.
+pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
     mut anchor: ImmEntity<'r, 'w, 's, PlumeCaps>,
     role: MenuButtonRole,
+    id: impl core::hash::Hash,
     f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>),
-) -> ImmResponse<'r, 'w, 's, K> {
+) -> ImmEntity<'r, 'w, 's, PlumeCaps> {
     let open = anchor.menu_open();
     struct MenuWasOpen;
     let was_open = anchor.hash_get_typ::<MenuWasOpen>() == Some(imm_id(true));
     anchor.hash_set_typ::<MenuWasOpen>(imm_id(open.is_some()));
     let grace = open.is_none() && was_open;
     if open.is_none() && !grace {
-        return respond(anchor, false);
+        return anchor;
     }
     let anchor_entity = anchor.entity();
     let nav = open.flatten();
-    anchor = anchor.unrooted_ui("menu_popup", |ui| {
+    anchor = anchor.unrooted_ui(id, |ui| {
         ui.ch_id("socket")
             .on_spawn_apply_scene(popup_socket)
             .on_spawn_insert(move || PopupAnchor(anchor_entity))
@@ -1156,7 +1171,7 @@ fn imm_menu_popup<'r, 'w, 's, K>(
                 frame.add_ui(|ui| f(&mut ImmMenu { ui }));
             });
     });
-    respond(anchor, false)
+    anchor
 }
 
 /// Header kinds for [`ImmTab`]: which per-tab builders the handle carries.

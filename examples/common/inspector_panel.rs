@@ -519,6 +519,19 @@ fn header(ui: &mut Ui, s: &mut Inspector) {
         {
             (s.material, s.hierarchy) = Default::default();
         }
+        // A drop-down off the app's own button rather than a menu bar's: the
+        // button keeps its tool-button look and opens the same menu rows.
+        ui.tool_button(font_awesome::solid::ELLIPSIS_VERTICAL)
+            .flat()
+            .tooltip("More material actions")
+            .menu(|menu| {
+                if menu.item("Copy Values").shortcut("Ctrl+C").clicked {
+                    info!("copy material values");
+                }
+                menu.item("Paste Values").enabled(false);
+                menu.separator();
+                menu.item_toggle("Autosave", &mut s.autosave);
+            });
     });
 }
 
