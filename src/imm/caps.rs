@@ -21,9 +21,8 @@ use crate::utils::numeric::Numeric;
 /// Synchronizes an app [`Numeric`] with a control's [`SliderValue`] (slider,
 /// number input).
 ///
-/// Who-wins: a pending user edit (via `ValueChange<f32>`) always lands in the app
-/// value; otherwise the app value is pushed to the widget, except while the user
-/// is interacting (dragging, or editing the focused field).
+/// Who-wins: a pending user edit always lands in the app value; otherwise the app
+/// value is pushed to the widget, except while the user is interacting.
 pub struct CapabilityPlumeValue;
 
 impl ImmCapability for CapabilityPlumeValue {
@@ -79,10 +78,9 @@ where
         };
 
         let interacting = pressed || focused_within(&self);
-        // The edit is compared in `T`, so a sub-integer drag of an integer value
-        // isn't reported as a change; the push-back is compared in `f32`, so an
-        // integer snaps its widget back on release and an `f64` that has no exact
-        // `f32` stops re-pushing every frame.
+        // The edit compares in `T`, so a sub-integer drag isn't reported as a change;
+        // the push-back compares in `f32`, so an integer snaps its widget back on
+        // release and an `f64` with no exact `f32` stops re-pushing every frame.
         if let Some(new_value) = pending
             && T::from_f32(new_value) != *value
         {
@@ -132,10 +130,8 @@ where
         };
 
         // No interaction guard, unlike `plume_value`: the splitter writes its own
-        // `SplitFraction` as it drags and reports the same number, so the app
-        // value is already in step by the time it could be pushed back. What the
-        // guard would suppress is exactly what has to get through — the layout
-        // clamping a drag against a pane's minimum.
+        // `SplitFraction` as it drags, so the app value is already in step. The guard
+        // would suppress what must get through — a drag clamped by a pane's minimum.
         if let Some(new_value) = pending
             && new_value != *fraction
         {
@@ -235,9 +231,8 @@ where
 
 /// Synchronizes an app `usize` index with a select's picked row.
 ///
-/// The capability query only sees imm-managed entities, so all state flows
-/// through the select root: [`SelectedIndex`] (maintained by the retained layer)
-/// for reads, [`SetValue<usize>`] for writes.
+/// The capability query only sees imm-managed entities, so state flows through the
+/// select root: [`SelectedIndex`] for reads, [`SetValue<usize>`] for writes.
 pub struct CapabilityPlumeSelect;
 
 impl ImmCapability for CapabilityPlumeSelect {
@@ -293,8 +288,7 @@ where
 /// Synchronizes an app `String` with a text input's buffer, via the
 /// [`TextInputValue`] mirror (reads) and [`SetValue<String>`] (writes).
 ///
-/// The user's typing always lands in the app string; app pushes are held back
-/// while the field is focused.
+/// The user's typing always wins; app pushes are held back while the field is focused.
 pub struct CapabilityPlumeText;
 
 impl ImmCapability for CapabilityPlumeText {
@@ -352,14 +346,8 @@ where
 
 /// Synchronizes an app [`Color`] with a color picker's [`ColorPickerValue`].
 ///
-/// The picker self-updates its value as the user drags, so this mirrors the
-/// xy/select/text pattern: a widget value that moved since the last sync is the
-/// user's edit and wins; otherwise the app value is pushed to the widget.
-///
-/// Everything is keyed on the color's linear-RGBA bits, not `Color` equality —
-/// the widget stores its value as `Color::Hsva` while an app may hand in any
-/// variant, and cross-variant `PartialEq` would report equal colors as different
-/// and fight forever.
+/// The picker self-updates as the user drags, so a widget value that moved since
+/// the last sync wins; otherwise the app value is pushed to the widget.
 pub struct CapabilityPlumeColor;
 
 impl ImmCapability for CapabilityPlumeColor {
@@ -378,8 +366,8 @@ pub trait ImmPlumeColor {
 // Hash-memory key for the last widget color the imm layer synced against.
 struct ColorSyncKey;
 
-// `Color` isn't `Hash`, so key it on its linear-RGBA component bit patterns — a
-// canonical space so any two variants of the same color compare equal.
+// `Color` isn't `Hash`, so key on linear-RGBA bits — a canonical space, so the
+// widget's `Hsva` and an app's any-variant color don't compare unequal forever.
 fn color_bits(color: Color) -> (u32, u32, u32, u32) {
     let linear = color.to_linear();
     (
@@ -420,19 +408,14 @@ where
     }
 }
 
-// Per-pass table counting how many times each `(parent, base id)` pair has been
-// requested, so repeated sibling widgets get distinct ids without the caller
-// supplying one. This reimplements, on plume's side, the occurrence
-// disambiguation that would otherwise have to live in `bevy_immediate`'s id
-// resolver — letting plume track the unmodified upstream crate. Cleared at the
-// start of every [`PlumeRoot`](crate::imm::PlumeRoot) build (i.e. per system run).
+// Per-pass count of how many times each `(parent, base id)` pair has been requested,
+// so repeated sibling widgets get distinct ids. See `ch_loc` in [`crate::imm`]'s
+// `widgets` module; cleared at the start of every `PlumeRoot` build.
 #[derive(Resource, Default)]
 pub(crate) struct PlumeOccurrences(pub(crate) HashMap<ImmId, u32>);
 
 /// Registers [`PlumeOccurrences`] and the write access the imm layer needs to
-/// auto-disambiguate repeated sibling ids. Carries no widget-side entry point; it
-/// exists purely so the resource is reachable mid-build via `Imm`'s capability
-/// resources. See `ch_loc` in [`crate::imm`]'s `widgets` module.
+/// auto-disambiguate repeated sibling ids. No widget-side entry point of its own.
 pub struct CapabilityPlumeIds;
 
 impl ImmCapability for CapabilityPlumeIds {

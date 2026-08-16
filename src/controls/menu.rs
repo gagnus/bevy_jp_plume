@@ -70,9 +70,8 @@ impl PlumeMenuBar {
 }
 
 /// One entry in a menu tree. Its position picks its role: a child of a
-/// [`PlumeMenuBar`] (or any non-menu parent) is a top-level button that opens a
-/// menu; declared inside another menu button's `Children` it becomes an item in
-/// that menu; an item with menu children of its own becomes a submenu.
+/// [`PlumeMenuBar`] opens a menu, one declared inside a menu button's `Children`
+/// is an item in that menu, and an item with menu children is a submenu.
 ///
 /// Items with [`Checkable`](bevy::ui::Checkable) toggle
 /// [`Checked`](bevy::ui::Checked) when picked.
@@ -236,10 +235,9 @@ pub(crate) fn imm_menu_anchor(
     }
 }
 
-// What makes a control the app built itself open a menu: the marker the menu
-// systems key on, the role no classifier can derive here (the popup is not a
-// declared child), and the event routing [`menu_button_row`] carries as `on(…)`.
-// Both paths' standalone dropdowns start here.
+// What makes a control the app built itself open a menu: the marker the menu systems
+// key on, the role no classifier can derive here (the popup is not a declared child),
+// and the event routing [`menu_button_row`] carries as `on(…)`.
 pub(crate) fn menu_anchor_base() -> impl Scene {
     bsn! {
         MenuButtonRow
@@ -263,10 +261,9 @@ pub fn menu_anchor(items: impl SceneList) -> impl Scene {
                 MenuChrome
                 Children [
                     (
-                        // Pre-rendered like [`PlumeMenuButton`]'s, and wired here
-                        // rather than by the classifier, which this anchor opts out
-                        // of along with the child adoption that would swallow the
-                        // control's own children.
+                        // Wired here rather than by the classifier, which this anchor
+                        // opts out of along with the child adoption that would
+                        // swallow the control's own children.
                         menu_frame_chrome()
                         MenuChrome
                         MenuPopup
@@ -329,16 +326,15 @@ fn imm_frame_on_menu_event(
     }
 }
 
-// Plain root marker every menu bar carries, for the same reason
-// [`MenuButtonRow`] exists — see docs/plume_rules.md.
+// Plain root marker every menu bar carries, for the same reason [`MenuButtonRow`]
+// exists: the imm path never inserts the scene component.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct MenuBarRoot;
 
-// Marker every menu button row carries, retained or imm-built. The systems key
-// on this rather than [`PlumeMenuButton`], which is a scene component and so
-// may only appear on entities spawned through its own `@` template — the imm
-// anchors are not.
+// Marker every menu button row carries, retained or imm-built. The systems key on
+// this, not [`PlumeMenuButton`], which only appears on entities spawned through its
+// own `@` template — the imm anchors are not.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct MenuButtonRow;
@@ -460,11 +456,10 @@ fn adopt_menu_children(
     }
 }
 
-// Popover placements: a bar menu drops below its button, edges flush; a submenu
-// opens beside its row, top edges flush. The solver takes the least-occluded
-// candidate and ties go to the first, so each side offers the flush alignment
-// first and the opposite one after — an anchor at the far edge of the window
-// (a `⋯` button in a panel header) has nothing to flush against otherwise.
+// Popover placements: a bar menu drops below its button, a submenu opens beside its
+// row, both edge-flush. The solver takes the least-occluded candidate and ties go to
+// the first, so each side offers the flush alignment first and the opposite one after
+// — an anchor at the far edge of the window has nothing to flush against otherwise.
 fn popover_for(role: MenuButtonRole) -> Popover {
     let sides: &[PopoverSide] = match role {
         MenuButtonRole::Submenu => &[PopoverSide::Right, PopoverSide::Left],

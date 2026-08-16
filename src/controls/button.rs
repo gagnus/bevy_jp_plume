@@ -40,7 +40,7 @@ use crate::tokens;
 #[derive(Component, Default, Clone, Reflect, Debug, PartialEq, Eq)]
 #[reflect(Component, Clone, Default)]
 pub enum ButtonVariant {
-    /// The standard button appearance
+    /// The standard button appearance.
     #[default]
     Normal,
     /// A button with a more prominent color, this is used for "call to action" buttons,
@@ -56,10 +56,8 @@ pub enum ButtonVariant {
     Outline,
 }
 
-/// Rest-state chrome for a checkable button. The loud variants of [`ButtonVariant`] are
-/// absent by construction: they spend their emphasis at rest, leaving checked nothing to
-/// say. Checked accents the surface the variant leads with — fill for
-/// [`Normal`](Self::Normal), ink for the unfilled two.
+/// Rest-state chrome for a checkable button. The loud [`ButtonVariant`]s are absent by
+/// construction: they spend their emphasis at rest, leaving checked nothing to say.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub enum ButtonCheckableVariant {
     /// Filled at rest; checked swaps the fill to the accent.
@@ -96,9 +94,9 @@ pub struct PlumeButtonProps {
     pub caption: Box<dyn SceneList>,
     /// Color variant for the button.
     pub variant: ButtonVariant,
-    /// Rounded corners options
+    /// Rounded corners options.
     pub corners: RoundedCorners,
-    /// If true does not respond with color change hover and pressed
+    /// If true does not respond with color change hover and pressed.
     pub checkable: bool,
 }
 
@@ -151,9 +149,8 @@ impl PlumeButton {
             TextStyleRelay
             Children [
                 (
-                    // The border lives on an overlay child rather than on the button node: drawn
-                    // over the fill, it leaves no seam between body and border the way a node's
-                    // own inset border does.
+                    // The border lives on an overlay child rather than the button node:
+                    // drawn over the fill, it leaves no seam the way an inset border does.
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::ZERO,

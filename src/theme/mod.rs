@@ -265,14 +265,14 @@ impl core::ops::Index<ThemeSlot> for ThemeResolvedPalette {
     }
 }
 
-/// Represents a set of [`Oklcha`] colors which have same hue and chroma but different lightnesses
+/// Represents a set of [`Oklcha`] colors which have same hue and chroma but different lightnesses.
 #[derive(Clone, Debug, PartialEq, Reflect)]
 pub struct OklchaArray<const N: usize> {
-    /// Hue of the colors
+    /// Hue of the colors.
     pub hue: f32,
-    /// Chroma of the colors
+    /// Chroma of the colors.
     pub chroma: f32,
-    /// N lightness values
+    /// N lightness values.
     pub l: [f32; N],
 }
 
@@ -401,7 +401,7 @@ impl ThemeEditablePalette {
     }
 }
 
-/// Get the 3 default axis colors (RGB)
+/// Get the 3 default axis colors (RGB).
 pub fn default_axis_colors() -> [Oklcha; 3] {
     [
         Oklcha::new(0.5232, 0.1404, 13.84, 1.0),

@@ -18,9 +18,8 @@ pub struct BodyGap(pub Val);
 #[reflect(Component, Clone, Default)]
 pub struct BodyPadding(pub UiRect);
 
-// Write whichever of the two the caller set onto `node`; the other keeps whatever
-// the scene gave it. Both gap axes, since the one that is not the body's stacking
-// direction is inert without wrapping — that saves every relay naming its axis.
+// Write whichever of the two the caller set onto `node`; the other keeps what the
+// scene gave it. Both gap axes, since the non-stacking one is inert without wrapping.
 pub(crate) fn apply_body_style(
     node: &mut Node,
     gap: Option<&BodyGap>,

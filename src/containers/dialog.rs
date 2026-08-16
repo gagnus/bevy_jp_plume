@@ -163,20 +163,18 @@ impl PlumeDialog {
 }
 
 /// Set on a dialog or popup root when a close is requested; the surface's owner
-/// (the imm layer, or a control's observer) closes it rather than the
-/// requester. An app owning a retained [`PlumePopup`](crate::retained::PlumePopup)
-/// observes `On<Add, CloseRequested>` and calls
-/// [`close_popup`](crate::retained::close_popup) — without that, a dismissed
-/// popup is hidden but never despawned.
+/// closes it, not the requester.
+///
+/// An app owning a retained [`PlumePopup`](crate::retained::PlumePopup) observes
+/// `On<Add, CloseRequested>` and calls [`close_popup`](crate::retained::close_popup);
+/// without that, a dismissed popup is hidden but never despawned.
 #[derive(Component)]
 pub struct CloseRequested;
 
 // Chrome-level input for [`dialog_frame`], kept distinct from the public
-// [`PlumeDialogProps`] so `body` has exactly one meaning — the finished body,
-// inserted verbatim — and body padding never reaches the frame (it lives on the
-// body's [`dialog_body`]).
+// [`PlumeDialogProps`] so `body` means only the finished body, inserted verbatim.
 pub(crate) struct DialogChrome {
-    /// Debug name to give the entity
+    /// Debug name to give the entity.
     pub name: Name,
     /// Finished body slot, inserted into the frame verbatim. The public dialog hands
     /// over a padded [`dialog_body`]; the imm layer hands over an empty slot and
@@ -234,8 +232,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
          }| {
             bsn! {
                 // Title bar; dragging it moves the window. Same chrome as the section
-                // header; the dialog is distinguished by its drop shadow, not a
-                // different header.
+                // header — a dialog is distinguished by its drop shadow.
                 Node {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
@@ -301,12 +298,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
 }
 
 // `BodyGap` / `BodyPadding` sit on the frame, which is what a caller holds, but the
-// body child is what lays the content out.
-//
-// Padding is the body's either way. The gap is not: a dialog bounded by a height
-// knob wraps its contents in the scroll machinery, leaving the body holding that
-// frame alone — with nothing to space — while the stack inside the viewport is what
-// carries the items. So the gap follows the content down when it moves.
+// body child lays the content out. Padding is the body's either way; the gap follows
+// the content down, since a height-bounded dialog wraps it in the scroll machinery
+// and the body is left holding that frame alone, with nothing to space.
 fn relay_dialog_body_style(
     q_frames: Query<
         (Option<&BodyGap>, Option<&BodyPadding>, &Children),

@@ -3,14 +3,14 @@ use bevy::color::Oklcha;
 
 use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 
-/// Default plume light palette editable inputs
+/// Default plume light palette editable inputs.
 pub fn default_light_palette() -> ThemeEditablePalette {
     // Blue, well clear of the fixed danger hue: a red accent would make a destructive
     // action indistinguishable from the confirm button next to it.
     light_palette(250.0, false)
 }
 
-/// Plume light palette editable inputs with given hue
+/// Plume light palette editable inputs with given hue.
 pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePalette {
     let neutral_hue = if complementary_neutral {
         (hue + 180.0) % 360.0

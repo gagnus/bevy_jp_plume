@@ -133,7 +133,7 @@ fn advance_ui_anims(
     for (mut anim, mut transform, visibility) in q_anims.iter_mut() {
         if anim.pos != anim.target {
             anim.pos = approach(anim.pos, anim.target, UI_ANIM_RATE, dt);
-        // still do a set on changed (initial `set_value`)
+        // Still do a set on changed (initial `set_value`).
         } else if !anim.is_changed() {
             continue;
         }

@@ -53,14 +53,14 @@ pub struct PlumeSlider;
 
 /// Props used to construct the [`PlumeSlider`] scene.
 pub struct PlumeSliderProps {
-    /// Slider minimum value
+    /// Slider minimum value.
     pub min: f32,
-    /// Slider maximum value
+    /// Slider maximum value.
     pub max: f32,
     /// Increment used by arrow keys and relative value changes ([`SliderStep`]);
-    /// `None` = 1% of the range
+    /// `None` = 1% of the range.
     pub step: Option<f32>,
-    /// Decimal places drag values are rounded to ([`SliderPrecision`]); `None` = unrounded
+    /// Decimal places drag values are rounded to ([`SliderPrecision`]); `None` = unrounded.
     pub precision: Option<i32>,
 }
 
@@ -169,13 +169,13 @@ impl PlumeSlider {
     }
 }
 
-// Marker for the track strip
+// Marker for the track strip.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SliderTrack;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeSlider`] — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not the [`PlumeSlider`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SliderFrame;

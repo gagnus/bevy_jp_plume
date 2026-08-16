@@ -54,9 +54,9 @@ pub struct PlumeColorEditProps {
 #[reflect(Component, Clone, Default)]
 pub struct PlumeColorEdit;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeColorEdit`], and it carries the
-// control's requirements for the same reason — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this — and it carries the control's requirements — rather than the
+// [`PlumeColorEdit`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[require(ColorPickerValue)]

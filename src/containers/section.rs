@@ -37,9 +37,8 @@ use crate::utils::anim::AnimState;
 #[reflect(Component, Clone, Default)]
 pub struct PlumeSection;
 
-// Plain root marker, inserted by [`section_frame`]
-// in both the retained and imm paths (unlike the [`PlumeSection`] scene-component,
-// which must not be inserted as a bare component).
+// Plain root marker, inserted by [`section_frame`] on both the retained and imm paths.
+// The systems key on this, not [`PlumeSection`], which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionRoot;
@@ -49,10 +48,8 @@ pub(crate) struct SectionRoot;
 #[reflect(Component, Clone, Default)]
 pub struct SectionCollapsed;
 
-// Whether a section's header responds to clicks by folding its body. App-owned
-// config (unlike [`SectionCollapsed`], which is user state), so the imm layer
-// reconciles it every frame from the `.collapsible(_)` builder. Absent means
-// collapsible, matching the [`Default`].
+// Whether a section's header responds to clicks by folding its body. App-owned config,
+// unlike [`SectionCollapsed`], which is user state. Absent means collapsible.
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionCollapsible(pub(crate) bool);
@@ -121,10 +118,9 @@ impl PlumeSection {
     }
 }
 
-// Section chrome (root, header bar, chevron, collapse behavior) shared by the
-// public [`PlumeSection`] and the imm layer. `props.contents` is inserted as the
-// body slot verbatim (the public section wraps it in a [`section_body`]; the imm
-// layer leaves it empty and reconciles the body itself).
+// Section chrome (root, header bar, chevron, collapse behavior) shared by the public
+// [`PlumeSection`] and the imm layer. `props.contents` is inserted as the body slot
+// verbatim; the imm layer leaves it empty and reconciles the body itself.
 pub(crate) fn section_frame(
     header: impl SceneList,
     collapsible: bool,

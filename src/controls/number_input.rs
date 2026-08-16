@@ -56,9 +56,9 @@ const DRAG_FINE_FACTOR: f32 = 0.1;
 #[reflect(Component, Default, Clone)]
 pub struct PlumeNumberInput;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeNumberInput`], and it carries the
-// precision for the same reason — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this — and it carries the precision — rather than the [`PlumeNumberInput`] scene
+// component, which only the retained path inserts.
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub(crate) struct NumberInputFrame {
@@ -75,15 +75,15 @@ impl Default for NumberInputFrame {
 /// Props used to construct the [`PlumeNumberInput`] scene.
 #[derive(Clone)]
 pub struct PlumeNumberInputProps {
-    /// Initial value
+    /// Initial value.
     pub value: f32,
-    /// Decimal places used to display and commit the value
+    /// Decimal places used to display and commit the value.
     pub precision: usize,
-    /// Minimum committable value
+    /// Minimum committable value.
     pub min: f32,
-    /// Maximum committable value
+    /// Maximum committable value.
     pub max: f32,
-    /// Up/Down arrow increment
+    /// Up/Down arrow increment.
     pub step: f32,
     /// Optional non-editable suffix shown after the number (a unit such as `px`, `%`, or `°`).
     pub suffix: Option<String>,
@@ -108,10 +108,9 @@ impl Default for PlumeNumberInputProps {
 #[reflect(Component, Default, Clone)]
 pub struct NoDrag;
 
-// The drag-catching overlay child of the frame, and its gesture state. Pickable
-// while idle so it sees the press before the field can take focus; set to
-// `Pickable::IGNORE` while the field is focused, disabled, or opted out, letting
-// clicks fall through to the text underneath.
+// The drag-catching overlay child of the frame, and its gesture state. Pickable while
+// idle so it sees the press before the field can take focus; `Pickable::IGNORE` while
+// focused, disabled or opted out, letting clicks reach the text underneath.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct NumberInputScrubber {

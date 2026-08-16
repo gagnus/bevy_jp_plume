@@ -6,8 +6,7 @@
 
 // The engine types a hand-built scene has to name: control state to read or
 // seed, and the Tab-traversal scope for a root that is not `screen()`. Kept on
-// plume's surface so an app never has to reach into `bevy_ui`/`bevy_ui_widgets`
-// (see the Plume-only surface rule in CLAUDE.md).
+// plume's surface so an app never has to reach into `bevy_ui`/`bevy_ui_widgets`.
 pub use bevy::input_focus::tab_navigation::TabGroup;
 pub use bevy::ui::{Checkable, Checked, InteractionDisabled, Selected};
 pub use bevy::ui_widgets::{Activate, SliderValue, ValueChange};

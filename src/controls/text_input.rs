@@ -61,9 +61,9 @@ pub struct TextInputValue(pub String);
 pub struct PlumeTextInputProps {
     /// Initial text.
     pub value: String,
-    /// Visible width
+    /// Visible width.
     pub visible_width: Option<f32>,
-    /// Max characters
+    /// Max characters.
     pub max_characters: Option<usize>,
     /// Optional per-character filter rejecting disallowed input.
     pub filter: Option<EditableTextFilter>,
@@ -115,10 +115,9 @@ pub(crate) fn text_input_frame() -> impl Scene {
     }
 }
 
-// Plain root marker on every frame [`text_input_frame`] builds — the number
-// input's included, since it composes the same frame. The systems key on this
-// rather than [`PlumeTextInput`], which is a scene component and so may not be
-// inserted bare into a shared piece — see docs/plume_rules.md.
+// Plain root marker on every frame [`text_input_frame`] builds — the number input's
+// included, since it composes the same frame. The systems key on this, not the
+// [`PlumeTextInput`] scene component, which must not be inserted into a shared piece.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct TextInputFrame;
@@ -130,9 +129,8 @@ struct TextInputFrame;
 pub(crate) struct TextInputOutline;
 
 // The frame's border, on an absolutely-positioned overlay child (as `PlumeButton`
-// does) rather than on the frame node. A node border insets the content box, so a
-// px hairline inside em padding would shift the text by a font-dependent amount;
-// the field's text now sits at exactly `SPACE`, matching a button caption at any size.
+// does) rather than the frame node. A node border insets the content box, so a px
+// hairline inside em padding would shift the text by a font-dependent amount.
 pub(crate) fn text_input_outline() -> impl Scene {
     bsn! {
         Node {
@@ -201,8 +199,8 @@ pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: S
 /// Opt-out marker on a text-input frame ([`PlumeTextInput`] or
 /// [`PlumeNumberInput`](crate::controls::PlumeNumberInput)).
 ///
-/// It sits on the frame rather than on the field so callers can set it without reaching into the
-/// frame's children; a system relays it to the field.
+/// On the frame rather than the field, so callers need not reach into its children;
+/// a system relays it down.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct NoSelectAllOnFocus;

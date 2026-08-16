@@ -11,10 +11,10 @@ pub trait Numeric: Clone + Copy + PartialEq + PartialOrd + 'static {
     /// Is this an integer type?
     const INTEGRAL: bool;
 
-    /// Smallest finite value
+    /// Smallest finite value.
     const MIN: Self;
 
-    /// Largest finite value
+    /// Largest finite value.
     const MAX: Self;
 
     /// Widen to the `f32` the controls store their value in.

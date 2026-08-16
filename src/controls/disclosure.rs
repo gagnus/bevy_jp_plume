@@ -65,9 +65,8 @@ impl PlumeDisclosure {
     }
 }
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeDisclosure`] — see
-// docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not [`PlumeDisclosure`], which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct DisclosureFrame;

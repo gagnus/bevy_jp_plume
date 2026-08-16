@@ -59,9 +59,9 @@ pub struct PlumeColorPickerProps {
 #[scene(PlumeColorPickerProps)]
 pub struct PlumeColorPicker;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeColorPicker`], and it carries the
-// picker's requirements for the same reason — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this — and it carries the picker's requirements — rather than the
+// [`PlumeColorPicker`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[require(ColorPickerValue)]
@@ -231,11 +231,10 @@ fn sync_color_to_views(
     mut commands: Commands,
 ) {
     for (root, color) in q_picker.iter() {
-        // we push out in the color space the color is in
+        // Both spaces up front: each view is fed in the one it works in.
         let (hsva, srgba): (Hsva, Srgba) = (color.0.into(), color.0.into());
         let views = collect_views(root, &q_children, &q_sv, &q_hue, &q_swatch, &q_channel);
 
-        // hsv zone
         if let Some(sv) = views.sv {
             set_xy(&mut q_xy, sv, Vec2::new(hsva.saturation, 1.0 - hsva.value));
             // The plane's white→hue tint follows the hue bar.
@@ -247,7 +246,6 @@ fn sync_color_to_views(
             set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
         }
 
-        // swatch
         if let Some(swatch) = views.swatch
             && let Ok(mut swatch_val) = q_swatch_val.get_mut(swatch)
             && swatch_val.0 != color.0
@@ -255,7 +253,6 @@ fn sync_color_to_views(
             swatch_val.0 = color.0;
         }
 
-        // channels
         for (field, channel) in views.channels {
             let target = channel_value(hsva, srgba, channel);
             // `SliderValue` is immutable, so a change is a re-insert; only push when
@@ -369,7 +366,7 @@ fn emit_value_change(root: Entity, color: Color, commands: &mut Commands) {
 }
 
 // Fold a committed numeric-field edit back into the working HSV. Our own pushes
-// from `sync_hsv_to_views` also mark `SliderValue` changed, so a field whose value
+// from `sync_color_to_views` also mark `SliderValue` changed, so a field whose value
 // still agrees with the HSV is skipped as an echo; only a genuine user edit folds.
 fn fold_channel_edits(
     q_changed: Query<(Entity, &SliderValue, &ColorPickerChannel), Changed<SliderValue>>,
@@ -392,8 +389,7 @@ fn fold_channel_edits(
             continue;
         }
 
-        // we push out the color in the color space
-        // that was changed
+        // Fold the edit back in whichever space the edited channel belongs to.
         match channel.0 {
             Channel::R => {
                 srgba.red = slider.0;

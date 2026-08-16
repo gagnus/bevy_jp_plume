@@ -48,18 +48,8 @@ const INDICATOR_BASE_WIDTH: f32 = 100.0;
 /// rather than by position:
 ///
 /// ```text
-/// bsn! {
-///     @PlumeTabs {
-///         @header: {Box::new(bsn_list![
-///             (@PlumeTab { @caption: bsn! { caption("General") }, @target: #general } Selected),
-///             (@PlumeTab { @caption: bsn! { caption("Video") }, @target: #video }),
-///         ])},
-///         @body: {Box::new(bsn_list![
-///             (#general tab_body() Children [ … ]),
-///             (#video tab_body() Children [ … ]),
-///         ])}
-///     }
-/// }
+/// @header: … (@PlumeTab { @target: #general } Selected) …
+/// @body:   … (#general tab_body() Children [ … ]) …
 /// ```
 /// # Emitted events
 /// * [`ValueChange<usize>`](bevy::ui_widgets::ValueChange) with the picked tab index.
@@ -228,10 +218,9 @@ pub(crate) fn tabs_frame() -> impl Scene {
     }
 }
 
-// The strip's scrolling frame; the scrollbar stays hidden, since a strip has no
-// room to give it and the wheel is how a crowded one is meant to be moved. The
-// bar's fill sits here rather than on the strip, which a crowded strip's tabs
-// overflow.
+// The strip's scrolling frame; the scrollbar stays hidden, since a strip has no room
+// to give it and the wheel is how a crowded one is moved. The bar's fill sits here
+// rather than on the strip, which a crowded strip's tabs overflow.
 pub(crate) fn tab_strip_frame() -> impl Scene {
     bsn! {
         scroll_frame(ScrollAxis::Horizontal)
@@ -240,11 +229,9 @@ pub(crate) fn tab_strip_frame() -> impl Scene {
     }
 }
 
-// The header strip. Tabs are appended as children; the indicator overlays the
-// bottom edge, so the strip carries no padding for the two to share an origin.
-// As the content of a horizontal [`scroll_viewport`], `width: 100%` fills that
-// viewport; the tabs of a crowded strip overflow it, so the bar's fill belongs on
-// [`tab_strip_frame`] instead.
+// The header strip. Tabs are appended as children; the indicator overlays the bottom
+// edge, so the strip carries no padding for the two to share an origin. A crowded
+// strip's tabs overflow it, so the bar's fill belongs on [`tab_strip_frame`] instead.
 pub(crate) fn tab_strip() -> impl Scene {
     bsn! {
         Node {
@@ -685,10 +672,9 @@ fn update_tab_indicator(
             continue;
         };
 
-        // Zero width means the strip has not been laid out yet; no target at all
-        // means the strip is empty. Either way the underline has nothing to mark,
-        // so it collapses and stays unsettled — a tab arriving snaps it into place
-        // rather than sliding it out of the corner.
+        // Zero width means the strip is not laid out yet; no target means it is empty.
+        // Either way the underline collapses and stays unsettled, so a tab arriving
+        // snaps it into place rather than sliding it out of the corner.
         let Some((target_pos, target_width)) = target.filter(|(_, width)| *width > 0.0) else {
             indicator.settled = false;
             if transform.scale.x != 0.0 {

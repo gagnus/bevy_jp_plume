@@ -64,13 +64,13 @@ pub struct PlumeSelect;
 #[reflect(Component)]
 pub struct SelectedIndex(pub usize);
 
-// Marker for the caption which changes with selected item
+// Marker for the caption which changes with selected item.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct SelectCaption;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeSelect`] — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not the [`PlumeSelect`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 struct SelectFrame;
@@ -91,16 +91,16 @@ struct SelectOptions(Vec<(String, bool)>);
 #[reflect(Component, Default)]
 struct SelectMaxVisible(usize);
 
-/// Props for the control
+/// Props for the control.
 pub struct PlumeSelectProps {
     /// Option labels in popup order, each with whether it can be picked. A
     /// disabled option still shows, grayed and inert.
     pub options: Vec<(String, bool)>,
     /// Index of the initially selected option.
     pub selected: usize,
-    /// Corner roundedness
+    /// Corner roundedness.
     pub corners: RoundedCorners,
-    /// Maximum visible options before it scrolls
+    /// Maximum visible options before it scrolls.
     pub max_visible: usize,
 }
 
@@ -349,8 +349,8 @@ impl PlumeSelectOption {
 #[reflect(Component, Default)]
 struct SelectOptionIndex(usize);
 
-// Plain marker every option row carries. The systems key on this rather than
-// [`PlumeSelectOption`] — see docs/plume_rules.md.
+// Plain marker every option row carries. The systems key on this, not the
+// [`PlumeSelectOption`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct SelectOptionRow;
@@ -859,9 +859,7 @@ fn measure_select_width(
         if widest_row > 0.0 {
             // The popup doesn't exist to measure, so its horizontal chrome is
             // reconstructed: border both sides plus the options' scrollbar gutter.
-            // Bevy caches the overlay's resolved em size on its `ComputedNode`;
-            // before layout has reached it, em falls back to rem exactly as
-            // `Val::Em` resolution would.
+            // Before layout reaches the overlay, em falls back to rem as `Val::Em` would.
             let em_px = q_computed
                 .get(measure_ent)
                 .map_or(rem_size.0, |computed| computed.em_size.0);
@@ -1067,7 +1065,7 @@ fn update_active_row_outline(
     }
 }
 
-// Plugin which runs the [`PlumeSelect`] control
+// Plugin which runs the [`PlumeSelect`] control.
 pub(crate) struct SelectPlugin;
 
 impl Plugin for SelectPlugin {

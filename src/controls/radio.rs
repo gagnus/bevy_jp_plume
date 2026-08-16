@@ -197,8 +197,7 @@ fn radio_group_uncheck_others(
 
 // The headless widget only emits `ValueChange<bool>` (always `true`) for an enabled,
 // unchecked radio, so no re-checks are needed here. The group's pick is re-announced
-// by position from the radio rather than from the group's own observer, which is the
-// arrangement that reaches app observers on the group.
+// by position from the radio, which is what reaches app observers on the group.
 fn radio_check_self(
     ev: On<ValueChange<bool>>,
     q_parents: Query<&ChildOf>,
@@ -231,17 +230,17 @@ fn radio_check_self(
     }
 }
 
-// Marker for the radio filled disc
+// Marker for the radio filled disc.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioBg;
 
-// Marker for the radio outline
+// Marker for the radio outline.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioOutline;
 
-// Marker for the radio check mark
+// Marker for the radio check mark.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct RadioMark;

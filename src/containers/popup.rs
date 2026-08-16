@@ -88,11 +88,9 @@ fn track_popup_anchors(
     }
 }
 
-// A parentless (imm) socket sits outside every propagation chain, so the
-// ambient text style is bridged the same way the rect is: the anchor's
-// `Inherited<TextFont>` is copied onto the socket, and the popup's all-inherit
-// `InheritableFont` resolves through it. Nothing else writes `Inherited` on a
-// parentless entity, so the copy is authoritative.
+// A parentless (imm) socket sits outside every propagation chain, so the ambient text
+// style is bridged like the rect: the anchor's `Inherited<TextFont>` is copied onto the
+// socket. Nothing else writes `Inherited` on a parentless entity, so the copy stands.
 fn bridge_socket_text_style(
     q_sockets: Query<(Entity, &PopupAnchor), (With<PopupSocket>, Without<ChildOf>)>,
     q_inherited: Query<&Inherited<TextFont>>,
@@ -190,8 +188,8 @@ pub(crate) fn imm_popup_scene(
     }
 }
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumePopup`] — see docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not the [`PlumePopup`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 struct PopupRoot;
@@ -269,10 +267,9 @@ fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
     }
 }
 
-// Drag a non-control part of the popup to move it. This is an entity observer on
-// the popup, so it only fires for drags that bubbled up unconsumed — i.e. not on a
-// pad/number/button, which stop their own drags. The first drag drops `Popover` so
-// the manual position stops fighting the auto-placement; reopening restores it.
+// Drag a non-control part of the popup to move it: an entity observer, so it fires
+// only for drags that bubbled up unconsumed. The first drag drops `Popover` so the
+// manual position stops fighting auto-placement; reopening restores it.
 fn on_popup_drag(
     drag: On<Pointer<Drag>>,
     q_childof: Query<&ChildOf>,
@@ -319,9 +316,8 @@ fn despawn_closing_popups(q_closing: Query<Entity, With<ClosingPopup>>, mut comm
     }
 }
 
-// A press anywhere outside an open popup's anchor control requests its close
-// (hidden at once; the owner — color edit's observer or the imm layer — closes
-// it). The scope is the socket's parent, so presses on the anchor (e.g. the
+// A press outside an open popup's anchor control requests its close; the owner does
+// the closing. The scope is the socket's parent, so presses on the anchor (e.g. the
 // swatch) stay toggle-only.
 fn on_dismiss_outside_press(
     mut click: On<Pointer<Press>>,
@@ -379,9 +375,8 @@ fn close_popups_on_escape(
     }
 }
 
-// A popup is its own body — it has no frame wrapping one — so the pair every other
-// container relays to a child lands here on the entity that already carries it.
-// Still a relay rather than a direct write, so the vocabulary is the same one.
+// A popup is its own body, so the pair every other container relays to a child lands
+// here on the entity that already carries it. Still a relay, to keep the vocabulary.
 fn relay_popup_style(
     mut q_popups: Query<
         (Option<&BodyGap>, Option<&BodyPadding>, &mut Node),

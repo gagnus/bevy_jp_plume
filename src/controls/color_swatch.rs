@@ -17,10 +17,8 @@ use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
 
-/// A color swatch widget.
-///
-/// This is spawnable by inheriting it as a "scene component"; size and corners can be
-/// overridden by inserting a [`Node`](bevy::ui::Node) beside it.
+/// A color swatch. Spawnable as a scene component; override its size and corners by
+/// inserting a [`Node`](bevy::ui::Node) beside it.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct PlumeColorSwatch;

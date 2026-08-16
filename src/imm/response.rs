@@ -1,6 +1,5 @@
-//! Response returned by every imm widget call: state flags plus builder methods.
-//! Builders are gated by [`kind`] markers, so only the widget they belong to
-//! exposes them.
+//! Response returned by every imm widget call: state flags plus builder methods,
+//! gated by [`kind`] markers so only the widget they belong to exposes them.
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 use core::panic::Location;
@@ -46,10 +45,8 @@ use crate::theme::{
 };
 use crate::utils::numeric::Numeric;
 
-/// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a
-/// response typed to its kind, so kind-specific builders are compile-checked
-/// (`ui.button(…).step(…)` doesn't exist). [`kind::Any`] is the default for widgets
-/// with only the universal builders.
+/// Zero-sized widget-kind markers for [`ImmResponse`]: each widget returns a response
+/// typed to its kind, so kind-specific builders are compile-checked.
 pub mod kind {
     use core::marker::PhantomData;
 
@@ -63,17 +60,14 @@ pub mod kind {
     /// Kinds that lay out direct children on a flex axis: row, column.
     /// Excludes frames with nested bodies (section, dialog).
     pub trait Container: Gapped {}
-    /// Kinds whose padding is layout rather than theming, so an app may set it:
+    /// Kinds whose padding is layout rather than theming, so an app may set it.
     /// Excludes the themed containers (section, dialog).
     pub trait Padded {}
     /// Padded kinds that paint nothing of their own, leaving the fill, border,
-    /// corners and shadow to the app as well. Excludes the controls that theme
-    /// their own surface (button).
+    /// corners and shadow to the app. Excludes the controls that theme their own.
     pub trait Surface: Padded {}
-    /// Kinds an app may give a height: they either center their content (button,
-    /// swatch) or hold whatever size they are handed (tabs, scroll area). Excludes
-    /// controls whose height is font-driven or fixed geometry (caption, toggle,
-    /// slider, checkbox, radio), where forcing one clips text or deforms the control.
+    /// Kinds an app may give a height. Excludes controls whose height is font-driven
+    /// or fixed geometry (caption, toggle, slider, checkbox, radio).
     pub trait Heightable {}
     /// Kinds that derive nothing from either axis, so an app may set both: button,
     /// color swatch.
@@ -81,19 +75,15 @@ pub mod kind {
     /// Kinds built on the button frame, checkable or not: they share its chrome
     /// builders but not its variant, which narrows once the button is checkable.
     pub trait ButtonLike {}
-    /// Kinds an app may lift out of the pick path: containers, whose empty area
-    /// has no business swallowing picks, and the decorations that report
-    /// nothing anyway. Excludes controls, where it would kill the interaction
-    /// while leaving the control looking live.
+    /// Kinds an app may lift out of the pick path: containers and decorations.
+    /// Excludes controls, where it would kill the interaction but not the styling.
     pub trait PickThrough {}
 
     /// Default kind: universal builders only (caption, checkbox, toggle, radio).
     pub struct Any;
     /// `caption`.
     pub struct Caption;
-    /// `icon`. Its own kind rather than [`Any`], which it shares nothing with:
-    /// the others there are controls, and a decoration's builders must not
-    /// reach them.
+    /// `icon`.
     pub struct Icon;
     /// What fills a button: its own label, laid out by the control.
     pub struct Label;
@@ -104,12 +94,10 @@ pub mod kind {
     /// `button_container`.
     pub struct Button<C = Label>(PhantomData<C>);
     /// A button whose variant is set: its emphasis is spent, so it can no longer be
-    /// made [`checkable`](super::ImmResponse::checkable) — a checked state would have
-    /// nothing left to say. Reach a checkable one by calling `checkable` first.
+    /// made [`checkable`](super::ImmResponse::checkable). Call `checkable` first.
     pub struct StyledButton<C = Label>(PhantomData<C>);
-    /// A button after [`checkable`](super::ImmResponse::checkable): it carries an
-    /// on/off state, so its variant is narrowed to the ones that have chrome left
-    /// to spend on it.
+    /// A button after [`checkable`](super::ImmResponse::checkable): its variant is
+    /// narrowed to the ones with chrome left to spend on a checked state.
     pub struct CheckableButton<C = Label>(PhantomData<C>);
     /// `color_swatch`.
     pub struct Swatch;
@@ -135,7 +123,7 @@ pub mod kind {
     pub struct Screen;
     /// `separator`.
     pub struct Separator;
-    /// `dialog`
+    /// `dialog`.
     pub struct Dialog;
     /// `scene`.
     pub struct Scene;
@@ -244,16 +232,12 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
         }
     }
 
-    /// Drop-down menu anchored to this widget, filled by `f` — the standalone
-    /// form of the menus [`menu_bar`](super::PlumeImm::menu_bar) holds, for a
-    /// `⋯` overflow or any other button that opens one. The rows are the same
-    /// [`ImmMenu`] items, so shortcuts, checks and submenus all work here.
+    /// Drop-down menu anchored to this widget, filled by `f` — the standalone form of
+    /// the menus [`menu_bar`](super::PlumeImm::menu_bar) holds, on the same
+    /// [`ImmMenu`] rows. It owns its open state, so there is no `&mut bool` to keep.
     ///
-    /// The menu owns its open state, so unlike [`popup`](Self::popup) there is
-    /// no `&mut bool` to keep. Anchoring makes the widget activate on press
-    /// rather than release — opening the menu moves focus, which would have
-    /// closed it again before a release ever landed; its own `clicked` still
-    /// fires on that press.
+    /// Anchoring makes the widget activate on press rather than release: opening the
+    /// menu moves focus, which would close it before a release landed.
     #[track_caller]
     pub fn menu(mut self, f: impl FnOnce(&mut ImmMenu<'_, 'w, 's>)) -> Self {
         struct MenuAnchor;
@@ -264,12 +248,8 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
         self
     }
 
-    /// Whether the [`menu`](Self::menu) hung off this widget is open. Builders
-    /// take effect whatever order they run in, so a row that reveals controls
-    /// on hover can read this after its `menu` call and feed it back into their
-    /// own [`displayed`](Self::displayed) — the row keeps its controls while
-    /// the menu it opened is still up, and the pointer is over the popup rather
-    /// than the row.
+    /// Whether the [`menu`](Self::menu) hung off this widget is open. Readable after
+    /// the `menu` call, so hover-revealed chrome can stay while the menu is up.
     pub fn menu_open(&self) -> bool {
         self.e.menu_open().is_some()
     }
@@ -304,10 +284,9 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
 
 /// Universal builders, available on every kind.
 impl<K> ImmResponse<'_, '_, '_, K> {
-    // Guard shared by every value-carrying builder: true when `value` differs from
-    // the last one stored under `Key` for this entity, so a builder only queues a
-    // command when its argument actually changed. `Key` is a per-builder marker
-    // type, giving each its own slot in the entity's hash memory.
+    // True when `value` differs from the last stored under `Key`, so a builder only
+    // queues a command when its argument changed. `Key` is a per-builder marker type,
+    // giving each its own slot in the entity's hash memory.
     fn key_changed<Key: 'static>(&mut self, value: impl core::hash::Hash) -> bool {
         self.e.hash_update_typ::<Key>(Some(imm_id(value)))
     }
@@ -354,9 +333,8 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Paint the widget, or hide it while it holds its place in the layout — so
-    /// revealing it moves nothing. Hidden, it takes no clicks and leaves the Tab
-    /// order, itself and everything under it.
+    /// Paint the widget, or hide it while it holds its place in the layout. Hidden,
+    /// it and everything under it take no clicks and leave the Tab order.
     pub fn visible(mut self, visible: bool) -> Self {
         struct VisibleKey;
         if self.key_changed::<VisibleKey>(visible) {
@@ -422,11 +400,9 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self.set_node::<GrowFromContentKey, _>(true, |node, _| node.flex_grow = 1.0)
     }
 
-    /// Keep this widget's size however tight the container gets, so the squeeze
-    /// falls on a sibling instead — for chrome that must stay usable.
-    ///
-    /// A [`grow`](Self::grow) sibling can't take it: growing zeroes `flex_basis`,
-    /// and flex shrinks in proportion to it. Give instead with
+    /// Keep this widget's size however tight the container gets, so the squeeze falls
+    /// on a sibling. A [`grow`](Self::grow) sibling can't take it — growing zeroes
+    /// `flex_basis`, which flex shrinks in proportion to; use
     /// [`grow_from_content`](Self::grow_from_content) + [`min_width`](Self::min_width).
     pub fn no_shrink(self) -> Self {
         struct NoShrinkKey;
@@ -541,13 +517,8 @@ impl<K: kind::Sizable> ImmResponse<'_, '_, '_, K> {
 
 impl ImmResponse<'_, '_, '_, kind::Caption> {
     /// Keep the text on one line however long it runs, and let it be narrower than
-    /// that line — so a bounded container cuts it off instead of the text wrapping
-    /// and growing the row.
-    ///
-    /// Bevy takes a node's clip rect from its parent, never its own `overflow`, so
-    /// this only bites when an ancestor clips: pair it with
-    /// [`clip`](Self::clip) on the container. Unpaired, the text simply
-    /// overflows in one line.
+    /// that line, so a bounded container cuts it off instead of growing the row.
+    /// Pair with [`clip`](Self::clip) on the container; unpaired, the text overflows.
     pub fn no_wrap(mut self) -> Self {
         struct NoWrapKey;
         if self.key_changed::<NoWrapKey>(()) {
@@ -563,7 +534,7 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
         self.set_node::<NoWrapMinKey, _>((), |node, ()| node.min_width = Val::ZERO)
     }
 
-    /// Set caption to be small caps
+    /// Render the caption in small caps.
     pub fn small_caps(mut self) -> Self {
         struct SmallCapsKey;
         if self.key_changed::<SmallCapsKey>(()) {
@@ -599,7 +570,7 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
         self
     }
 
-    /// Pin text color to Text0
+    /// Pin the text color to [`ThemeSlot::Text0`].
     pub fn bright(self) -> Self {
         self.text_color_slot(ThemeSlot::Text0)
     }
@@ -661,9 +632,8 @@ impl<'r, 'w, 's, C> ImmResponse<'r, 'w, 's, kind::Button<C>> {
         self.corners_impl(corners)
     }
 
-    /// Set the button's color variant (the styling systems re-style on change). This
-    /// spends the button's emphasis, so [`checkable`](Self::checkable) is no longer in
-    /// reach — a toggle picks its chrome through [`ButtonCheckableVariant`] instead.
+    /// Set the button's color variant. This spends the button's emphasis, so
+    /// [`checkable`](Self::checkable) is no longer in reach.
     pub fn variant(
         mut self,
         variant: ButtonVariant,
@@ -687,9 +657,7 @@ impl<'r, 'w, 's, C> ImmResponse<'r, 'w, 's, kind::Button<C>> {
     }
 
     /// Turn the button into a two-state toggle bound to `value`: activating it flips
-    /// `value` and `.changed` fires. Call it before choosing chrome — the result takes
-    /// [`ButtonCheckableVariant`], which omits the variants that have no emphasis left to
-    /// spend on a checked state.
+    /// `value` and `.changed` fires. Call it before choosing chrome.
     pub fn checkable(
         mut self,
         value: &mut bool,
@@ -846,7 +814,7 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Whether taking focus selects the whole value. Default is `true`
+    /// Whether taking focus selects the whole value. Default is `true`.
     pub fn select_on_focus(mut self, select_on_focus: bool) -> Self {
         struct SelectOnFocusKey;
         if self.key_changed::<SelectOnFocusKey>(select_on_focus) {
@@ -877,12 +845,9 @@ impl ImmResponse<'_, '_, '_, kind::Text> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Screen> {
-    /// Where this screen sits in the window's stack, back to front.
-    ///
-    /// Bevy orders root nodes by their `GlobalZIndex` and breaks ties on
-    /// archetype order rather than creation order, so an app drawing more than
-    /// one screen says so here — no amount of system sequencing decides it.
-    /// Plume's own popups (100) and tooltips (200) stay above.
+    /// Where this screen sits in the window's stack, back to front. Bevy breaks
+    /// `GlobalZIndex` ties on archetype order, so an app drawing more than one screen
+    /// says so here — system ordering won't. Popups (100) and tooltips (200) stay above.
     pub fn z_index(mut self, z: i32) -> Self {
         struct ZIndexKey;
         if self.key_changed::<ZIndexKey>(z) {
@@ -957,9 +922,8 @@ impl ImmResponse<'_, '_, '_, kind::MenuItem> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Section> {
-    /// Seed the section collapsed on first spawn only; afterwards the retained
-    /// entity owns its collapse state (a no-op on already-spawned widgets, so it
-    /// never fights the user's expand/collapse).
+    /// Seed the section collapsed on first spawn only; afterwards the retained entity
+    /// owns its collapse state, so this never fights the user.
     pub fn start_collapsed(mut self) -> Self {
         if self.will_be_spawned {
             self.e.entity_commands().insert(SectionCollapsed);
@@ -967,9 +931,7 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
         self
     }
 
-    /// Whether the header folds the body when clicked (default true). App-owned
-    /// config, so it reconciles every frame; the hash guard re-inserts only when
-    /// the value actually changes rather than each frame.
+    /// Whether the header folds the body when clicked (default true).
     pub fn collapsible(mut self, collapsible: bool) -> Self {
         struct CollapsibleKey;
         if self.key_changed::<CollapsibleKey>(collapsible) {
@@ -984,7 +946,6 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
     /// [`size::SPACE_TIGHT`].
     pub fn gap(mut self, gap: Val) -> Self {
         struct SectionBodyGapKey;
-        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
         if self.key_changed::<SectionBodyGapKey>(format!("{gap:?}")) {
             self.e.entity_commands().insert(BodyGap(gap));
         }
@@ -1007,7 +968,6 @@ impl ImmResponse<'_, '_, '_, kind::Tabs> {
     /// [`size::SPACE`]. Container-wide: every tab's body reads as the same surface.
     pub fn gap(mut self, gap: Val) -> Self {
         struct TabBodyGapKey;
-        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
         if self.key_changed::<TabBodyGapKey>(format!("{gap:?}")) {
             self.e.entity_commands().insert(BodyGap(gap));
         }
@@ -1027,15 +987,11 @@ impl ImmResponse<'_, '_, '_, kind::Tabs> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Split> {
-    /// How small each pane may get. [`Val::Auto`] — the default — is the pane's
-    /// own content minimum, which the layout enforces even though the divider
-    /// cannot resolve it in advance; any other `Val` also stops the drag.
-    ///
-    /// A splitter too small for both floors gives the first pane its own and
-    /// lets the second give, which is what flexbox does when it runs out of room.
+    /// How small each pane may get. [`Val::Auto`] — the default — is the pane's own
+    /// content minimum; any other `Val` also stops the drag. A splitter too small for
+    /// both floors gives the first pane its own and lets the second give.
     pub fn min_panes(mut self, first: Val, second: Val) -> Self {
         struct MinPanes;
-        // `Val` holds floats, so it is keyed by its `Debug` form, as elsewhere.
         if self.key_changed::<MinPanes>(format!("{first:?}{second:?}")) {
             self.e.entity_commands().insert(SplitMin { first, second });
         }
@@ -1086,7 +1042,6 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     /// Set the gap between the items the region stacks.
     pub fn gap(mut self, gap: Val) -> Self {
         struct ScrollContentGapKey;
-        // `Val` holds floats and so isn't `Hash`; its `Debug` form keys it, as in `set_node`.
         if self.key_changed::<ScrollContentGapKey>(format!("{gap:?}")) {
             self.e.entity_commands().insert(BodyGap(gap));
         }
@@ -1127,9 +1082,9 @@ impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
         self.set_node::<AlignItemsKey, _>(align, |node, align| node.align_items = align)
     }
 
-    /// Cut off anything a child draws outside this container, rather than letting
-    /// it spill. What gives [`no_wrap`](Self::no_wrap) captions their boundary,
-    /// since bevy clips a node by its parent's `overflow`, not its own.
+    /// Cut off anything a child draws outside this container. Bevy clips a node by its
+    /// parent's `overflow`, not its own, so this is what bounds a
+    /// [`no_wrap`](Self::no_wrap) caption.
     pub fn clip(self) -> Self {
         struct ClipKey;
         self.set_node::<ClipKey, _>((), |node, ()| node.overflow = Overflow::clip())
@@ -1159,9 +1114,7 @@ impl<K: kind::PickThrough> ImmResponse<'_, '_, '_, K> {
 
 /// Builders for kinds spacing app-supplied children.
 impl<K: kind::Gapped> ImmResponse<'_, '_, '_, K> {
-    /// Set the gap between children, overriding the container's default. Both
-    /// `row_gap` and `column_gap` are set; plume containers are single-axis and
-    /// don't wrap, so only the main-axis gap has any effect.
+    /// Set the gap between children, overriding the container's default.
     pub fn gap(self, gap: Val) -> Self {
         struct GapKey;
         self.set_node::<GapKey, _>(gap, |node, gap| {

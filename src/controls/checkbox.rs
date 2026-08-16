@@ -133,22 +133,22 @@ impl PlumeCheckbox {
     }
 }
 
-// Marker for the checkbox frame (contains both checkbox and label)
+// Marker for the checkbox frame (contains both checkbox and label).
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxFrame;
 
-// Marker for the checkbox bg
+// Marker for the checkbox bg.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxBg;
 
-// Marker for the checkbox outline
+// Marker for the checkbox outline.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxOutline;
 
-// Marker for the checkbox check mark
+// Marker for the checkbox check mark.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct CheckboxMark;

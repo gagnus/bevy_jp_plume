@@ -34,7 +34,7 @@ const RETICLE_BORDER: Val = size::em_from_px(2.0);
 
 /// Props used to construct a [`PlumeXyPad`] scene.
 pub struct PlumeXyPadProps {
-    /// reticle size
+    /// Reticle size.
     pub reticle_size: Val2,
 }
 
@@ -99,9 +99,9 @@ struct XyPadInner;
 #[reflect(Component, Clone, Default)]
 struct XyPadThumb;
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeXyPad`] — see docs/plume_rules.md.
-// It carries the pad's requirements for the same reason.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this — and it carries the pad's requirements — rather than the [`PlumeXyPad`] scene
+// component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[require(XyPadDragging)]

@@ -47,24 +47,19 @@ use crate::utils::numeric::Numeric;
 /// wherever imm systems are written.
 pub trait PlumeImm<'w, 's> {
     /// Themed text in the current container's font and color. The response's
-    /// `clicked`/`changed` are always false (text has no activation behavior);
-    /// the builders and `hovered` work as usual.
+    /// `clicked`/`changed` are always false; `hovered` and the builders work.
     fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's, kind::Caption>;
 
-    /// Hairline rule across the container: a horizontal line in a
-    /// [`Self::vertical`], a vertical one in a [`Self::horizontal`]. Spans the
-    /// container's content box; chain `.full_bleed()` to run edge to edge
-    /// through the padding. The response's `clicked`/`changed` are always false.
+    /// Hairline rule across the container: horizontal in a [`Self::vertical`],
+    /// vertical in a [`Self::horizontal`]. Chain `.full_bleed()` to cross the padding.
     fn separator(&mut self) -> ImmResponse<'_, 'w, 's, kind::Separator>;
 
-    /// Non-interactive color preview: a themed, bordered rounded box filled with
-    /// `color`. Defaults to a [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT)
-    /// square; chain `.square()`/`.width()`/`.height()` to resize.
+    /// Non-interactive color preview filled with `color`. Defaults to a
+    /// [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT) square; resize with `.size()`.
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
 
-    /// Interactive HSV color picker: a saturation/value plane, a hue bar and a
-    /// preview swatch. Two-way bound to `color`; `.changed` on the response fires
-    /// when the user drags to a new color. The layout is fixed by the control.
+    /// Interactive HSV color picker, two-way bound to `color`; `.changed` fires when
+    /// the user drags to a new color. The layout is fixed by the control.
     fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
     /// Editable color swatch: a swatch that opens a color-picker popup on click,
@@ -133,9 +128,7 @@ pub trait PlumeImm<'w, 's> {
     fn text_edit(&mut self, text: &mut String) -> ImmResponse<'_, 'w, 's, kind::Text>;
 
     /// Dropdown: `f` declares the options on the [`ImmSelect`] collector, in popup
-    /// order. Selection is value-keyed like [`Self::radio`] — each option names the
-    /// value it stands for, and picking one writes that value into `selected`. A
-    /// `selected` matching no option falls back to the first.
+    /// order. Value-keyed like [`Self::radio`]; no match falls back to the first.
     fn select<T: PartialEq>(
         &mut self,
         selected: &mut T,
@@ -143,19 +136,15 @@ pub trait PlumeImm<'w, 's> {
     ) -> ImmResponse<'_, 'w, 's, kind::Select>;
 
     /// Horizontal menu bar strip; `f` declares its drop-down menus on the
-    /// [`ImmMenuBar`] context. Menus open on click, switch on hover while one
-    /// is open, and close themselves when an item is picked, on Escape, or when
-    /// focus leaves — the bodies only run while their menu is open.
+    /// [`ImmMenuBar`] context. Bodies only run while their menu is open.
     fn menu_bar(&mut self, f: impl FnOnce(&mut ImmMenuBar<'_, 'w, 's>)) -> ImmResponse<'_, 'w, 's>;
 
-    /// Headerless floating surface — a
-    /// [`dialog`](crate::imm::PlumeRoot::dialog) with no title bar (and so no
-    /// title, ✕ or drag). Positioned chrome only; the caller controls whether it's
-    /// drawn. Unlike the two root surfaces this is useful nested, pinned to the
-    /// container it is declared in — see [`ImmPanel::at_corner`].
+    /// Headerless floating surface — a [`dialog`](crate::imm::PlumeRoot::dialog)
+    /// with no title bar, ✕ or drag. Useful nested, pinned to the container it is
+    /// declared in — see [`ImmPanel::at_corner`].
     ///
-    /// Not inside a [`scroll_area_vertical`](Self::scroll_area_vertical), which does not float
-    /// over but scrolls with, stretching the range. Declare it beside one instead.
+    /// Not inside a [`scroll_area_vertical`](Self::scroll_area_vertical): it would
+    /// scroll with the content rather than float over it.
     fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
 
     /// Horizontal, center-aligned container (label-beside-control). Children pack
@@ -171,15 +160,12 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Column>;
 
-    /// Tab container: a header strip over a body showing one tab at a time.
-    /// `f` declares the tabs on the [`ImmTabs`] collector; only the selected tab's
-    /// `.body()` closure runs, so hidden tabs cost nothing. Tabs that all finish
-    /// with `.no_body()` leave the container a bare strip. A strip with more tabs than room
-    /// squeezes them toward [`size::TAB_MIN_WIDTH`], then scrolls.
+    /// Tab container: a header strip over a body showing one tab at a time. `f`
+    /// declares the tabs on the [`ImmTabs`] collector; only the selected tab's
+    /// `.body()` runs. A crowded strip squeezes toward [`size::TAB_MIN_WIDTH`], then scrolls.
     ///
-    /// Selection is value-keyed like [`Self::radio`]: each tab names the value it
-    /// stands for, and clicking one writes that value into `selected`. A `selected`
-    /// matching no tab falls back to the first.
+    /// Selection is value-keyed like [`Self::radio`]; a `selected` matching no tab
+    /// falls back to the first.
     fn tabs<'t, T: PartialEq>(
         &mut self,
         selected: &mut T,
@@ -194,11 +180,9 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Section>;
 
-    /// Vertically scrolling region: `f` builds the content, which scrolls inside a
-    /// managed viewport (with a self-hiding scrollbar) once it outgrows the height
-    /// set via `.max_height()`/`.height()`. Unbounded it just stacks its content
-    /// like a [`Self::vertical`]. Use it to scroll one part of a surface while the
-    /// rest — headers, footers — stays pinned.
+    /// Vertically scrolling region: `f` builds the content, which scrolls once it
+    /// outgrows the height set via `.max_height()`/`.height()`. Unbounded it stacks
+    /// like a [`Self::vertical`].
     fn scroll_area_vertical(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
@@ -212,30 +196,14 @@ pub trait PlumeImm<'w, 's> {
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::ScrollArea>;
 
-    /// Two panes side by side, with a divider the user drags to re-proportion
-    /// them.
+    /// Two panes side by side, with a divider the user drags to re-proportion them.
     ///
-    /// `fraction` is the first pane's share of the width, `0.0..=1.0`, written
-    /// back as the divider moves — so it is the app's to keep and to save.
-    /// `.changed` on the response reports a move. Chain
-    /// [`min_panes`](ImmResponse::min_panes) to stop either pane getting too
-    /// small.
+    /// `fraction` is the first pane's share of the width, `0.0..=1.0`, written back
+    /// as the divider moves; `.changed` reports a move. Chain
+    /// [`min_panes`](ImmResponse::min_panes) to stop either pane getting too small.
     ///
-    /// Give each pane one container of its own — a [`vertical`](Self::vertical), a
-    /// [`scroll_area_vertical`](Self::scroll_area_vertical), a
-    /// [`tabs`](Self::tabs). A pane is bare layout with no direction or spacing of
-    /// its own, so a second child lands beside the first with nothing between them.
-    ///
-    /// The splitter itself takes no spacing or alignment: the gap between the panes
-    /// is the divider, and the panes must stretch for the divider to line up.
-    ///
-    /// Two closures rather than a collector: a split has exactly two panes, and
-    /// that is worth saying in the signature rather than in the docs.
-    ///
-    /// Each pane gets a [`PaneUi`] rather than a bare [`Ui`]: it is a `Ui`
-    /// throughout, and adds the settled fraction, which `fraction` itself
-    /// cannot supply while it is on loan to this call. What a pane usually asks
-    /// it is whether the other one has [collapsed](ImmResponse::collapsible).
+    /// Give each pane one container of its own: a pane is bare layout with no
+    /// direction or spacing, so a second child lands beside the first.
     fn split_horizontal(
         &mut self,
         fraction: &mut f32,
@@ -252,37 +220,27 @@ pub trait PlumeImm<'w, 's> {
         second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split>;
 
-    /// Hosts a retained scene inside an immediate pass: `f` builds it the frame
-    /// its entity is first spawned and never again, applied to that entity, so
-    /// what the scene spawns belongs to it.
+    /// Hosts a retained scene inside an immediate pass: `f` builds it the frame its
+    /// entity is first spawned and never again.
     ///
-    /// The bridge for content an immediate pass must not rebuild every frame —
-    /// a canvas holding a layout the user drags around, a subtree some other
-    /// plugin owns and reconciles. Only the imm layer's own entities are
-    /// tracked, so a hosted scene is never reconciled against: it persists
-    /// untouched for as long as the call site keeps running, and is despawned
-    /// with its host when that stops. Keep the entity from the response if the
-    /// scene has to be found again.
+    /// The scene is never reconciled against — it persists untouched while the call
+    /// site keeps running, and is despawned with its host when that stops. Keep the
+    /// entity from the response if it has to be found again.
     ///
-    /// The host sizes it (`.grow()`, `.width()`, `.height()`); the scene styles
-    /// itself, since an imm pass cannot know what it built.
+    /// The host sizes it (`.grow()`, `.width()`); the scene styles itself.
     fn scene<S: Scene>(&mut self, f: impl FnOnce() -> S) -> ImmResponse<'_, 'w, 's, kind::Scene>;
 
     /// Invisible filler that absorbs a row's spare width (pushes what follows to
     /// the trailing edge).
     fn flex_spacer(&mut self);
 
-    /// Scope child ids by `id`, making widget identity follow the key instead of
-    /// call order.
-    ///
-    /// Same-id repeats already auto-disambiguate by occurrence index, but that is
-    /// positional — use this when entries reorder or a conditional sibling shifts them.
+    /// Scope child ids by `id`, making widget identity follow the key instead of call
+    /// order — for entries that reorder, where occurrence indices are positional.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
 }
 
-// The two surfaces that open a pass, handed out by [`PlumeRoot`] alone. Nested
-// they would measure against their parent rather than the viewport, be clipped by
-// any ancestor that clips, and nest a `TabGroup` inside the one they opened in.
+// The two surfaces that open a pass, handed out by [`PlumeRoot`] alone: nested, they
+// would measure against their parent and nest a `TabGroup` inside the one they opened.
 impl<'w, 's> Ui<'w, 's> {
     #[track_caller]
     pub(crate) fn screen(
@@ -327,9 +285,6 @@ impl<'w, 's> Ui<'w, 's> {
 impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn caption(&mut self, text: &str) -> ImmResponse<'_, 'w, 's, kind::Caption> {
-        // Identity is the call site, not the text, so a caption whose text changes
-        // (e.g. a live value read-out) reconciles its `Text` in place rather than
-        // respawning an entity every frame the value moves.
         let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene({
             let text = text.to_owned();
             move || caption(text)
@@ -378,8 +333,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch> {
-        // Identity is the call site, not the color: an animating value reconciles its
-        // ColorSwatchValue in place rather than respawning the box every change.
         let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(move || {
             bsn! {
                 @PlumeColorSwatch
@@ -419,8 +372,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
-        // Identity is the call site: the picker retains its working HSV, so the
-        // scene seeds the color once and the capability syncs it thereafter.
+        // The picker retains its working HSV, so the scene seeds the color once and
+        // the capability syncs it thereafter.
         let initial = *color;
         let mut changed = false;
         let entity = self
@@ -459,9 +412,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
-        // Keys on the face and label, not the glyph, so a glyph toggle reconciles in
-        // place instead of respawning; see `tool_button`. The icon is the first
-        // `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
+        // Keyed on the face, not the glyph: the face selects the font asset. The icon
+        // is the first `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
         let mut entity = self
             .ch_loc(loc_id((icon.face(), label)))
             .on_spawn_apply_scene(move || {
@@ -487,9 +439,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button> {
-        // Identity keys on the face, not the glyph, so toggling the glyph within a
-        // face reconciles in place instead of respawning (a visible pop). The face
-        // stays in the key because it selects the font, a runtime asset handle.
+        // Keyed on the face, not the glyph: the face selects the font asset.
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || {
@@ -508,8 +458,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Icon> {
-        // Keyed on the face (a runtime font handle), not the glyph, so toggling the
-        // glyph within a face reconciles in place rather than respawning — as tool_button does.
+        // Keyed on the face, not the glyph: the face selects the font asset.
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || display::icon(icon));
@@ -715,9 +664,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .map(|option| (option.label.clone(), option.enabled))
             .collect();
         let mut changed = false;
-        // The labels key the widget: the options are seeded at spawn, so an edited
-        // option list — a renamed label or a flipped `enabled` — has to respawn
-        // rather than keep stale rows.
+        // The labels key the widget: options are seeded at spawn, so an edited list
+        // must respawn rather than keep stale rows.
         let entity = self
             .ch_loc(loc_id(&labels))
             .on_spawn_apply_scene(move || {
@@ -831,14 +779,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                                 width,
                             } = item;
                             let mut tab = match header {
-                                // The label and glyph key the tab: a renamed tab
-                                // respawns rather than keeping the old caption at
-                                // the same slot.
+                                // The label and glyph key the tab: a renamed tab respawns.
                                 TabHeader::Label { label, icon } => ui
                                     .ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
                                     .on_spawn_apply_scene(move || tab_button(label, icon)),
-                                // Keyed on the slot alone; the content reconciles
-                                // itself, as it would anywhere else.
                                 TabHeader::Content(content) => ui
                                     .ch_id(("tab_container", slot))
                                     .on_spawn_apply_scene(tab_chrome)
@@ -979,9 +923,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn scene<S: Scene>(&mut self, f: impl FnOnce() -> S) -> ImmResponse<'_, 'w, 's, kind::Scene> {
-        // Identity is the call site, as everywhere else: the builder runs once,
-        // so a scene whose inputs change is *not* rebuilt — that is the point of
-        // hosting one. Key the call site with `push_id` to swap it for another.
+        // The builder runs once, so a scene whose inputs change is *not* rebuilt.
+        // Key the call site with `push_id` to swap it for another.
         respond(self.ch_loc(loc_id(())).on_spawn_apply_scene(f), false)
     }
 
@@ -1032,7 +975,7 @@ pub struct ImmSelectOption<'a, T> {
 }
 
 impl<T> ImmSelectOption<'_, T> {
-    /// Default is `true`. If `false` then gray the option out and refuse picks on it.
+    /// Gray the option out and refuse picks on it. Default is `true`.
     pub fn enabled(self, enabled: bool) -> Self {
         self.option.enabled = enabled;
         self
@@ -1132,15 +1075,10 @@ fn imm_menu_popup<'r, 'w, 's, K>(
     respond(imm_menu_popup_on(anchor, role, "menu_popup", f), false)
 }
 
-// Builds a menu button's popup while its retained `MenuOpen` state says open.
-// The popup is unrooted (see `ImmPopup`); the frame's `MenuAnchorLink` routes
-// events and ancestor walks back to the anchor. After a close, one extra pass
-// builds the popup hidden, so a picked item's pending activation still reaches
-// its imm call site before the subtree is dropped.
-//
-// Takes and returns the anchor entity rather than a response, so
-// [`ImmResponse::menu`] can hang a menu off a widget that already built one —
-// which is also why the popup's id is the caller's, not a fixed one.
+// Builds a menu button's popup while its retained `MenuOpen` says open. Unrooted
+// (see `ImmPopup`); the frame's `MenuAnchorLink` routes events back to the anchor.
+// After a close, one extra pass builds it hidden, so a picked item's pending
+// activation still reaches its imm call site before the subtree is dropped.
 pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
     mut anchor: ImmEntity<'r, 'w, 's, PlumeCaps>,
     role: MenuButtonRole,
@@ -1221,10 +1159,10 @@ impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
     }
 
     /// Declare a tab standing for `key` whose header `header` builds instead of a
-    /// label — a dirty marker, a badge, a close button, which keeps its own clicks.
+    /// label — a dirty marker, a badge, a close button.
     ///
-    /// Every header is built each frame, so several cannot each hold a `&mut` to
-    /// the same value; share a `Cell` to report back.
+    /// Every header is built each frame, so several cannot each hold a `&mut` to the
+    /// same value; share a `Cell` to report back.
     pub fn tab_container(
         &mut self,
         key: T,
@@ -1254,9 +1192,6 @@ impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
 
 /// Handle to a just-declared tab, for its per-tab options. `H` is the header's
 /// [`tab_header`] kind, so `.icon()` only exists where plume owns the label.
-///
-/// A tab must end by saying what it shows: [`body`](Self::body) or
-/// [`no_body`](Self::no_body), either of which consumes the handle.
 #[must_use = "a tab has to say what it shows: finish it with .body(…) or .no_body()"]
 pub struct ImmTab<'a, 't, 'w, 's, T, H = tab_header::Labeled> {
     entry: &'a mut TabEntry<'t, 'w, 's, T>,
@@ -1452,8 +1387,7 @@ pub(crate) struct BodySpacing {
 
 impl BodySpacing {
     // Insert whichever the caller set onto `entity`; an unset one is left absent, so
-    // the scene's own value stands. One guard for the pair, keyed on both: guarded
-    // separately, a change to either would re-run only its own insert.
+    // the scene's own value stands. One guard keyed on both, as in the tab sizing.
     fn apply(self, entity: &mut ImmEntity<'_, '_, '_, PlumeCaps>) {
         struct BodySpacingKey;
         let Self { gap, padding } = self;
@@ -1471,8 +1405,7 @@ impl BodySpacing {
     }
 }
 
-// The dialog's frame-level props, split out so they travel to the scene as one
-// value instead of eight positional arguments.
+// The dialog's frame-level props, as one value the scene builders destructure.
 #[derive(Clone, Copy)]
 struct DialogLayout {
     width: Val,
@@ -1576,10 +1509,7 @@ impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
 
     /// Pin the panel to a corner of whatever it is declared in — the surrounding
     /// container, or the viewport at root scope — `x` and `y` in from its edges.
-    /// Inside a pane it follows that pane, a splitter's say, with nothing to wire.
-    ///
-    /// An ordinary absolute child, so a clipping container cuts it off at its own
-    /// edge; insets that keep it inside are unaffected.
+    /// An ordinary absolute child, so a clipping container cuts it off at its edge.
     pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
         self.layout.inset = corner.inset(x, y);
         self
@@ -1711,12 +1641,9 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
         };
         let anchor_entity = anchor.entity;
         let mut closed = false;
-        // Unrooted, so the popup is a UI root rather than a descendant of the
-        // anchor: picking bubbles up the hierarchy and `Hovered` is set on every
-        // ancestor of the hit, so a popup inside its anchor would re-fire the
-        // anchor's clicks and hold it highlighted. The socket carries the anchor
-        // as [`PopupAnchor`] instead — it has no parent to fall back on. Ids stay
-        // unique per anchor, since the scope hangs off the anchor's own id.
+        // Unrooted, so the popup is a UI root rather than a descendant of the anchor:
+        // picking bubbles, so a popup inside its anchor would re-fire the anchor's
+        // clicks and hold it hovered. The socket carries [`PopupAnchor`] instead.
         anchor.e = anchor.e.unrooted_ui(caller, |ui| {
             ui.ch_id("socket")
                 .on_spawn_apply_scene(popup_socket)
@@ -1817,8 +1744,6 @@ fn scroll_viewport_with_scrollbar<'r, 'w, 's>(
     content: impl FnOnce(&mut Ui<'w, 's>),
 ) -> ImmEntity<'r, 'w, 's, PlumeCaps> {
     frame.add_ui(move |ui| {
-        // The entity is known before its spawn command flushes, so the scrollbar
-        // can point at the viewport it drives.
         let viewport = ui
             .ch_id("scroll_viewport")
             .on_spawn_apply_scene(move || scroll_viewport(axis))
@@ -1829,11 +1754,10 @@ fn scroll_viewport_with_scrollbar<'r, 'w, 's>(
     })
 }
 
-// Combining the caller location with a key means label/options changes respawn the
-// widget instead of leaving stale scene content. `#[track_caller]` bubbles the
-// location through the (also `#[track_caller]`) widget methods to the user's call
-// site, so the same widget at two source lines already gets distinct ids; only a
-// repeated call site (e.g. a loop) collides, which [`PlumeChild::ch_loc`] resolves.
+// Widget identity is the call site: `#[track_caller]` bubbles the location through
+// the widget methods to the user's source line, so a widget whose bound value moves
+// reconciles in place rather than respawning. Folding in `key` makes a change to
+// that key respawn instead. Repeated call sites collide; `ch_loc` resolves those.
 #[track_caller]
 fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
     ImmIdBuilder::Hierarchy(ImmId::new((Location::caller(), key)))
@@ -1843,15 +1767,11 @@ fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
 // never coincide with a genuine `(location, key)` base.
 const OCCURRENCE_SALT: u32 = 0x506c_756d; // "Plum"
 
-// Child creation with plume-side occurrence disambiguation.
-//
-// Unpatched `bevy_immediate` maps each hierarchy id to exactly one entity, so two
-// widgets built from the same call site — a helper called in a loop — would land
-// on the same entity. This threads a per-`(parent, base id)` occurrence counter
-// (held in [`PlumeOccurrences`]): the first use keeps the plain id (so a widget
-// that appears once, or a conditional sibling, never shifts the others) and each
-// repeat takes a distinct suffix. Keeping it here lets plume track upstream
-// `bevy_immediate` with no `resolve`-time patch.
+// Child creation with plume-side occurrence disambiguation. `bevy_immediate` maps
+// each hierarchy id to one entity, so two widgets from the same call site — a helper
+// called in a loop — would collide. The first use of a `(parent, base id)` keeps the
+// plain id, so a widget appearing once never shifts; each repeat takes a suffix.
+// Doing it here rather than in the id resolver keeps upstream unpatched.
 trait PlumeChild<'w, 's> {
     fn ch_loc(&mut self, id: ImmIdBuilder) -> ImmEntity<'_, 'w, 's, PlumeCaps>;
 }
@@ -1883,9 +1803,6 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
         self.ch_with_manual_id(ImmIdBuilder::Hierarchy(id))
     }
 }
-
-// Set the `glyph` on a tool button's `icon` `Text` child. The font stays as
-// spawned, since the face keys the button's identity.
 
 // Both split directions, which differ only in the axis they hand down. The
 // panes are imm children of the splitter's own frame rather than scene props:
@@ -1989,10 +1906,7 @@ mod tests {
     #[derive(Resource, Default)]
     struct Recorded(Vec<Vec<Entity>>);
 
-    // Three widgets from ONE call site (the loop body) under one parent. With
-    // occurrence disambiguation they map to three distinct, stable entities;
-    // without it they collide onto a single entity once the id->entity mapping is
-    // populated (i.e. from the second frame on).
+    // Three widgets from ONE call site (the loop body) under one parent.
     fn three_siblings(mut root: PlumeRoot, mut recorded: ResMut<Recorded>) {
         let mut frame = Vec::new();
         root.push_id("sibling-test", |ui| {

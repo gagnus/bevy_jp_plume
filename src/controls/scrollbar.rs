@@ -40,9 +40,8 @@ pub struct PlumeScrollbarProps {
     pub orientation: ControlOrientation,
 }
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeScrollbar`] — see
-// docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not [`PlumeScrollbar`], which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ScrollbarFrame;

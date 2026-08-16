@@ -97,7 +97,7 @@ impl Plugin for PlumeCorePlugin {
     }
 }
 
-/// A plugin group that adds all dependencies for Plume
+/// A plugin group that adds all dependencies for Plume.
 pub struct PlumePlugins;
 
 impl PluginGroup for PlumePlugins {

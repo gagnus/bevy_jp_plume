@@ -1,6 +1,5 @@
-//! Immediate-mode API: write plain systems taking [`Ui`] and call widgets on
-//! it (`if ui.slider(&mut v, 0.0..=1.0).changed { … }`); a reconciler maps the
-//! calls onto retained plume scenes.
+//! Immediate-mode API: write plain systems taking [`Ui`] and call widgets on it;
+//! a reconciler maps the calls onto retained plume scenes.
 mod caps;
 mod response;
 mod widgets;
@@ -30,8 +29,8 @@ pub use crate::utils::numeric::Numeric;
 #[doc(hidden)]
 pub struct PlumeCaps;
 
-// `impl_capability_set!` emits a bare `pub trait`, which no attribute can reach;
-// a private module keeps it unnameable. Trait impls are not module-scoped, so
+// `impl_capability_set!` emits a bare `pub trait`, which no attribute can reach; a
+// private module keeps it unnameable. Trait impls aren't module-scoped, so
 // `PlumeCaps`' capabilities still apply crate-wide.
 mod cap_set {
     use bevy_immediate::ui::activated::CapabilityUiActivated;
@@ -70,19 +69,14 @@ mod cap_set {
     );
 }
 
-/// The immediate-mode context handed to container closures; all widget calls
-/// live in [`PlumeImm`].
-///
-/// Wraps the reconciler rather than aliasing it, so the vendored `bevy_immediate`
-/// stays a private dependency and its API is not part of plume's.
+/// The immediate-mode context handed to container closures; all widget calls live
+/// in [`PlumeImm`].
 #[repr(transparent)]
 pub struct Ui<'w, 's>(pub(crate) Imm<'w, 's, PlumeCaps>);
 
 impl<'w, 's> Ui<'w, 's> {
-    /// Is the pointer over the container this scope is filling, or anything
-    /// inside it. Stays true over the container's own children, so chrome
-    /// revealed by it — `ui.tool_button(EYE).visible(hovered)` — doesn't
-    /// vanish as the pointer arrives.
+    /// Is the pointer over the container this scope is filling, or anything inside it
+    /// — so chrome the container reveals doesn't vanish as the pointer reaches it.
     pub fn hovered(&mut self) -> bool {
         let Some(parent) = self.0.current_entity() else {
             return false;
@@ -104,16 +98,14 @@ impl<'w, 's> Ui<'w, 's> {
         false
     }
 
-    // The reconciler hands closures a `&mut Imm`; `repr(transparent)` makes the
-    // reference cast to the wrapper layout-identical, which is the only reason
-    // container bodies can take a `&mut Ui`.
+    // The reconciler hands closures a `&mut Imm`; `repr(transparent)` makes the cast
+    // to the wrapper layout-identical, which is why container bodies take `&mut Ui`.
     pub(crate) fn wrap_mut<'a>(imm: &'a mut Imm<'w, 's, PlumeCaps>) -> &'a mut Self {
         // SAFETY: `Ui` is `repr(transparent)` over exactly this type.
         unsafe { &mut *(imm as *mut Imm<'w, 's, PlumeCaps> as *mut Self) }
     }
 
-    // The slice of the reconciler plume's own widgets build on. Forwarded rather
-    // than exposed, so none of it reaches an app.
+    // The slice of the reconciler plume's own widgets build on.
     pub(crate) fn ch_id<T: core::hash::Hash>(&mut self, id: T) -> ImmEntity<'_, 'w, 's, PlumeCaps> {
         self.0.ch_id(id)
     }
@@ -162,17 +154,15 @@ impl<'r, 'w, 's> ImmEntityExt<'w, 's> for ImmEntity<'r, 'w, 's, PlumeCaps> {
 /// [`screen`](Self::screen) or [`dialog`](Self::dialog) — to get the [`Ui`] that
 /// [`PlumeImm`] widgets are called on.
 ///
-/// Widgets are deliberately unreachable at root scope: the root is virtual, so a
-/// widget there would anchor at the viewport origin with no font ancestor, both
-/// silently. A `Ui` is only handed out inside a surface that fixes them.
+/// Widgets are unreachable at root scope: the root is virtual, so one there would
+/// anchor at the viewport origin with no font ancestor, both silently.
 pub struct PlumeRoot<'w, 's> {
     imm: Ui<'w, 's>,
 }
 
 impl<'w, 's> PlumeRoot<'w, 's> {
-    /// Full-screen surface for a system's top-level content: a transparent,
-    /// padded column filling the viewport that establishes the standard font and
-    /// text color. The usual choice for screen-filling UI.
+    /// Full-screen surface for a system's top-level content: a transparent, padded
+    /// column filling the viewport, establishing the standard font and text color.
     #[track_caller]
     pub fn screen(
         &mut self,
@@ -182,8 +172,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     }
 
     /// Movable floating dialog — the other top-level surface. Configure via the
-    /// returned [`ImmDialog`] and build the body with [`ImmDialog::show`]; the
-    /// dialog is absolutely positioned, so it stands alone at root scope.
+    /// returned [`ImmDialog`] and build the body with [`ImmDialog::show`].
     #[track_caller]
     pub fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's> {
         self.imm.dialog(title, open)
@@ -207,23 +196,17 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     }
 }
 
-/// The [`Ui`] a splitter hands each of its panes: a `Ui` in every respect, plus
-/// the divider's settled [`fraction`](Self::fraction).
-///
-/// A pane cannot read that off the app's own binding, which is on loan to the
-/// [`split_horizontal`](PlumeImm::split_horizontal) call for as long as the
-/// pane is being built — and a distinct type is how the reading stays
-/// unavailable everywhere it would mean nothing.
+/// The [`Ui`] a splitter hands each of its panes: a `Ui` in every respect, plus the
+/// divider's settled [`fraction`](Self::fraction), which the app's own binding cannot
+/// supply while it is on loan to the [`split_horizontal`](PlumeImm::split_horizontal) call.
 pub struct PaneUi<'a, 'w, 's> {
     pub(crate) ui: &'a mut Ui<'w, 's>,
     pub(crate) fraction: f32,
 }
 
 impl PaneUi<'_, '_, '_> {
-    /// The *first* pane's share of the splitter, `0.0..=1.0` — the same number
-    /// both panes are handed, and the same one the app's binding will hold once
-    /// the call returns. A pane that has
-    /// [collapsed](ImmResponse::collapsible) is exactly `0.0` or `1.0`.
+    /// The *first* pane's share of the splitter, `0.0..=1.0`, as the divider has
+    /// settled it. A [collapsed](ImmResponse::collapsible) pane reads exactly `0.0` or `1.0`.
     pub fn fraction(&self) -> f32 {
         self.fraction
     }

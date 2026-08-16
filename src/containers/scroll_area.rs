@@ -116,11 +116,9 @@ pub(crate) fn scroll_viewport(axis: ScrollAxis) -> impl Scene {
     }
 }
 
-// Content stack inside a [`scroll_viewport`]. Flex shrinks items to fit their
-// container even when it scrolls, and `row()`/`column()` floor their minimums at
-// zero, so without a `flex_shrink: 0` wrapper to absorb that pressure every row the
-// caller writes gets crushed — centered content spilling out of the clip — instead
-// of overflowing into the scroll.
+// Content stack inside a [`scroll_viewport`]. Flex shrinks items to fit even when the
+// container scrolls, and `row()`/`column()` floor their minimums at zero, so without a
+// `flex_shrink: 0` wrapper every row gets crushed instead of overflowing into the scroll.
 pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
     bsn! {
         Node {

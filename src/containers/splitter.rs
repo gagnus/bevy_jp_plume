@@ -1,10 +1,5 @@
-//! Two panes with a draggable divider between them.
-//!
-//! The split is stored as a *fraction* of the splitter's length, so both panes
-//! keep their share as the window resizes. Each pane may state a minimum; the
-//! divider stops there, and so does the stored fraction — a value that kept
-//! travelling past what the layout will do would leave the drag with dead
-//! travel to unwind before the divider moved again.
+//! Two panes with a draggable divider between them. The split is stored as a
+//! *fraction* of the splitter's length, so both panes keep their share on resize.
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
 use bevy::ecs::change_detection::DetectChangesMut;
 use bevy::ecs::component::Component;
@@ -256,10 +251,9 @@ pub(crate) fn splitter_frame(axis: SplitAxis, fraction: f32) -> impl Scene {
         SplitMin
         // `Val::Em` minimums need the chain's `EmSize` to resolve.
         TextStyleRelay
-        // `Pickable` is per-entity and depth-based, so the frame is its own hit over
-        // the same area as the panes: without this it swallows picks the panes let
-        // through, and their `IGNORE` buys nothing. The divider sets no `Pickable`
-        // of its own, and per-entity means this never reaches it, so drags survive.
+        // `Pickable` is per-entity, so the frame is its own hit over the same area as
+        // the panes and must ignore picks too, or theirs buys nothing. The divider
+        // sets none of its own and is unaffected, so drags survive.
         Pickable::IGNORE
     }
 }
@@ -285,10 +279,8 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
         }
         template_value(pane)
         TextStyleRelay
-        // A pane is pure layout, like `screen`, so it lets picks fall through its
-        // empty parts — whatever the app puts in it does its own blocking. Content
-        // over a 3d viewport is the case that needs it, and it needs the frame to
-        // ignore picks too, since a pane's own `IGNORE` does not speak for it.
+        // A pane is pure layout, like `screen`, so it lets picks fall through its empty
+        // parts — content over a 3d viewport is the case that needs it.
         Pickable::IGNORE
     }
 }
@@ -301,12 +293,9 @@ struct SplitDivider {
     drag_share: f32,
 }
 
-// The grab strip, with the hairline centred inside it. The strip is wider than
-// the line it draws, so the divider can be grabbed without being a gutter: it
-// is positioned *over* the seam rather than taking a place in the flow, which
-// leaves the two panes flush and their shares summing to the whole. In the flow
-// it would both push the panes apart by its own width and overflow the splitter
-// once the fraction left less room than it takes.
+// The grab strip, with the hairline centred inside it. Wider than the line it draws,
+// so it can be grabbed without being a gutter: positioned *over* the seam rather than
+// in the flow, leaving the panes flush and their shares summing to the whole.
 pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
     let cursor = axis.cursor();
     // Along the axis: the grab width, centred on the seam by `apply_split`.
@@ -430,7 +419,6 @@ fn apply_split(
                 }
             }
 
-            // Splitter position (accounting for edges)
             if let Ok(mut node) = q_dividers.get_mut(*child) {
                 let inset = if f == 0.0 {
                     Val::ZERO
@@ -458,10 +446,8 @@ fn apply_split(
     }
 }
 
-// The divider has no headless widget behind it, so it keeps its own `Pressed`:
-// press marks the gesture, release/drag-end/cancel end it. While it is on, the
-// active style and the resize cursor hold even when the pointer outruns the
-// strip mid-drag.
+// The divider has no headless widget behind it, so it keeps its own `Pressed`, which
+// holds the active style and cursor when the pointer outruns the strip mid-drag.
 fn press_divider(press: On<Pointer<Press>>, mut commands: Commands) {
     commands.entity(press.event_target()).insert(Pressed);
 }
@@ -497,11 +483,9 @@ fn drag_start_divider(
     }
 }
 
-// Drag the divider: the pointer's travel along the axis, as a share of the
-// splitter's length, clamped to what the two minimums leave. A collapsible
-// pane adds two zones past its floor: down to half the floor the divider holds
-// at the floor, further and it snaps fully closed — and the same halfway
-// point, crossed outward, is where a closed pane snaps back to its floor.
+// Drag the divider: pointer travel along the axis as a share of the splitter's
+// length, clamped to what the two minimums leave. Past a collapsible pane's floor,
+// half that floor is the hysteresis point — inward it snaps closed, outward it reopens.
 fn drag_divider(
     mut drag: On<Pointer<Drag>>,
     mut q_dividers: Query<&mut SplitDivider>,
@@ -595,13 +579,10 @@ fn drag_divider(
     });
 }
 
-// Adopts what the layout actually did, so the stored fraction never drifts from
-// what is on screen. That happens whenever a floor the drag could not resolve
-// stopped a pane — a `Val::Auto` minimum, or content that refuses to shrink —
-// and without it the divider would develop dead travel: the fraction would keep
-// moving while the pane could not, and dragging back would do nothing until the
-// slack unwound. Writing the measured value back converges in one frame, since
-// asking for exactly what the layout already gives changes nothing.
+// Adopts what the layout actually did, whenever a floor the drag could not resolve
+// stopped a pane — a `Val::Auto` minimum, or content that refuses to shrink. Without
+// it the fraction keeps moving while the pane cannot, and dragging back does nothing
+// until that dead travel unwinds. Converges in one frame.
 fn snap_split_to_layout(
     mut q_splitters: Query<(
         Entity,
@@ -640,10 +621,8 @@ fn snap_split_to_layout(
     }
 }
 
-// The hairline brightens and thickens under the pointer and while dragging: the
-// divider is chrome you have to find before you can use it. Borrows the
-// scrollbar thumb's tokens, the theme's existing voice for a draggable neutral
-// strip.
+// The hairline brightens and thickens under the pointer and while dragging, on the
+// scrollbar thumb's tokens — the theme's voice for a draggable neutral strip.
 fn style_divider(
     children: &Children,
     axis: SplitAxis,

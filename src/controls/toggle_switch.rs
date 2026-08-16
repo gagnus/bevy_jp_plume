@@ -84,9 +84,8 @@ impl PlumeToggleSwitch {
                 ),
                 (
                     // The 2px inset nests the 16px knob (radius 8) concentrically inside
-                    // the pill's outer radius (9) minus the ring's border. The knob keeps
-                    // this off-position in layout; the on/off slide is a post-layout
-                    // `UiTransform` translation so it never triggers a relayout.
+                    // the pill's outer radius (9) minus the ring's border. The on/off
+                    // slide is a post-layout `UiTransform`, so it never relayouts.
                     Node {
                         position_type: PositionType::Absolute,
                         left: size::em_from_px(1.0),
@@ -108,19 +107,18 @@ impl PlumeToggleSwitch {
     }
 }
 
-// Plain root marker, inserted by the scene on both the retained and imm paths.
-// The systems key on this rather than [`PlumeToggleSwitch`] — see
-// docs/plume_rules.md.
+// Plain root marker, inserted on both the retained and imm paths. The systems key on
+// this, not [`PlumeToggleSwitch`], which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchFrame;
 
-// Marker for the toggle switch border ring
+// Marker for the toggle switch border ring.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchOutline;
 
-// Marker for the toggle switch slide
+// Marker for the toggle switch slide.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ToggleSwitchSlide;

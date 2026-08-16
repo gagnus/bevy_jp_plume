@@ -197,8 +197,7 @@ impl FaIcon {
 }
 
 /// FontAwesome glyphs, split by the face each one lives in.
-// A glyph constant's name is its documentation; see the Comments section of
-// docs/code_rules.md.
+// A glyph constant's name is its documentation.
 #[allow(missing_docs)]
 pub mod font_awesome {
     /// Glyphs from the FontAwesome Solid face.

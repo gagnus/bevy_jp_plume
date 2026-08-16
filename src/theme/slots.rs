@@ -1,4 +1,4 @@
-//! ThemeSlot provides contextual names for the palette entries
+//! ThemeSlot provides contextual names for the palette entries.
 
 use bevy::ecs::component::Component;
 use bevy::reflect::Reflect;
