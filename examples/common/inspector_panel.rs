@@ -195,7 +195,6 @@ impl Documents {
 #[derive(Resource, Debug, Clone, PartialEq, Default)]
 pub struct Inspector {
     pub tab: Tab,
-    pub ui_scale: f32,
     /// The viewport's share of the width; the panel takes the rest. The
     /// splitter writes it as its divider is dragged, which is what makes the
     /// layout the app's to save rather than the widget's to remember.
@@ -212,7 +211,6 @@ pub struct Inspector {
 impl Inspector {
     pub fn initial() -> Self {
         Self {
-            ui_scale: 1.0,
             split: 0.75,
             show_hud: true,
             ..Self::default()
@@ -280,8 +278,13 @@ impl Plugin for InspectorPanelPlugin {
     }
 }
 
-fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
+fn inspector_panel_ui(
+    mut root: PlumeRoot,
+    mut state: ResMut<Inspector>,
+    mut rem_size: ResMut<RemSize>,
+) {
     let mut s = state.clone();
+    let mut r = rem_size.clone();
     root.screen(|ui| {
         menu_bar(ui, &mut s);
         // Same reason as `tab` below: neither the split nor the documents can stay
@@ -292,7 +295,7 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         ui.split_horizontal(
             &mut split,
             |ui| document_pane(ui, &mut documents, show_hud),
-            |ui| panel(ui, &mut s),
+            |ui| panel(ui, &mut s, &mut r),
         )
         // The panel never gets narrower than its controls need; the document pane
         // gives down to a couple of squeezed tabs, past which its strip scrolls.
@@ -304,9 +307,9 @@ fn inspector_panel_ui(mut root: PlumeRoot, mut state: ResMut<Inspector>) {
         s.split = split;
         s.documents = documents;
     })
-    .background_slot(ThemeSlot::Neutral0)
-    .font_size(BASE_FONT_PX * s.ui_scale);
+    .background_slot(ThemeSlot::Neutral0);
     state.set_if_neq(s);
+    rem_size.set_if_neq(r);
 }
 
 // The imm twin of the retained example's `menu_bar`: the same File and View
@@ -473,7 +476,7 @@ fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
         });
 }
 
-fn panel(ui: &mut Ui, s: &mut Inspector) {
+fn panel(ui: &mut Ui, s: &mut Inspector, r: &mut RemSize) {
     ui.vertical(|ui| {
         header(ui, s);
         ui.separator();
@@ -491,14 +494,13 @@ fn panel(ui: &mut Ui, s: &mut Inspector) {
         .grow();
         s.tab = tab;
         ui.separator();
-        footer(ui, s);
+        footer(ui, s, r);
     })
     // Width and minimum belong to the splitter now; the panel fills its pane,
     // and the seam's line is the splitter's divider rather than a panel border.
     .grow()
     .background_slot(ThemeSlot::Neutral1)
-    .padding(size::SPACE)
-    .font_size(BASE_FONT_PX * s.ui_scale);
+    .padding(size::SPACE);
 }
 
 fn header(ui: &mut Ui, s: &mut Inspector) {
@@ -628,15 +630,14 @@ fn node_row(ui: &mut Ui, node: &mut SceneNode, parent: bool) {
     });
 }
 
-fn footer(ui: &mut Ui, s: &mut Inspector) {
+fn footer(ui: &mut Ui, _: &mut Inspector, r: &mut RemSize) {
     ui.horizontal(|ui| {
-        ui.caption("UI scale").width(GUTTER);
-        ui.slider(&mut s.ui_scale, 0.5..=2.0)
+        ui.caption("Rem").width(GUTTER);
+        ui.slider(&mut r.0, 10.0..=20.0)
             .grow()
-            .step(0.05)
-            .precision(2);
-        ui.caption(&format!("{:.0}%", s.ui_scale * 100.0))
-            .width(em(3));
+            .step(1.)
+            .precision(0);
+        ui.caption(&format!("{}", r.0)).width(em(2));
     });
 }
 

@@ -14,7 +14,7 @@ use bevy::input::ButtonInput;
 use bevy::input::keyboard::KeyCode;
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
-use bevy::picking::events::{Drag, Pointer, Press};
+use bevy::picking::events::{Click, Drag, DragEnd, DragStart, Pointer, Press};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -230,6 +230,15 @@ impl PlumePopup {
             // scope Tab traversal like a dialog does.
             {(props.dismiss != PopupDismiss::FocusOut).then(|| bsn! { TabGroup::new(0) })}
             {props.movable.then(|| bsn! { on(on_popup_drag) })}
+            // A popup floats over whatever its anchor sits in, so pointer activity
+            // inside it must not bubble on to that surface: a retained socket is a
+            // hierarchy child, and its anchor's ancestors would read the popup's
+            // presses and drags as their own (a canvas node drag, a window raise).
+            on(stop_pointer::<Press>)
+            on(stop_pointer::<Click>)
+            on(stop_pointer::<DragStart>)
+            on(stop_pointer::<Drag>)
+            on(stop_pointer::<DragEnd>)
             Children [
                 {props.contents},
             ]
@@ -265,6 +274,12 @@ fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
         positions: sides.map(side_to_position).to_vec(),
         window_margin: 10.0,
     }
+}
+
+// Ends a pointer event's ancestor walk at the popup root. Entity observers below
+// and on the root have already run; only the world outside the popup loses it.
+fn stop_pointer<E: core::fmt::Debug + Clone + Reflect>(mut event: On<Pointer<E>>) {
+    event.propagate(false);
 }
 
 // Drag a non-control part of the popup to move it: an entity observer, so it fires

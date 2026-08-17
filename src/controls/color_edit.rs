@@ -22,6 +22,7 @@ use bevy::ui::{AlignItems, Node};
 use bevy::ui_widgets::ValueChange;
 
 use crate::constants::{font_awesome, size};
+use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::containers::{
     CloseRequested, PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket, row,
@@ -39,10 +40,22 @@ use crate::utils::hierarchy::{descendant, nearest_with};
 const EPS: f32 = 1.0e-6;
 
 /// Scene props for [`PlumeColorEdit`].
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct PlumeColorEditProps {
     /// Color the swatch shows before the user edits it.
     pub initial_color: Color,
+    /// Offer alpha: the swatch reads translucency and the picker popup edits
+    /// it. `false` shows and edits RGB only, leaving the alpha as it arrived.
+    pub alpha: bool,
+}
+
+impl Default for PlumeColorEditProps {
+    fn default() -> Self {
+        PlumeColorEditProps {
+            initial_color: Color::default(),
+            alpha: true,
+        }
+    }
 }
 
 /// An editable color swatch: click to open a color-picker popup. Spawnable as a
@@ -72,6 +85,11 @@ struct ColorEditSwatch;
 #[reflect(Component, Clone, Default)]
 struct ColorEditPopup;
 
+// Marks a control that edits RGB only, so its popup spawns the picker without alpha.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorEditRgbOnly;
+
 // Marks the picker inside the popup.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -79,6 +97,11 @@ struct ColorEditPicker;
 
 impl PlumeColorEdit {
     fn scene(props: PlumeColorEditProps) -> impl Scene {
+        let PlumeColorEditProps {
+            initial_color,
+            alpha,
+        } = props;
+        let rgb_only = (!alpha).then(|| bsn! { ColorEditRgbOnly });
         bsn! {
             Node {
                 align_items: AlignItems::Start,
@@ -86,12 +109,15 @@ impl PlumeColorEdit {
             ColorEditFrame
             // Without this the swatch below is off the chain — no `EmSize`.
             TextStyleRelay
-            template_value(ColorPickerValue(props.initial_color))
+            template_value(ColorPickerValue(initial_color))
+            {rgb_only}
             Children [
                 // The swatch is the click target that toggles the popup.
                 (
-                    @PlumeColorSwatch
-                    template_value(ColorSwatchValue(props.initial_color))
+                    @PlumeColorSwatch {
+                        @initial_color: initial_color,
+                        @alpha: alpha,
+                    }
                     ColorEditSwatch
                     EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 ),
@@ -114,6 +140,7 @@ fn on_swatch_click(
     q_popup_marker: Query<(), With<ColorEditPopup>>,
     q_socket: Query<(), With<PopupSocket>>,
     q_value: Query<&ColorPickerValue, With<ColorEditFrame>>,
+    q_rgb_only: Query<(), With<ColorEditRgbOnly>>,
     mut commands: Commands,
 ) {
     // Only react to presses landing on a swatch (its border-overlay child included).
@@ -132,6 +159,7 @@ fn on_swatch_click(
         return;
     };
     let color = q_value.get(root).map(|value| value.0).unwrap_or_default();
+    let alpha = !q_rgb_only.contains(root);
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
@@ -154,12 +182,15 @@ fn on_swatch_click(
                     (
                         @PlumeColorPicker {
                             @initial_color: color,
+                            @alpha: alpha,
                         }
                         ColorEditPicker
                     ),
                 ],
             }
             ColorEditPopup
+            // Reset font size
+            InheritableFont { font_size: {Some(PlumeFontSize::Rem(1.0))} }
         })
         .insert(ChildOf(socket));
 }

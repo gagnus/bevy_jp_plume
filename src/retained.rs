@@ -24,11 +24,12 @@ pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,
     NoSelectAllOnFocus, PlumeButton, PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps,
     PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch,
-    PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps, PlumeNumberInput,
-    PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar,
-    PlumeScrollbarProps, PlumeSelect, PlumeSelectProps, PlumeSlider, PlumeSliderProps,
-    PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter,
-    ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, menu_anchor, select_options,
+    PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps,
+    PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup, PlumeRadioProps,
+    PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps, PlumeSlider,
+    PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton,
+    ScrollbarGutter, ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, menu_anchor,
+    select_options,
 };
 pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, icon};
 pub use crate::theme::components::{

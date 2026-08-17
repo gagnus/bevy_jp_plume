@@ -4,13 +4,7 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checkable, Checked, ColorSwatchValue, Flat, InheritableFont, InteractionDisabled,
-    PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure,
-    PlumeFontSize, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea,
-    PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, Screen, SectionCollapsed, Selected, SetValue, SliderValue,
-    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, menu_anchor,
-    row, screen, separator, small_caps, space, tab_body,
+    Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, menu_anchor, row, screen, separator, small_caps, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
@@ -18,10 +12,10 @@ mod common;
 
 use common::Options;
 use common::inspector_panel::{
-    BASE_FONT_PX, Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab,
+    Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab,
 };
 
-const GUTTER: Val = Val::Px(78.0);
+const GUTTER: Val = Val::Em(6.0);
 
 fn main() {
     let mut app = common::demo_app(false);
@@ -32,7 +26,6 @@ fn main() {
             (
                 common::log_on_change::<Inspector>,
                 push_material,
-                push_ui_scale,
                 push_tree_rows,
                 push_documents,
                 push_hud_visible,
@@ -51,7 +44,6 @@ enum Bound {
     Cull,
     Metallic,
     Roughness,
-    UiScale,
     Filter,
     Picker,
 }
@@ -61,7 +53,6 @@ impl Bound {
         Some(match self {
             Bound::Metallic => &mut s.material.metallic,
             Bound::Roughness => &mut s.material.roughness,
-            Bound::UiScale => &mut s.ui_scale,
             _ => return None,
         })
     }
@@ -177,27 +168,6 @@ fn push_material(
             let value = value.clone();
             commands.trigger(SetValue { entity, value });
         }
-    }
-}
-
-// The imm twin's `.font_size()` on the panel, as a retained cascade root.
-fn push_ui_scale(
-    state: Res<Inspector>,
-    q_panel: Query<(Entity, Option<&InheritableFont>), Or<(With<Screen>, With<InspectorPanel>)>>,
-    mut commands: Commands,
-) {
-    if !state.is_changed() {
-        return;
-    }
-    let wanted = PlumeFontSize::Px(BASE_FONT_PX * state.ui_scale);
-    for (entity, font) in q_panel.iter() {
-        if font.is_some_and(|font| font.font_size == Some(wanted)) {
-            continue;
-        }
-        commands.entity(entity).insert(InheritableFont {
-            font_size: Some(wanted),
-            ..default()
-        });
     }
 }
 
@@ -376,7 +346,8 @@ fn root() -> impl Scene {
                 // minimum is `Auto` — whatever its content needs.
                 @PlumeSplitter {
                     @fraction: 0.75,
-                    @min_second: px(260),
+                    @min_first: em(9),
+                    @min_second: em(20),
                     @collapsible_second: true,
                     @first: bsn_list![documents()],
                     @second: bsn_list![panel()],
@@ -582,7 +553,7 @@ fn viewport_hud() -> impl Scene {
     bsn! {
         @PlumeDialog {
             @header: false,
-            @inset: {Corner::BottomRight.inset(px(16), px(16))},
+            @inset: {Corner::BottomRight.inset(em(1), em(1))},
             @contents: bsn_list![
                 (
                     row()
@@ -639,7 +610,6 @@ fn viewport() -> impl Scene {
 fn panel() -> impl Scene {
     // Owned values, because `bsn!` defers these calls past any local's lifetime.
     let Inspector {
-        ui_scale,
         material,
         hierarchy,
         ..
@@ -659,7 +629,7 @@ fn panel() -> impl Scene {
             separator(),
             tabs(material, hierarchy.nodes),
             separator(),
-            footer(ui_scale),
+            footer(),
         ]
     }
 }
@@ -781,8 +751,7 @@ fn material_tab(m: Material) -> impl Scene {
                             Children [
                                 field_label("Name"),
                                 (
-                                    @PlumeColorSwatch
-                                    template_value(ColorSwatchValue(base))
+                                    @PlumeColorSwatch { @initial_color: base }
                                 ),
                                 (
                                     @PlumeTextInput {
@@ -857,7 +826,7 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
         row()
         TreeRow(index)
         Children [
-            space(px(depth as f32 * 14.0)),
+            space(em(depth)),
             (
                 @PlumeDisclosure
                 template_value(NodeBound::Expanded(index))
@@ -881,20 +850,23 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
     }
 }
 
-fn footer(scale: f32) -> impl Scene {
+fn footer() -> impl Scene {
     bsn! {
         row()
         Children [
             field_label("UI scale"),
             (
                 @PlumeSlider {
-                    @min: 0.5,
-                    @max: 2.0,
-                    @precision: {Some(2)},
+                    @min: 10.,
+                    @max: 20.,
+                    @step: {Some(1.)},
+                    @precision: {Some(0)},
                 }
-                SliderValue(scale)
+                SliderValue(size::MEDIUM_FONT_PX)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
-                on_number(Bound::UiScale)
+                on(move |ev: On<ValueChange<f32>>, mut r: ResMut<RemSize>| {
+                    r.0 = ev.value;
+                })
             ),
         ]
     }

@@ -1,6 +1,6 @@
-//! HSV color picker: a saturation/value plane, a hue bar and a preview swatch,
-//! composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated as one
-//! retained control. Reports its color in [`ColorPickerValue`] and self-updates
+//! HSV color picker: a saturation/value plane, hue and alpha bars and a preview
+//! swatch, composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated
+//! as one retained control. Reports its color in [`ColorPickerValue`] and self-updates
 //! it as the user drags, so it works dropped straight into a scene.
 use core::f32::consts::PI;
 
@@ -19,10 +19,11 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
-    InterpolationColorSpace, LinearGradient, Node, Val, Val2, em, percent,
+    InterpolationColorSpace, LinearGradient, Node, PositionType, Val, Val2, em, percent,
 };
 use bevy::ui_widgets::{SliderValue, ValueChange};
 
+use super::color_swatch::CheckerUnderlay;
 use crate::constants::size;
 use crate::containers::space;
 use crate::controls::{
@@ -42,10 +43,22 @@ const HUE_RETICLE_SIZE: Val2 = Val2 {
 };
 
 /// Scene props for [`PlumeColorPicker`].
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct PlumeColorPickerProps {
     /// Color the picker starts on before the user drags it.
     pub initial_color: Color,
+    /// Offer alpha: the alpha bar and A field. `false` hides both and leaves
+    /// the color's alpha as it arrived.
+    pub alpha: bool,
+}
+
+impl Default for PlumeColorPickerProps {
+    fn default() -> Self {
+        PlumeColorPickerProps {
+            initial_color: Color::default(),
+            alpha: true,
+        }
+    }
 }
 
 /// A composed HSV color picker. Spawnable as a scene component; it lays out its
@@ -84,6 +97,16 @@ struct ColorPickerSv;
 #[reflect(Component, Clone, Default)]
 struct ColorPickerHue;
 
+// Marks the alpha bar's pad.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerAlpha;
+
+// Marks the alpha bar's gradient layer, repainted as the color moves.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorPickerAlphaRamp;
+
 // Marks the preview swatch child.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -99,6 +122,8 @@ enum Channel {
     G,
     /// sRGB blue.
     B,
+    /// Alpha.
+    A,
     /// Hue, degrees.
     H,
     /// Saturation.
@@ -145,6 +170,54 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
 
 impl PlumeColorPicker {
     fn scene(props: PlumeColorPickerProps) -> impl Scene {
+        // Alpha bar: checker under a color→transparent ramp, the pad on top of
+        // both so the layers never shade its input.
+        let alpha_bar: Vec<Box<dyn Scene>> = props
+            .alpha
+            .then(|| -> Box<dyn Scene> {
+                Box::new(bsn! {
+                Node { width: HUE_BAR_WIDTH, height: PLANE_SIZE }
+                TextStyleRelay
+                Children [
+                    (
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            top: Val::ZERO,
+                            right: Val::ZERO,
+                            bottom: Val::ZERO,
+                        }
+                        CheckerUnderlay
+                    ),
+                    (
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            top: Val::ZERO,
+                            right: Val::ZERO,
+                            bottom: Val::ZERO,
+                        }
+                        ColorPickerAlphaRamp
+                    ),
+                    (
+                        @PlumeXyPad {
+                            @reticle_size: HUE_RETICLE_SIZE,
+                        }
+                        Node { width: percent(100), height: percent(100) }
+                        XyPadLock { x: {Some(0.5)}, y: None }
+                        ColorPickerAlpha
+                    ),
+                ]
+                })
+            })
+            .into_iter()
+            .collect();
+        let alpha_row: Vec<Box<dyn Scene>> = props
+            .alpha
+            .then(|| -> Box<dyn Scene> { Box::new(channel_row("A", Channel::A, 3, 1.0)) })
+            .into_iter()
+            .collect();
+        let alpha = props.alpha;
         bsn! {
             Node {
                 display: Display::Flex,
@@ -173,6 +246,7 @@ impl PlumeColorPicker {
                     BackgroundGradient(hue_gradient())
                     ColorPickerHue
                 ),
+                {alpha_bar},
                 // Preview swatch over the numeric fields; the swatch grows to fill
                 // the spare height so the R/G/B/H/S/V rows sit at the bottom.
                 (
@@ -185,14 +259,15 @@ impl PlumeColorPicker {
                     TextStyleRelay
                     Children [
                         (
-                            @PlumeColorSwatch
+                            @PlumeColorSwatch { @alpha: alpha }
                             Node { width: percent(100), flex_grow: 1.0 }
                             ColorPickerSwatch
                         ),
-                        // sRGB channels, then a gap, then the HSV channels.
+                        // sRGB channels and alpha, then a gap, then the HSV channels.
                         channel_row("R", Channel::R, 3, 1.0),
                         channel_row("G", Channel::G, 3, 1.0),
                         channel_row("B", Channel::B, 3, 1.0),
+                        {alpha_row},
                         space(size::SPACE_TIGHT / 2.0),
                         channel_row("H", Channel::H, 0, 360.0),
                         channel_row("S", Channel::S, 3, 1.0),
@@ -208,6 +283,8 @@ impl PlumeColorPicker {
 struct PickerViews {
     sv: Option<Entity>,
     hue: Option<Entity>,
+    alpha: Option<Entity>,
+    ramp: Option<Entity>,
     swatch: Option<Entity>,
     channels: Vec<(Entity, Channel)>,
 }
@@ -218,11 +295,14 @@ const CHANNEL_EPS: f32 = 1.0e-6;
 
 // Push the working HSV out to every view (plane, hue bar, swatch, numeric fields)
 // and the public `Color` mirror, whenever the working color changes.
+#[allow(clippy::too_many_arguments)]
 fn sync_color_to_views(
     q_picker: Query<(Entity, &ColorPickerValue), Changed<ColorPickerValue>>,
     q_children: Query<&Children>,
     q_sv: Query<(), With<ColorPickerSv>>,
     q_hue: Query<(), With<ColorPickerHue>>,
+    q_alpha: Query<(), With<ColorPickerAlpha>>,
+    q_ramp: Query<(), With<ColorPickerAlphaRamp>>,
     q_swatch: Query<(), With<ColorPickerSwatch>>,
     q_channel: Query<&ColorPickerChannel>,
     mut q_xy: Query<&mut XyPadValue>,
@@ -233,7 +313,16 @@ fn sync_color_to_views(
     for (root, color) in q_picker.iter() {
         // Both spaces up front: each view is fed in the one it works in.
         let (hsva, srgba): (Hsva, Srgba) = (color.0.into(), color.0.into());
-        let views = collect_views(root, &q_children, &q_sv, &q_hue, &q_swatch, &q_channel);
+        let views = collect_views(
+            root,
+            &q_children,
+            &q_sv,
+            &q_hue,
+            &q_alpha,
+            &q_ramp,
+            &q_swatch,
+            &q_channel,
+        );
 
         if let Some(sv) = views.sv {
             set_xy(&mut q_xy, sv, Vec2::new(hsva.saturation, 1.0 - hsva.value));
@@ -244,6 +333,15 @@ fn sync_color_to_views(
         }
         if let Some(hue) = views.hue {
             set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
+        }
+        if let Some(alpha) = views.alpha {
+            set_xy(&mut q_xy, alpha, Vec2::new(0.5, 1.0 - srgba.alpha));
+        }
+        if let Some(ramp) = views.ramp {
+            // The ramp shows what each alpha would make of the current color.
+            commands
+                .entity(ramp)
+                .insert(BackgroundGradient(alpha_gradient(srgba)));
         }
 
         if let Some(swatch) = views.swatch
@@ -276,17 +374,22 @@ fn set_xy(q_xy: &mut Query<&mut XyPadValue>, pad: Entity, target: Vec2) {
 }
 
 // Walk a picker's descendants for its marked view children in one pass.
+#[allow(clippy::too_many_arguments)]
 fn collect_views(
     root: Entity,
     q_children: &Query<&Children>,
     q_sv: &Query<(), With<ColorPickerSv>>,
     q_hue: &Query<(), With<ColorPickerHue>>,
+    q_alpha: &Query<(), With<ColorPickerAlpha>>,
+    q_ramp: &Query<(), With<ColorPickerAlphaRamp>>,
     q_swatch: &Query<(), With<ColorPickerSwatch>>,
     q_channel: &Query<&ColorPickerChannel>,
 ) -> PickerViews {
     let mut views = PickerViews {
         sv: None,
         hue: None,
+        alpha: None,
+        ramp: None,
         swatch: None,
         channels: Vec::new(),
     };
@@ -297,6 +400,10 @@ fn collect_views(
                 views.sv = Some(entity);
             } else if q_hue.contains(entity) {
                 views.hue = Some(entity);
+            } else if q_alpha.contains(entity) {
+                views.alpha = Some(entity);
+            } else if q_ramp.contains(entity) {
+                views.ramp = Some(entity);
             } else if q_swatch.contains(entity) {
                 views.swatch = Some(entity);
             } else if let Ok(channel) = q_channel.get(entity) {
@@ -316,20 +423,39 @@ fn channel_value(hsva: Hsva, srgb: Srgba, channel: Channel) -> f32 {
         Channel::R => srgb.red,
         Channel::G => srgb.green,
         Channel::B => srgb.blue,
+        Channel::A => srgb.alpha,
         Channel::H => hsva.hue,
         Channel::S => hsva.saturation,
         Channel::V => hsva.value,
     }
 }
 
-// Fold a plane or hue-bar drag back into the working HSV. Both pads are direct
-// children of the picker root, so `ChildOf` points straight at it.
+// Fold a plane, hue-bar or alpha-bar drag back into the working color. The first
+// two pads are direct children of the picker root, so `ChildOf` points straight
+// at it; the alpha pad sits in a layered wrapper and walks up instead.
 fn fold_pad_edits(
     q_sv: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerSv>)>,
     q_hue: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerHue>)>,
+    q_alpha: Query<(Entity, &XyPadValue), (Changed<XyPadValue>, With<ColorPickerAlpha>)>,
+    q_childof: Query<&ChildOf>,
+    q_is_picker: Query<(), With<ColorPickerFrame>>,
     mut q_color: Query<&mut ColorPickerValue>,
     mut commands: Commands,
 ) {
+    for (pad, value) in q_alpha.iter() {
+        let Some(root) = find_picker_root(pad, &q_childof, &q_is_picker) else {
+            continue;
+        };
+        if let Ok(mut color) = q_color.get_mut(root) {
+            let mut srgba: Srgba = color.0.into();
+            let alpha = (1.0 - value.0.y).clamp(0.0, 1.0);
+            if srgba.alpha != alpha {
+                srgba.alpha = alpha;
+                color.0 = srgba.into();
+                emit_value_change(root, color.0, &mut commands);
+            }
+        }
+    }
     for (pad_value, parent) in q_sv.iter() {
         if let Ok(mut color) = q_color.get_mut(parent.parent()) {
             let mut hsva: Hsva = color.0.into();
@@ -403,6 +529,10 @@ fn fold_channel_edits(
                 srgba.blue = slider.0;
                 color.0 = srgba.into();
             }
+            Channel::A => {
+                srgba.alpha = slider.0;
+                color.0 = srgba.into();
+            }
             Channel::H => {
                 hsva.hue = slider.0;
                 color.0 = hsva.into();
@@ -458,6 +588,27 @@ fn sv_gradient(hue: f32) -> Vec<Gradient> {
             color_space: InterpolationColorSpace::Srgba,
         }),
     ]
+}
+
+// The vertical alpha strip for the current color: opaque at the top, gone at
+// the bottom, over the checker that makes the transparent end readable.
+fn alpha_gradient(srgba: Srgba) -> Vec<Gradient> {
+    let opaque = Color::from(Srgba {
+        alpha: 1.0,
+        ..srgba
+    });
+    let clear = Color::from(Srgba {
+        alpha: 0.0,
+        ..srgba
+    });
+    vec![Gradient::Linear(LinearGradient {
+        angle: PI, // top→bottom
+        stops: vec![
+            ColorStop::new(opaque, percent(0.0)),
+            ColorStop::new(clear, percent(100.0)),
+        ],
+        color_space: InterpolationColorSpace::Srgba,
+    })]
 }
 
 // The vertical hue strip: the spectral wheel from top (hue 0) to bottom (hue 360).

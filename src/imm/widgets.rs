@@ -58,14 +58,25 @@ pub trait PlumeImm<'w, 's> {
     /// [`ROW_HEIGHT`](crate::constants::size::ROW_HEIGHT) square; resize with `.size()`.
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
 
+    /// [`Self::color_swatch`] painting `color` opaque, its alpha ignored.
+    fn color_swatch_rgb(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch>;
+
     /// Interactive HSV color picker, two-way bound to `color`; `.changed` fires when
     /// the user drags to a new color. The layout is fixed by the control.
     fn color_picker(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
+
+    /// [`Self::color_picker`] without the alpha bar and field, for a color whose
+    /// alpha is not the user's to edit; the alpha it arrived with passes through.
+    fn color_picker_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
     /// Editable color swatch: a swatch that opens a color-picker popup on click,
     /// dismissed by clicking outside. Two-way bound to `color`; `.changed` fires
     /// when the user edits it.
     fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
+
+    /// [`Self::color_edit`] whose swatch paints opaque and whose popup edits RGB
+    /// only; the alpha the color arrived with passes through.
+    fn color_edit_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
     /// Fixed gap along the container's main axis — `length` of width in a
     /// [`Self::horizontal`], of height in a [`Self::vertical`]. For a gap that
@@ -333,41 +344,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn color_swatch(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch> {
-        let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(move || {
-            bsn! {
-                @PlumeColorSwatch
-                ColorSwatchValue(color)
-            }
-        });
-        struct SwatchColor;
-        let lin = color.to_linear();
-        let key = (
-            lin.red.to_bits(),
-            lin.green.to_bits(),
-            lin.blue.to_bits(),
-            lin.alpha.to_bits(),
-        );
-        if entity.hash_update_typ::<SwatchColor>(Some(imm_id(key))) && !entity.will_be_spawned() {
-            entity
-                .entity_commands()
-                .queue(move |mut e: EntityWorldMut| {
-                    if let Some(mut value) = e.get_mut::<ColorSwatchValue>() {
-                        value.0 = color;
-                    }
-                });
-        }
-        let hovered = entity.hovered();
-        let will_be_spawned = entity.will_be_spawned();
-        ImmResponse {
-            clicked: false,
-            changed: false,
-            hovered,
-            entity: entity.entity(),
-            will_be_spawned,
-            integral: false,
-            e: entity,
-            kind: PhantomData,
-        }
+        imm_color_swatch(self, color, true)
+    }
+
+    #[track_caller]
+    fn color_swatch_rgb(&mut self, color: Color) -> ImmResponse<'_, 'w, 's, kind::Swatch> {
+        imm_color_swatch(self, color, false)
     }
 
     #[track_caller]
@@ -384,12 +366,38 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
+    fn color_picker_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
+        let initial = *color;
+        let mut changed = false;
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(
+                move || bsn! { @PlumeColorPicker { @initial_color: initial, @alpha: false } },
+            )
+            .plume_color(color, &mut changed);
+        respond(entity, changed)
+    }
+
+    #[track_caller]
     fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
         let initial = *color;
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || bsn! { @PlumeColorEdit { @initial_color: initial } })
+            .plume_color(color, &mut changed);
+        respond(entity, changed)
+    }
+
+    #[track_caller]
+    fn color_edit_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's> {
+        let initial = *color;
+        let mut changed = false;
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(
+                move || bsn! { @PlumeColorEdit { @initial_color: initial, @alpha: false } },
+            )
             .plume_color(color, &mut changed);
         respond(entity, changed)
     }
@@ -1289,9 +1297,9 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self
     }
 
-    /// Initial position from corner, `x` and `y` in from its two edges.
-    pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
-        self.layout.inset = corner.inset(x, y);
+    /// Initial position from corner, `left` and `top` in from its two edges.
+    pub fn at_corner(mut self, corner: Corner, left: Val, top: Val) -> Self {
+        self.layout.inset = corner.inset(left, top);
         self
     }
 
@@ -1443,19 +1451,19 @@ impl Corner {
         matches!(self, Self::BottomLeft | Self::BottomRight)
     }
 
-    /// Offsets from each edge of the surrounding surface placing a frame `x`, `y`
+    /// Offsets from each edge of the surrounding surface placing a frame `left`, `top`
     /// in from this corner, as
     /// [`PlumeDialogProps::inset`](crate::retained::PlumeDialogProps).
-    pub fn inset(self, x: Val, y: Val) -> UiRect {
+    pub fn inset(self, left: Val, top: Val) -> UiRect {
         let (left, right) = if self.is_right() {
-            (Val::Auto, x)
+            (Val::Auto, left)
         } else {
-            (x, Val::Auto)
+            (left, Val::Auto)
         };
         let (top, bottom) = if self.is_bottom() {
-            (Val::Auto, y)
+            (Val::Auto, top)
         } else {
-            (y, Val::Auto)
+            (top, Val::Auto)
         };
         UiRect {
             left,
@@ -1857,6 +1865,53 @@ fn split<'r, 'w, 's>(
         }
     });
     respond(entity, changed)
+}
+
+// `color_swatch` and `color_swatch_rgb`: one spawn, keyed so a call site that
+// switches variants respawns, with the color pushed on change thereafter.
+#[track_caller]
+fn imm_color_swatch<'r, 'w, 's>(
+    ui: &'r mut Ui<'w, 's>,
+    color: Color,
+    alpha: bool,
+) -> ImmResponse<'r, 'w, 's, kind::Swatch> {
+    let mut entity = ui.ch_loc(loc_id(alpha)).on_spawn_apply_scene(move || {
+        bsn! {
+            @PlumeColorSwatch {
+                @initial_color: color,
+                @alpha: alpha,
+            }
+        }
+    });
+    struct SwatchColor;
+    let lin = color.to_linear();
+    let key = (
+        lin.red.to_bits(),
+        lin.green.to_bits(),
+        lin.blue.to_bits(),
+        lin.alpha.to_bits(),
+    );
+    if entity.hash_update_typ::<SwatchColor>(Some(imm_id(key))) && !entity.will_be_spawned() {
+        entity
+            .entity_commands()
+            .queue(move |mut e: EntityWorldMut| {
+                if let Some(mut value) = e.get_mut::<ColorSwatchValue>() {
+                    value.0 = color;
+                }
+            });
+    }
+    let hovered = entity.hovered();
+    let will_be_spawned = entity.will_be_spawned();
+    ImmResponse {
+        clicked: false,
+        changed: false,
+        hovered,
+        entity: entity.entity(),
+        will_be_spawned,
+        integral: false,
+        e: entity,
+        kind: PhantomData,
+    }
 }
 
 fn respond<'r, 'w, 's, K>(

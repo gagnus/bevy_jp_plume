@@ -1,10 +1,11 @@
 //! A framework for inheritable font styles.
 use bevy::app::{Inherited, Propagate, PropagateOver};
 use bevy::asset::AssetServer;
+use bevy::ecs::change_detection::{DetectChanges, Ref};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::{Entity, EntityHashMap};
 use bevy::ecs::hierarchy::ChildOf;
-use bevy::ecs::query::{Changed, Has};
+use bevy::ecs::query::Has;
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::SystemSet;
 use bevy::ecs::system::{Commands, Local, Query, Res};
@@ -107,27 +108,27 @@ pub fn small_caps() -> impl Scene {
 // its context; `RemSize` is set to the standard size at plugin init, so nodes
 // the mirror hasn't reached yet resolve at 1.0 scale rather than wrong.
 pub(crate) fn mirror_em_size(
-    changed: Query<
-        (
-            Entity,
-            &Inherited<TextFont>,
-            Option<&ComputedUiRenderTargetInfo>,
-            Option<&EmSize>,
-        ),
-        Changed<Inherited<TextFont>>,
-    >,
+    q_text_font: Query<(
+        Entity,
+        Ref<Inherited<TextFont>>,
+        Option<&ComputedUiRenderTargetInfo>,
+        Option<&EmSize>,
+    )>,
     rem_size: Res<RemSize>,
     mut commands: Commands,
 ) {
-    for (entity, inherited, target, existing) in &changed {
-        let logical_size = target.map(ComputedUiRenderTargetInfo::logical_size);
-        let em = EmSize::from_font_size(
-            inherited.0.font_size,
-            logical_size.unwrap_or_default(),
-            *rem_size,
-        );
-        if existing != Some(&em) {
-            commands.entity(entity).insert(em);
+    let rem_size_changed = rem_size.is_changed();
+    for (entity, inherited, target, existing) in q_text_font.iter() {
+        if inherited.is_changed() || rem_size_changed {
+            let logical_size = target.map(ComputedUiRenderTargetInfo::logical_size);
+            let em = EmSize::from_font_size(
+                inherited.0.font_size,
+                logical_size.unwrap_or_default(),
+                *rem_size,
+            );
+            if existing != Some(&em) {
+                commands.entity(entity).insert(em);
+            }
         }
     }
 }
