@@ -213,7 +213,10 @@ fn debug_options_dialog() -> impl Scene {
     let s = DebugSettings::default();
     bsn! {
         @PlumeDialog {
-            @title: bsn! { caption("Debug Options") InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE } },
+            @title: bsn! {
+                caption("Debug Options")
+                InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
+            },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
             @contents: bsn_list![
@@ -250,7 +253,10 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
     let (wireframe, show_colliders, freeze) = (s.wireframe, s.show_colliders, s.freeze_culling);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption("Rendering") small_caps() },
+            @header: bsn! {
+                caption("Rendering")
+                small_caps()
+            },
             @contents: bsn_list![
                 (
                     checkbox("Wireframe", Bound::Wireframe, wireframe)
@@ -275,7 +281,10 @@ fn physics_section(s: &DebugSettings) -> impl Scene {
     let (pause_sim, time_scale) = (s.pause_sim, s.time_scale);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption("Physics") small_caps() },
+            @header: bsn! {
+                caption("Physics")
+                small_caps()
+            },
             @contents: bsn_list![
                 (
                     checkbox("Pause simulation", Bound::PauseSim, pause_sim)
@@ -291,7 +300,10 @@ fn interface_section(s: &DebugSettings) -> impl Scene {
     let ui_scale = s.ui_scale;
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption("Interface") small_caps() },
+            @header: bsn! {
+                caption("Interface")
+                small_caps()
+            },
             @contents: bsn_list![
                 (
                     slider_row("UI scale", Bound::UiScale, ui_scale, 0.5, 2.0, 2, None)
@@ -307,7 +319,10 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
     let (overlay, log_level) = (s.overlay.index(), s.log_level.index());
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption("Diagnostics") small_caps() },
+            @header: bsn! {
+                caption("Diagnostics")
+                small_caps()
+            },
             @contents: bsn_list![
                 toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay),
                 toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
@@ -343,17 +358,19 @@ fn capture_row(s: &DebugSettings) -> impl Scene {
 }
 
 fn clear_capture_button() -> Box<dyn SceneList> {
-    Box::new(bsn_list![(
-        @PlumeToolButton {
-            @caption: bsn_list![icon(font_awesome::solid::XMARK)],
-            @variant: ButtonVariant::Plain,
-        }
-        Tooltip("Clear")
-        InheritableFont { font_size: {PlumeFontSize::Em(0.8)} }
-        on(|_: On<Activate>, mut s: ResMut<DebugSettings>| {
-            s.capture_dir.clear();
-        })
-    )])
+    Box::new(bsn_list![
+        (
+            @PlumeToolButton {
+                @caption: bsn_list![icon(font_awesome::solid::XMARK)],
+                @variant: ButtonVariant::Plain,
+            }
+            Tooltip("Clear")
+            InheritableFont { font_size: {PlumeFontSize::Em(0.8)} }
+            on(|_: On<Activate>, mut s: ResMut<DebugSettings>| {
+                s.capture_dir.clear();
+            })
+        ),
+    ])
 }
 
 // On the warning's row, so `show_capture_warning` can find it.
@@ -370,18 +387,20 @@ fn capture_warning_display(s: &DebugSettings) -> Display {
 // The imm twin builds the warning only while the path is set; retained builds
 // it once and `show_capture_warning` shows and hides it.
 fn capture_warning(display: Display) -> Box<dyn SceneList> {
-    Box::new(bsn_list![(
-        row()
-        Node { display: display, padding: UiRect::right(size::SPACE_TIGHT) }
-        CaptureWarning
-        Children [
-            (
-                icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
-                template_value(ThemeTextSlot(ThemeSlot::Danger0))
-                Tooltip("Should leave it blank!")
-            ),
-        ]
-    )])
+    Box::new(bsn_list![
+        (
+            row()
+            Node { display: display, padding: UiRect::right(size::SPACE_TIGHT) }
+            CaptureWarning
+            Children [
+                (
+                    icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                    template_value(ThemeTextSlot(ThemeSlot::Danger0))
+                    Tooltip("Should leave it blank!")
+                ),
+            ]
+        ),
+    ])
 }
 
 fn show_capture_warning(
@@ -391,8 +410,8 @@ fn show_capture_warning(
     if !settings.is_changed() {
         return;
     }
+    let display = capture_warning_display(&settings);
     for mut node in q_warnings.iter_mut() {
-        let display = capture_warning_display(&settings);
         if node.display != display {
             node.display = display;
         }
@@ -403,7 +422,10 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
     let (noclip, infinite_health, move_speed) = (s.noclip, s.infinite_health, s.move_speed);
     bsn! {
         @PlumeSection {
-            @header: bsn! { caption("Cheats") small_caps() },
+            @header: bsn! {
+                caption("Cheats")
+                small_caps()
+            },
             @contents: bsn_list![
                 checkbox("Noclip", Bound::Noclip, noclip),
                 checkbox("Infinite health", Bound::InfiniteHealth, infinite_health),
@@ -516,8 +538,10 @@ fn footer() -> impl Scene {
                                 row()
                                 Children [
                                     icon(font_awesome::solid::ARROW_ROTATE_LEFT),
-                                    caption("Reset to defaults")
-                                    template_value(ThemeTextSlot(ThemeSlot::Text0)),
+                                    (
+                                        caption("Reset to defaults")
+                                        template_value(ThemeTextSlot(ThemeSlot::Text0))
+                                    ),
                                 ]
                             ),
                             caption("Every debug option returns to its default value"),

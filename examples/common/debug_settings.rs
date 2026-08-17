@@ -285,12 +285,11 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
                 .grow()
                 .max_visible(3);
         });
-        // A path-style field: clear tucked inside the leading edge, browse inside
-        // the trailing one — `prefix_container` / `suffix_container` at work.
+        // A path-style field: clear tucked inside the leading edge, a warning
+        // inside the trailing one — `prefix_container` / `suffix_container` at work.
         ui.horizontal(|ui| {
             ui.caption("Capture to").width(em(84.0 / BASE_FONT_PX));
             let mut clear = false;
-            let danger = s.capture_dir != "";
             let text_edit = ui
                 .text_edit(&mut s.capture_dir)
                 .grow()
@@ -305,7 +304,12 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
                         .clicked;
                 });
 
-            if danger {
+            // After the edit and clear fold in, so the warning tracks this
+            // frame's text rather than lagging it by one.
+            if clear {
+                s.capture_dir.clear();
+            }
+            if !s.capture_dir.is_empty() {
                 text_edit.suffix_container(|ui| {
                     ui.horizontal(|ui| {
                         ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
@@ -314,9 +318,6 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
                     })
                     .padding(UiRect::right(size::SPACE_TIGHT));
                 });
-            }
-            if clear {
-                s.capture_dir.clear();
             }
         });
     });

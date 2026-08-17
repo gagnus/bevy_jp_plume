@@ -284,7 +284,7 @@ fn inspector_panel_ui(
     mut rem_size: ResMut<RemSize>,
 ) {
     let mut s = state.clone();
-    let mut r = rem_size.clone();
+    let mut r = *rem_size;
     root.screen(|ui| {
         menu_bar(ui, &mut s);
         // Same reason as `tab` below: neither the split nor the documents can stay
@@ -559,7 +559,7 @@ fn material_fields(ui: &mut Ui, s: &mut Material) {
             .text_color(Color::srgb(0.90, 0.35, 0.32));
         }
         field(ui, "Base color", |ui| {
-            ui.color_edit(&mut s.base_color);
+            ui.color_edit_rgb(&mut s.base_color);
             ui.caption(&hex(s.base_color)).grow();
         });
         field(ui, "Emissive", |ui| {

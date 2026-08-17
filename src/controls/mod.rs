@@ -58,7 +58,9 @@ pub(crate) use set_value::SetValuePlugin;
 use slider::SliderPlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
 use text_input::TextInputPlugin;
-pub use text_input::{NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue};
+pub use text_input::{
+    NoBlurOnEnter, NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue,
+};
 pub(crate) use text_input::{
     TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_outline,
     text_input_placeholder, text_input_prefix_container, text_input_suffix,
@@ -67,7 +69,7 @@ pub(crate) use text_input::{
 pub use toggle_switch::PlumeToggleSwitch;
 use toggle_switch::ToggleSwitchPlugin;
 use xy_pad::XyPadPlugin;
-pub(crate) use xy_pad::{PlumeXyPad, XyPadLock, XyPadValue};
+pub(crate) use xy_pad::{PlumeXyPad, XyPadLock, XyPadRing, XyPadValue};
 
 // Plugin which registers all controls.
 pub(crate) struct ControlsPlugin;

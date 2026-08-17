@@ -18,8 +18,8 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType,
-    Pressed, UiGlobalTransform, UiRect, UiScale, Val, Val2, percent,
+    AlignSelf, BorderRadius, ComputedNode, ComputedUiRenderTargetInfo, InteractionDisabled, Node,
+    PositionType, Pressed, UiGlobalTransform, UiRect, UiScale, Val, Val2, em, percent,
 };
 
 use crate::constants::size;
@@ -36,12 +36,15 @@ const RETICLE_BORDER: Val = size::em_from_px(2.0);
 pub struct PlumeXyPadProps {
     /// Reticle size.
     pub reticle_size: Val2,
+    /// Reticle border radius for shaping.
+    pub reticle_border_radius: BorderRadius,
 }
 
 impl Default for PlumeXyPadProps {
     fn default() -> Self {
         Self {
-            reticle_size: size::em_from_px(12.0).into(),
+            reticle_size: em(1).into(),
+            reticle_border_radius: size::CORNER_RADIUS.into(),
         }
     }
 }
@@ -69,8 +72,7 @@ impl Default for XyPadValue {
     }
 }
 
-/// True while the user is dragging the reticle; the imm layer reads it to hold
-/// back app-driven value pushes mid-drag.
+/// True while the user is dragging the reticle.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct XyPadDragging(pub bool);
@@ -88,6 +90,35 @@ pub struct XyPadLock {
     pub y: Option<f32>,
 }
 
+/// Constrains the pad to a ring: pointer input is projected onto the circle of
+/// `radius` around the center, so the reticle rides the ring wherever the drag sits.
+#[derive(Component, Clone, Copy, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct XyPadRing {
+    /// Ring radius in the pad's normalized units (`0.5` touches the edges).
+    pub radius: f32,
+    /// Width of the annulus around `radius` that accepts a new press or drag;
+    /// once a drag is on, it follows the pointer anywhere. `None` (the default)
+    /// accepts the whole pad.
+    pub hit_width: Option<f32>,
+}
+
+impl Default for XyPadRing {
+    fn default() -> Self {
+        Self {
+            radius: 0.5,
+            hit_width: None,
+        }
+    }
+}
+
+// Whether the latest press over the pad engaged it; a ring pad's dead zones
+// decline the press, and the drag that follows keys off this record rather than
+// re-testing its own (already-moved) start position.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct XyPadPressEngaged(bool);
+
 // The stretch child that fills the pad inside its border and carries the pointer
 // picks; the reticle is positioned relative to it.
 #[derive(Component, Default, Clone, Reflect)]
@@ -104,7 +135,7 @@ struct XyPadThumb;
 // component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-#[require(XyPadDragging)]
+#[require(XyPadDragging, XyPadPressEngaged)]
 struct XyPadFrame;
 
 impl PlumeXyPad {
@@ -115,8 +146,6 @@ impl PlumeXyPad {
                 // bar; the SV plane sizes itself up explicitly.
                 min_height: size::em_from_px(16.0),
                 min_width: size::em_from_px(16.0),
-                border: size::HAIRLINE,
-                border_radius: size::CORNER_RADIUS_SMALL,
             }
             XyPadFrame
             XyPadValue
@@ -130,7 +159,6 @@ impl PlumeXyPad {
                     Node {
                         align_self: AlignSelf::Stretch,
                         flex_grow: 1.0,
-                        border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     XyPadInner
                     TextStyleRelay
@@ -143,7 +171,7 @@ impl PlumeXyPad {
                                 width: {props.reticle_size.x},
                                 height: {props.reticle_size.y},
                                 border: RETICLE_BORDER,
-                                border_radius: size::CORNER_RADIUS,
+                                border_radius: {props.reticle_border_radius},
                                 // Half-reticle offsets center the ring on the value position.
                                 margin: UiRect {
                                     left: {-props.reticle_size.x / 2.0},
@@ -206,13 +234,61 @@ fn value_from_pointer(
         *transform,
         pointer_position * node_target.scale_factor() / ui_scale,
     )?;
-    // `normalize_point` is center-origin (-0.5..0.5); shift to 0..1 and clamp so
-    // dragging outside the pad pins to the edge rather than overshooting.
-    Some((pos + Vec2::splat(0.5)).clamp(Vec2::ZERO, Vec2::ONE))
+    // `normalize_point` is center-origin (-0.5..0.5); shift to 0..1. Unclamped —
+    // the caller clamps or ring-projects, keeping an outside drag directional.
+    Some(pos + Vec2::splat(0.5))
 }
 
-// Write the value for a pointer event whose target is an inner pad; returns the
-// pad root so the caller can flag it dragging.
+// Constrain `pos` to the pad's shape and store it. A ring pad projects onto its
+// circle, a plain pad clamps to the rect so dragging outside pins to the edge;
+// a locked axis then holds its fixed value, so a 1D bar only moves along its
+// free axis.
+fn write_value(
+    pad: Entity,
+    pos: Vec2,
+    q_lock: &Query<&XyPadLock>,
+    q_ring: &Query<&XyPadRing>,
+    q_value: &mut Query<&mut XyPadValue>,
+) {
+    let mut value = if let Ok(ring) = q_ring.get(pad) {
+        let direction = (pos - Vec2::splat(0.5))
+            .try_normalize()
+            .unwrap_or(Vec2::NEG_Y);
+        Vec2::splat(0.5) + direction * ring.radius
+    } else {
+        pos.clamp(Vec2::ZERO, Vec2::ONE)
+    };
+    if let Ok(lock) = q_lock.get(pad) {
+        if let Some(x) = lock.x {
+            value.x = x;
+        }
+        if let Some(y) = lock.y {
+            value.y = y;
+        }
+    }
+    if let Ok(mut current) = q_value.get_mut(pad)
+        && current.0 != value
+    {
+        current.0 = value;
+    }
+}
+
+// Whether a press at normalized `pos` engages the pad: a ring pad with a hit
+// band only accepts inside its annulus, so the dead zones around the ring let
+// the press fall through to whatever is behind.
+fn ring_hit(pos: Vec2, ring: Option<&XyPadRing>) -> bool {
+    let Some(&XyPadRing {
+        radius,
+        hit_width: Some(hit_width),
+    }) = ring
+    else {
+        return true;
+    };
+    let distance = (pos - Vec2::splat(0.5)).length();
+    (distance - radius).abs() <= hit_width / 2.0
+}
+
+// Write the value for a pointer event whose target is an inner pad.
 fn apply_pointer(
     inner: Entity,
     pointer_position: Vec2,
@@ -228,32 +304,24 @@ fn apply_pointer(
     >,
     q_disabled: &Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_lock: &Query<&XyPadLock>,
+    q_ring: &Query<&XyPadRing>,
     q_value: &mut Query<&mut XyPadValue>,
-) -> Option<Entity> {
-    let (node, node_target, transform, parent) = q_inner.get(inner).ok()?;
+) {
+    let Ok((node, node_target, transform, parent)) = q_inner.get(inner) else {
+        return;
+    };
     let pad = parent.parent();
-    if q_disabled.get(pad).ok()? {
-        return None;
+    if !matches!(q_disabled.get(pad), Ok(false)) {
+        return;
     }
-    let mut value = value_from_pointer(node, node_target, transform, pointer_position, ui_scale)?;
-    // A locked axis ignores the pointer and holds its fixed value, so a 1D bar
-    // only moves along its free axis.
-    if let Ok(lock) = q_lock.get(pad) {
-        if let Some(x) = lock.x {
-            value.x = x;
-        }
-        if let Some(y) = lock.y {
-            value.y = y;
-        }
-    }
-    if let Ok(mut current) = q_value.get_mut(pad)
-        && current.0 != value
-    {
-        current.0 = value;
-    }
-    Some(pad)
+    let Some(pos) = value_from_pointer(node, node_target, transform, pointer_position, ui_scale)
+    else {
+        return;
+    };
+    write_value(pad, pos, q_lock, q_ring, q_value);
 }
 
+#[allow(clippy::too_many_arguments)]
 fn on_pointer_press(
     mut press: On<Pointer<Press>>,
     q_inner: Query<
@@ -267,32 +335,55 @@ fn on_pointer_press(
     >,
     q_disabled: Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_lock: Query<&XyPadLock>,
+    q_ring: Query<&XyPadRing>,
+    mut q_engaged: Query<&mut XyPadPressEngaged>,
     mut q_value: Query<&mut XyPadValue>,
     ui_scale: Res<UiScale>,
 ) {
-    if q_inner.contains(press.entity) {
-        press.propagate(false);
-        apply_pointer(
-            press.entity,
-            press.pointer_location.position,
-            ui_scale.0,
-            &q_inner,
-            &q_disabled,
-            &q_lock,
-            &mut q_value,
-        );
+    let Ok((node, node_target, transform, parent)) = q_inner.get(press.entity) else {
+        return;
+    };
+    let pad = parent.parent();
+    let pos = value_from_pointer(
+        node,
+        node_target,
+        transform,
+        press.pointer_location.position,
+        ui_scale.0,
+    );
+    let engaged = pos.is_some_and(|pos| ring_hit(pos, q_ring.get(pad).ok()));
+    if let Ok(mut record) = q_engaged.get_mut(pad) {
+        record.0 = engaged;
+    }
+    if !engaged {
+        return;
+    }
+    press.propagate(false);
+    if matches!(q_disabled.get(pad), Ok(false))
+        && let Some(pos) = pos
+    {
+        write_value(pad, pos, &q_lock, &q_ring, &mut q_value);
     }
 }
 
 fn on_drag_start(
     mut drag_start: On<Pointer<DragStart>>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
+    q_engaged: Query<&XyPadPressEngaged>,
     mut q_dragging: Query<(&mut XyPadDragging, Has<InteractionDisabled>)>,
     mut commands: Commands,
 ) {
     if let Ok(parent) = q_inner.get(drag_start.entity)
         && let Ok((mut dragging, disabled)) = q_dragging.get_mut(parent.parent())
     {
+        // The initiating press decides engagement — the pointer may already have
+        // left a ring's annulus by the time DragStart is delivered.
+        if !q_engaged
+            .get(parent.parent())
+            .is_ok_and(|engaged| engaged.0)
+        {
+            return;
+        }
         drag_start.propagate(false);
         if !disabled {
             dragging.0 = true;
@@ -317,6 +408,7 @@ fn on_drag(
     q_disabled: Query<Has<InteractionDisabled>, With<XyPadFrame>>,
     q_dragging: Query<&XyPadDragging>,
     q_lock: Query<&XyPadLock>,
+    q_ring: Query<&XyPadRing>,
     mut q_value: Query<&mut XyPadValue>,
     ui_scale: Res<UiScale>,
 ) {
@@ -331,6 +423,7 @@ fn on_drag(
             &q_inner,
             &q_disabled,
             &q_lock,
+            &q_ring,
             &mut q_value,
         );
     }

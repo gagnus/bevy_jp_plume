@@ -69,9 +69,9 @@ pub trait PlumeImm<'w, 's> {
     /// alpha is not the user's to edit; the alpha it arrived with passes through.
     fn color_picker_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
-    /// Editable color swatch: a swatch that opens a color-picker popup on click,
-    /// dismissed by clicking outside. Two-way bound to `color`; `.changed` fires
-    /// when the user edits it.
+    /// Editable color: a select-style button (swatch plus arrow) opening a
+    /// color-picker popup on click, dismissed by clicking outside. Two-way bound
+    /// to `color`. Fires `.changed` when the user edits it.
     fn color_edit(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
     /// [`Self::color_edit`] whose swatch paints opaque and whose popup edits RGB
@@ -749,7 +749,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(move || {
                 bsn! {
                     section_frame(
-                        bsn_list![caption(header_owned) small_caps()],
+                        bsn_list![
+                            (
+                                caption(header_owned)
+                                small_caps()
+                            ),
+                        ],
                         true,
                         bsn_list![]
                     )
@@ -839,9 +844,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut changed = false;
         let entity = self
             .ch_loc(loc_id(()))
-            .on_spawn_apply_scene(
-                move || bsn! { tabs_frame() template_value(SelectedIndex(initial)) },
-            )
+            .on_spawn_apply_scene(move || {
+                bsn! {
+                    tabs_frame()
+                    template_value(SelectedIndex(initial))
+                }
+            })
             .plume_select(&mut index, &mut changed);
 
         // A bare strip: no body node taking room the caller gave the container.
@@ -1351,7 +1359,12 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
                     body: Box::new(bsn_list![]),
                     header: Some(DialogHeader {
                         title: Box::new(
-                            bsn_list![caption(title) InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }],
+                            bsn_list![
+                                (
+                                    caption(title)
+                                    InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
+                                ),
+                            ],
                         ),
                         closable,
                         movable,

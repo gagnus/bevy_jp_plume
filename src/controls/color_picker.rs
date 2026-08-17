@@ -1,11 +1,11 @@
-//! HSV color picker: a saturation/value plane, hue and alpha bars and a preview
-//! swatch, composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated
+//! HSV color picker: a hue wheel around a saturation/value plane, an alpha bar
+//! and a preview swatch, composed from [`PlumeXyPad`] and [`PlumeColorSwatch`] and coordinated
 //! as one retained control. Reports its color in [`ColorPickerValue`] and self-updates
 //! it as the user drags, so it works dropped straight into a scene.
-use core::f32::consts::PI;
+use core::f32::consts::{PI, TAU};
 
 use bevy::app::{Plugin, PostUpdate};
-use bevy::color::{Color, Hsva, Srgba};
+use bevy::color::{Alpha, Color, Hsva, Srgba};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
@@ -14,12 +14,14 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query};
 use bevy::math::Vec2;
+use bevy::picking::Pickable;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::{
-    AlignItems, AlignSelf, BackgroundGradient, ColorStop, Display, FlexDirection, Gradient,
-    InterpolationColorSpace, LinearGradient, Node, PositionType, Val, Val2, em, percent,
+    AlignItems, AlignSelf, AngularColorStop, BackgroundGradient, BorderGradient, BorderRadius,
+    ColorStop, ConicGradient, Display, FlexDirection, Gradient, InterpolationColorSpace,
+    JustifyContent, LinearGradient, Node, PositionType, UiPosition, UiRect, Val, Val2, em, percent,
 };
 use bevy::ui_widgets::{SliderValue, ValueChange};
 
@@ -27,19 +29,32 @@ use super::color_swatch::CheckerUnderlay;
 use crate::constants::size;
 use crate::containers::space;
 use crate::controls::{
-    ColorSwatchValue, PlumeColorSwatch, PlumeNumberInput, PlumeXyPad, XyPadLock, XyPadValue,
+    ColorSwatchValue, PlumeColorSwatch, PlumeNumberInput, PlumeXyPad, XyPadLock, XyPadRing,
+    XyPadValue,
 };
 use crate::display::caption;
 use crate::font_styles::TextStyleRelay;
+use crate::utils::hierarchy::nearest_with;
 
-// The SV plane's side and the hue bar's dimensions, em-sized so the picker
-// tracks the effective font. The bar shares the plane's height so the two line up.
-const PLANE_SIZE: Val = size::em_from_px(220.0);
-const HUE_BAR_WIDTH: Val = size::em_from_px(20.0);
-// The hue bar's reticle spans the bar, so it is wider than it is tall.
-const HUE_RETICLE_SIZE: Val2 = Val2 {
-    x: size::em_from_px(24.0),
-    y: size::em_from_px(12.0),
+// Wheel geometry in px-at-standard-font; the em constants and the ring's
+// centerline derive from these, so a tweak here moves everything together.
+const WHEEL_SIZE_PX: f32 = 250.0;
+const RING_THICKNESS_PX: f32 = 20.0;
+const WHEEL_SIZE: Val = size::em_from_px(WHEEL_SIZE_PX);
+const RING_THICKNESS: Val = size::em_from_px(RING_THICKNESS_PX);
+
+// The SV plane's side, sized to sit inside the ring's inner circle.
+const PLANE_SIZE: Val = size::em_from_px(136.0);
+
+// The ring's centerline in the wheel pad's normalized units.
+const RING_RADIUS: f32 = (WHEEL_SIZE_PX - RING_THICKNESS_PX) / 2.0 / WHEEL_SIZE_PX;
+// Presses engage the wheel only on the painted band, plus 4px of slop each side.
+const RING_HIT_WIDTH: f32 = (RING_THICKNESS_PX + 8.0) / WHEEL_SIZE_PX;
+const ALPHA_BAR_HEIGHT: Val = size::em_from_px(20.0);
+
+const ALPHA_RETICLE_SIZE: Val2 = Val2 {
+    x: Val::Em(1.0),
+    y: size::em_from_px(24.0),
 };
 
 /// Scene props for [`PlumeColorPicker`].
@@ -62,7 +77,7 @@ impl Default for PlumeColorPickerProps {
 }
 
 /// A composed HSV color picker. Spawnable as a scene component; it lays out its
-/// own SV plane, hue bar and swatch.
+/// own hue wheel, inscribed SV plane, alpha bar and swatch.
 ///
 /// Reports [`ColorPickerValue`] and self-updates it as the user drags.
 /// # Emitted events
@@ -149,7 +164,7 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
         }
         TextStyleRelay
         Children [
-            space(size::em_from_px(4.0)),
+            space(em(0.25)),
             (
                 caption(label)
                 Node { width: em(1), flex_shrink: 0.0 }
@@ -161,7 +176,7 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
                     @max: max,
                     @suffix: suffix,
                 }
-                Node { flex_grow: 1.0 }
+                Node { width: em(6) }
                 ColorPickerChannel(channel)
             ),
         ]
@@ -176,38 +191,42 @@ impl PlumeColorPicker {
             .alpha
             .then(|| -> Box<dyn Scene> {
                 Box::new(bsn! {
-                Node { width: HUE_BAR_WIDTH, height: PLANE_SIZE }
-                TextStyleRelay
-                Children [
-                    (
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::ZERO,
-                            top: Val::ZERO,
-                            right: Val::ZERO,
-                            bottom: Val::ZERO,
-                        }
-                        CheckerUnderlay
-                    ),
-                    (
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::ZERO,
-                            top: Val::ZERO,
-                            right: Val::ZERO,
-                            bottom: Val::ZERO,
-                        }
-                        ColorPickerAlphaRamp
-                    ),
-                    (
-                        @PlumeXyPad {
-                            @reticle_size: HUE_RETICLE_SIZE,
-                        }
-                        Node { width: percent(100), height: percent(100) }
-                        XyPadLock { x: {Some(0.5)}, y: None }
-                        ColorPickerAlpha
-                    ),
-                ]
+                    Node { width: percent(100), height: ALPHA_BAR_HEIGHT }
+                    TextStyleRelay
+                    Children [
+                        (
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::ZERO,
+                                top: Val::ZERO,
+                                right: Val::ZERO,
+                                bottom: Val::ZERO,
+                            }
+                            CheckerUnderlay
+                        ),
+                        (
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::ZERO,
+                                top: Val::ZERO,
+                                right: Val::ZERO,
+                                bottom: Val::ZERO,
+                            }
+                            ColorPickerAlphaRamp
+                        ),
+                        (
+                            @PlumeXyPad {
+                                @reticle_size: ALPHA_RETICLE_SIZE,
+                            }
+                            Node {
+                                width: percent(100),
+                                height: percent(100),
+                                border: size::HAIRLINE,
+                            }
+                            XyPadLock { x: None, y: {Some(0.5)} }
+                            ColorPickerAlpha
+                        ),
+                    ]
                 })
             })
             .into_iter()
@@ -229,46 +248,99 @@ impl PlumeColorPicker {
             TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
             Children [
-                // Saturation (x) / value (y). The plane's hue-tinted gradient is
-                // driven by the sync system, since it tracks the hue bar.
+                // The wheel over the alpha bar, which spans the wheel's width.
                 (
-                    @PlumeXyPad
-                    Node { width: PLANE_SIZE, height: PLANE_SIZE }
-                    ColorPickerSv
-                ),
-                // Hue bar: a pad locked to x, so it only moves along the hue axis.
-                (
-                    @PlumeXyPad {
-                        @reticle_size: HUE_RETICLE_SIZE,
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: size::em_from_px(8.0),
                     }
-                    Node { width: HUE_BAR_WIDTH, height: PLANE_SIZE }
-                    XyPadLock { x: {Some(0.5)}, y: None }
-                    BackgroundGradient(hue_gradient())
-                    ColorPickerHue
+                    TextStyleRelay
+                    Children [
+                        // The hue ring (a border-only circle), the wheel pad over
+                        // it, and the SV pad on top keeping the picks over its square.
+                        (
+                            Node {
+                                width: WHEEL_SIZE,
+                                height: WHEEL_SIZE,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                            }
+                            TextStyleRelay
+                            Children [
+                                (
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: Val::ZERO,
+                                        top: Val::ZERO,
+                                        right: Val::ZERO,
+                                        bottom: Val::ZERO,
+                                        border: RING_THICKNESS,
+                                        border_radius: BorderRadius::MAX,
+                                    }
+                                    BorderGradient(hue_wheel_gradient())
+                                    // Em-sized chrome needs the chain's `EmSize`.
+                                    TextStyleRelay
+                                    Pickable::IGNORE
+                                ),
+                                (
+                                    @PlumeXyPad {
+                                        @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
+                                    }
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: Val::ZERO,
+                                        top: Val::ZERO,
+                                        right: Val::ZERO,
+                                        bottom: Val::ZERO,
+                                    }
+                                    XyPadRing {
+                                        radius: RING_RADIUS,
+                                        hit_width: {Some(RING_HIT_WIDTH)},
+                                    }
+                                    ColorPickerHue
+                                ),
+                                // Saturation (x) / value (y). The plane's hue-tinted
+                                // gradient is driven by the sync system, since it
+                                // tracks the wheel.
+                                (
+                                    @PlumeXyPad {
+                                        @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
+                                    }
+                                    Node { width: PLANE_SIZE, height: PLANE_SIZE }
+                                    ColorPickerSv
+                                ),
+                            ]
+                        ),
+                        {alpha_bar},
+                    ]
                 ),
-                {alpha_bar},
                 // Preview swatch over the numeric fields; the swatch grows to fill
                 // the spare height so the R/G/B/H/S/V rows sit at the bottom.
                 (
                     Node {
                         flex_direction: FlexDirection::Column,
                         align_self: AlignSelf::Stretch,
-                        row_gap: size::em_from_px(2.0),
+                        row_gap: size::SPACE_TIGHT,
                         flex_grow: 1.0,
                     }
                     TextStyleRelay
                     Children [
                         (
                             @PlumeColorSwatch { @alpha: alpha }
-                            Node { width: percent(100), flex_grow: 1.0 }
+                            Node {
+                                width: em(6),
+                                flex_grow: 1.0,
+                                margin: UiRect::left(em(1.25)),
+                            }
                             ColorPickerSwatch
                         ),
+                        space(size::SPACE_TIGHT),
                         // sRGB channels and alpha, then a gap, then the HSV channels.
                         channel_row("R", Channel::R, 3, 1.0),
                         channel_row("G", Channel::G, 3, 1.0),
                         channel_row("B", Channel::B, 3, 1.0),
                         {alpha_row},
-                        space(size::SPACE_TIGHT / 2.0),
+                        space(size::SPACE_TIGHT),
                         channel_row("H", Channel::H, 0, 360.0),
                         channel_row("S", Channel::S, 3, 1.0),
                         channel_row("V", Channel::V, 3, 1.0),
@@ -331,11 +403,16 @@ fn sync_color_to_views(
                 .entity(sv)
                 .insert(BackgroundGradient(sv_gradient(hsva.hue)));
         }
-        if let Some(hue) = views.hue {
-            set_xy(&mut q_xy, hue, Vec2::new(0.5, hsva.hue / 360.0));
+        // The ring position roundtrips through trig, so an exact compare would
+        // see its own echo as a move; only write when the implied hue disagrees.
+        if let Some(hue) = views.hue
+            && let Ok(mut value) = q_xy.get_mut(hue)
+            && hue_delta(ring_pos_to_hue(value.0), hsva.hue) > HUE_EPS
+        {
+            value.0 = hue_to_ring_pos(hsva.hue);
         }
         if let Some(alpha) = views.alpha {
-            set_xy(&mut q_xy, alpha, Vec2::new(0.5, 1.0 - srgba.alpha));
+            set_xy(&mut q_xy, alpha, Vec2::new(srgba.alpha, 0.5));
         }
         if let Some(ramp) = views.ramp {
             // The ramp shows what each alpha would make of the current color.
@@ -430,12 +507,16 @@ fn channel_value(hsva: Hsva, srgb: Srgba, channel: Channel) -> f32 {
     }
 }
 
-// Fold a plane, hue-bar or alpha-bar drag back into the working color. The first
-// two pads are direct children of the picker root, so `ChildOf` points straight
-// at it; the alpha pad sits in a layered wrapper and walks up instead.
+// A wheel drag's hue roundtrips through sin/cos and atan2, so our own position
+// pushes read back a hair off the hue that produced them; within this they are
+// echoes, not edits. A thousandth of a degree is far below anything visible.
+const HUE_EPS: f32 = 1.0e-3;
+
+// Fold a plane, wheel or alpha-bar drag back into the working color. Every pad
+// sits inside a layered wrapper, so each walks up to its picker root.
 fn fold_pad_edits(
-    q_sv: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerSv>)>,
-    q_hue: Query<(&XyPadValue, &ChildOf), (Changed<XyPadValue>, With<ColorPickerHue>)>,
+    q_sv: Query<(Entity, &XyPadValue), (Changed<XyPadValue>, With<ColorPickerSv>)>,
+    q_hue: Query<(Entity, &XyPadValue), (Changed<XyPadValue>, With<ColorPickerHue>)>,
     q_alpha: Query<(Entity, &XyPadValue), (Changed<XyPadValue>, With<ColorPickerAlpha>)>,
     q_childof: Query<&ChildOf>,
     q_is_picker: Query<(), With<ColorPickerFrame>>,
@@ -443,42 +524,59 @@ fn fold_pad_edits(
     mut commands: Commands,
 ) {
     for (pad, value) in q_alpha.iter() {
-        let Some(root) = find_picker_root(pad, &q_childof, &q_is_picker) else {
+        let Some(root) = nearest_with(pad, &q_childof, &q_is_picker) else {
             continue;
         };
         if let Ok(mut color) = q_color.get_mut(root) {
-            let mut srgba: Srgba = color.0.into();
-            let alpha = (1.0 - value.0.y).clamp(0.0, 1.0);
-            if srgba.alpha != alpha {
-                srgba.alpha = alpha;
-                color.0 = srgba.into();
+            // Alpha edits stay in whatever space the color is in — a conversion
+            // here would lose the hue whenever the RGB form is degenerate.
+            let alpha = value.0.x.clamp(0.0, 1.0);
+            if color.0.alpha() != alpha {
+                color.0.set_alpha(alpha);
                 emit_value_change(root, color.0, &mut commands);
             }
         }
     }
-    for (pad_value, parent) in q_sv.iter() {
-        if let Ok(mut color) = q_color.get_mut(parent.parent()) {
+    for (pad, pad_value) in q_sv.iter() {
+        let Some(root) = nearest_with(pad, &q_childof, &q_is_picker) else {
+            continue;
+        };
+        if let Ok(mut color) = q_color.get_mut(root) {
             let mut hsva: Hsva = color.0.into();
             let (saturation, value) = (pad_value.0.x, 1.0 - pad_value.0.y);
-            if hsva.saturation != saturation || hsva.value != value {
+            // Epsilons, not equality: `value` roundtrips through 1.0-(1.0-v),
+            // whose ulp drift would echo a programmatic push back as an edit.
+            if (hsva.saturation - saturation).abs() > CHANNEL_EPS
+                || (hsva.value - value).abs() > CHANNEL_EPS
+            {
                 hsva.saturation = saturation;
                 hsva.value = value;
                 color.0 = hsva.into();
-                emit_value_change(parent.parent(), color.0, &mut commands);
+                emit_value_change(root, color.0, &mut commands);
             }
         }
     }
-    for (value, parent) in q_hue.iter() {
-        if let Ok(mut color) = q_color.get_mut(parent.parent()) {
+    for (pad, value) in q_hue.iter() {
+        let Some(root) = nearest_with(pad, &q_childof, &q_is_picker) else {
+            continue;
+        };
+        if let Ok(mut color) = q_color.get_mut(root) {
             let mut hsva: Hsva = color.0.into();
-            let hue = (value.0.y * 360.0).clamp(0.0, 360.0);
-            if hsva.hue != hue {
+            let hue = ring_pos_to_hue(value.0);
+            if hue_delta(hsva.hue, hue) > HUE_EPS {
                 hsva.hue = hue;
                 color.0 = hsva.into();
-                emit_value_change(parent.parent(), color.0, &mut commands);
+                emit_value_change(root, color.0, &mut commands);
             }
         }
     }
+}
+
+// Angular distance between two hues in degrees, the short way around the
+// circle, so 360 and 0 read as the same hue rather than a full turn apart.
+fn hue_delta(a: f32, b: f32) -> f32 {
+    let delta = (a - b).rem_euclid(360.0);
+    delta.min(360.0 - delta)
 }
 
 // Announce a user-driven color change on the picker root. Programmatic pushes
@@ -502,7 +600,7 @@ fn fold_channel_edits(
     mut commands: Commands,
 ) {
     for (field, slider, channel) in q_changed.iter() {
-        let Some(root) = find_picker_root(field, &q_childof, &q_is_picker) else {
+        let Some(root) = nearest_with(field, &q_childof, &q_is_picker) else {
             continue;
         };
         let Ok(mut color) = q_color.get_mut(root) else {
@@ -530,8 +628,8 @@ fn fold_channel_edits(
                 color.0 = srgba.into();
             }
             Channel::A => {
-                srgba.alpha = slider.0;
-                color.0 = srgba.into();
+                // Stays in the color's own space, preserving hue through black.
+                color.0.set_alpha(slider.0);
             }
             Channel::H => {
                 hsva.hue = slider.0;
@@ -547,20 +645,6 @@ fn fold_channel_edits(
             }
         }
         emit_value_change(root, color.0, &mut commands);
-    }
-}
-
-// Walk up from a numeric field to the picker root it belongs to.
-fn find_picker_root(
-    mut entity: Entity,
-    q_childof: &Query<&ChildOf>,
-    q_is_picker: &Query<(), With<ColorPickerFrame>>,
-) -> Option<Entity> {
-    loop {
-        if q_is_picker.contains(entity) {
-            return Some(entity);
-        }
-        entity = q_childof.get(entity).ok()?.parent();
     }
 }
 
@@ -590,8 +674,8 @@ fn sv_gradient(hue: f32) -> Vec<Gradient> {
     ]
 }
 
-// The vertical alpha strip for the current color: opaque at the top, gone at
-// the bottom, over the checker that makes the transparent end readable.
+// The horizontal alpha strip for the current color: gone at the left, opaque at
+// the right, over the checker that makes the transparent end readable.
 fn alpha_gradient(srgba: Srgba) -> Vec<Gradient> {
     let opaque = Color::from(Srgba {
         alpha: 1.0,
@@ -602,28 +686,42 @@ fn alpha_gradient(srgba: Srgba) -> Vec<Gradient> {
         ..srgba
     });
     vec![Gradient::Linear(LinearGradient {
-        angle: PI, // top→bottom
+        angle: PI * 0.5, // left→right
         stops: vec![
-            ColorStop::new(opaque, percent(0.0)),
-            ColorStop::new(clear, percent(100.0)),
+            ColorStop::new(clear, percent(0.0)),
+            ColorStop::new(opaque, percent(100.0)),
         ],
         color_space: InterpolationColorSpace::Srgba,
     })]
 }
 
-// The vertical hue strip: the spectral wheel from top (hue 0) to bottom (hue 360).
-fn hue_gradient() -> Vec<Gradient> {
-    let stops = (0..=6)
+// The spectral ring for the wheel's border: a full conic sweep, hue 0 at the
+// top increasing clockwise, with stops every 30° so sRGB stays near-spectral.
+fn hue_wheel_gradient() -> Vec<Gradient> {
+    let stops = (0..=12)
         .map(|i| {
-            let hue = i as f32 * 60.0;
-            ColorStop::new(Color::hsl(hue, 1.0, 0.5), percent(i as f32 / 6.0 * 100.0))
+            let hue = i as f32 * 30.0;
+            AngularColorStop::new(Color::hsl(hue, 1.0, 0.5), i as f32 / 12.0 * TAU)
         })
         .collect();
-    vec![Gradient::Linear(LinearGradient {
-        angle: PI, // top→bottom
+    vec![Gradient::Conic(ConicGradient {
+        start: 0.0,
+        position: UiPosition::CENTER,
         stops,
         color_space: InterpolationColorSpace::Srgba,
     })]
+}
+
+// The wheel's angle convention, shared by both directions: hue 0 at the top of
+// the ring, increasing clockwise, matching `hue_wheel_gradient`.
+fn hue_to_ring_pos(hue: f32) -> Vec2 {
+    let (sin, cos) = hue.to_radians().sin_cos();
+    Vec2::new(0.5 + sin * RING_RADIUS, 0.5 - cos * RING_RADIUS)
+}
+
+fn ring_pos_to_hue(pos: Vec2) -> f32 {
+    let offset = pos - Vec2::splat(0.5);
+    offset.x.atan2(-offset.y).to_degrees().rem_euclid(360.0)
 }
 
 // Registers the color-picker sync systems.

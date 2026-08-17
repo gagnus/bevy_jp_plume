@@ -1,5 +1,5 @@
-//! Editable color swatch: a swatch that opens a [`PlumeColorPicker`] in a
-//! movable [`PlumePopup`], dismissed by pressing outside the control.
+//! Editable color: a select-style button (swatch plus arrow) that opens a
+//! [`PlumeColorPicker`] in a movable [`PlumePopup`], dismissed by pressing outside.
 //!
 //! Its color is the public [`ColorPickerValue`] on the root, mirrored to and from
 //! the inner picker, so the existing color capability drives it through the imm
@@ -18,25 +18,30 @@ use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::ui::{AlignItems, Node};
-use bevy::ui_widgets::ValueChange;
+use bevy::ui::{AlignItems, Node, UiRect, Val};
+use bevy::ui_widgets::{Activate, ActivateOnPress, ValueChange};
 
 use crate::constants::{font_awesome, size};
 use crate::containers::{
     CloseRequested, PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket, row,
 };
-use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
-use crate::cursor::EntityCursor;
+use crate::controls::{
+    ColorPickerValue, ColorSwatchValue, PlumeButton, PlumeColorPicker, PlumeColorSwatch,
+};
 use crate::display::{caption, icon};
 use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay, small_caps};
 use crate::theme::ThemeTextToken;
 use crate::tokens;
-use crate::utils::hierarchy::{descendant, nearest_with};
+use crate::utils::hierarchy::{descendant_with, nearest_with};
 
 // Two colors this close (per linear channel) are treated as equal, so a mirror
 // push that merely echoes the current value doesn't ping-pong across the pair.
 const EPS: f32 = 1.0e-6;
+
+// Swatch side inside the button: a little under the row height so the button
+// chrome stays visible around it.
+const SWATCH_SIZE: Val = size::em_from_px(16.0);
 
 /// Scene props for [`PlumeColorEdit`].
 #[derive(Clone)]
@@ -57,7 +62,7 @@ impl Default for PlumeColorEditProps {
     }
 }
 
-/// An editable color swatch: click to open a color-picker popup. Spawnable as a
+/// An editable color: a select-style button opening a color-picker popup. Spawnable as a
 /// scene component; reports its color in [`ColorPickerValue`] on the root.
 /// # Emitted events
 /// * [`ValueChange<Color>`](bevy::ui_widgets::ValueChange) on each user edit.
@@ -74,10 +79,15 @@ pub struct PlumeColorEdit;
 #[require(ColorPickerValue)]
 struct ColorEditFrame;
 
-// Marks the swatch shown on the closed control (also the click target that opens it).
+// Marks the swatch inside the button, mirroring the current color.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 struct ColorEditSwatch;
+
+// Marks the select-style button that toggles the picker popup.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+struct ColorEditButton;
 
 // Marks the popup whose visibility is toggled open/closed.
 #[derive(Component, Default, Clone, Reflect)]
@@ -111,14 +121,26 @@ impl PlumeColorEdit {
             template_value(ColorPickerValue(initial_color))
             {rgb_only}
             Children [
-                // The swatch is the click target that toggles the popup.
+                // The button is the click target that toggles the popup.
                 (
-                    @PlumeColorSwatch {
-                        @initial_color: initial_color,
-                        @alpha: alpha,
+                    @PlumeButton {
+                        @caption: bsn_list![
+                            (
+                                @PlumeColorSwatch {
+                                    @initial_color: initial_color,
+                                    @alpha: alpha,
+                                }
+                                ColorEditSwatch
+                                Node {
+                                    width: SWATCH_SIZE,
+                                    height: SWATCH_SIZE,
+                                }
+                            ),
+                            icon(font_awesome::solid::ANGLE_DOWN),
+                        ],
                     }
-                    ColorEditSwatch
-                    EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
+                    ActivateOnPress
+                    ColorEditButton
                 ),
                 // The picker popup spawns into this socket while open.
                 popup_socket(),
@@ -127,13 +149,14 @@ impl PlumeColorEdit {
     }
 }
 
-// A press on the swatch toggles its popup: despawn if open, else spawn a fresh
-// picker (movable, dismissed by pressing outside) seeded with the current color.
+// Activating the button toggles its popup. Pointer presses on the button node
+// itself arrive here through `ActivateOnPress` (matching the select), keyboard
+// activation through the button's key handling.
 #[allow(clippy::too_many_arguments)]
-fn on_swatch_click(
-    mut click: On<Pointer<Press>>,
+fn on_button_activate(
+    ev: On<Activate>,
     q_childof: Query<&ChildOf>,
-    q_is_swatch: Query<(), With<ColorEditSwatch>>,
+    q_is_button: Query<(), With<ColorEditButton>>,
     q_is_edit: Query<(), With<ColorEditFrame>>,
     q_children: Query<&Children>,
     q_popup_marker: Query<(), With<ColorEditPopup>>,
@@ -142,19 +165,82 @@ fn on_swatch_click(
     q_rgb_only: Query<(), With<ColorEditRgbOnly>>,
     mut commands: Commands,
 ) {
-    // Only react to presses landing on a swatch (its border-overlay child included).
-    if nearest_with(click.entity, &q_childof, &q_is_swatch).is_none() {
+    if !q_is_button.contains(ev.entity) {
         return;
     }
-    let Some(root) = nearest_with(click.entity, &q_childof, &q_is_edit) else {
+    let Some(root) = nearest_with(ev.entity, &q_childof, &q_is_edit) else {
         return;
     };
-    click.propagate(false);
-    if let Some(popup) = descendant(root, &q_children, &q_popup_marker) {
-        close_popup(&mut commands, popup);
+    toggle_popup(
+        root,
+        &q_children,
+        &q_popup_marker,
+        &q_socket,
+        &q_value,
+        &q_rgb_only,
+        &mut commands,
+    );
+}
+
+// A press on the button's children, handled at the press's original target: when
+// another popup's outside-press dismiss swallows the press there, it never
+// bubbles to the `Button`, so the `Activate` path alone would cost a second
+// click. A press on the button node itself is left to that path, whose observers
+// co-fire at this hop regardless of the swallow.
+#[allow(clippy::too_many_arguments)]
+fn on_button_press(
+    mut press: On<Pointer<Press>>,
+    q_childof: Query<&ChildOf>,
+    q_is_button: Query<(), With<ColorEditButton>>,
+    q_is_edit: Query<(), With<ColorEditFrame>>,
+    q_children: Query<&Children>,
+    q_popup_marker: Query<(), With<ColorEditPopup>>,
+    q_socket: Query<(), With<PopupSocket>>,
+    q_value: Query<&ColorPickerValue, With<ColorEditFrame>>,
+    q_rgb_only: Query<(), With<ColorEditRgbOnly>>,
+    mut commands: Commands,
+) {
+    if press.entity != press.original_event_target() {
         return;
     }
-    let Some(socket) = descendant(root, &q_children, &q_socket) else {
+    let Some(button) = nearest_with(press.entity, &q_childof, &q_is_button) else {
+        return;
+    };
+    if button == press.entity {
+        return;
+    }
+    let Some(root) = nearest_with(button, &q_childof, &q_is_edit) else {
+        return;
+    };
+    // Swallowed so the press cannot also reach the button and `Activate`.
+    press.propagate(false);
+    toggle_popup(
+        root,
+        &q_children,
+        &q_popup_marker,
+        &q_socket,
+        &q_value,
+        &q_rgb_only,
+        &mut commands,
+    );
+}
+
+// Toggle `root`'s picker popup: despawn if open, else spawn a fresh picker
+// (movable, dismissed by pressing outside) seeded with the current color.
+fn toggle_popup(
+    root: Entity,
+    q_children: &Query<&Children>,
+    q_popup_marker: &Query<(), With<ColorEditPopup>>,
+    q_socket: &Query<(), With<PopupSocket>>,
+    q_value: &Query<&ColorPickerValue, With<ColorEditFrame>>,
+    q_rgb_only: &Query<(), With<ColorEditRgbOnly>>,
+    commands: &mut Commands,
+) {
+    if let Some(popup) = descendant_with(root, q_children, q_popup_marker) {
+        close_popup(commands, popup);
+        return;
+    }
+    let Some(socket) = descendant_with(root, q_children, q_socket) else {
         return;
     };
     let color = q_value.get(root).map(|value| value.0).unwrap_or_default();
@@ -188,6 +274,9 @@ fn on_swatch_click(
                 ],
             }
             ColorEditPopup
+            Node {
+                padding: UiRect::new(size::SPACE, size::SPACE, size::SPACE_TIGHT, size::SPACE),
+            }
             // Reset font size
             InheritableFont { font_size: {Some(PlumeFontSize::Rem(1.0))} }
         })
@@ -241,7 +330,7 @@ fn sync_edit_to_picker(
     mut q_swatch: Query<&mut ColorSwatchValue>,
 ) {
     for (root, value) in q_edit.iter() {
-        if let Some(picker) = descendant(root, &q_children, &q_picker_marker)
+        if let Some(picker) = descendant_with(root, &q_children, &q_picker_marker)
             && let Ok(mut picker_value) = q_picker_value.get_mut(picker)
             && !colors_close(picker_value.0, value.0)
         {
@@ -259,7 +348,7 @@ fn set_swatch(
     q_swatch_marker: &Query<(), With<ColorEditSwatch>>,
     q_swatch: &mut Query<&mut ColorSwatchValue>,
 ) {
-    if let Some(swatch) = descendant(root, q_children, q_swatch_marker)
+    if let Some(swatch) = descendant_with(root, q_children, q_swatch_marker)
         && let Ok(mut value) = q_swatch.get_mut(swatch)
         && !colors_close(value.0, color)
     {
@@ -293,7 +382,8 @@ pub(crate) struct ColorEditPlugin;
 
 impl Plugin for ColorEditPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_observer(on_swatch_click)
+        app.add_observer(on_button_activate)
+            .add_observer(on_button_press)
             .add_observer(on_popup_close_requested)
             .add_systems(PostUpdate, (sync_edit_from_picker, sync_edit_to_picker));
     }

@@ -21,7 +21,7 @@ pub use crate::containers::{
     tab_body, tab_label,
 };
 pub use crate::controls::{
-    ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoDrag,
+    ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoBlurOnEnter, NoDrag,
     NoSelectAllOnFocus, PlumeButton, PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps,
     PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch,
     PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps,

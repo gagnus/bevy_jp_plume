@@ -642,8 +642,10 @@ fn header() -> impl Scene {
         row()
         Children [
             icon(font_awesome::solid::SLIDERS),
-            caption("Inspector")
-            small_caps(),
+            (
+                caption("Inspector")
+                small_caps()
+            ),
             flex_spacer(),
             (
                 @PlumeToolButton {
@@ -747,15 +749,16 @@ fn material_tab(m: Material) -> impl Scene {
         @PlumeScrollArea {
             @contents: bsn_list![
                 @PlumeSection {
-                    @header: bsn! { caption("Surface") small_caps() },
+                    @header: bsn! {
+                        caption("Surface")
+                        small_caps()
+                    },
                     @contents: bsn_list![
                         (
                             row()
                             Children [
                                 field_label("Name"),
-                                (
-                                    @PlumeColorSwatch { @initial_color: base }
-                                ),
+                                @PlumeColorSwatch { @initial_color: base },
                                 (
                                     @PlumeTextInput {
                                         @value: name,
@@ -771,7 +774,10 @@ fn material_tab(m: Material) -> impl Scene {
                     ],
                 },
                 @PlumeSection {
-                    @header: bsn! { caption("Shading") small_caps() },
+                    @header: bsn! {
+                        caption("Shading")
+                        small_caps()
+                    },
                     @contents: bsn_list![
                         radio_row("Blend", blend, Bound::Blend),
                         radio_row("Cull", cull, Bound::Cull),
@@ -781,7 +787,10 @@ fn material_tab(m: Material) -> impl Scene {
                 },
                 (
                     @PlumeSection {
-                        @header: bsn! { caption("Color picker") small_caps() },
+                        @header: bsn! {
+                            caption("Color picker")
+                            small_caps()
+                        },
                         @contents: bsn_list![
                             (
                                 @PlumeColorPicker { @initial_color: base }

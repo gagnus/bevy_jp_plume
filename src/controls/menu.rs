@@ -270,7 +270,9 @@ pub fn menu_anchor(items: impl SceneList) -> impl Scene {
                         template_value(popover_for(MenuButtonRole::Bar))
                         Node { display: Display::None }
                         Visibility::Hidden
-                        Children [ {items} ]
+                        Children [
+                            {items},
+                        ]
                     ),
                 ]
             ),

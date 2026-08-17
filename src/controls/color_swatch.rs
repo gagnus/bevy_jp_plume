@@ -21,7 +21,7 @@ use crate::constants::size;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
-use crate::utils::hierarchy::descendant;
+use crate::utils::hierarchy::descendant_with;
 
 /// Scene props for [`PlumeColorSwatch`].
 #[derive(Clone)]
@@ -138,7 +138,7 @@ fn update_swatch_color(
             true => value.0,
             false => value.0.with_alpha(1.0),
         };
-        if let Some(fill) = descendant(swatch_ent, &q_children, &q_fill) {
+        if let Some(fill) = descendant_with(swatch_ent, &q_children, &q_fill) {
             commands.entity(fill).insert(BackgroundColor(color));
         }
     }

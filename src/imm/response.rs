@@ -849,10 +849,19 @@ impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
                         .copied()
                         .find(|&child| world.get::<TextInputField>(child).is_some())
                 });
-                if let Some(field) = field
-                    && let Ok(mut child) = world.spawn_scene(text_input_placeholder(placeholder))
-                {
-                    child.insert(ChildOf(field));
+                match field {
+                    Some(field) => {
+                        if let Ok(mut child) =
+                            world.spawn_scene(text_input_placeholder(placeholder))
+                        {
+                            child.insert(ChildOf(field));
+                        }
+                    }
+                    // Seeded first-spawn-only, so a miss would be permanent and
+                    // silent without this.
+                    None => bevy::log::warn!(
+                        "text_edit placeholder dropped: no field child at spawn time"
+                    ),
                 }
             });
         }

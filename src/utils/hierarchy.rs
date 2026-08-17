@@ -20,19 +20,12 @@ pub(crate) fn nearest_with<M: Component>(
 }
 
 // Find the first marked descendant of `root`.
-pub(crate) fn descendant<M: Component>(
+pub(crate) fn descendant_with<M: Component>(
     root: Entity,
     q_children: &Query<&Children>,
     q_marker: &Query<(), With<M>>,
 ) -> Option<Entity> {
-    let mut stack = vec![root];
-    while let Some(entity) = stack.pop() {
-        if entity != root && q_marker.contains(entity) {
-            return Some(entity);
-        }
-        if let Ok(children) = q_children.get(entity) {
-            stack.extend(children.iter().copied());
-        }
-    }
-    None
+    q_children
+        .iter_descendants(root)
+        .find(|descendant| q_marker.contains(*descendant))
 }

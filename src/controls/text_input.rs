@@ -1,5 +1,5 @@
 //! Editable text field and its decorative container.
-use bevy::app::{Plugin, PreUpdate};
+use bevy::app::{Plugin, PostUpdate, PreUpdate};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::change_detection::{DetectChanges, DetectChangesMut};
 use bevy::ecs::component::Component;
@@ -26,12 +26,13 @@ use bevy::text::{
 };
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect, Val,
+    AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect,
+    UiSystems, Val,
 };
 use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
 use crate::constants::size;
-use crate::controls::{DefaultWidth, SetValue};
+use crate::controls::{ButtonVariant, DefaultWidth, SetValue};
 use crate::cursor::EntityCursor;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme};
@@ -212,12 +213,19 @@ pub(crate) fn text_input_field(
 // input's field: the number input's own key handler commits and steps too.
 fn text_input_on_enter(
     key_input: On<FocusedInput<KeyboardInput>>,
-    query_fields: Query<(), With<TextInputField>>,
+    query_fields: Query<&ChildOf, With<TextInputField>>,
+    query_no_blur: Query<(), With<NoBlurOnEnter>>,
     mut focus: ResMut<InputFocus>,
 ) {
-    if key_input.input.state != ButtonState::Pressed
-        || !query_fields.contains(key_input.event_target())
-    {
+    if key_input.input.state != ButtonState::Pressed {
+        return;
+    }
+    let Ok(child_of) = query_fields.get(key_input.event_target()) else {
+        return;
+    };
+    // The frame's opt-out: an app whose own Enter handling may keep the field
+    // in play (a filter, a prompt) must not find it blurred when it declines.
+    if query_no_blur.contains(child_of.parent()) {
         return;
     }
     if matches!(
@@ -249,6 +257,12 @@ pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: S
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct NoSelectAllOnFocus;
+
+/// Opt-out marker on a [`PlumeTextInput`] frame: Enter keeps focus in the field,
+/// for an app whose own Enter handling may leave it in play (a filter, a prompt).
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+pub struct NoBlurOnEnter;
 
 // Relay the frame's [`NoSelectAllOnFocus`] to its field, in both directions. Running as a system
 // (not at insertion time) means the field is always spawned by the time the marker is read.
@@ -412,8 +426,8 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// Marks a frame's leading content slot; [`order_text_input_prefixes`] keeps it
-/// ahead of the field, wherever its spawner appended it.
+// Marks a frame's leading content slot, kept ahead of the field wherever its
+// spawner appended it.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct TextInputPrefix;
@@ -457,10 +471,8 @@ pub(crate) fn text_input_suffix_container(content: Box<dyn SceneList>) -> impl S
     }
 }
 
-// A content adornment sits in the end padding meant to inset bare text; drop
-// that end to SPACE_TIGHT so the control hugs the corner it decorates. Driven
-// by the child list, so imm-built adornments (which arrive after the frame)
-// and their removal both re-derive it. The dim unit suffix keeps full padding.
+// A content adornment sits in the end padding meant to inset bare text; drop that
+// end to SPACE_TIGHT. Child-list-driven, so late imm adornments re-derive it.
 fn tighten_adorned_frame_padding(
     mut q_frames: Query<(&Children, &mut Node), (With<TextInputFrame>, Changed<Children>)>,
     q_prefix: Query<(), With<TextInputPrefix>>,
@@ -481,8 +493,7 @@ fn tighten_adorned_frame_padding(
 }
 
 // An imm-built prefix is appended after the scene's own children (the reconciler
-// only parents, it does not order); move it ahead of the field, where the
-// retained scene places its own. Runs once per prefix, on arrival.
+// only parents, it does not order); move it ahead of the field on arrival.
 fn order_text_input_prefixes(
     q_added: Query<(Entity, &ChildOf), Added<TextInputPrefix>>,
     q_frames: Query<&Children, With<TextInputFrame>>,
@@ -761,6 +772,79 @@ fn set_text_input_styles(
     }
 }
 
+// Mirror the frame's `InteractionDisabled` onto plume buttons inside its
+// adornment containers, so a disabled input's embedded controls gray and refuse
+// picks with it (the relay the select does for its internal button).
+fn sync_adornment_disabled(
+    q_newly_disabled: Query<Entity, (With<TextInputFrame>, Added<InteractionDisabled>)>,
+    q_new_buttons: Query<Entity, Added<ButtonVariant>>,
+    q_frames: Query<Has<InteractionDisabled>, With<TextInputFrame>>,
+    q_childof: Query<&ChildOf>,
+    q_children: Query<&Children>,
+    q_container: Query<(), Or<(With<TextInputPrefix>, With<TextInputSuffixContainer>)>>,
+    q_button: Query<(), With<ButtonVariant>>,
+    mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    mut commands: Commands,
+) {
+    fn relay(
+        frame_ent: Entity,
+        disabled: bool,
+        q_children: &Query<&Children>,
+        q_container: &Query<(), Or<(With<TextInputPrefix>, With<TextInputSuffixContainer>)>>,
+        q_button: &Query<(), With<ButtonVariant>>,
+        commands: &mut Commands,
+    ) {
+        for &container in q_children.get(frame_ent).into_iter().flatten() {
+            if !q_container.contains(container) {
+                continue;
+            }
+            for target in q_children.iter_descendants(container) {
+                if q_button.contains(target) {
+                    match disabled {
+                        true => commands.entity(target).insert(InteractionDisabled),
+                        false => commands.entity(target).remove::<InteractionDisabled>(),
+                    };
+                }
+            }
+        }
+    }
+    for frame_ent in q_newly_disabled.iter() {
+        relay(
+            frame_ent,
+            true,
+            &q_children,
+            &q_container,
+            &q_button,
+            &mut commands,
+        );
+    }
+    removed_disabled.read().for_each(|frame_ent| {
+        if q_frames.contains(frame_ent) {
+            relay(
+                frame_ent,
+                false,
+                &q_children,
+                &q_container,
+                &q_button,
+                &mut commands,
+            );
+        }
+    });
+    // A button spawned into an already-disabled frame's adornment (imm rebuilds
+    // its container content) starts disabled too.
+    for button_ent in q_new_buttons.iter() {
+        let disabled = q_childof
+            .iter_ancestors(button_ent)
+            .find(|&ancestor| q_container.contains(ancestor))
+            .and_then(|container| q_childof.get(container).ok())
+            .and_then(|frame| q_frames.get(frame.parent()).ok())
+            .unwrap_or(false);
+        if disabled {
+            commands.entity(button_ent).insert(InteractionDisabled);
+        }
+    }
+}
+
 // Show each placeholder only while its parent field is empty and unfocused.
 fn update_text_input_placeholders(
     mut q_placeholders: Query<(&ChildOf, &mut Visibility), With<TextInputPlaceholder>>,
@@ -802,23 +886,26 @@ impl Plugin for TextInputPlugin {
                 update_text_input_styles_focus,
                 update_text_input_placeholders,
                 sync_select_all_on_focus,
+                sync_adornment_disabled,
                 seed_text_input_value,
                 mirror_text_input_value,
-                order_text_input_prefixes,
-                tighten_adorned_frame_padding,
             )
                 .in_set(PickingSystems::Last),
+        )
+        // Before layout, so an imm adornment spawned this frame is ordered and
+        // padded before it is ever drawn, not one frame later.
+        .add_systems(
+            PostUpdate,
+            (order_text_input_prefixes, tighten_adorned_frame_padding)
+                .chain()
+                .before(UiSystems::Layout),
         )
         .add_observer(text_input_on_set_value);
     }
 }
 
-// Upstream's editable-style sync drops `TextLayout`/`LineHeight` changes two ways:
-// the field only matches its query once layout adds `ComputedUiRenderTargetInfo`,
-// so spawn-tick changes go stale unseen; and a `TextFont` change whose font asset
-// is still loading `continue`s over both sibling branches, consuming their windows
-// — the asset's later registration re-marks only the `TextFont`. Re-touch both
-// whenever either gate re-opens, so the sync applies them on its next pass.
+// Upstream's editable-style sync misses `TextLayout`/`LineHeight` changes made
+// before target info or a loading font arrives; re-touch both when a gate re-opens.
 fn reapply_field_text_styles(
     mut q_fields: Query<
         (&mut TextLayout, &mut LineHeight),
