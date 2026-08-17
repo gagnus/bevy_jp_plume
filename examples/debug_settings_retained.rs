@@ -4,10 +4,10 @@ use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize,
-    PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeToggleSwitch,
-    PopupDismiss, PopupPlacement, PopupSocket, SetValue, SliderValue, ThemeBackgroundSlot,
-    ThemeTextSlot, Tooltip, TooltipContent, ValueChange, caption, close_popup, column, flex_spacer,
-    icon, popup_socket, row, separator, small_caps,
+    PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeTextInput,
+    PlumeToggleSwitch, PlumeToolButton, PopupDismiss, PopupPlacement, PopupSocket, SetValue,
+    SliderValue, ThemeBackgroundSlot, ThemeTextSlot, Tooltip, TooltipContent, ValueChange, caption,
+    close_popup, column, flex_spacer, icon, popup_socket, row, separator, small_caps,
 };
 
 #[path = "common/mod.rs"]
@@ -26,6 +26,7 @@ fn main() {
                 common::log_on_change::<DebugSettings>,
                 push_settings,
                 push_ui_scale,
+                show_capture_warning,
             ),
         );
     app.run();
@@ -45,6 +46,7 @@ enum Bound {
     EntityInspector,
     Overlay,
     LogLevel,
+    CaptureDir,
     Noclip,
     InfiniteHealth,
     MoveSpeed,
@@ -74,6 +76,13 @@ impl Bound {
             Bound::UiScale => &mut s.ui_scale,
             _ => return None,
         })
+    }
+
+    fn text(self, s: &mut DebugSettings) -> Option<&mut String> {
+        match self {
+            Bound::CaptureDir => Some(&mut s.capture_dir),
+            _ => None,
+        }
     }
 
     fn choice(self, s: &DebugSettings) -> Option<usize> {
@@ -112,6 +121,10 @@ fn push_settings(
             commands.trigger(SetValue { entity, value });
         }
         if let Some(&mut value) = bound.number(settings) {
+            commands.trigger(SetValue { entity, value });
+        }
+        if let Some(value) = bound.text(settings) {
+            let value = value.clone();
             commands.trigger(SetValue { entity, value });
         }
         if let Some(value) = bound.choice(settings) {
@@ -154,6 +167,17 @@ fn on_number(bound: Bound) -> impl Scene {
         on(move |ev: On<ValueChange<f32>>, mut s: ResMut<DebugSettings>| {
             if let Some(field) = bound.number(&mut s) {
                 *field = ev.value;
+            }
+        })
+    }
+}
+
+fn on_text(bound: Bound) -> impl Scene {
+    bsn! {
+        template_value(bound)
+        on(move |ev: On<ValueChange<String>>, mut s: ResMut<DebugSettings>| {
+            if let Some(field) = bound.text(&mut s) {
+                field.clone_from(&ev.value);
             }
         })
     }
@@ -289,7 +313,88 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
                 toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
                 select_row("Overlay", Bound::Overlay, OverlayCorner::select_options(), overlay, 4),
                 select_row("Log level", Bound::LogLevel, LogLevel::select_options(), log_level, 3),
+                capture_row(s),
             ],
+        }
+    }
+}
+
+// A path-style field: clear tucked inside the leading edge, a warning inside
+// the trailing one — the props twins of `prefix_container` / `suffix_container`.
+fn capture_row(s: &DebugSettings) -> impl Scene {
+    let value = s.capture_dir.clone();
+    let warning_display = capture_warning_display(s);
+    bsn! {
+        row()
+        Children [
+            field_label("Capture to"),
+            (
+                @PlumeTextInput {
+                    @value: value,
+                    @placeholder: {Some("Beside the app".to_string())},
+                    @prefix_container: {Some(clear_capture_button())},
+                    @suffix_container: {Some(capture_warning(warning_display))},
+                }
+                Node { width: Val::ZERO, flex_grow: 1.0 }
+                on_text(Bound::CaptureDir)
+            ),
+        ]
+    }
+}
+
+fn clear_capture_button() -> Box<dyn SceneList> {
+    Box::new(bsn_list![(
+        @PlumeToolButton {
+            @caption: bsn_list![icon(font_awesome::solid::XMARK)],
+            @variant: ButtonVariant::Plain,
+        }
+        Tooltip("Clear")
+        InheritableFont { font_size: {PlumeFontSize::Em(0.8)} }
+        on(|_: On<Activate>, mut s: ResMut<DebugSettings>| {
+            s.capture_dir.clear();
+        })
+    )])
+}
+
+// On the warning's row, so `show_capture_warning` can find it.
+#[derive(Component, Default, Clone)]
+struct CaptureWarning;
+
+fn capture_warning_display(s: &DebugSettings) -> Display {
+    match s.capture_dir.is_empty() {
+        true => Display::None,
+        false => Display::Flex,
+    }
+}
+
+// The imm twin builds the warning only while the path is set; retained builds
+// it once and `show_capture_warning` shows and hides it.
+fn capture_warning(display: Display) -> Box<dyn SceneList> {
+    Box::new(bsn_list![(
+        row()
+        Node { display: display, padding: UiRect::right(size::SPACE_TIGHT) }
+        CaptureWarning
+        Children [
+            (
+                icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                template_value(ThemeTextSlot(ThemeSlot::Danger0))
+                Tooltip("Should leave it blank!")
+            ),
+        ]
+    )])
+}
+
+fn show_capture_warning(
+    settings: Res<DebugSettings>,
+    mut q_warnings: Query<&mut Node, With<CaptureWarning>>,
+) {
+    if !settings.is_changed() {
+        return;
+    }
+    for mut node in q_warnings.iter_mut() {
+        let display = capture_warning_display(&settings);
+        if node.display != display {
+            node.display = display;
         }
     }
 }

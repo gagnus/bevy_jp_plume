@@ -23,6 +23,7 @@ pub struct DebugSettings {
     pub entity_inspector: bool,
     pub overlay: OverlayCorner,
     pub log_level: LogLevel,
+    pub capture_dir: String,
     pub noclip: bool,
     pub infinite_health: bool,
     pub move_speed: f32,
@@ -46,6 +47,7 @@ impl Default for DebugSettings {
             entity_inspector: false,
             overlay: OverlayCorner::default(),
             log_level: LogLevel::default(),
+            capture_dir: "captures/latest".into(),
             noclip: false,
             infinite_health: false,
             move_speed: 6.0,
@@ -282,6 +284,40 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
             ui.select(&mut s.log_level, options_of::<LogLevel>)
                 .grow()
                 .max_visible(3);
+        });
+        // A path-style field: clear tucked inside the leading edge, browse inside
+        // the trailing one — `prefix_container` / `suffix_container` at work.
+        ui.horizontal(|ui| {
+            ui.caption("Capture to").width(em(84.0 / BASE_FONT_PX));
+            let mut clear = false;
+            let danger = s.capture_dir != "";
+            let text_edit = ui
+                .text_edit(&mut s.capture_dir)
+                .grow()
+                .placeholder("Beside the app")
+                .prefix_container(|ui| {
+                    clear = ui
+                        .tool_button(font_awesome::solid::XMARK)
+                        .flat()
+                        .variant(ButtonVariant::Plain)
+                        .font_scale(0.8)
+                        .tooltip("Clear")
+                        .clicked;
+                });
+
+            if danger {
+                text_edit.suffix_container(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                            .text_color_slot(ThemeSlot::Danger0)
+                            .tooltip("Should leave it blank!");
+                    })
+                    .padding(UiRect::right(size::SPACE_TIGHT));
+                });
+            }
+            if clear {
+                s.capture_dir.clear();
+            }
         });
     });
 }

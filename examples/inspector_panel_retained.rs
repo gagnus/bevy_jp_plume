@@ -4,16 +4,19 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeColorEdit, PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, menu_anchor, row, screen, separator, small_caps, space, tab_body,
+    Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeColorEdit, PlumeColorPicker,
+    PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeRadio,
+    PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab,
+    PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected,
+    SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer,
+    icon, menu_anchor, row, screen, separator, small_caps, space, tab_body,
 };
 
 #[path = "common/mod.rs"]
 mod common;
 
 use common::Options;
-use common::inspector_panel::{
-    Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab,
-};
+use common::inspector_panel::{Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab};
 
 const GUTTER: Val = Val::Em(6.0);
 

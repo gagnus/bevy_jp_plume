@@ -7,7 +7,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Added, Changed, Has, With, Without};
+use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res, ResMut};
@@ -18,8 +18,8 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
-    TextReadWriteMode,
+    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextFont,
+    TextLayout, TextReadWriteMode,
 };
 use bevy::ui::widget::Text;
 use bevy::ui::{
@@ -57,7 +57,7 @@ pub(crate) struct TextInputField;
 pub struct TextInputValue(pub String);
 
 /// Props used to construct the [`PlumeTextInput`] scene.
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct PlumeTextInputProps {
     /// Initial text.
     pub value: String,
@@ -70,24 +70,42 @@ pub struct PlumeTextInputProps {
     /// Optional dim hint shown while the field is empty and unfocused.
     pub placeholder: Option<String>,
     /// Optional non-editable suffix shown after the text (a unit such as `px`, `%`, or `°`).
+    /// Exclusive with `suffix_container`.
     pub suffix: Option<String>,
+    /// Optional content ahead of the text, inside the frame (e.g. a clear button).
+    pub prefix_container: Option<Box<dyn SceneList>>,
+    /// Optional content after the text, inside the frame. Replaces `suffix` —
+    /// the trailing slot holds a unit label or content, never both.
+    pub suffix_container: Option<Box<dyn SceneList>>,
 }
 
 impl PlumeTextInput {
     fn scene(props: PlumeTextInputProps) -> impl Scene {
+        debug_assert!(
+            !(props.suffix.is_some() && props.suffix_container.is_some()),
+            "`suffix` and `suffix_container` are exclusive: the trailing slot holds one thing"
+        );
         bsn! {
             text_input_frame()
             TextInputValue({props.value})
             Children [
                 text_input_outline(),
+                {props.prefix_container.map(|content| bsn_list![
+                    text_input_prefix_container(content),
+                ])},
                 (
                     text_input_field(props.visible_width, props.max_characters)
                     {props.filter.map(|filter| bsn! { template_value(filter) })}
+                    Children [
+                        {props.placeholder.map(|placeholder| bsn_list![
+                            text_input_placeholder(placeholder),
+                        ])},
+                    ]
                 ),
-                {props.placeholder.map(|placeholder| bsn_list![
-                    text_input_placeholder(placeholder),
-                ])},
                 {props.suffix.map(|suffix| bsn_list![text_input_suffix(suffix)])},
+                {props.suffix_container.map(|content| bsn_list![
+                    text_input_suffix_container(content),
+                ])},
             ]
         }
     }
@@ -157,9 +175,11 @@ pub(crate) fn text_input_field(
 ) -> impl Scene {
     bsn! {
         // Fills the frame's content box so the click/edit target is the whole row, not a thin strip.
+        // Centering is for the placeholder child; the editable text lays itself out.
         Node {
             flex_grow: 1.0,
             height: {Val::Percent(100.0)},
+            align_items: AlignItems::Center,
         }
         TextInputField
         // The field is the text entity, so the inheritable color (which only propagates to
@@ -336,17 +356,16 @@ struct TextInputPlaceholder;
 #[reflect(Component, Default)]
 struct TextInputDimText;
 
-// Dim hint overlaying the field; absolute with auto vertical insets, so the frame's
-// align_items centers it without displacing the field.
+// Dim hint over the field — a child of it, not the frame, so it starts where the
+// text it stands in for would, whatever adornments sit ahead of the field.
+// Absolute with auto vertical insets, so the field's align_items centers it.
 pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
         ThemeTextToken(tokens::TEXT_DIM)
         Node {
             position_type: PositionType::Absolute,
-            // Matches `text_input_frame`'s horizontal padding: the hint has to start
-            // exactly where the text it stands in for would.
-            left: size::SPACE,
+            left: Val::ZERO,
         }
         TextInputPlaceholder
         TextInputDimText
@@ -365,6 +384,102 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
         TextInputDimText
         // Never steal the click that focuses the field.
         Pickable::IGNORE
+    }
+}
+
+/// Marks a frame's leading content slot; [`order_text_input_prefixes`] keeps it
+/// ahead of the field, wherever its spawner appended it.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct TextInputPrefix;
+
+// Content ahead of the editable field, inside the frame — a clear button, an icon.
+// Interactive, unlike the dim text pieces: clicks land on the content, not the field.
+pub(crate) fn text_input_prefix_container(content: Box<dyn SceneList>) -> impl Scene {
+    bsn! {
+        Node {
+            align_items: AlignItems::Center,
+            margin: UiRect::right(size::SPACE_TIGHT),
+            flex_shrink: 0.0,
+        }
+        TextInputPrefix
+        TextStyleRelay
+        Children [
+            {content},
+        ]
+    }
+}
+
+// Marks a frame's trailing content slot, for the padding tightener below.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct TextInputSuffixContainer;
+
+// Content after the editable field, inside the frame; the trailing counterpart
+// of [`text_input_prefix_container`].
+pub(crate) fn text_input_suffix_container(content: Box<dyn SceneList>) -> impl Scene {
+    bsn! {
+        Node {
+            align_items: AlignItems::Center,
+            margin: UiRect::left(size::SPACE_TIGHT),
+            flex_shrink: 0.0,
+        }
+        TextInputSuffixContainer
+        TextStyleRelay
+        Children [
+            {content},
+        ]
+    }
+}
+
+// A content adornment sits in the end padding meant to inset bare text; drop
+// that end to SPACE_TIGHT so the control hugs the corner it decorates. Driven
+// by the child list, so imm-built adornments (which arrive after the frame)
+// and their removal both re-derive it. The dim unit suffix keeps full padding.
+fn tighten_adorned_frame_padding(
+    mut q_frames: Query<(&Children, &mut Node), (With<TextInputFrame>, Changed<Children>)>,
+    q_prefix: Query<(), With<TextInputPrefix>>,
+    q_suffix: Query<(), With<TextInputSuffixContainer>>,
+) {
+    for (children, mut node) in q_frames.iter_mut() {
+        let end = |occupied: bool| match occupied {
+            true => size::SPACE_TIGHT,
+            false => size::SPACE,
+        };
+        let left = end(children.iter().any(|&child| q_prefix.contains(child)));
+        let right = end(children.iter().any(|&child| q_suffix.contains(child)));
+        if node.padding.left != left || node.padding.right != right {
+            node.padding.left = left;
+            node.padding.right = right;
+        }
+    }
+}
+
+// An imm-built prefix is appended after the scene's own children (the reconciler
+// only parents, it does not order); move it ahead of the field, where the
+// retained scene places its own. Runs once per prefix, on arrival.
+fn order_text_input_prefixes(
+    q_added: Query<(Entity, &ChildOf), Added<TextInputPrefix>>,
+    q_frames: Query<&Children, With<TextInputFrame>>,
+    q_is_field: Query<(), With<TextInputField>>,
+    mut commands: Commands,
+) {
+    for (prefix_ent, child_of) in q_added.iter() {
+        let Ok(children) = q_frames.get(child_of.parent()) else {
+            continue;
+        };
+        let Some(field_index) = children
+            .iter()
+            .position(|&child| q_is_field.contains(child))
+        else {
+            continue;
+        };
+        let prefix_index = children.iter().position(|&child| child == prefix_ent);
+        if prefix_index.is_some_and(|index| index > field_index) {
+            commands
+                .entity(child_of.parent())
+                .insert_children(field_index, &[prefix_ent]);
+        }
     }
 }
 
@@ -588,19 +703,23 @@ fn set_text_input_styles(
             .insert(ThemeTextToken(font_token));
     }
 
-    // Placeholder and suffix dim with the frame.
+    // Placeholder and suffix dim with the frame; the suffix is a frame child,
+    // the placeholder the field's.
     let dim_token = if disabled {
         tokens::TEXT_INPUT_TEXT_DISABLED
     } else {
         tokens::TEXT_DIM
     };
-    if let Ok(children) = q_children.get(frame_ent) {
-        for &child in children.iter().filter(|&&child| q_dim.contains(child)) {
-            if !q_text.get(child).is_ok_and(|text| text.0 == dim_token) {
-                commands
-                    .entity(child)
-                    .insert(ThemeTextToken(dim_token.clone()));
-            }
+    let dim_children = q_children
+        .get(frame_ent)
+        .into_iter()
+        .flatten()
+        .chain(q_children.get(field_ent).into_iter().flatten());
+    for &child in dim_children.filter(|&&child| q_dim.contains(child)) {
+        if !q_text.get(child).is_ok_and(|text| text.0 == dim_token) {
+            commands
+                .entity(child)
+                .insert(ThemeTextToken(dim_token.clone()));
         }
     }
 
@@ -617,24 +736,18 @@ fn set_text_input_styles(
     }
 }
 
-// Show each placeholder only while its sibling field is empty and unfocused.
+// Show each placeholder only while its parent field is empty and unfocused.
 fn update_text_input_placeholders(
     mut q_placeholders: Query<(&ChildOf, &mut Visibility), With<TextInputPlaceholder>>,
     q_fields: Query<&EditableText, With<TextInputField>>,
     q_changed_fields: Query<(), (Changed<EditableText>, With<TextInputField>)>,
-    q_children: Query<&Children>,
     focus: Res<InputFocus>,
 ) {
     if !focus.is_changed() && q_changed_fields.is_empty() {
         return;
     }
     for (child_of, mut visibility) in q_placeholders.iter_mut() {
-        let Ok(children) = q_children.get(child_of.parent()) else {
-            continue;
-        };
-        let Some(field_ent) = children.iter().copied().find(|&c| q_fields.contains(c)) else {
-            continue;
-        };
+        let field_ent = child_of.parent();
         let Ok(editable_text) = q_fields.get(field_ent) else {
             continue;
         };
@@ -658,7 +771,7 @@ impl Plugin for TextInputPlugin {
             PreUpdate,
             (
                 update_text_cursor_color,
-                reapply_field_justify,
+                reapply_field_text_styles,
                 update_text_input_styles,
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
@@ -666,6 +779,8 @@ impl Plugin for TextInputPlugin {
                 sync_select_all_on_focus,
                 seed_text_input_value,
                 mirror_text_input_value,
+                order_text_input_prefixes,
+                tighten_adorned_frame_padding,
             )
                 .in_set(PickingSystems::Last),
         )
@@ -673,12 +788,23 @@ impl Plugin for TextInputPlugin {
     }
 }
 
-// A BSN-spawned field's `TextLayout` change fires before it is layout-eligible, so
-// upstream drops the justify; re-touch it once the field is realized.
-fn reapply_field_justify(
-    mut q_fields: Query<&mut TextLayout, (With<TextInputField>, Added<ComputedUiRenderTargetInfo>)>,
+// Upstream's editable-style sync drops `TextLayout`/`LineHeight` changes two ways:
+// the field only matches its query once layout adds `ComputedUiRenderTargetInfo`,
+// so spawn-tick changes go stale unseen; and a `TextFont` change whose font asset
+// is still loading `continue`s over both sibling branches, consuming their windows
+// — the asset's later registration re-marks only the `TextFont`. Re-touch both
+// whenever either gate re-opens, so the sync applies them on its next pass.
+fn reapply_field_text_styles(
+    mut q_fields: Query<
+        (&mut TextLayout, &mut LineHeight),
+        (
+            With<TextInputField>,
+            Or<(Added<ComputedUiRenderTargetInfo>, Changed<TextFont>)>,
+        ),
+    >,
 ) {
-    for mut layout in q_fields.iter_mut() {
+    for (mut layout, mut line_height) in q_fields.iter_mut() {
         layout.set_changed();
+        line_height.set_changed();
     }
 }

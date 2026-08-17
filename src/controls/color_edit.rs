@@ -22,7 +22,6 @@ use bevy::ui::{AlignItems, Node};
 use bevy::ui_widgets::ValueChange;
 
 use crate::constants::{font_awesome, size};
-use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::containers::{
     CloseRequested, PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket, row,
@@ -30,7 +29,7 @@ use crate::containers::{
 use crate::controls::{ColorPickerValue, ColorSwatchValue, PlumeColorPicker, PlumeColorSwatch};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
-use crate::font_styles::{TextStyleRelay, small_caps};
+use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay, small_caps};
 use crate::theme::ThemeTextToken;
 use crate::tokens;
 use crate::utils::hierarchy::{descendant, nearest_with};

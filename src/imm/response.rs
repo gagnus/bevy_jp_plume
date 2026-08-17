@@ -11,7 +11,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::world::{EntityWorldMut, World};
 use bevy::picking::Pickable;
-use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
+use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn, bsn_list};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
@@ -32,8 +32,9 @@ use crate::containers::{
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuButtonRole, MenuShortcutText, NoDrag,
-    NoSelectAllOnFocus, NumberInputFrame, ScrollbarHidden, menu_anchor_base,
-    set_select_max_visible, text_input_placeholder, text_input_suffix,
+    NoSelectAllOnFocus, NumberInputFrame, ScrollbarHidden, TextInputField, menu_anchor_base,
+    set_select_max_visible, text_input_placeholder, text_input_prefix_container, text_input_suffix,
+    text_input_suffix_container,
 };
 use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
@@ -827,7 +828,7 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
     }
 }
 
-impl ImmResponse<'_, '_, '_, kind::Text> {
+impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
     /// Dim hint shown while the field is empty and unfocused.
     /// Seeded on first spawn only — hints don't change, and the id doesn't track it.
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
@@ -835,11 +836,45 @@ impl ImmResponse<'_, '_, '_, kind::Text> {
             let parent = self.entity;
             let placeholder = placeholder.into();
             self.e.commands().queue(move |world: &mut World| {
-                if let Ok(mut child) = world.spawn_scene(text_input_placeholder(placeholder)) {
-                    child.insert(ChildOf(parent));
+                // The hint hangs off the editable field, so it starts where the
+                // text would, whatever adornments sit ahead of the field.
+                let field = world.get::<Children>(parent).and_then(|children| {
+                    children
+                        .iter()
+                        .copied()
+                        .find(|&child| world.get::<TextInputField>(child).is_some())
+                });
+                if let Some(field) = field
+                    && let Ok(mut child) = world.spawn_scene(text_input_placeholder(placeholder))
+                {
+                    child.insert(ChildOf(field));
                 }
             });
         }
+        self
+    }
+
+    /// Content ahead of the text, inside the frame — a clear button, an icon.
+    /// `f` builds it each frame, like any imm container body.
+    #[track_caller]
+    pub fn prefix_container(mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+        self.e = self.e.add_ui(|ui| {
+            ui.ch_id("text_input_prefix")
+                .on_spawn_apply_scene(|| text_input_prefix_container(Box::new(bsn_list![])))
+                .add_ui(f);
+        });
+        self
+    }
+
+    /// Content after the text, inside the frame. The trailing slot holds a unit
+    /// label or content, never both: exclusive with [`suffix`](Self::suffix).
+    #[track_caller]
+    pub fn suffix_container(mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
+        self.e = self.e.add_ui(|ui| {
+            ui.ch_id("text_input_suffix")
+                .on_spawn_apply_scene(|| text_input_suffix_container(Box::new(bsn_list![])))
+                .add_ui(f);
+        });
         self
     }
 }
