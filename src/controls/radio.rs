@@ -32,6 +32,7 @@ use crate::theme::{
 };
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::{descendant_get, nearest_with};
 
 /// A radio, spawnable as a scene component with optional [`PlumeRadioProps`].
 /// Emits [`bevy::ui_widgets::ValueChange<bool>`] (always true) when checked.
@@ -211,10 +212,7 @@ fn radio_check_self(
     }
     commands.entity(ev.source).insert(Checked);
 
-    let Some(group) = q_parents
-        .iter_ancestors(ev.source)
-        .find(|ancestor| q_groups.contains(*ancestor))
-    else {
+    let Some(group) = nearest_with(ev.source, &q_parents, &q_groups) else {
         return;
     };
     let index = q_children
@@ -265,9 +263,9 @@ fn update_radio_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
-    q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
+    q_bg: Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<RadioOutline>>,
+    q_mark: Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut commands: Commands,
 ) {
@@ -300,9 +298,9 @@ fn update_radio_styles_remove(
         With<RadioButton>,
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
-    q_outline: Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
+    q_bg: Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<RadioOutline>>,
+    q_mark: Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<RadioMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -339,28 +337,21 @@ fn apply_radio_styles(
     checked: bool,
     font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
-    q_bg: &Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
-    q_outline: &Query<&ThemeBorderToken, With<RadioOutline>>,
-    q_mark: &Query<(&ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
+    q_bg: &Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioBg>>,
+    q_outline: &Query<(Entity, &ThemeBorderToken), With<RadioOutline>>,
+    q_mark: &Query<(Entity, &ThemeBackgroundToken, &GradientAmount), With<RadioMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<RadioMark>>,
     has_box_shadow: bool,
     commands: &mut Commands,
 ) {
-    let Some(bg_ent) = q_children
-        .iter_descendants(radio_ent)
-        .find(|en| q_bg.contains(*en))
+    let Some((bg_ent, bg_token, bg_amount)) = descendant_get(radio_ent, q_children, q_bg) else {
+        return;
+    };
+    let Some((outline_ent, outline_border)) = descendant_get(radio_ent, q_children, q_outline)
     else {
         return;
     };
-    let Some(outline_ent) = q_children
-        .iter_descendants(radio_ent)
-        .find(|en| q_outline.contains(*en))
-    else {
-        return;
-    };
-    let Some(mark_ent) = q_children
-        .iter_descendants(radio_ent)
-        .find(|en| q_mark.contains(*en))
+    let Some((mark_ent, mark_token, mark_amount)) = descendant_get(radio_ent, q_children, q_mark)
     else {
         return;
     };
@@ -369,16 +360,6 @@ fn apply_radio_styles(
     if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
         mark_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
-
-    let (bg_token, bg_amount) = q_bg
-        .get(bg_ent)
-        .expect("bg entity was just found via q_bg::contains");
-    let outline_border = q_outline
-        .get(outline_ent)
-        .expect("outline entity was just found via q_outline::contains");
-    let (mark_token, mark_amount) = q_mark
-        .get(mark_ent)
-        .expect("mark entity was just found via q_mark::contains");
     set_radio_styles(
         radio_ent,
         bg_ent,

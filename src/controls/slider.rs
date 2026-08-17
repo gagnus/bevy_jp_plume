@@ -39,6 +39,7 @@ use crate::font_styles::TextStyleRelay;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, UiTheme, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::{descendant_get, descendant_get_mut};
 
 // Thumb scale while grabbed: the knob grows this much on press for grab feedback.
 const THUMB_GRABBED_SCALE: f32 = 1.15;
@@ -196,7 +197,15 @@ fn update_slider_styles(
     >,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<SliderThumb>,
+    >,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -223,7 +232,15 @@ fn update_slider_styles_remove(
     mut remove_pressed: RemovedComponents<Pressed>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<SliderThumb>,
+    >,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -254,7 +271,15 @@ fn update_slider_styles_theme(
     q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<SliderFrame>>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<SliderThumb>,
+    >,
     mut q_thumb_anim: Query<&mut AnimState, With<SliderThumb>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
@@ -286,20 +311,25 @@ fn apply_slider_styles(
     hovered: bool,
     q_children: &Query<&Children>,
     q_tracks: &mut Query<&mut BackgroundGradient, With<SliderTrack>>,
-    q_thumbs: &Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<SliderThumb>>,
+    q_thumbs: &Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<SliderThumb>,
+    >,
     q_thumb_anim: &mut Query<&mut AnimState, With<SliderThumb>>,
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
-    let Some(track_ent) = q_children
-        .iter_descendants(slider_ent)
-        .find(|en| q_tracks.contains(*en))
+    let Some(mut track_background_gradient) = descendant_get_mut(slider_ent, q_children, q_tracks)
     else {
         return;
     };
-    let Some(thumb_ent) = q_children
-        .iter_descendants(slider_ent)
-        .find(|en| q_thumbs.contains(*en))
+    let Some((thumb_ent, thumb_token, thumb_amount, has_box_shadow)) =
+        descendant_get(slider_ent, q_children, q_thumbs)
     else {
         return;
     };
@@ -308,13 +338,6 @@ fn apply_slider_styles(
     if let Ok(mut thumb_anim) = q_thumb_anim.get_mut(thumb_ent) {
         thumb_anim.set_target(if pressed { 1.0 } else { 0.0 });
     }
-
-    let mut track_background_gradient = q_tracks
-        .get_mut(track_ent)
-        .expect("track entity was just found via q_tracks::contains");
-    let (thumb_token, thumb_amount, has_box_shadow) = q_thumbs
-        .get(thumb_ent)
-        .expect("thumb entity was just found via q_thumbs::contains");
     set_slider_styles(
         slider_ent,
         thumb_ent,
@@ -408,17 +431,15 @@ fn update_slider_pos(
 ) {
     for (slider_ent, value, range) in q_sliders.iter() {
         let percent_value = (range.thumb_position(value.0) * 100.0).clamp(0.0, 100.0);
-        q_children.iter_descendants(slider_ent).for_each(|child| {
-            if let Ok(mut gradient) = q_tracks.get_mut(child)
-                && let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..]
-            {
-                linear_gradient.stops[1].point = percent(percent_value);
-                linear_gradient.stops[2].point = percent(percent_value);
-            }
-            if let Ok(mut thumb) = q_thumbs.get_mut(child) {
-                thumb.left = percent(percent_value);
-            }
-        });
+        if let Some(mut gradient) = descendant_get_mut(slider_ent, &q_children, &mut q_tracks)
+            && let [Gradient::Linear(linear_gradient)] = &mut gradient.0[..]
+        {
+            linear_gradient.stops[1].point = percent(percent_value);
+            linear_gradient.stops[2].point = percent(percent_value);
+        }
+        if let Some(mut thumb) = descendant_get_mut(slider_ent, &q_children, &mut q_thumbs) {
+            thumb.left = percent(percent_value);
+        }
     }
 }
 

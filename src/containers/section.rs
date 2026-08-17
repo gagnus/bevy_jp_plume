@@ -29,6 +29,7 @@ use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::descendant_get_mut;
 
 /// A section: a header bar over a body. Collapsible by default — clicking the
 /// header folds the body away.
@@ -221,17 +222,15 @@ fn update_section_collapse(
     mut q_chevrons: Query<&mut AnimState, With<SectionChevron>>,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
-        for descendant in q_children.iter_descendants(root) {
-            if let Ok(mut node) = q_body.get_mut(descendant) {
-                node.display = if collapsed {
-                    Display::None
-                } else {
-                    Display::Flex
-                };
-            }
-            if let Ok(mut chevron) = q_chevrons.get_mut(descendant) {
-                chevron.set_target(if collapsed { 1.0 } else { 0.0 });
-            }
+        if let Some(mut node) = descendant_get_mut(root, &q_children, &mut q_body) {
+            node.display = if collapsed {
+                Display::None
+            } else {
+                Display::Flex
+            };
+        }
+        if let Some(mut chevron) = descendant_get_mut(root, &q_children, &mut q_chevrons) {
+            chevron.set_target(if collapsed { 1.0 } else { 0.0 });
         }
     };
     for root in q_collapsed.iter() {
@@ -256,16 +255,14 @@ fn update_section_collapsible(
     mut q_chevrons: Query<(&mut Node, &mut AnimState), With<SectionChevron>>,
 ) {
     for (root, collapsible, collapsed) in q_changed.iter() {
-        for descendant in q_children.iter_descendants(root) {
-            if let Ok((mut node, mut anim)) = q_chevrons.get_mut(descendant) {
-                node.display = if collapsible.0 {
-                    Display::Flex
-                } else {
-                    Display::None
-                };
-                // Settle the chevron without a spin.
-                anim.set_target(if collapsed { 1.0 } else { 0.0 });
-            }
+        if let Some((mut node, mut anim)) = descendant_get_mut(root, &q_children, &mut q_chevrons) {
+            node.display = if collapsible.0 {
+                Display::Flex
+            } else {
+                Display::None
+            };
+            // Settle the chevron without a spin.
+            anim.set_target(if collapsed { 1.0 } else { 0.0 });
         }
     }
 }
@@ -275,7 +272,7 @@ fn update_section_header_style(
     q_changed: Query<Entity, (With<SectionRoot>, Changed<SectionCollapsible>)>,
     q_sections: Query<Option<&SectionCollapsible>, With<SectionRoot>>,
     q_children: Query<&Children>,
-    mut q_headers: Query<&mut Node, With<SectionHeader>>,
+    mut q_headers: Query<(Entity, &mut Node), With<SectionHeader>>,
     mut commands: Commands,
 ) {
     for root in q_changed.iter() {
@@ -285,10 +282,7 @@ fn update_section_header_style(
         // Absent means collapsible (the component's Default); only explicit false is flat.
         let collapsible = !matches!(collapsible, Some(SectionCollapsible(false)));
 
-        for descendant in q_children.iter_descendants(root) {
-            let Ok(mut node) = q_headers.get_mut(descendant) else {
-                continue;
-            };
+        if let Some((header, mut node)) = descendant_get_mut(root, &q_children, &mut q_headers) {
             let (bg_token, text_token, border, border_radius, cursor) = if !collapsible {
                 (
                     tokens::SECTION_BODY_BG,
@@ -308,7 +302,7 @@ fn update_section_header_style(
             };
             node.border = border;
             node.border_radius = border_radius.into();
-            commands.entity(descendant).insert((
+            commands.entity(header).insert((
                 ThemeBackgroundToken(bg_token),
                 InheritableThemeTextToken(text_token),
                 EntityCursor::System(cursor),

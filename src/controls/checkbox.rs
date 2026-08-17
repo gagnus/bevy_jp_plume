@@ -32,6 +32,7 @@ use crate::theme::{
 };
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::descendant_get;
 
 /// A checkbox, spawnable as a scene component with optional [`PlumeCheckboxProps`].
 /// Emits [`bevy::ui_widgets::ValueChange<bool>`] with the new state.
@@ -172,9 +173,17 @@ fn update_checkbox_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
-    q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
+    q_bg: Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<CheckboxBg>,
+    >,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<CheckboxOutline>>,
+    q_mark: Query<(Entity, &ThemeBorderToken), With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut commands: Commands,
 ) {
@@ -205,9 +214,17 @@ fn update_checkbox_styles_remove(
         With<CheckboxFrame>,
     >,
     q_children: Query<&Children>,
-    q_bg: Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: Query<&ThemeBorderToken, With<CheckboxOutline>>,
-    q_mark: Query<&ThemeBorderToken, With<CheckboxMark>>,
+    q_bg: Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<CheckboxBg>,
+    >,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<CheckboxOutline>>,
+    q_mark: Query<(Entity, &ThemeBorderToken), With<CheckboxMark>>,
     mut q_mark_anim: Query<&mut AnimState, With<CheckboxMark>>,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut removed_checked: RemovedComponents<Checked>,
@@ -241,28 +258,30 @@ fn apply_checkbox_styles(
     checked: bool,
     font_color: &InheritableThemeTextToken,
     q_children: &Query<&Children>,
-    q_bg: &Query<(&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>), With<CheckboxBg>>,
-    q_outline: &Query<&ThemeBorderToken, With<CheckboxOutline>>,
-    q_mark: &Query<&ThemeBorderToken, With<CheckboxMark>>,
+    q_bg: &Query<
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
+        With<CheckboxBg>,
+    >,
+    q_outline: &Query<(Entity, &ThemeBorderToken), With<CheckboxOutline>>,
+    q_mark: &Query<(Entity, &ThemeBorderToken), With<CheckboxMark>>,
     q_mark_anim: &mut Query<&mut AnimState, With<CheckboxMark>>,
     commands: &mut Commands,
 ) {
-    let Some(bg_ent) = q_children
-        .iter_descendants(checkbox_ent)
-        .find(|en| q_bg.contains(*en))
+    let Some((bg_ent, bg_token, bg_amount, has_box_shadow)) =
+        descendant_get(checkbox_ent, q_children, q_bg)
     else {
         return;
     };
-    let Some(outline_ent) = q_children
-        .iter_descendants(checkbox_ent)
-        .find(|en| q_outline.contains(*en))
+    let Some((outline_ent, outline_color)) = descendant_get(checkbox_ent, q_children, q_outline)
     else {
         return;
     };
-    let Some(mark_ent) = q_children
-        .iter_descendants(checkbox_ent)
-        .find(|en| q_mark.contains(*en))
-    else {
+    let Some((mark_ent, mark_color)) = descendant_get(checkbox_ent, q_children, q_mark) else {
         return;
     };
 
@@ -270,15 +289,6 @@ fn apply_checkbox_styles(
     if let Ok(mut mark_anim) = q_mark_anim.get_mut(mark_ent) {
         mark_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
-    let (bg_token, bg_amount, has_box_shadow) = q_bg
-        .get(bg_ent)
-        .expect("bg entity was just found via q_bg::contains");
-    let outline_color = q_outline
-        .get(outline_ent)
-        .expect("outline entity was just found via q_outline::contains");
-    let mark_color = q_mark
-        .get(mark_ent)
-        .expect("mark entity was just found via q_mark::contains");
     set_checkbox_styles(
         checkbox_ent,
         bg_ent,

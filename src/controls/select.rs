@@ -49,6 +49,7 @@ use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, set_optional_background,
 };
 use crate::tokens;
+use crate::utils::hierarchy::{descendant_get_mut, descendant_with, nearest_get_mut, nearest_with};
 
 /// Select control: a dropdown button over string options.
 /// # Emitted events
@@ -401,10 +402,7 @@ fn open_select_popup(
     let Ok((options, selected, max_visible, computed)) = q_select.get(select_ent) else {
         return;
     };
-    let Some(socket) = q_children
-        .iter_descendants(select_ent)
-        .find(|descendant| q_socket.contains(*descendant))
-    else {
+    let Some(socket) = descendant_with(select_ent, q_children, q_socket) else {
         warn!("Select popup socket not found");
         return;
     };
@@ -459,18 +457,11 @@ fn close_select_popup(
     focus: &mut InputFocus,
     commands: &mut Commands,
 ) {
-    if let Some(select_ent) = q_parents
-        .iter_ancestors(popup)
-        .find(|ancestor| q_is_select.contains(*ancestor))
-    {
+    if let Some(select_ent) = nearest_with(popup, q_parents, q_is_select) {
         let focus_in_select = focus.get().is_some_and(|focused| {
             focused == select_ent || q_parents.iter_ancestors(focused).any(|a| a == select_ent)
         });
-        if focus_in_select
-            && let Some(button) = q_children
-                .iter_descendants(select_ent)
-                .find(|descendant| q_button.contains(*descendant))
-        {
+        if focus_in_select && let Some(button) = descendant_with(select_ent, q_children, q_button) {
             focus.set(button, FocusCause::Navigated);
         }
     }
@@ -498,9 +489,7 @@ fn on_menu_event(
     mut commands: Commands,
     mut focus: ResMut<InputFocus>,
 ) {
-    let popup = q_children
-        .iter_descendants(ev.source)
-        .find(|descendant| q_popup.contains(*descendant));
+    let popup = descendant_with(ev.source, &q_children, &q_popup);
     match ev.event().action {
         MenuAction::Open(nav) => {
             ev.propagate(false);
@@ -552,12 +541,9 @@ fn on_menu_event(
             }
         }
         MenuAction::FocusRoot => {
-            for descendant in q_children.iter_descendants(ev.source) {
-                if q_buttons.contains(descendant) {
-                    ev.propagate(false);
-                    focus.set(descendant, FocusCause::Navigated);
-                    break;
-                }
+            if let Some(button) = descendant_with(ev.source, &q_children, &q_buttons) {
+                ev.propagate(false);
+                focus.set(button, FocusCause::Navigated);
             }
         }
     }
@@ -574,10 +560,7 @@ fn close_popup_on_reselect(
     mut focus: ResMut<InputFocus>,
     mut commands: Commands,
 ) {
-    if let Some(popup) = q_parents
-        .iter_ancestors(ev.event_target())
-        .find(|ancestor| q_popup.contains(*ancestor))
-    {
+    if let Some(popup) = nearest_with(ev.event_target(), &q_parents, &q_popup) {
         close_select_popup(
             popup,
             &q_parents,
@@ -643,13 +626,7 @@ fn sync_selected_index(
     mut q_select: Query<&mut SelectedIndex, With<SelectFrame>>,
 ) {
     for (row, row_index) in q_newly_selected.iter() {
-        let Some(select_ent) = q_parents
-            .iter_ancestors(row)
-            .find(|ancestor| q_select.contains(*ancestor))
-        else {
-            continue;
-        };
-        if let Ok(mut index) = q_select.get_mut(select_ent)
+        if let Some(mut index) = nearest_get_mut(row, &q_parents, &mut q_select)
             && index.0 != row_index.0
         {
             index.0 = row_index.0;
@@ -687,13 +664,10 @@ fn sync_caption(
             .get(index.0)
             .map(|(label, _)| label.clone())
             .unwrap_or_default();
-        for descendant in q_children.iter_descendants(select_ent) {
-            if let Ok(mut caption) = q_caption.get_mut(descendant) {
-                if caption.0 != label {
-                    caption.0 = label;
-                }
-                break;
-            }
+        if let Some(mut caption) = descendant_get_mut(select_ent, &q_children, &mut q_caption)
+            && caption.0 != label
+        {
+            caption.0 = label;
         }
     }
 }
@@ -739,29 +713,26 @@ fn sync_select_disabled(
     mut commands: Commands,
 ) {
     for select_ent in q_newly_disabled.iter() {
-        for descendant in q_children.iter_descendants(select_ent) {
-            if q_button.contains(descendant) {
-                commands.entity(descendant).insert(InteractionDisabled);
-            } else if q_popup.contains(descendant) {
-                close_select_popup(
-                    descendant,
-                    &q_parents,
-                    &q_children,
-                    &q_is_select,
-                    &q_button,
-                    &mut focus,
-                    &mut commands,
-                );
-            }
+        if let Some(button) = descendant_with(select_ent, &q_children, &q_button) {
+            commands.entity(button).insert(InteractionDisabled);
+        }
+        if let Some(popup) = descendant_with(select_ent, &q_children, &q_popup) {
+            close_select_popup(
+                popup,
+                &q_parents,
+                &q_children,
+                &q_is_select,
+                &q_button,
+                &mut focus,
+                &mut commands,
+            );
         }
     }
     removed_disabled.read().for_each(|ent| {
-        if q_is_select.contains(ent) {
-            for descendant in q_children.iter_descendants(ent) {
-                if q_button.contains(descendant) {
-                    commands.entity(descendant).remove::<InteractionDisabled>();
-                }
-            }
+        if q_is_select.contains(ent)
+            && let Some(button) = descendant_with(ent, &q_children, &q_button)
+        {
+            commands.entity(button).remove::<InteractionDisabled>();
         }
     });
 }
@@ -778,15 +749,12 @@ fn sync_select_width(
         if width <= 0.0 {
             continue;
         }
-        for descendant in q_children.iter_descendants(select_ent) {
-            if q_popup.contains(descendant) {
-                if let Ok(mut node) = q_node.get_mut(descendant) {
-                    let target = px(width);
-                    if node.min_width != target {
-                        node.min_width = target;
-                    }
-                }
-                break;
+        if let Some(popup) = descendant_with(select_ent, &q_children, &q_popup)
+            && let Ok(mut node) = q_node.get_mut(popup)
+        {
+            let target = px(width);
+            if node.min_width != target {
+                node.min_width = target;
             }
         }
     }
@@ -868,16 +836,15 @@ fn measure_select_width(
                 + val_px(size::SPACE, em_px);
             let button_target = px((widest_row + chrome).ceil());
             let caption_target = px(widest_label.ceil());
-            for descendant in q_children.iter_descendants(child_of.parent()) {
-                if q_button.contains(descendant) {
-                    if let Ok(mut node) = q_nodes.get_mut(descendant) {
-                        node.width = button_target;
-                    }
-                } else if q_caption.contains(descendant)
-                    && let Ok(mut node) = q_nodes.get_mut(descendant)
-                {
-                    node.width = caption_target;
-                }
+            if let Some(button) = descendant_with(child_of.parent(), &q_children, &q_button)
+                && let Ok(mut node) = q_nodes.get_mut(button)
+            {
+                node.width = button_target;
+            }
+            if let Some(caption) = descendant_with(child_of.parent(), &q_children, &q_caption)
+                && let Ok(mut node) = q_nodes.get_mut(caption)
+            {
+                node.width = caption_target;
             }
         }
         commands.entity(measure_ent).despawn();
@@ -908,9 +875,7 @@ fn update_option_styles(
     mut commands: Commands,
 ) {
     for (option_ent, disabled, selected, hovered, bg_color, font_color) in q_options.iter() {
-        let check_ent = q_children
-            .iter_descendants(option_ent)
-            .find(|en| q_check.contains(*en));
+        let check_ent = descendant_with(option_ent, &q_children, &q_check);
         set_option_styles(
             option_ent,
             check_ent,
@@ -949,9 +914,7 @@ fn update_option_styles_remove(
             if let Ok((option_ent, disabled, selected, hovered, bg_color, font_color)) =
                 q_options.get(ent)
             {
-                let check_ent = q_children
-                    .iter_descendants(option_ent)
-                    .find(|en| q_check.contains(*en));
+                let check_ent = descendant_with(option_ent, &q_children, &q_check);
                 set_option_styles(
                     option_ent,
                     check_ent,

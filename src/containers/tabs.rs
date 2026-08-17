@@ -37,6 +37,7 @@ use crate::focus::FocusIndicator;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
 use crate::utils::anim::{UI_ANIM_RATE, approach};
+use crate::utils::hierarchy::{descendant_with, nearest_with};
 use crate::{display, tokens};
 
 // Width the indicator node is spawned at; it is scaled to the selected tab's
@@ -360,10 +361,7 @@ fn strip_tabs(
     q_strips: &Query<(), With<TabStrip>>,
     is_tab: impl Fn(Entity) -> bool,
 ) -> Vec<Entity> {
-    let Some(strip) = q_children
-        .iter_descendants(root)
-        .find(|descendant| q_strips.contains(*descendant))
-    else {
+    let Some(strip) = descendant_with(root, q_children, q_strips) else {
         return Vec::new();
     };
     let Ok(children) = q_children.get(strip) else {
@@ -392,10 +390,7 @@ fn select_tab_on_activate(
     if disabled {
         return;
     }
-    let Some(root) = q_parents
-        .iter_ancestors(tab_ent)
-        .find(|ancestor| q_roots.contains(*ancestor))
-    else {
+    let Some(root) = nearest_with(tab_ent, &q_parents, &q_roots) else {
         return;
     };
     let tabs = strip_tabs(root, &q_children, &q_strips, |tab| q_tabs.contains(tab));
@@ -654,10 +649,7 @@ fn update_tab_indicator(
             }
             offset += width;
         }
-        let Some(strip) = q_children
-            .iter_descendants(root)
-            .find(|descendant| q_strips.contains(*descendant))
-        else {
+        let Some(strip) = descendant_with(root, &q_children, &q_strips) else {
             continue;
         };
         let Some(indicator_ent) = q_children.get(strip).ok().and_then(|children| {

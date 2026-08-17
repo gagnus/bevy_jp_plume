@@ -28,6 +28,7 @@ use crate::font_styles::TextStyleRelay;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::descendant_get;
 
 const SLIDE_GRADIENT_AMOUNT: f32 = 0.3;
 
@@ -143,9 +144,14 @@ fn update_switch_styles(
         ),
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<ToggleSwitchOutline>>,
     q_slide: Query<
-        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
         With<ToggleSwitchSlide>,
     >,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
@@ -178,9 +184,14 @@ fn update_switch_styles_remove(
         With<ToggleSwitchFrame>,
     >,
     q_children: Query<&Children>,
-    q_outline: Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
+    q_outline: Query<(Entity, &ThemeBorderToken), With<ToggleSwitchOutline>>,
     q_slide: Query<
-        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
         With<ToggleSwitchSlide>,
     >,
     mut q_slide_anim: Query<&mut AnimState, With<ToggleSwitchSlide>>,
@@ -217,23 +228,25 @@ fn apply_switch_styles(
     checked: bool,
     pill_now: (&ThemeBackgroundToken, &GradientAmount),
     q_children: &Query<&Children>,
-    q_outline: &Query<&ThemeBorderToken, With<ToggleSwitchOutline>>,
+    q_outline: &Query<(Entity, &ThemeBorderToken), With<ToggleSwitchOutline>>,
     q_slide: &Query<
-        (&ThemeBackgroundToken, &GradientAmount, Has<BoxShadow>),
+        (
+            Entity,
+            &ThemeBackgroundToken,
+            &GradientAmount,
+            Has<BoxShadow>,
+        ),
         With<ToggleSwitchSlide>,
     >,
     q_slide_anim: &mut Query<&mut AnimState, With<ToggleSwitchSlide>>,
     commands: &mut Commands,
 ) {
-    let Some(outline_ent) = q_children
-        .iter_descendants(switch_ent)
-        .find(|en| q_outline.contains(*en))
+    let Some((outline_ent, outline_border)) = descendant_get(switch_ent, q_children, q_outline)
     else {
         return;
     };
-    let Some(slide_ent) = q_children
-        .iter_descendants(switch_ent)
-        .find(|en| q_slide.contains(*en))
+    let Some((slide_ent, slide_token, slide_amount, has_box_shadow)) =
+        descendant_get(switch_ent, q_children, q_slide)
     else {
         return;
     };
@@ -241,13 +254,6 @@ fn apply_switch_styles(
     if let Ok(mut slide_anim) = q_slide_anim.get_mut(slide_ent) {
         slide_anim.set_target(if checked { 1.0 } else { 0.0 });
     }
-
-    let outline_border = q_outline
-        .get(outline_ent)
-        .expect("outline entity was just found via q_outline::contains");
-    let (slide_token, slide_amount, has_box_shadow) = q_slide
-        .get(slide_ent)
-        .expect("slide entity was just found via q_slide::contains");
     set_switch_styles(
         switch_ent,
         outline_ent,

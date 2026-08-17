@@ -32,6 +32,7 @@ use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
 use crate::tokens;
+use crate::utils::hierarchy::nearest_with;
 
 /// Tooltip text shown after hovering this control (or any descendant).
 #[derive(Component, Clone, PartialEq, Default, Reflect)]
@@ -140,9 +141,7 @@ fn on_pointer_move(
     if pointer.entity != pointer.original_event_target() {
         return;
     }
-    let hovered = core::iter::once(pointer.entity)
-        .chain(q_childof.iter_ancestors(pointer.entity))
-        .find(|entity| q_sources.contains(*entity));
+    let hovered = nearest_with(pointer.entity, &q_childof, &q_sources);
     let now = time.elapsed_secs_f64();
     use TooltipState::*;
     controller.state = match (controller.state, hovered) {

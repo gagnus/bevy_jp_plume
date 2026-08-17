@@ -20,6 +20,8 @@ use bevy::ui::Pressed;
 use bevy::window::CustomCursor;
 use bevy::window::{CursorIcon, SystemCursorIcon, Window};
 
+use crate::utils::hierarchy::nearest_get;
+
 /// A resource that specifies the cursor icon to be used when the mouse is not hovering over
 /// any other entity. This is used to set the default cursor icon for the window.
 #[derive(Deref, Resource, Debug, Clone, Default, Reflect)]
@@ -106,13 +108,9 @@ pub(crate) fn update_cursor(
         .unwrap_or_else(|| {
             hover_map
                 .and_then(|hover_map| match hover_map.get(&PointerId::Mouse) {
-                    Some(hover_set) => hover_set.keys().find_map(|entity| {
-                        cursor_query.get(*entity).ok().or_else(|| {
-                            parent_query
-                                .iter_ancestors(*entity)
-                                .find_map(|e| cursor_query.get(e).ok())
-                        })
-                    }),
+                    Some(hover_set) => hover_set
+                        .keys()
+                        .find_map(|entity| nearest_get(*entity, &parent_query, &cursor_query)),
                     None => None,
                 })
                 .unwrap_or(&r_default_cursor)

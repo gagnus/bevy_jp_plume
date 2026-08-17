@@ -12,6 +12,7 @@ use bevy::ui::Checked;
 use bevy::ui_widgets::{Checkbox, RadioButton, RadioGroup, SliderRange, SliderValue};
 
 use crate::controls::ColorPickerValue;
+use crate::utils::hierarchy::nearest_with;
 
 /// Programmatically set a control's value, whatever kind of control it is. The
 /// control's state and its mirror follow; no `ValueChange` is emitted, so an app
@@ -62,9 +63,7 @@ fn on_set_bool(
 
     // Checking a grouped radio has to clear its siblings, exactly as a click does.
     if q_radio.contains(ev.entity)
-        && let Some(group) = q_parents
-            .iter_ancestors(ev.entity)
-            .find(|ancestor| q_groups.contains(*ancestor))
+        && let Some(group) = nearest_with(ev.entity, &q_parents, &q_groups)
     {
         for descendant in q_children.iter_descendants(group) {
             if descendant != ev.entity && q_radio.contains(descendant) {

@@ -37,6 +37,7 @@ use crate::cursor::EntityCursor;
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme};
 use crate::tokens;
+use crate::utils::hierarchy::nearest_with;
 
 /// A single-line text input: a themed frame (background, border, sizing) wrapping an
 /// inner editable field and an optional suffix label. Enter releases focus —
@@ -833,9 +834,7 @@ fn sync_adornment_disabled(
     // A button spawned into an already-disabled frame's adornment (imm rebuilds
     // its container content) starts disabled too.
     for button_ent in q_new_buttons.iter() {
-        let disabled = q_childof
-            .iter_ancestors(button_ent)
-            .find(|&ancestor| q_container.contains(ancestor))
+        let disabled = nearest_with(button_ent, &q_childof, &q_container)
             .and_then(|container| q_childof.get(container).ok())
             .and_then(|frame| q_frames.get(frame.parent()).ok())
             .unwrap_or(false);

@@ -27,6 +27,7 @@ use crate::focus::FocusIndicator;
 use crate::theme::InheritableThemeTextToken;
 use crate::tokens;
 use crate::utils::anim::AnimState;
+use crate::utils::hierarchy::descendant_get_mut;
 
 /// A disclosure twisty: a chevron that points right when closed and eases through
 /// a quarter turn to point down when open. No fill or border.
@@ -131,10 +132,8 @@ fn apply(
     commands: &mut Commands,
 ) {
     for (disclosure_ent, disabled, checked) in disclosures {
-        for descendant in q_children.iter_descendants(disclosure_ent) {
-            if let Ok(mut chevron) = q_chevron.get_mut(descendant) {
-                chevron.set_target(if checked { 1.0 } else { 0.0 });
-            }
+        if let Some(mut chevron) = descendant_get_mut(disclosure_ent, q_children, q_chevron) {
+            chevron.set_target(if checked { 1.0 } else { 0.0 });
         }
 
         let text_token = if disabled {
