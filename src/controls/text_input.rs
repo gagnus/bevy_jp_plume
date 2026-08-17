@@ -4,6 +4,7 @@ use bevy::camera::visibility::Visibility;
 use bevy::ecs::change_detection::{DetectChanges, DetectChangesMut};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
+use bevy::ecs::event::EntityEvent;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::RemovedComponents;
 use bevy::ecs::observer::On;
@@ -11,8 +12,10 @@ use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res, ResMut};
-use bevy::input_focus::InputFocus;
+use bevy::input::ButtonState;
+use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::input_focus::{FocusedInput, InputFocus};
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
@@ -35,7 +38,8 @@ use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, Theme
 use crate::tokens;
 
 /// A single-line text input: a themed frame (background, border, sizing) wrapping an
-/// inner editable field and an optional suffix label.
+/// inner editable field and an optional suffix label. Enter releases focus —
+/// an app treating blur as its commit signal gets Enter-to-commit with it.
 ///
 /// # Emitted events
 /// * [`ValueChange<String>`](bevy::ui_widgets::ValueChange) on each keystroke while focused.
@@ -96,6 +100,7 @@ impl PlumeTextInput {
                 (
                     text_input_field(props.visible_width, props.max_characters)
                     {props.filter.map(|filter| bsn! { template_value(filter) })}
+                    on(text_input_on_enter)
                     Children [
                         {props.placeholder.map(|placeholder| bsn_list![
                             text_input_placeholder(placeholder),
@@ -200,6 +205,26 @@ pub(crate) fn text_input_field(
         }
         template_value(LineHeight::RelativeToFont(20.0 / size::MEDIUM_FONT_PX))
         TextCursorStyle::default()
+    }
+}
+
+// Enter releases focus — a single-line field's "done". Only on the plain text
+// input's field: the number input's own key handler commits and steps too.
+fn text_input_on_enter(
+    key_input: On<FocusedInput<KeyboardInput>>,
+    query_fields: Query<(), With<TextInputField>>,
+    mut focus: ResMut<InputFocus>,
+) {
+    if key_input.input.state != ButtonState::Pressed
+        || !query_fields.contains(key_input.event_target())
+    {
+        return;
+    }
+    if matches!(
+        key_input.input.key_code,
+        KeyCode::Enter | KeyCode::NumpadEnter
+    ) {
+        focus.clear();
     }
 }
 

@@ -22,7 +22,7 @@ use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::{ImmEntity, ImmId, imm_id};
 
-use super::caps::{ImmPlumeChecked, ImmPlumeMenu, ImmPlumeTooltip};
+use super::caps::{ImmPlumeChecked, ImmPlumeFocus, ImmPlumeMenu, ImmPlumeTooltip};
 use super::widgets::{ImmMenu, imm_menu_popup_on};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
@@ -253,6 +253,11 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
     /// the `menu` call, so hover-revealed chrome can stay while the menu is up.
     pub fn menu_open(&self) -> bool {
         self.e.menu_open().is_some()
+    }
+
+    /// Whether keyboard focus is in this widget — itself or a direct child.
+    pub fn focused(&self) -> bool {
+        self.e.focused()
     }
 
     /// Rich tooltip: `content` builds the panel body each frame while the

@@ -144,6 +144,23 @@ where
     }
 }
 
+/// Widget-side entry point for keyboard-focus state; the accesses ride on
+/// [`CapabilityPlumeText`], which already requests them.
+pub trait ImmPlumeFocus {
+    /// Whether keyboard focus is on this widget or a direct child — where a
+    /// text input keeps its editable field.
+    fn focused(&self) -> bool;
+}
+
+impl<Cap> ImmPlumeFocus for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeText>,
+{
+    fn focused(&self) -> bool {
+        focused_within(self)
+    }
+}
+
 // The focused entity is the editable field child of a text-input frame, so a
 // direct-children check covers the number input.
 fn focused_within<Cap: CapSet>(entity: &ImmEntity<'_, '_, '_, Cap>) -> bool {
