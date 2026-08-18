@@ -21,7 +21,7 @@ pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePale
         neutrals: OklchaArray {
             hue: neutral_hue,
             chroma: 0.008,
-            l: [0.99, 0.88, 0.79, 0.74, 0.69, 0.71, 0.73],
+            l: [0.92, 0.88, 0.82, 0.77, 0.74, 0.71, 0.69],
         },
         accent: OklchaArray {
             hue,
@@ -36,7 +36,7 @@ pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePale
         disabled: OklchaArray {
             hue: neutral_hue,
             chroma: 0.008,
-            l: [0.34, 0.74],
+            l: [0.63, 0.78],
         },
         contrast: Oklcha::new(1.0, 0.0, 0.0, 1.0),
         axes: default_axis_colors(),
