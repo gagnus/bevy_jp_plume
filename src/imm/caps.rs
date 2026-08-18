@@ -13,7 +13,7 @@ use bevy_immediate::{
     CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImmId, ImplCap, imm_id,
 };
 
-use crate::containers::{CloseRequested, SplitCollapsible, SplitFraction};
+use crate::containers::{CloseRequested, SplitSize};
 use crate::controls::{ColorPickerValue, MenuOpen, SelectedIndex, SetValue, TextInputValue};
 use crate::display::TooltipShowing;
 use crate::utils::numeric::Numeric;
@@ -28,15 +28,18 @@ pub struct CapabilityPlumeValue;
 impl ImmCapability for CapabilityPlumeValue {
     fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         cap_req.request_component_write::<NewValueChange<f32>>(app.world_mut());
+        cap_req.request_component_write::<NewValueChange<SplitSize>>(app.world_mut());
         cap_req.request_component_read::<SliderValue>(app.world_mut());
-        cap_req.request_component_read::<SplitFraction>(app.world_mut());
-        cap_req.request_component_read::<SplitCollapsible>(app.world_mut());
+        cap_req.request_component_read::<SplitSize>(app.world_mut());
         cap_req.request_component_read::<Pressed>(app.world_mut());
         cap_req.request_component_read::<Children>(app.world_mut());
         cap_req.request_resource_read::<InputFocus>(app.world_mut());
 
         if !app.is_plugin_added::<TrackValueChangePlugin<f32>>() {
             app.add_plugins(TrackValueChangePlugin::<f32>::default());
+        }
+        if !app.is_plugin_added::<TrackValueChangePlugin<SplitSize>>() {
+            app.add_plugins(TrackValueChangePlugin::<SplitSize>::default());
         }
     }
 }
@@ -95,50 +98,50 @@ where
 
 /// Widget-side entry point for a splitter's divider position.
 pub trait ImmPlumeSplit {
-    /// Two-way sync between `fraction` and the entity's [`SplitFraction`]; sets
-    /// `changed` when a drag (or a layout clamp) landed in `fraction`.
-    fn plume_split(self, fraction: &mut f32, changed: &mut bool) -> Self;
+    /// Two-way sync between `split` and the entity's [`SplitSize`]; sets
+    /// `changed` when a drag (or a layout snap) landed in `split`.
+    fn plume_split(self, split: &mut SplitSize, changed: &mut bool) -> Self;
 }
 
 impl<Cap> ImmPlumeSplit for ImmEntity<'_, '_, '_, Cap>
 where
     Cap: ImplCap<CapabilityPlumeValue>,
 {
-    fn plume_split(mut self, fraction: &mut f32, changed: &mut bool) -> Self {
+    fn plume_split(mut self, split: &mut SplitSize, changed: &mut bool) -> Self {
         let state = 'read: {
             let Ok(mut entity) = self.cap_get_entity_mut() else {
                 break 'read None;
             };
             let pending = {
-                let Some(mut mailbox) = entity.get_mut::<NewValueChange<f32>>() else {
+                let Some(mut mailbox) = entity.get_mut::<NewValueChange<SplitSize>>() else {
                     break 'read None;
                 };
                 NewValueChange::take(&mut mailbox)
             };
-            let Some(widget_value) = entity.get::<SplitFraction>().map(|split| split.0) else {
+            let Some(widget_value) = entity.get::<SplitSize>().copied() else {
                 break 'read None;
             };
             Some((pending, widget_value))
         };
 
-        // Not spawned yet; the scene seeds the fraction, and this is the mailbox
+        // Not spawned yet; the scene seeds the size, and this is the mailbox
         // the divider's `ValueChange` will arrive in.
         let Some((pending, widget_value)) = state else {
             self.entity_commands()
-                .insert(NewValueChange::<f32>::default());
+                .insert(NewValueChange::<SplitSize>::default());
             return self;
         };
 
         // No interaction guard, unlike `plume_value`: the splitter writes its own
-        // `SplitFraction` as it drags, so the app value is already in step. The guard
+        // `SplitSize` as it drags, so the app value is already in step. The guard
         // would suppress what must get through — a drag clamped by a pane's minimum.
         if let Some(new_value) = pending
-            && new_value != *fraction
+            && new_value != *split
         {
-            *fraction = new_value;
+            *split = new_value;
             *changed = true;
-        } else if *fraction != widget_value {
-            self.entity_commands().insert(SplitFraction(*fraction));
+        } else if *split != widget_value {
+            self.entity_commands().insert(*split);
         }
         self
     }

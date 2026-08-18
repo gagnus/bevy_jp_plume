@@ -34,12 +34,10 @@ pub(crate) use separator::SeparatorPlugin;
 pub use separator::{Separator, SeparatorBleed, separator};
 pub use space::space;
 pub use splitter::{
-    PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide,
-    SplitFraction, SplitMin,
+    PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitMin,
+    SplitPane, SplitSize, SplitSized,
 };
-pub(crate) use splitter::{
-    SplitPane, SplitterPlugin, splitter_divider, splitter_frame, splitter_pane,
-};
+pub(crate) use splitter::{SplitterPlugin, splitter_divider, splitter_frame, splitter_pane};
 pub use tabs::{
     PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps, TabTarget, tab_body, tab_label,
 };

@@ -137,7 +137,6 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             column_gap: size::SPACE,
             min_height: size::ROW_HEIGHT,
             padding: UiRect::left(size::SPACE),
-            border_radius: size::CORNER_RADIUS_SMALL,
         }
         MenuButtonRow
         Hovered
@@ -1116,7 +1115,7 @@ fn set_menu_button_styles(
 
     // Bar buttons round like buttons; rows in a menu run square, edge to edge.
     let radius = if bar {
-        BorderRadius::all(size::CORNER_RADIUS_SMALL)
+        BorderRadius::all(size::CORNER_RADIUS)
     } else {
         BorderRadius::ZERO
     };

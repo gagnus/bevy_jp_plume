@@ -26,11 +26,11 @@ use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
-    PopupPlacement, ScrollAxis, SplitAxis, SplitCollapsible, SplitPane, column, dialog_body,
-    dialog_frame, flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content,
-    scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
-    splitter_divider, splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip,
-    tab_strip_frame, tabs_frame,
+    PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
+    flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content, scroll_frame,
+    scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
+    splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
+    tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -209,24 +209,27 @@ pub trait PlumeImm<'w, 's> {
 
     /// Two panes side by side, with a divider the user drags to re-proportion them.
     ///
-    /// `fraction` is the first pane's share of the width, `0.0..=1.0`, written back
-    /// as the divider moves; `.changed` reports a move. Chain
+    /// `split` holds the sized pane's width (first pane unless
+    /// [`sized_pane`](ImmResponse::sized_pane) says otherwise), written back as
+    /// the divider moves; `.changed` reports a move. A `Percent` size keeps the
+    /// split proportional when the splitter resizes; `Px`/`Em` anchor the sized
+    /// pane so only the other pane absorbs the change. Chain
     /// [`min_panes`](ImmResponse::min_panes) to stop either pane getting too small.
     ///
     /// Give each pane one container of its own: a pane is bare layout with no
     /// direction or spacing, so a second child lands beside the first.
     fn split_horizontal(
         &mut self,
-        fraction: &mut f32,
+        split: &mut SplitSize,
         first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
         second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split>;
 
     /// [`split_horizontal`](Self::split_horizontal) with the panes stacked and
-    /// the divider across them; `fraction` is the top pane's share of the height.
+    /// the divider across them; `split` holds the sized pane's height.
     fn split_vertical(
         &mut self,
-        fraction: &mut f32,
+        split: &mut SplitSize,
         first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
         second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split>;
@@ -920,21 +923,21 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn split_horizontal(
         &mut self,
-        fraction: &mut f32,
+        split_size: &mut SplitSize,
         first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
         second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split> {
-        split(self, SplitAxis::Horizontal, fraction, first, second)
+        split(self, SplitAxis::Horizontal, split_size, first, second)
     }
 
     #[track_caller]
     fn split_vertical(
         &mut self,
-        fraction: &mut f32,
+        split_size: &mut SplitSize,
         first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
         second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     ) -> ImmResponse<'_, 'w, 's, kind::Split> {
-        split(self, SplitAxis::Vertical, fraction, first, second)
+        split(self, SplitAxis::Vertical, split_size, first, second)
     }
 
     #[track_caller]
@@ -1832,49 +1835,33 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
 fn split<'r, 'w, 's>(
     ui: &'r mut Ui<'w, 's>,
     axis: SplitAxis,
-    fraction: &mut f32,
+    split_size: &mut SplitSize,
     first: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
     second: impl FnOnce(&mut PaneUi<'_, 'w, 's>),
 ) -> ImmResponse<'r, 'w, 's, kind::Split> {
-    let initial = *fraction;
+    let initial = *split_size;
     let mut changed = false;
     let entity = ui
         .ch_loc(loc_id(()))
-        .on_spawn_apply_scene(move || splitter_frame(axis, initial))
-        .plume_split(fraction, &mut changed);
-    // A collapsed pane's contents are not built at all: nothing measures, so
-    // nothing can prop the pane back open, and its imm state is released.
-    let collapse = entity
-        .cap_get_component::<SplitCollapsible>()
-        .ok()
-        .flatten()
-        .copied()
-        .unwrap_or_default();
-    let split = *fraction;
+        .on_spawn_apply_scene(move || splitter_frame(axis, initial, SplitPane::First))
+        .plume_split(split_size, &mut changed);
+    let split = *split_size;
     let entity = entity.add_ui(|ui| {
         let pane = ui
             .ch_id("split_first")
             .on_spawn_apply_scene(|| splitter_pane(SplitPane::First));
-        if !(collapse.first && split == 0.0) {
-            pane.add_ui(|ui| {
-                first(&mut PaneUi {
-                    ui,
-                    fraction: split,
-                })
-            });
+        // A closed pane's contents are not built at all: nothing measures, so
+        // nothing can prop the pane back open, and its imm state is released.
+        if split.closed != Some(SplitPane::First) {
+            pane.add_ui(|ui| first(&mut PaneUi { ui, split }));
         }
         ui.ch_id("split_divider")
             .on_spawn_apply_scene(move || splitter_divider(axis));
         let pane = ui
             .ch_id("split_second")
             .on_spawn_apply_scene(|| splitter_pane(SplitPane::Second));
-        if !(collapse.second && split == 1.0) {
-            pane.add_ui(|ui| {
-                second(&mut PaneUi {
-                    ui,
-                    fraction: split,
-                })
-            });
+        if split.closed != Some(SplitPane::Second) {
+            pane.add_ui(|ui| second(&mut PaneUi { ui, split }));
         }
     });
     respond(entity, changed)

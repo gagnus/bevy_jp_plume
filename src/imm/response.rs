@@ -28,7 +28,7 @@ use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::constants::size;
 use crate::containers::{
     BodyGap, BodyPadding, PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed,
-    SplitCollapsible, SplitDividerAutoHide, SplitMin,
+    SplitCollapsible, SplitDividerAutoHide, SplitMin, SplitPane, SplitSized,
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuButtonRole, MenuShortcutText, NoDrag,
@@ -1043,6 +1043,17 @@ impl ImmResponse<'_, '_, '_, kind::Split> {
         struct MinPanes;
         if self.key_changed::<MinPanes>(format!("{first:?}{second:?}")) {
             self.e.entity_commands().insert(SplitMin { first, second });
+        }
+        self
+    }
+
+    /// Which pane the bound [`SplitSize`](crate::containers::SplitSize) describes.
+    /// The other pane flexes into the rest, so it alone absorbs resizes of the
+    /// splitter itself. Defaults to the first pane.
+    pub fn sized_pane(mut self, pane: SplitPane) -> Self {
+        struct SizedPaneKey;
+        if self.key_changed::<SizedPaneKey>(pane) {
+            self.e.entity_commands().insert(SplitSized(pane));
         }
         self
     }

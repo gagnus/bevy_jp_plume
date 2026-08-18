@@ -44,7 +44,7 @@ use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutte
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
 use crate::font_styles::TextStyleRelay;
-use crate::rounded_corners::RoundedCorners;
+use crate::style::RoundedCorners;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, set_optional_background,
 };
@@ -99,8 +99,6 @@ pub struct PlumeSelectProps {
     pub options: Vec<(String, bool)>,
     /// Index of the initially selected option.
     pub selected: usize,
-    /// Corner roundedness.
-    pub corners: RoundedCorners,
     /// Maximum visible options before it scrolls.
     pub max_visible: usize,
 }
@@ -110,7 +108,6 @@ impl Default for PlumeSelectProps {
         Self {
             options: Vec::new(),
             selected: 0,
-            corners: Default::default(),
             max_visible: 8,
         }
     }
@@ -165,7 +162,7 @@ impl PlumeSelect {
                             }
                         },
                         @variant: ButtonVariant::Normal,
-                        @corners: {props.corners},
+                        @border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS_SMALL)},
                     }
                     ActivateOnPress
                     MenuButton

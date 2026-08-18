@@ -23,6 +23,7 @@ pub use widgets::{
     PlumeImm, tab_header,
 };
 
+use crate::containers::SplitSize;
 pub use crate::utils::numeric::Numeric;
 
 /// Capability set powering plume's immediate-mode layer.
@@ -197,18 +198,18 @@ impl<'w, 's> PlumeRoot<'w, 's> {
 }
 
 /// The [`Ui`] a splitter hands each of its panes: a `Ui` in every respect, plus the
-/// divider's settled [`fraction`](Self::fraction), which the app's own binding cannot
+/// divider's settled [`split`](Self::split), which the app's own binding cannot
 /// supply while it is on loan to the [`split_horizontal`](PlumeImm::split_horizontal) call.
 pub struct PaneUi<'a, 'w, 's> {
     pub(crate) ui: &'a mut Ui<'w, 's>,
-    pub(crate) fraction: f32,
+    pub(crate) split: SplitSize,
 }
 
 impl PaneUi<'_, '_, '_> {
-    /// The *first* pane's share of the splitter, `0.0..=1.0`, as the divider has
-    /// settled it. A [collapsed](ImmResponse::collapsible) pane reads exactly `0.0` or `1.0`.
-    pub fn fraction(&self) -> f32 {
-        self.fraction
+    /// The splitter's state as the divider has settled it: the sized pane's
+    /// length, and which pane a drag has [closed](ImmResponse::collapsible), if any.
+    pub fn split(&self) -> SplitSize {
+        self.split
     }
 }
 

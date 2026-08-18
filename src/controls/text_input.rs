@@ -129,7 +129,7 @@ pub(crate) fn text_input_frame() -> impl Scene {
             height: size::ROW_HEIGHT,
             align_items: AlignItems::Center,
             padding: UiRect::new(size::SPACE, size::SPACE, size::em_from_px(1.5), Val::ZERO),
-            border_radius: size::CORNER_RADIUS,
+            border_radius: size::CORNER_RADIUS_SMALL,
             min_width: size::em_from_px(40.0),
         }
         DefaultWidth(size::em_from_px(124.0))
@@ -165,7 +165,7 @@ pub(crate) fn text_input_outline() -> impl Scene {
             top: Val::ZERO,
             bottom: Val::ZERO,
             border: size::HAIRLINE,
-            border_radius: size::CORNER_RADIUS,
+            border_radius: size::CORNER_RADIUS_SMALL,
         }
         TextInputOutline
         // Em-sized chrome needs the chain's `EmSize`.

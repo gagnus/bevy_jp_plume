@@ -9,7 +9,7 @@ use bevy_jp_plume::retained::{
     PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab,
     PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected,
     SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer,
-    icon, menu_anchor, row, screen, separator, small_caps, space, tab_body,
+    icon, menu_anchor, row, screen, separator, small_caps, space,
 };
 
 #[path = "common/mod.rs"]
@@ -32,6 +32,8 @@ fn main() {
                 push_tree_rows,
                 push_documents,
                 push_hud_visible,
+                push_panel_tab,
+                push_rem_value,
             ),
         );
     app.run();
@@ -96,6 +98,43 @@ impl Bound {
 // Marks a tree row with the node it draws, so the filter/fold system can hide it.
 #[derive(Component, Clone, Copy, Default)]
 struct TreeRow(usize);
+
+// Marks a panel tab's body with the tab that shows it; the strip is bodyless,
+// so `push_panel_tab` does the swapping.
+#[derive(Component, Clone, Copy)]
+struct TabPane(Tab);
+
+// Marks the footer's live rem readout.
+#[derive(Component, Default, Clone)]
+struct RemValue;
+
+fn push_panel_tab(state: Res<Inspector>, mut q_panes: Query<(&TabPane, &mut Node)>) {
+    if !state.is_changed() {
+        return;
+    }
+    for (pane, mut node) in q_panes.iter_mut() {
+        let wanted = if pane.0 == state.tab {
+            Display::Flex
+        } else {
+            Display::None
+        };
+        if node.display != wanted {
+            node.display = wanted;
+        }
+    }
+}
+
+fn push_rem_value(rem_size: Res<RemSize>, mut q_values: Query<&mut Text, With<RemValue>>) {
+    if !rem_size.is_changed() {
+        return;
+    }
+    for mut text in q_values.iter_mut() {
+        let wanted = format!("{}", rem_size.0);
+        if text.0 != wanted {
+            text.0 = wanted;
+        }
+    }
+}
 
 // Marks the per-node controls, which bind by index rather than by field.
 #[derive(Component, Clone, Copy)]
@@ -340,17 +379,19 @@ fn root() -> impl Scene {
         screen()
         template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
         Children [
-            menu_bar(),
+            top_bar(),
             (
                 // The viewport and the panel, with a divider to re-proportion
-                // them. The panel's old `width: 25%` is the starting fraction
-                // and its `min_width` is now the splitter's floor, so the drag
-                // stops where the layout would have anyway. The viewport's
-                // minimum is `Auto` — whatever its content needs.
+                // them. The panel is the sized pane, anchored in em so it holds
+                // its width (and tracks the font size) while the viewport
+                // absorbs window resizes; `min_second` is its floor, so the
+                // drag stops where the layout would have anyway. The viewport
+                // has no floor of its own and gives all the way down.
                 @PlumeSplitter {
-                    @fraction: 0.75,
-                    @min_first: em(9),
-                    @min_second: em(20),
+                    @size: em(30),
+                    @sized_pane: SplitPane::Second,
+                    @min_first: Val::ZERO,
+                    @min_second: em(28),
                     @collapsible_second: true,
                     @first: bsn_list![documents()],
                     @second: bsn_list![panel()],
@@ -362,10 +403,46 @@ fn root() -> impl Scene {
     }
 }
 
+// The menus and the document strip share one line, the retained twin of the imm
+// example's `top_bar`.
+fn top_bar() -> impl Scene {
+    let tabs: Vec<_> = (0..MAX_DOCUMENTS).map(document_tab).collect();
+    bsn! {
+        row()
+        Children [
+            menu_bar(),
+            separator(),
+            (
+                row()
+                Children [
+                    (
+                        // No `@body`, and no tab names one: a strip that only
+                        // reports which document is showing.
+                        @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
+                        DocTabs
+                        Node { flex_basis: Val::ZERO, flex_grow: 1.0 }
+                        on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
+                            s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
+                        })
+                    ),
+                    (
+                        @PlumeToolButton {
+                            @caption: bsn! { icon(font_awesome::solid::PLUS) },
+                            @variant: ButtonVariant::Plain,
+                        }
+                        Flat
+                        Tooltip("Open a new document")
+                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
+                    ),
+                ]
+            ),
+        ]
+    }
+}
+
 fn menu_bar() -> impl Scene {
     bsn! {
         @PlumeMenuBar
-        ThemeBackgroundSlot(ThemeSlot::Neutral2)
         Children [
             (
                 @PlumeMenuButton { @label: "File" }
@@ -452,10 +529,9 @@ fn push_hud_visible(state: Res<Inspector>, mut q_hud: Query<&mut Node, With<HudR
 #[derive(Component, Default, Clone)]
 struct HudRoot;
 
-// The strip of open documents over the one viewport they share, the retained twin
-// of the imm example's bodyless tab strip.
+// The one viewport the documents share, with the HUD floating in its corner;
+// the strip that picks the document lives in `top_bar`.
 fn documents() -> impl Scene {
-    let tabs: Vec<_> = (0..MAX_DOCUMENTS).map(document_tab).collect();
     bsn! {
         column()
         Node {
@@ -464,35 +540,6 @@ fn documents() -> impl Scene {
             row_gap: Val::ZERO,
         }
         Children [
-            (
-                row()
-                Node {
-                    column_gap: size::SPACE_TIGHT,
-                    padding: UiRect::right(size::SPACE_TIGHT),
-                }
-                template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
-                Children [
-                    (
-                        // No `@body`, and no tab names one: a strip that only
-                        // reports which document is showing.
-                        @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
-                        DocTabs
-                        Node { width: Val::ZERO, flex_grow: 1.0 }
-                        on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
-                            s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
-                        })
-                    ),
-                    (
-                        @PlumeToolButton {
-                            @caption: bsn! { icon(font_awesome::solid::PLUS) },
-                            @variant: ButtonVariant::Plain,
-                        }
-                        Flat
-                        Tooltip("Open a new document")
-                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
-                    ),
-                ]
-            ),
             viewport(),
             viewport_hud(),
         ]
@@ -621,42 +668,79 @@ fn panel() -> impl Scene {
         column()
         InspectorPanel
         // Width and minimum belong to the splitter now; the panel just fills
-        // the pane it is given.
+        // the pane it is given. The tab row sits on the screen's own ground;
+        // only the body below it carries the panel slab.
         Node {
             flex_grow: 1.0,
-            padding: size::SPACE,
+            min_height: Val::ZERO,
+            row_gap: Val::ZERO,
         }
-        template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
         Children [
-            header(),
-            separator(),
-            tabs(material, hierarchy.nodes),
-            separator(),
-            footer(),
+            tab_row(),
+            (
+                column()
+                Node {
+                    flex_grow: 1.0,
+                    min_height: Val::ZERO,
+                    padding: size::SPACE,
+                }
+                template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
+                Children [
+                    tab_pane(Tab::Material, bsn_list![material_tab(material)]),
+                    tab_pane(Tab::Hierarchy, bsn_list![hierarchy_tab(hierarchy.nodes)]),
+                    separator(),
+                    footer(),
+                ]
+            ),
         ]
     }
 }
 
-fn header() -> impl Scene {
+// The panel's tab buttons with the material actions on the same row, the
+// retained twin of the imm example's bodyless strip: the tabs only report, and
+// `push_panel_tab` swaps the panes below.
+fn tab_row() -> impl Scene {
     bsn! {
         row()
+        Node { padding: UiRect::right(size::SPACE) }
         Children [
-            icon(font_awesome::solid::SLIDERS),
             (
-                caption("Inspector")
-                small_caps()
+                @PlumeTabs {
+                    @header: bsn_list![
+                        (
+                            @PlumeTab {
+                                @caption: bsn_list![
+                                    icon(font_awesome::solid::PALETTE),
+                                    caption("Material"),
+                                ],
+                            }
+                            Selected
+                        ),
+                        @PlumeTab {
+                            @caption: bsn_list![
+                                icon(font_awesome::solid::SITEMAP),
+                                caption("Hierarchy"),
+                            ],
+                        },
+                    ],
+                }
+                on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
+                    s.tab = Tab::from_index(ev.value);
+                })
             ),
             flex_spacer(),
             (
                 @PlumeToolButton {
                     @caption: bsn! { icon(font_awesome::solid::FLOPPY_DISK) },
                 }
+                Flat
                 Tooltip("Save material")
             ),
             (
                 @PlumeToolButton {
                     @caption: bsn! { icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
                 }
+                Flat
                 Tooltip("Revert to the last saved values")
                 on(|_: On<Activate>, mut s: ResMut<Inspector>| {
                     (s.material, s.hierarchy) = Default::default();
@@ -668,6 +752,7 @@ fn header() -> impl Scene {
                 @PlumeToolButton {
                     @caption: bsn! { icon(font_awesome::solid::ELLIPSIS_VERTICAL) },
                 }
+                Flat
                 Tooltip("More material actions")
                 menu_anchor(bsn_list![
                     (
@@ -695,49 +780,24 @@ fn header() -> impl Scene {
     }
 }
 
-fn tabs(material: Material, nodes: Vec<SceneNode>) -> impl Scene {
+// One tab's body, shown while its tab is the selected one.
+fn tab_pane(tab: Tab, contents: impl SceneList) -> impl Scene {
+    let display = if tab == Tab::default() {
+        Display::Flex
+    } else {
+        Display::None
+    };
     bsn! {
-        @PlumeTabs {
-            @header: bsn_list![
-                (
-                    @PlumeTab {
-                        @caption: bsn_list![
-                            icon(font_awesome::solid::PALETTE),
-                            caption("Material"),
-                        ],
-                        @target: #material,
-                    }
-                    Selected
-                ),
-                @PlumeTab {
-                    @caption: bsn_list![
-                        icon(font_awesome::solid::SITEMAP),
-                        caption("Hierarchy"),
-                    ],
-                    @target: #hierarchy,
-                },
-            ],
-            @body: bsn_list![
-                (
-                    #material
-                    tab_body()
-                    Children [
-                        material_tab(material),
-                    ]
-                ),
-                (
-                    #hierarchy
-                    tab_body()
-                    Children [
-                        hierarchy_tab(nodes),
-                    ]
-                ),
-            ],
+        column()
+        template_value(TabPane(tab))
+        Node {
+            flex_grow: 1.0,
+            min_height: Val::ZERO,
+            display: display,
         }
-        Node { flex_grow: 1.0, min_height: Val::ZERO }
-        on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
-            s.tab = Tab::from_index(ev.value);
-        })
+        Children [
+            {contents},
+        ]
     }
 }
 
@@ -866,7 +926,7 @@ fn footer() -> impl Scene {
     bsn! {
         row()
         Children [
-            field_label("UI scale"),
+            field_label("Rem"),
             (
                 @PlumeSlider {
                     @min: 10.,
@@ -879,6 +939,11 @@ fn footer() -> impl Scene {
                 on(move |ev: On<ValueChange<f32>>, mut r: ResMut<RemSize>| {
                     r.0 = ev.value;
                 })
+            ),
+            (
+                caption(format!("{}", size::MEDIUM_FONT_PX))
+                RemValue
+                Node { width: em(2) }
             ),
         ]
     }

@@ -18,8 +18,8 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent, Node,
-    PositionType, Pressed, UiRect, Val,
+    AlignItems, BorderRadius, BoxShadow, Checkable, Checked, InteractionDisabled, JustifyContent,
+    Node, PositionType, Pressed, UiRect, Val,
 };
 use bevy::ui_widgets::{Activate, Button, ValueChange};
 
@@ -95,7 +95,7 @@ pub struct PlumeButtonProps {
     /// Color variant for the button.
     pub variant: ButtonVariant,
     /// Rounded corners options.
-    pub corners: RoundedCorners,
+    pub border_radius: BorderRadius,
     /// If true does not respond with color change hover and pressed.
     pub checkable: bool,
 }
@@ -105,7 +105,7 @@ impl Default for PlumeButtonProps {
         Self {
             caption: Box::new(bsn_list![]),
             variant: ButtonVariant::default(),
-            corners: Default::default(),
+            border_radius: RoundedCorners::All.to_border_radius(size::CORNER_RADIUS),
             checkable: false,
         }
     }
@@ -125,7 +125,6 @@ impl PlumeButton {
             .variant
             .filled()
             .then(|| bsn! { template_value(control_box_shadow()) });
-        let corners = props.corners;
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -133,7 +132,7 @@ impl PlumeButton {
                 align_items: AlignItems::Center,
                 column_gap: size::SPACE,
                 padding: UiRect::horizontal(size::SPACE),
-                border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
+                border_radius: {props.border_radius},
             }
             Button
             template_value(props.variant)
@@ -158,7 +157,7 @@ impl PlumeButton {
                         top: Val::ZERO,
                         bottom: Val::ZERO,
                         border: size::HAIRLINE,
-                        border_radius: {corners.to_border_radius(size::CORNER_RADIUS)},
+                        border_radius: {props.border_radius},
                     }
                     ButtonOutline
                     // Em-sized chrome needs the chain's `EmSize`.
@@ -211,7 +210,7 @@ impl PlumeToolButton {
             @PlumeButton {
                 @caption: {props.caption},
                 @variant: {props.variant},
-                @corners: {props.corners},
+                @border_radius: {props.border_radius},
             }
             Node {
                 padding: UiRect::horizontal(size::SPACE_TIGHT),

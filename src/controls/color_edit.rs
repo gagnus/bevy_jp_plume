@@ -18,21 +18,19 @@ use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::ui::{AlignItems, Node, UiRect, Val};
+use bevy::ui::{AlignItems, Node, Val};
 use bevy::ui_widgets::{Activate, ActivateOnPress, ValueChange};
 
 use crate::constants::{font_awesome, size};
 use crate::containers::{
     CloseRequested, PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
-    popup_socket, row,
+    popup_socket,
 };
 use crate::controls::{
     ColorPickerValue, ColorSwatchValue, PlumeButton, PlumeColorPicker, PlumeColorSwatch,
 };
-use crate::display::{caption, icon};
-use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay, small_caps};
-use crate::theme::ThemeTextToken;
-use crate::tokens;
+use crate::display::icon;
+use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay};
 use crate::utils::hierarchy::{descendant_with, nearest_with};
 
 // Two colors this close (per linear channel) are treated as equal, so a mirror
@@ -253,18 +251,6 @@ fn toggle_popup(
                 @movable: true,
                 @contents: bsn_list![
                     (
-                        row()
-                        Children [
-                            icon(font_awesome::solid::PALETTE),
-                            (
-                                caption("Color Edit")
-                                small_caps()
-                                Node { width: size::em_from_px(100.0) }
-                                ThemeTextToken(tokens::TEXT_MAIN)
-                            ),
-                        ]
-                    ),
-                    (
                         @PlumeColorPicker {
                             @initial_color: color,
                             @alpha: alpha,
@@ -275,7 +261,7 @@ fn toggle_popup(
             }
             ColorEditPopup
             Node {
-                padding: UiRect::new(size::SPACE, size::SPACE, size::SPACE_TIGHT, size::SPACE),
+                padding: size::SPACE,
             }
             // Reset font size
             InheritableFont { font_size: {Some(PlumeFontSize::Rem(1.0))} }

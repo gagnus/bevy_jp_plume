@@ -1,9 +1,12 @@
 //! Editor inspector as a self-contained feature plugin: a docked side panel whose
-//! two tabs hold a material editor and a scrolling scene tree, beside a document strip.
+//! two tabs hold a material editor and a scrolling scene tree, under a top bar
+//! where the menus share a line with the document strip.
 use std::cell::Cell;
 
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
+use rand::rngs::StdRng;
+use rand::{RngExt, SeedableRng};
 
 use super::{Options, log_on_change};
 
@@ -121,7 +124,7 @@ impl Default for Documents {
             active: None,
             next_id: 0,
         };
-        for _ in 0..MAX_DOCUMENTS {
+        for _ in 0..MAX_DOCUMENTS / 4 {
             documents.add();
         }
         documents.open[0].dirty = false;
@@ -195,10 +198,11 @@ impl Documents {
 #[derive(Resource, Debug, Clone, PartialEq, Default)]
 pub struct Inspector {
     pub tab: Tab,
-    /// The viewport's share of the width; the panel takes the rest. The
-    /// splitter writes it as its divider is dragged, which is what makes the
-    /// layout the app's to save rather than the widget's to remember.
-    pub split: f32,
+    /// The panel's width, anchored in em so it holds through window resizes and
+    /// tracks the font size. The splitter writes it as its divider is dragged,
+    /// which is what makes the layout the app's to save rather than the
+    /// widget's to remember.
+    pub split: SplitSize,
     pub documents: Documents,
     pub material: Material,
     pub hierarchy: Hierarchy,
@@ -211,7 +215,7 @@ pub struct Inspector {
 impl Inspector {
     pub fn initial() -> Self {
         Self {
-            split: 0.75,
+            split: SplitSize::new(em(30.0)),
             show_hud: true,
             ..Self::default()
         }
@@ -284,45 +288,51 @@ fn inspector_panel_ui(
     mut rem_size: ResMut<RemSize>,
 ) {
     let mut s = state.clone();
-    let mut r = *rem_size;
+    let mut rem = *rem_size;
     root.screen(|ui| {
-        menu_bar(ui, &mut s);
-        // Same reason as `tab` below: neither the split nor the documents can stay
-        // borrowed from `s` while the other pane's bodies edit the rest of it.
-        let mut split = s.split;
-        let mut documents = s.documents.clone();
-        let show_hud = s.show_hud;
+        let Inspector {
+            tab,
+            split,
+            documents,
+            material,
+            hierarchy,
+            show_hud,
+            autosave,
+        } = &mut s;
+
+        top_bar(ui, documents, show_hud, autosave);
+
         ui.split_horizontal(
-            &mut split,
-            |ui| document_pane(ui, &mut documents, show_hud),
-            |ui| panel(ui, &mut s, &mut r),
+            split,
+            |ui| document_pane(ui, documents, *show_hud),
+            |ui| panel(ui, tab, material, hierarchy, autosave, &mut rem),
         )
-        // The panel never gets narrower than its controls need; the document pane
-        // gives down to a couple of squeezed tabs, past which its strip scrolls.
-        // Dragging well past the panel's floor closes it entirely.
-        .min_panes(em(9), em(20))
+        // The panel is the sized pane, so the document pane alone absorbs
+        // window resizes. It never gets narrower than its controls need; the
+        // document pane gives down to a couple of squeezed tabs, past which its
+        // strip scrolls. Dragging well past the panel's floor closes it entirely.
+        .sized_pane(SplitPane::Second)
+        .min_panes(Val::ZERO, em(28))
         .collapsible(false, true)
         .auto_hide_divider(true)
         .grow();
-        s.split = split;
-        s.documents = documents;
     })
     .background_slot(ThemeSlot::Neutral0);
     state.set_if_neq(s);
-    rem_size.set_if_neq(r);
+    rem_size.set_if_neq(rem);
 }
 
-// The imm twin of the retained example's `menu_bar`: the same File and View
-// menus over the same `Inspector` state, bound with `&mut`s instead of `on()`.
-fn menu_bar(ui: &mut Ui, s: &mut Inspector) {
+// The File and View menus sharing a line with the document strip. The retained
+// twin (`top_bar` there too) binds with `on()` where this takes `&mut`s.
+fn top_bar(ui: &mut Ui, documents: &mut Documents, show_hud: &mut bool, autosave: &mut bool) {
     ui.horizontal(|ui| {
         ui.menu_bar(|bar| {
             bar.menu("File", |menu| {
                 if menu.item("New Document").shortcut("Ctrl+N").clicked {
-                    s.documents.add();
+                    documents.add();
                 }
                 if menu.item("Save").shortcut("Ctrl+S").clicked {
-                    s.documents.save_active();
+                    documents.save_active();
                 }
                 menu.separator();
                 menu.submenu("Recent", |menu| {
@@ -336,19 +346,19 @@ fn menu_bar(ui: &mut Ui, s: &mut Inspector) {
                 menu.item("Exit").enabled(false);
             });
             bar.menu("View", |menu| {
-                menu.item_toggle("Show HUD", &mut s.show_hud);
-                menu.item_toggle("Autosave", &mut s.autosave);
+                menu.item_toggle("Show HUD", show_hud);
+                menu.item_toggle("Autosave", autosave);
             });
         });
-    })
-    .background_slot(ThemeSlot::Neutral1);
+        ui.separator();
+        document_strip(ui, documents);
+    });
 }
 
-// The strip of open documents over the one viewport they share, with the HUD
-// floating in its corner.
+// The one viewport the open documents share, with the HUD floating in its
+// corner; the strip that picks the document lives in `top_bar`.
 fn document_pane(ui: &mut Ui, documents: &mut Documents, show_hud: bool) {
     ui.vertical(|ui| {
-        document_strip(ui, documents);
         match documents.active_document() {
             Some(document) => viewport(ui, document),
             None => empty_viewport(ui),
@@ -414,8 +424,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
         {
             opening.set(true);
         }
-    })
-    .border_slot(UiRect::vertical(size::HAIRLINE), ThemeSlot::Neutral4);
+    });
     documents.active = active;
     if let Some(id) = closing.get() {
         documents.close(id);
@@ -436,7 +445,12 @@ fn viewport(ui: &mut Ui, document: &Document) {
         });
         ui.flex_spacer();
     })
-    .grow();
+    .grow()
+    .background(Color::hsv(
+        StdRng::seed_from_u64(document.id.0 as u64).random_range(0.0..360.0),
+        0.5,
+        0.5,
+    ));
 }
 
 fn empty_viewport(ui: &mut Ui) {
@@ -451,7 +465,7 @@ fn empty_viewport(ui: &mut Ui) {
         ui.flex_spacer();
     })
     .grow()
-    .background_slot(ThemeSlot::Neutral2);
+    .background_slot(ThemeSlot::Neutral1);
 }
 
 // Declared inside the pane, so its corner is the pane's and it follows the
@@ -476,65 +490,72 @@ fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
         });
 }
 
-fn panel(ui: &mut Ui, s: &mut Inspector, r: &mut RemSize) {
+fn panel(
+    ui: &mut Ui,
+    tab: &mut Tab,
+    material: &mut Material,
+    hierarchy: &mut Hierarchy,
+    autosave: &mut bool,
+    rem: &mut RemSize,
+) {
     ui.vertical(|ui| {
-        header(ui, s);
-        ui.separator();
-        // The tab key can't stay borrowed from `s` while the bodies edit the rest of it.
-        let mut tab = s.tab;
-        ui.tabs(&mut tab, |tabs| {
-            let (material, hierarchy) = (&mut s.material, &mut s.hierarchy);
-            tabs.tab(Tab::Material, "Material")
-                .icon(font_awesome::solid::PALETTE)
-                .body(|ui| material_tab(ui, material));
-            tabs.tab(Tab::Hierarchy, "Hierarchy")
-                .icon(font_awesome::solid::SITEMAP)
-                .body(|ui| hierarchy_tab(ui, hierarchy));
-        })
-        .grow();
-        s.tab = tab;
-        ui.separator();
-        footer(ui, s, r);
-    })
-    // Width and minimum belong to the splitter now; the panel fills its pane,
-    // and the seam's line is the splitter's divider rather than a panel border.
-    .grow()
-    .background_slot(ThemeSlot::Neutral1)
-    .padding(size::SPACE);
-}
-
-fn header(ui: &mut Ui, s: &mut Inspector) {
-    ui.horizontal(|ui| {
-        ui.icon(font_awesome::solid::SLIDERS);
-        ui.caption("Inspector")
-            .small_caps()
-            .text_color_slot(ThemeSlot::Text0);
-        ui.flex_spacer();
-        ui.tool_button(font_awesome::solid::FLOPPY_DISK)
-            .flat()
-            .tooltip("Save material");
-        if ui
-            .tool_button(font_awesome::solid::ARROW_ROTATE_LEFT)
-            .flat()
-            .tooltip("Revert to the last saved values")
-            .clicked
-        {
-            (s.material, s.hierarchy) = Default::default();
-        }
-        // A drop-down off the app's own button rather than a menu bar's: the
-        // button keeps its tool-button look and opens the same menu rows.
-        ui.tool_button(font_awesome::solid::ELLIPSIS_VERTICAL)
-            .flat()
-            .tooltip("More material actions")
-            .menu(|menu| {
-                if menu.item("Copy Values").shortcut("Ctrl+C").clicked {
-                    info!("copy material values");
-                }
-                menu.item("Paste Values").enabled(false);
-                menu.separator();
-                menu.item_toggle("Autosave", &mut s.autosave);
+        ui.horizontal(|ui| {
+            ui.tabs(tab, |tabs| {
+                tabs.tab(Tab::Material, "Material")
+                    .icon(font_awesome::solid::PALETTE)
+                    .no_body();
+                tabs.tab(Tab::Hierarchy, "Hierarchy")
+                    .icon(font_awesome::solid::SITEMAP)
+                    .no_body();
             });
-    });
+
+            ui.flex_spacer();
+            ui.tool_button(font_awesome::solid::FLOPPY_DISK)
+                .flat()
+                .tooltip("Save material");
+            if ui
+                .tool_button(font_awesome::solid::ARROW_ROTATE_LEFT)
+                .flat()
+                .tooltip("Revert to the last saved values")
+                .clicked
+            {
+                (*material, *hierarchy) = Default::default();
+            }
+            // A drop-down off the app's own button rather than a menu bar's: the
+            // button keeps its tool-button look and opens the same menu rows.
+            ui.tool_button(font_awesome::solid::ELLIPSIS_VERTICAL)
+                .flat()
+                .tooltip("More material actions")
+                .menu(|menu| {
+                    if menu.item("Copy Values").shortcut("Ctrl+C").clicked {
+                        info!("copy material values");
+                    }
+                    menu.item("Paste Values").enabled(false);
+                    menu.separator();
+                    menu.item_toggle("Autosave", autosave);
+                });
+        })
+        .padding(UiRect::right(size::SPACE));
+
+        ui.vertical(|ui| {
+            match tab {
+                Tab::Material => {
+                    material_tab(ui, material);
+                }
+                Tab::Hierarchy => {
+                    hierarchy_tab(ui, hierarchy);
+                }
+            }
+
+            ui.separator();
+            footer(ui, rem);
+        })
+        .grow()
+        .padding(size::SPACE)
+        .background_slot(ThemeSlot::Neutral1);
+    })
+    .width(percent(100))
+    .gap(Val::ZERO);
 }
 
 fn material_tab(ui: &mut Ui, s: &mut Material) {
@@ -630,14 +651,14 @@ fn node_row(ui: &mut Ui, node: &mut SceneNode, parent: bool) {
     });
 }
 
-fn footer(ui: &mut Ui, _: &mut Inspector, r: &mut RemSize) {
+fn footer(ui: &mut Ui, rem: &mut RemSize) {
     ui.horizontal(|ui| {
         ui.caption("Rem").width(GUTTER);
-        ui.slider(&mut r.0, 10.0..=20.0)
+        ui.slider(&mut rem.0, 10.0..=20.0)
             .grow()
             .step(1.)
             .precision(0);
-        ui.caption(&format!("{}", r.0)).width(em(2));
+        ui.caption(&format!("{}", rem.0)).width(em(2));
     });
 }
 

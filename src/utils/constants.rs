@@ -72,14 +72,13 @@ pub mod size {
         y: em_from_px(18.0),
     };
 
-    /// Standard corner radius for controls and containers; em, so a scaled
-    /// control keeps its rounding in proportion rather than looking sharper.
-    pub const CORNER_RADIUS: Val = em_from_px(4.0);
+    /// Standard corner radius for controls and containers.
+    pub const CORNER_RADIUS: Val = em_from_px(6.0);
 
-    /// Standard corner radius for controls and containers
-    pub const CORNER_RADIUS_SMALL: Val = em_from_px(3.0);
+    /// Tighter rounding for small controls.
+    pub const CORNER_RADIUS_SMALL: Val = em_from_px(4.0);
 
-    /// Increased corner radius for dialogs
+    /// Rounding for dialog sized containers.
     pub const DIALOG_RADIUS: Val = em_from_px(8.0);
 
     /// Hairline thickness in px: borders stay one crisp pixel at any font size,
