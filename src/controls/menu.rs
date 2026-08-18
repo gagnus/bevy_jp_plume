@@ -42,8 +42,7 @@ use crate::display::{caption, icon};
 use crate::focus::FocusIndicator;
 use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
-    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
-    set_optional_background,
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow, set_optional_background,
 };
 use crate::tokens;
 
@@ -204,7 +203,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
         MenuPopupFrame
         ThemeBackgroundToken(tokens::MENU_BG)
         ThemeBorderToken(tokens::MENU_BORDER)
-        template_value(control_box_shadow())
+        template_value(dialog_box_shadow())
         GlobalZIndex(100)
         OverrideClip
         InheritableThemeTextToken(tokens::TEXT_DIM)

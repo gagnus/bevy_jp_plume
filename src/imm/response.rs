@@ -42,7 +42,7 @@ use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
 use crate::theme::{
     Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
-    ThemeBorderSlot, ThemeSlot, control_box_shadow,
+    ThemeBorderSlot, ThemeSlot,
 };
 use crate::utils::numeric::Numeric;
 
@@ -1261,14 +1261,5 @@ impl<K: kind::Surface> ImmResponse<'_, '_, '_, K> {
         self.set_node::<BorderRadiusKey, _>(border_radius, |node, border_radius| {
             node.border_radius = border_radius;
         })
-    }
-
-    /// Lift the container off its surface with the standard themed control shadow.
-    pub fn shadow(mut self) -> Self {
-        struct ShadowKey;
-        if self.key_changed::<ShadowKey>(true) {
-            self.e.entity_commands().insert(control_box_shadow());
-        }
-        self
     }
 }
