@@ -10,34 +10,32 @@ use crate::tokens::{self, ThemeToken};
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Reflect)]
 pub enum ThemeSlot {
     /// Window background.
-    /// - `MENU_BG`
     /// - `SELECT_BG`
     /// - `SCROLLBAR_BG`
     /// - `TEXT_INPUT_BG`
     /// - `TEXT_INPUT_BG_ACTIVE`
     /// - `WINDOW_BG`
+    /// - `TAB_BAR_BG`
     #[default]
     Neutral0,
 
     /// Dialog background.
+    /// - `MENU_BG`
     /// - `DIALOG_BG`
     /// - `DIALOG_HEADER_BG`
     /// - `POPUP_BG`
     /// - `SECTION_BODY_BG`
     /// - `TOOLTIP_BG`
-    /// - `TAB_BAR_BG`
     /// - `TAB_BODY_BG`
+    /// - `TAB_BG_SELECTED`
     Neutral1,
 
     /// Raised header background.
     /// - `SECTION_HEADER_BG`
-    /// - `TAB_BG_SELECTED`
     Neutral2,
 
     /// Hover for controls with no background.
-    /// - `MENU_ITEM_BG_HOVER`
     /// - `SELECT_OPTION_BG_HOVER`
-    /// - `MENU_BUTTON_BG_HOVER`
     /// - `BUTTON_OUTLINE_BG_HOVER`
     /// - `BUTTON_PLAIN_BG_HOVER`
     /// - `TAB_BG_HOVERED`
@@ -69,6 +67,8 @@ pub enum ThemeSlot {
     /// Control hover
     /// - `BUTTON_BG_HOVER`
     /// - `BUTTON_OUTLINE_BORDER_HOVER`
+    /// - `MENU_ITEM_BG_HOVER`
+    /// - `MENU_BUTTON_BG_HOVER`
     Neutral5,
 
     /// Control pressed
@@ -412,12 +412,12 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
         tokens::SWITCH_SLIDE_BG_CHECKED_DISABLED,
         ThemeSlot::Disabled1,
     ),
-    (tokens::MENU_BG, ThemeSlot::Neutral0),
+    (tokens::MENU_BG, ThemeSlot::Neutral1),
     (tokens::MENU_BORDER, ThemeSlot::Neutral4),
-    (tokens::MENU_BUTTON_BG_HOVER, ThemeSlot::Neutral3),
+    (tokens::MENU_BUTTON_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::MENU_BUTTON_TEXT, ThemeSlot::Text0),
     (tokens::MENU_BUTTON_TEXT_DISABLED, ThemeSlot::Disabled1),
-    (tokens::MENU_ITEM_BG_HOVER, ThemeSlot::Neutral3),
+    (tokens::MENU_ITEM_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::MENU_ITEM_TEXT, ThemeSlot::Text0),
     (tokens::MENU_ITEM_TEXT_DISABLED, ThemeSlot::Disabled1),
     (tokens::POPUP_BG, ThemeSlot::Neutral1),
@@ -450,12 +450,12 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::TAB_TEXT_DISABLED, ThemeSlot::Disabled1),
     (tokens::TAB_INDICATOR, ThemeSlot::Accent0),
     (tokens::TAB_INDICATOR_DISABLED, ThemeSlot::Disabled1),
-    (tokens::TAB_BAR_BG, ThemeSlot::Neutral1),
+    (tokens::TAB_BAR_BG, ThemeSlot::Neutral0),
     (tokens::TAB_BG, ThemeSlot::Transparent),
     (tokens::TAB_BG_HOVERED, ThemeSlot::Neutral3),
     (tokens::TAB_BG_PRESSED, ThemeSlot::Neutral4),
     (tokens::TAB_BG_DISABLED, ThemeSlot::Transparent),
-    (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral2),
+    (tokens::TAB_BG_SELECTED, ThemeSlot::Neutral1),
     (tokens::TAB_BODY_BG, ThemeSlot::Neutral1),
     (tokens::SELECT_BG, ThemeSlot::Neutral0),
     (tokens::SELECT_BORDER, ThemeSlot::Neutral4),

@@ -60,7 +60,8 @@ impl PlumeMenuBar {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Stretch,
                 min_height: size::ROW_HEIGHT,
-                padding: UiRect::horizontal(size::SPACE_TIGHT),
+                column_gap: size::SPACE,
+                padding: UiRect::axes(size::SPACE, size::SPACE_TIGHT),
             }
             MenuBarRoot
             AccessibilityNode(accesskit::Node::new(Role::MenuBar))
