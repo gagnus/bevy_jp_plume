@@ -5,7 +5,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::RemovedComponents;
-use bevy::ecs::query::{Added, With};
+use bevy::ecs::query::{Added, Has, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
@@ -31,12 +31,19 @@ pub struct FocusIndicator;
 #[reflect(Component, Clone, Default)]
 pub struct FocusWithinIndicator;
 
+/// Modifier for either indicator: draw the ring inside the entity's box. For a
+/// control whose container clips the clearance an outset ring needs — a tab in
+/// its strip, say, where an outset ring survives only where it laps a neighbour.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub struct InsetFocusRing;
+
 fn manage_focus_indicators(
     mut commands: Commands,
     input_focus: Res<InputFocus>,
     input_focus_visible: Res<InputFocusVisible>,
-    q_indicators: Query<Entity, With<FocusIndicator>>,
-    q_within_indicators: Query<Entity, With<FocusWithinIndicator>>,
+    q_indicators: Query<(Entity, Has<InsetFocusRing>), With<FocusIndicator>>,
+    q_within_indicators: Query<(Entity, Has<InsetFocusRing>), With<FocusWithinIndicator>>,
     q_children: Query<&Children>,
     q_parents: Query<&ChildOf>,
     theme: Res<UiTheme>,
@@ -45,10 +52,14 @@ fn manage_focus_indicators(
         return;
     }
 
-    let ring = |theme: &UiTheme| Outline {
+    let ring = |theme: &UiTheme, inset: bool| Outline {
         color: theme.color(&tokens::FOCUS_RING),
         width: size::FOCUS_RING_WIDTH,
-        offset: size::FOCUS_RING_OFFSET,
+        offset: if inset {
+            size::FOCUS_RING_INSET_OFFSET
+        } else {
+            size::FOCUS_RING_OFFSET
+        },
     };
 
     let mut visited = HashSet::<Entity>::with_capacity(q_indicators.count());
@@ -59,8 +70,8 @@ fn manage_focus_indicators(
             .iter_descendants(focus)
             .chain(core::iter::once(focus))
         {
-            if q_indicators.contains(entity) {
-                commands.entity(entity).insert(ring(&theme));
+            if let Ok((_, inset)) = q_indicators.get(entity) {
+                commands.entity(entity).insert(ring(&theme, inset));
                 visited.insert(entity);
             }
         }
@@ -69,14 +80,14 @@ fn manage_focus_indicators(
             .iter_ancestors(focus)
             .chain(core::iter::once(focus))
         {
-            if q_within_indicators.contains(entity) {
-                commands.entity(entity).insert(ring(&theme));
+            if let Ok((_, inset)) = q_within_indicators.get(entity) {
+                commands.entity(entity).insert(ring(&theme, inset));
                 visited.insert(entity);
             }
         }
     }
 
-    for entity in q_indicators.iter().chain(q_within_indicators.iter()) {
+    for (entity, _) in q_indicators.iter().chain(q_within_indicators.iter()) {
         if !visited.contains(&entity) {
             commands.entity(entity).remove::<Outline>();
         }

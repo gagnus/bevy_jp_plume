@@ -42,7 +42,8 @@ use crate::display::{caption, icon};
 use crate::focus::FocusIndicator;
 use crate::font_styles::{InheritableFont, TextStyleRelay};
 use crate::theme::{
-    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow, set_optional_background,
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
+    set_optional_background,
 };
 use crate::tokens;
 

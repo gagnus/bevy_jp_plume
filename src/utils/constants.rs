@@ -102,12 +102,20 @@ pub mod size {
     /// the glyph. A header carrying more than that wants its own, wider floor.
     pub const TAB_MIN_WIDTH: Val = Val::Em(2.5);
 
+    const FOCUS_RING_WIDTH_PX: f32 = 2.0;
+    const FOCUS_RING_OFFSET_PX: f32 = 2.0;
+
     /// Focus ring thickness; px with the other hairlines, so the ring reads the
     /// same on every control whatever font it sits in.
-    pub const FOCUS_RING_WIDTH: Val = Val::Px(2.0);
+    pub const FOCUS_RING_WIDTH: Val = Val::Px(FOCUS_RING_WIDTH_PX);
 
     /// Clearance between a control's edge and its focus ring.
-    pub const FOCUS_RING_OFFSET: Val = Val::Px(2.0);
+    pub const FOCUS_RING_OFFSET: Val = Val::Px(FOCUS_RING_OFFSET_PX);
+
+    /// [`FOCUS_RING_OFFSET`] for a ring drawn inside the control's box: the same
+    /// clearance measured inwards from the edge, so an inset ring reads the same
+    /// as an outset one. Bevy takes the negative offset as "in from the edge".
+    pub const FOCUS_RING_INSET_OFFSET: Val = Val::Px(-(FOCUS_RING_WIDTH_PX + FOCUS_RING_OFFSET_PX));
 
     /// Tight spacing for dense chrome: tooltips, popups, menu strips, tool
     /// buttons, and the interiors of sections and radio groups.

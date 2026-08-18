@@ -4,21 +4,21 @@
 //! Its color is the public [`ColorPickerValue`] on the root, mirrored to and from
 //! the inner picker, so the existing color capability drives it through the imm
 //! layer with no extra work.
-use bevy::app::{Plugin, PostUpdate};
+use bevy::app::{Plugin, PostUpdate, Update};
 use bevy::color::Color;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::Add;
 use bevy::ecs::observer::On;
-use bevy::ecs::query::{Changed, With, Without};
+use bevy::ecs::query::{Changed, Has, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query};
 use bevy::picking::events::{Pointer, Press};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::ui::{AlignItems, Node, Val};
+use bevy::ui::{AlignItems, InteractionDisabled, Node, Val};
 use bevy::ui_widgets::{Activate, ActivateOnPress, ValueChange};
 
 use crate::constants::{font_awesome, size};
@@ -31,7 +31,7 @@ use crate::controls::{
 };
 use crate::display::icon;
 use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay};
-use crate::utils::hierarchy::{descendant_with, nearest_with};
+use crate::utils::hierarchy::{descendant_get, descendant_with, nearest_get, nearest_with};
 
 // Two colors this close (per linear channel) are treated as equal, so a mirror
 // push that merely echoes the current value doesn't ping-pong across the pair.
@@ -155,7 +155,7 @@ fn on_button_activate(
     ev: On<Activate>,
     q_childof: Query<&ChildOf>,
     q_is_button: Query<(), With<ColorEditButton>>,
-    q_is_edit: Query<(), With<ColorEditFrame>>,
+    q_edit: Query<(Entity, Has<InteractionDisabled>), With<ColorEditFrame>>,
     q_children: Query<&Children>,
     q_popup_marker: Query<(), With<ColorEditPopup>>,
     q_socket: Query<(), With<PopupSocket>>,
@@ -166,9 +166,12 @@ fn on_button_activate(
     if !q_is_button.contains(ev.entity) {
         return;
     }
-    let Some(root) = nearest_with(ev.entity, &q_childof, &q_is_edit) else {
+    let Some((root, disabled)) = nearest_get(ev.entity, &q_childof, &q_edit) else {
         return;
     };
+    if disabled {
+        return;
+    }
     toggle_popup(
         root,
         &q_children,
@@ -190,7 +193,7 @@ fn on_button_press(
     mut press: On<Pointer<Press>>,
     q_childof: Query<&ChildOf>,
     q_is_button: Query<(), With<ColorEditButton>>,
-    q_is_edit: Query<(), With<ColorEditFrame>>,
+    q_edit: Query<(Entity, Has<InteractionDisabled>), With<ColorEditFrame>>,
     q_children: Query<&Children>,
     q_popup_marker: Query<(), With<ColorEditPopup>>,
     q_socket: Query<(), With<PopupSocket>>,
@@ -207,9 +210,13 @@ fn on_button_press(
     if button == press.entity {
         return;
     }
-    let Some(root) = nearest_with(button, &q_childof, &q_is_edit) else {
+    let Some((root, disabled)) = nearest_get(button, &q_childof, &q_edit) else {
         return;
     };
+    // This path bypasses the button, so the disabled check has to happen here too.
+    if disabled {
+        return;
+    }
     // Swallowed so the press cannot also reach the button and `Activate`.
     press.propagate(false);
     toggle_popup(
@@ -352,6 +359,34 @@ fn colors_close(a: Color, b: Color) -> bool {
         && (a.alpha - b.alpha).abs() <= EPS
 }
 
+// The headless button reads `InteractionDisabled` on itself, so the marker on the
+// root has to be mirrored onto the inner button — which also grays it. Compared
+// each frame rather than driven by `Added`, since the marker can land on the root
+// before the scene has spawned the button.
+fn sync_disabled(
+    q_edits: Query<(Entity, Has<InteractionDisabled>), With<ColorEditFrame>>,
+    q_children: Query<&Children>,
+    q_button: Query<(Entity, Has<InteractionDisabled>), With<ColorEditButton>>,
+    q_popup_marker: Query<(), With<ColorEditPopup>>,
+    mut commands: Commands,
+) {
+    for (root, disabled) in q_edits.iter() {
+        let Some((button, button_disabled)) = descendant_get(root, &q_children, &q_button) else {
+            continue;
+        };
+        if disabled != button_disabled {
+            if disabled {
+                commands.entity(button).insert(InteractionDisabled);
+            } else {
+                commands.entity(button).remove::<InteractionDisabled>();
+            }
+        }
+        if disabled && let Some(popup) = descendant_with(root, &q_children, &q_popup_marker) {
+            close_popup(&mut commands, popup);
+        }
+    }
+}
+
 // Fulfil an outside-press close request on this control's popup.
 fn on_popup_close_requested(
     ev: On<Add, CloseRequested>,
@@ -371,6 +406,7 @@ impl Plugin for ColorEditPlugin {
         app.add_observer(on_button_activate)
             .add_observer(on_button_press)
             .add_observer(on_popup_close_requested)
+            .add_systems(Update, sync_disabled)
             .add_systems(PostUpdate, (sync_edit_from_picker, sync_edit_to_picker));
     }
 }

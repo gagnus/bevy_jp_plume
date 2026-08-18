@@ -90,7 +90,6 @@ impl PlumeSlider {
             DefaultWidth(size::em_from_px(180.0))
             Hovered
             TabIndex(0)
-            FocusIndicator
             Slider {
                 track_click: TrackClick::Snap,
                 orientation: SliderOrientation::Horizontal,
@@ -156,6 +155,9 @@ impl PlumeSlider {
                             }
                             template_value(control_box_shadow())
                             SliderThumb
+                            // Focus rings follow the node's rounding, so the ring
+                            // belongs on the round thumb, not the square frame.
+                            FocusIndicator
                             TextStyleRelay
                             template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
                             UiTransform::default()

@@ -33,7 +33,7 @@ use crate::containers::{
 use crate::controls::{PlumeScrollbar, ScrollbarHidden, SelectedIndex, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::caption;
-use crate::focus::FocusIndicator;
+use crate::focus::{FocusIndicator, InsetFocusRing};
 use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
 use crate::utils::anim::{UI_ANIM_RATE, approach};
@@ -287,6 +287,9 @@ pub(crate) fn tab_chrome() -> impl Scene {
         Hovered
         TabIndex(0)
         FocusIndicator
+        // A tab fills its strip's height, so an outset ring is clipped away by the
+        // strip's scroll frame on every edge but the ones lapping its neighbours.
+        InsetFocusRing
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         ThemeBackgroundToken(tokens::TAB_BG)
         InheritableThemeTextToken(tokens::TAB_TEXT)
