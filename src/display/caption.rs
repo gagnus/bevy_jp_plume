@@ -5,13 +5,11 @@ use bevy::ui::widget::Text;
 
 use crate::constants::FaIcon;
 use crate::font_styles::InheritableFont;
-use crate::theme::ThemedText;
 
 /// A caption within, say, a button using inherited color.
 pub fn caption(text: impl Into<String>) -> impl Scene {
     bsn! {
         Text(text)
-        ThemedText
     }
 }
 
@@ -22,7 +20,6 @@ pub fn icon(icon: FaIcon) -> impl Scene {
     let font_path = icon.face().font_path();
     bsn! {
         Text(glyph)
-        ThemedText
         InheritableFont {
             font: FontSourceTemplate::Handle(font_path),
         }

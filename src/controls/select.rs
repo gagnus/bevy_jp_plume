@@ -43,7 +43,6 @@ use crate::containers::{
 use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
-use crate::font_styles::TextStyleRelay;
 use crate::style::RoundedCorners;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, set_optional_background,
@@ -144,7 +143,6 @@ impl PlumeSelect {
                 align_items: AlignItems::Stretch,
             }
             SelectFrame
-            TextStyleRelay
             template_value(SelectOptions(options))
             template_value(SelectedIndex(selected))
             template_value(SelectMaxVisible(max_visible))
@@ -193,7 +191,6 @@ impl PlumeSelect {
                     SelectMeasure
                     // The ghost labels must inherit the real row font, or the
                     // measured widths bake in the engine default.
-                    TextStyleRelay
                     Children [
                         {ghost_rows},
                     ]
@@ -265,7 +262,6 @@ impl PlumeSelectOptions {
             }
             template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::SPACE).unwrap()))
             ListBox
-            TextStyleRelay
             // Focusable for arrow-key selection.
             TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
@@ -280,7 +276,6 @@ impl PlumeSelectOptions {
                         overflow: Overflow::scroll_y(),
                     }
                     ScrollArea
-                    TextStyleRelay
                     Children [
                         {props.options},
                     ]
@@ -324,7 +319,6 @@ impl PlumeSelectOption {
             SelectOptionRow
             AccessibilityNode(accesskit::Node::new(Role::ListItem))
             InheritableThemeTextToken(tokens::SELECT_OPTION_TEXT)
-            TextStyleRelay
             Hovered
             ListItem
             Children [
@@ -1019,8 +1013,6 @@ fn update_active_row_outline(
             },
             ThemeBorderToken(tokens::FOCUS_RING),
             ActiveRowOutline,
-            // Em-sized chrome needs the chain's `EmSize`.
-            TextStyleRelay,
         ));
     }
 }

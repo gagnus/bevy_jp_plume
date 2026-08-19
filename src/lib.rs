@@ -13,7 +13,6 @@ use bevy::app::{Plugin, PluginGroup, PluginGroupBuilder, PostUpdate, PropagateSe
 use bevy::asset::embedded_asset;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::text::TextFont;
-use bevy::ui::UiSystems;
 // Short crate-internal paths for the modules the public surface re-exports
 // piecemeal through `style`, `retained` and `theme`.
 pub(crate) use theme::tokens;
@@ -78,22 +77,10 @@ impl Plugin for PlumeCorePlugin {
                 .in_set(font_styles::FontStyleSystems)
                 .before(PropagateSet::<TextFont>::default()),
         );
-        // `Val::Em` chrome: nodes without an `EmSize` fall back to `RemSize`,
-        // so the standard size must be the fallback; the mirror then feeds the
-        // effective inherited font to every chain node ahead of layout.
+        // `Val::Em` chrome: propagation lands a `TextFont` on every node under a
+        // surface, and bevy derives `EmSize` from it; nodes above any surface
+        // fall back to `RemSize`, so it must hold the standard size.
         app.insert_resource(bevy::text::RemSize(constants::size::MEDIUM_FONT_PX));
-        app.add_systems(
-            PostUpdate,
-            font_styles::mirror_em_size
-                .after(PropagateSet::<TextFont>::default())
-                .before(UiSystems::Layout),
-        );
-        // The mirror's regression net: em chrome the mirror never reaches.
-        #[cfg(debug_assertions)]
-        app.add_systems(
-            PostUpdate,
-            font_styles::warn_em_without_em_size.after(font_styles::mirror_em_size),
-        );
     }
 }
 

@@ -3,7 +3,6 @@ use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignItems, Display, FlexDirection, Node, Val};
 
 use crate::constants::size;
-use crate::font_styles::TextStyleRelay;
 
 /// Horizontal container that vertically centers mixed-height children; content
 /// goes in `Children`.
@@ -20,6 +19,5 @@ pub fn row() -> impl Scene {
             min_height: Val::ZERO,
             min_width: Val::ZERO,
         }
-        TextStyleRelay
     }
 }

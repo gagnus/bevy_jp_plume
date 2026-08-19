@@ -25,7 +25,6 @@ use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 use crate::constants::size;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{
     GradientAmount, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,
@@ -77,7 +76,6 @@ impl PlumeCheckbox {
             on(checkbox_self_update)
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextToken(tokens::CHECKBOX_TEXT)
-            TextStyleRelay
             Children [
                 (
                     Node {
@@ -86,8 +84,6 @@ impl PlumeCheckbox {
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
                     CheckboxBg
-                    // Em-sized chrome needs the chain's `EmSize`.
-                    TextStyleRelay
                     // Ring hugs the box, not the label row.
                     FocusIndicator
                     ThemeBackgroundToken(tokens::CHECKBOX_BG)
@@ -101,7 +97,6 @@ impl PlumeCheckbox {
                                 border_radius: size::CORNER_RADIUS_SMALL,
                             }
                             CheckboxOutline
-                            TextStyleRelay
                             ThemeBorderToken(tokens::CHECKBOX_BORDER)
                         ),
                         (
@@ -121,7 +116,6 @@ impl PlumeCheckbox {
                             }
                             UiTransform::from_rotation(Rot2::FRAC_PI_4)
                             CheckboxMark
-                            TextStyleRelay
                             template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             Visibility::Hidden
                             ThemeBorderToken(tokens::CHECKBOX_MARK)

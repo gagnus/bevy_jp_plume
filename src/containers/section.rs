@@ -25,7 +25,6 @@ use crate::constants::{font_awesome, size};
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::cursor::EntityCursor;
 use crate::display::icon;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};
 use crate::tokens;
 use crate::utils::anim::AnimState;
@@ -137,7 +136,6 @@ pub(crate) fn section_frame(
         SectionRoot
         template_value(SectionCollapsible(collapsible))
         ThemeBackgroundToken(tokens::SECTION_BODY_BG)
-        TextStyleRelay
         Children [
             (
                 Node {
@@ -155,7 +153,6 @@ pub(crate) fn section_frame(
                 ThemeBorderToken(tokens::SEPARATOR)
                 EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 InheritableThemeTextToken(tokens::SECTION_HEADER_TEXT)
-                TextStyleRelay
                 on(toggle_section_collapse)
                 Children [
                     {collapsible.then(|| bsn! {
@@ -185,7 +182,6 @@ pub(crate) fn section_body() -> impl Scene {
             padding: size::SPACE,
         }
         SectionBody
-        TextStyleRelay
     }
 }
 

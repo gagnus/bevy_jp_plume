@@ -24,7 +24,6 @@ use bevy::ui_widgets::{Checkbox, checkbox_self_update};
 use crate::constants::size;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
@@ -57,8 +56,6 @@ impl PlumeToggleSwitch {
             }
             Checkbox
             ToggleSwitchFrame
-            // Em-sized chrome needs the chain's `EmSize`.
-            TextStyleRelay
             TabIndex(0)
             FocusIndicator
             on(checkbox_self_update)
@@ -80,7 +77,6 @@ impl PlumeToggleSwitch {
                         border_radius: {size::TOGGLE_SIZE.y / 2.0},
                     }
                     ToggleSwitchOutline
-                    TextStyleRelay
                     ThemeBorderToken(tokens::SWITCH_BORDER)
                 ),
                 (
@@ -96,7 +92,6 @@ impl PlumeToggleSwitch {
                         border_radius: BorderRadius::MAX,
                     }
                     ToggleSwitchSlide
-                    TextStyleRelay
                     template_value(AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL))
                     UiTransform::default()
                     ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)

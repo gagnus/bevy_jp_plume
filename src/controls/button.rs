@@ -27,7 +27,6 @@ use crate::constants::size;
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
-use crate::font_styles::TextStyleRelay;
 use crate::rounded_corners::RoundedCorners;
 use crate::theme::{
     Flat, GradientAmount, Inert, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
@@ -145,7 +144,6 @@ impl PlumeButton {
             ThemeBackgroundToken(tokens::BUTTON_BG)
             GradientAmount::STANDARD
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
-            TextStyleRelay
             Children [
                 (
                     // The border lives on an overlay child rather than the button node:
@@ -160,8 +158,6 @@ impl PlumeButton {
                         border_radius: {props.border_radius},
                     }
                     ButtonOutline
-                    // Em-sized chrome needs the chain's `EmSize`.
-                    TextStyleRelay
                     Pickable::IGNORE
                     ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
                 ),

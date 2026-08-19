@@ -18,7 +18,6 @@ use bevy::ui::widget::{ImageNode, NodeImageMode};
 use bevy::ui::{BackgroundColor, Node, PositionType, Val, VisualBox, percent};
 
 use crate::constants::size;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
 use crate::utils::hierarchy::descendant_with;
@@ -96,8 +95,6 @@ impl PlumeColorSwatch {
             }
             template_value(ColorSwatchValue(props.initial_color))
             template_value(SwatchAlpha(props.alpha))
-            // Em-sized chrome needs the chain's `EmSize`.
-            TextStyleRelay
             Children [
                 {checker},
                 (

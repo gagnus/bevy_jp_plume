@@ -1,11 +1,10 @@
 //! Theme-driven styling components: the markers a retained scene puts on an
 //! entity to have `ThemePlugin` color it.
-use bevy::app::{Inherited, Propagate, PropagateOver, PropagateStop};
+use bevy::app::{Propagate, PropagateOver};
 use bevy::color::{Alpha, Color, Luminance, Srgba};
 use bevy::ecs::change_detection::DetectChanges;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
-use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::lifecycle::{Insert, RemovedComponents};
 use bevy::ecs::observer::On;
 use bevy::ecs::query::{Added, Changed, Has, Or, With, Without};
@@ -133,7 +132,7 @@ pub struct ThemeBorderSlot(pub ThemeSlot);
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
+#[require(PropagateOver::<TextColor>)]
 pub(crate) struct InheritableThemeTextToken(pub ThemeToken);
 
 /// Propagates a theme-slot text color to descendant themed text, and to the
@@ -142,7 +141,7 @@ pub(crate) struct InheritableThemeTextToken(pub ThemeToken);
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
+#[require(PropagateOver::<TextColor>)]
 pub struct InheritableThemeTextSlot(pub ThemeSlot);
 
 /// Propagates a one-off raw text color to descendant themed text, and to the
@@ -151,7 +150,7 @@ pub struct InheritableThemeTextSlot(pub ThemeSlot);
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
+#[require(PropagateOver::<TextColor>)]
 pub struct InheritableTextColor(pub Color);
 
 // Text color of the span itself by theme token — plume-internal; apps use
@@ -161,7 +160,7 @@ pub struct InheritableTextColor(pub Color);
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
+#[require(PropagateOver::<TextColor>)]
 pub(crate) struct ThemeTextToken(pub ThemeToken);
 
 /// Component which sets the color of the text span it is on from a theme slot
@@ -171,37 +170,8 @@ pub(crate) struct ThemeTextToken(pub ThemeToken);
 #[component(immutable)]
 #[derive(Reflect)]
 #[reflect(Component, Clone)]
-#[require(ThemedText, PropagateOver::<TextColor>)]
+#[require(PropagateOver::<TextColor>)]
 pub struct ThemeTextSlot(pub ThemeSlot);
-
-/// A marker component that is used to indicate that the text entity wants to opt-in to using
-/// inherited text styles.
-#[derive(Component, Reflect, Default, Clone)]
-#[reflect(Component)]
-pub struct ThemedText;
-
-// Finish propagating `C` to a child that gained [`ThemedText`] after it was
-// parented.
-//
-// Propagation copies `Inherited<C>` onto a new child when its `ChildOf` lands, but
-// only onto children already matching the `With<ThemedText>` filter. The imm
-// reconciler parents an entity before its scene applies the marker, so that copy is
-// missed and the text keeps the engine default font/color; this repeats it from the
-// other side. Entities whose parent's `Inherited<C>` is itself new are covered by
-// the ordinary downward pass.
-pub(crate) fn on_themed_text_inserted<C: Component + Clone + PartialEq>(
-    insert: On<Insert, ThemedText>,
-    q_unresolved: Query<&ChildOf, (Without<Propagate<C>>, Without<Inherited<C>>)>,
-    q_inherited: Query<&Inherited<C>, Without<PropagateStop<C>>>,
-    mut commands: Commands,
-) {
-    let Ok(child_of) = q_unresolved.get(insert.entity) else {
-        return;
-    };
-    if let Ok(inherited) = q_inherited.get(child_of.parent()) {
-        commands.entity(insert.entity).insert(inherited.clone());
-    }
-}
 
 // Everything that decides what a themed background paints: where the color comes
 // from, and how hard it is shaded.

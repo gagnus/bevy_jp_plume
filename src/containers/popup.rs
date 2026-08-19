@@ -29,18 +29,16 @@ use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, Popover
 use super::dialog::CloseRequested;
 use crate::constants::size;
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
-use crate::font_styles::{InheritableFont, TextStyleRelay};
+use crate::font_styles::InheritableFont;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
 };
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
-/// Marker for the popup mount point a control keeps in its scene. The relay
-/// keeps a retained socket (a child of its control) on the text-style chain.
+/// Marker for the popup mount point a control keeps in its scene.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
-#[require(TextStyleRelay)]
 pub struct PopupSocket;
 
 // The rect a socket overlays, when it is not the socket's own parent.

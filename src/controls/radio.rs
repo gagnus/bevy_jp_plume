@@ -25,7 +25,6 @@ use crate::constants::size;
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{
     GradientAmount, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,
@@ -76,7 +75,6 @@ impl PlumeRadio {
             on(radio_check_self)
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextToken(tokens::RADIO_TEXT)
-            TextStyleRelay
             Children [
                 (
                     // Gradient only when checked, since the unchecked fill is transparent.
@@ -89,8 +87,6 @@ impl PlumeRadio {
                         border_radius: BorderRadius::MAX,
                     }
                     RadioBg
-                    // Em-sized chrome needs the chain's `EmSize`.
-                    TextStyleRelay
                     // Ring hugs the disc, not the label row.
                     FocusIndicator
                     ThemeBackgroundToken(tokens::RADIO_BG)
@@ -119,7 +115,6 @@ impl PlumeRadio {
                                 border_radius: BorderRadius::MAX,
                             }
                             RadioMark
-                            TextStyleRelay
                             template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
                             UiTransform::default()
                             Visibility::Hidden
@@ -152,7 +147,6 @@ impl PlumeRadioGroup {
                 row_gap: size::SPACE_TIGHT,
             }
             RadioGroup
-            TextStyleRelay
             on(radio_group_uncheck_others)
         }
     }

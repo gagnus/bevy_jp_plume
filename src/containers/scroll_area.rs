@@ -27,7 +27,6 @@ use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 use crate::constants::size;
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::controls::{PlumeScrollbar, ScrollbarGutter};
-use crate::font_styles::TextStyleRelay;
 
 /// The axis a scroll region scrolls along.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -89,7 +88,6 @@ pub(crate) fn scroll_frame(axis: ScrollAxis) -> impl Scene {
             min_height: min_height,
         }
         ScrollbarGutter(size::SCROLLBAR_GUTTER)
-        TextStyleRelay
     }
 }
 
@@ -112,7 +110,6 @@ pub(crate) fn scroll_viewport(axis: ScrollAxis) -> impl Scene {
             overflow: overflow,
         }
         ScrollArea
-        TextStyleRelay
     }
 }
 
@@ -130,7 +127,6 @@ pub(crate) fn scroll_content(axis: ScrollAxis) -> impl Scene {
             flex_shrink: 0.0,
         }
         ScrollContent
-        TextStyleRelay
     }
 }
 
@@ -276,8 +272,6 @@ pub(crate) fn scrollbar_node(axis: ScrollAxis) -> impl Scene {
             width: width,
             height: height,
         }
-        // An em width needs the chain's `EmSize`.
-        TextStyleRelay
     }
 }
 

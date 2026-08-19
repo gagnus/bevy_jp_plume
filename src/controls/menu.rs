@@ -40,7 +40,7 @@ use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
 use crate::focus::FocusIndicator;
-use crate::font_styles::{InheritableFont, TextStyleRelay};
+use crate::font_styles::InheritableFont;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
     set_optional_background,
@@ -65,7 +65,6 @@ impl PlumeMenuBar {
             }
             MenuBarRoot
             AccessibilityNode(accesskit::Node::new(Role::MenuBar))
-            TextStyleRelay
         }
     }
 }
@@ -144,7 +143,6 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
         FocusIndicator
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         InheritableThemeTextToken(tokens::MENU_ITEM_TEXT)
-        TextStyleRelay
         on(menu_root_on_menu_event)
         Children [
             (
@@ -209,7 +207,6 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
         OverrideClip
         InheritableThemeTextToken(tokens::TEXT_DIM)
         InheritableFont {}
-        TextStyleRelay
     }
 }
 
@@ -1173,17 +1170,14 @@ fn set_menu_button_styles(
 // paths are covered once: retained separators when adopted into the frame, imm
 // ones when built inside it.
 fn space_menu_separators(
-    mut q_separators: Query<(Entity, &ChildOf, &mut Node), (With<Separator>, Changed<ChildOf>)>,
+    mut q_separators: Query<(&ChildOf, &mut Node), (With<Separator>, Changed<ChildOf>)>,
     q_frames: Query<(), With<MenuPopupFrame>>,
-    mut commands: Commands,
 ) {
-    for (separator, child_of, mut node) in q_separators.iter_mut() {
+    for (child_of, mut node) in q_separators.iter_mut() {
         if !q_frames.contains(child_of.parent()) {
             continue;
         }
         node.margin = UiRect::vertical(size::SPACE_TIGHT);
-        // Em margins need the chain's `EmSize`.
-        commands.entity(separator).insert(TextStyleRelay);
     }
 }
 

@@ -34,7 +34,6 @@ use crate::controls::{PlumeScrollbar, ScrollbarHidden, SelectedIndex, SetValue};
 use crate::cursor::EntityCursor;
 use crate::display::caption;
 use crate::focus::{FocusIndicator, InsetFocusRing};
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken};
 use crate::utils::anim::{UI_ANIM_RATE, approach};
 use crate::utils::hierarchy::{descendant_with, nearest_with};
@@ -215,7 +214,6 @@ pub(crate) fn tabs_frame() -> impl Scene {
             min_width: Val::ZERO,
         }
         TabsRoot
-        TextStyleRelay
     }
 }
 
@@ -245,7 +243,6 @@ pub(crate) fn tab_strip() -> impl Scene {
             flex_shrink: 0.0,
         }
         TabStrip
-        TextStyleRelay
         Children [
             (
                 Node {
@@ -256,8 +253,6 @@ pub(crate) fn tab_strip() -> impl Scene {
                     height: size::TAB_INDICATOR_HEIGHT,
                 }
                 TabIndicator
-                // Em-sized chrome needs the chain's `EmSize`.
-                TextStyleRelay
                 ZIndex(1)
                 UiTransform::default()
                 Pickable::IGNORE
@@ -293,7 +288,6 @@ pub(crate) fn tab_chrome() -> impl Scene {
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         ThemeBackgroundToken(tokens::TAB_BG)
         InheritableThemeTextToken(tokens::TAB_TEXT)
-        TextStyleRelay
         on(select_tab_on_activate)
     }
 }
@@ -324,7 +318,6 @@ pub fn tab_label(label: impl Into<String>) -> impl Scene {
             min_width: Val::ZERO,
             overflow: Overflow::clip(),
         }
-        TextStyleRelay
         Children [
             (
                 caption(label)
@@ -353,7 +346,6 @@ pub fn tab_body() -> impl Scene {
         }
         TabBody
         ThemeBackgroundToken(tokens::TAB_BODY_BG)
-        TextStyleRelay
     }
 }
 

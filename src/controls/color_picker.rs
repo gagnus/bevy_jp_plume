@@ -33,7 +33,6 @@ use crate::controls::{
     XyPadValue,
 };
 use crate::display::caption;
-use crate::font_styles::TextStyleRelay;
 use crate::utils::hierarchy::nearest_with;
 
 // Wheel geometry in px-at-standard-font; the em constants and the ring's
@@ -162,7 +161,6 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             align_items: AlignItems::Center,
             column_gap: Val::ZERO,
         }
-        TextStyleRelay
         Children [
             space(em(0.25)),
             (
@@ -192,7 +190,6 @@ impl PlumeColorPicker {
             .then(|| -> Box<dyn Scene> {
                 Box::new(bsn! {
                     Node { width: percent(100), height: ALPHA_BAR_HEIGHT }
-                    TextStyleRelay
                     Children [
                         (
                             Node {
@@ -245,7 +242,6 @@ impl PlumeColorPicker {
                 align_items: AlignItems::Start,
             }
             ColorPickerFrame
-            TextStyleRelay
             template_value(ColorPickerValue(props.initial_color))
             Children [
                 // The wheel over the alpha bar, which spans the wheel's width.
@@ -254,7 +250,6 @@ impl PlumeColorPicker {
                         flex_direction: FlexDirection::Column,
                         row_gap: size::em_from_px(8.0),
                     }
-                    TextStyleRelay
                     Children [
                         // The hue ring (a border-only circle), the wheel pad over
                         // it, and the SV pad on top keeping the picks over its square.
@@ -265,7 +260,6 @@ impl PlumeColorPicker {
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                             }
-                            TextStyleRelay
                             Children [
                                 (
                                     Node {
@@ -278,8 +272,6 @@ impl PlumeColorPicker {
                                         border_radius: BorderRadius::MAX,
                                     }
                                     BorderGradient(hue_wheel_gradient())
-                                    // Em-sized chrome needs the chain's `EmSize`.
-                                    TextStyleRelay
                                     Pickable::IGNORE
                                 ),
                                 (
@@ -323,7 +315,6 @@ impl PlumeColorPicker {
                         row_gap: size::SPACE_TIGHT,
                         flex_grow: 1.0,
                     }
-                    TextStyleRelay
                     Children [
                         (
                             @PlumeColorSwatch { @alpha: alpha }

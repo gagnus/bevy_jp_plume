@@ -30,7 +30,7 @@ use crate::controls::{
     ColorPickerValue, ColorSwatchValue, PlumeButton, PlumeColorPicker, PlumeColorSwatch,
 };
 use crate::display::icon;
-use crate::font_styles::{InheritableFont, PlumeFontSize, TextStyleRelay};
+use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::utils::hierarchy::{descendant_get, descendant_with, nearest_get, nearest_with};
 
 // Two colors this close (per linear channel) are treated as equal, so a mirror
@@ -114,8 +114,6 @@ impl PlumeColorEdit {
                 align_items: AlignItems::Start,
             }
             ColorEditFrame
-            // Without this the swatch below is off the chain — no `EmSize`.
-            TextStyleRelay
             template_value(ColorPickerValue(initial_color))
             {rgb_only}
             Children [

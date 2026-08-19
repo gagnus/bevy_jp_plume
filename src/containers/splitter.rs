@@ -29,7 +29,6 @@ use bevy::window::SystemCursorIcon;
 
 use crate::constants::size;
 use crate::cursor::{CursorLock, EntityCursor};
-use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBackgroundToken;
 use crate::tokens;
 
@@ -298,8 +297,6 @@ pub(crate) fn splitter_frame(
         template_value(size)
         template_value(SplitSized(sized_pane))
         SplitMin
-        // `Val::Em` sizes and minimums need the chain's `EmSize` to resolve.
-        TextStyleRelay
         // `Pickable` is per-entity, so the frame is its own hit over the same area as
         // the panes and must ignore picks too, or theirs buys nothing. The divider
         // sets none of its own and is unaffected, so drags survive.
@@ -317,7 +314,6 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
             min_height: Val::ZERO,
         }
         template_value(pane)
-        TextStyleRelay
         // A pane is pure layout, like `screen`, so it lets picks fall through its empty
         // parts — content over a 3d viewport is the case that needs it.
         Pickable::IGNORE
@@ -365,7 +361,6 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         }
         SplitDivider
         Hovered
-        TextStyleRelay
         EntityCursor::System(cursor)
         CursorLock
         on(drag_divider)
@@ -381,7 +376,6 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
                     height: line_height,
                     align_self: AlignSelf::Stretch,
                 }
-                TextStyleRelay
                 Pickable::IGNORE
                 ThemeBackgroundToken(tokens::SEPARATOR)
             ),

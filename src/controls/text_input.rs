@@ -34,8 +34,7 @@ use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 use crate::constants::size;
 use crate::controls::{ButtonVariant, DefaultWidth, SetValue};
 use crate::cursor::EntityCursor;
-use crate::font_styles::TextStyleRelay;
-use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, ThemedText, UiTheme};
+use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, UiTheme};
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
@@ -134,7 +133,6 @@ pub(crate) fn text_input_frame() -> impl Scene {
         }
         DefaultWidth(size::em_from_px(124.0))
         TextInputFrame
-        TextStyleRelay
         ThemeBackgroundToken(tokens::TEXT_INPUT_BG)
         EntityCursor::System(bevy::window::SystemCursorIcon::Text)
     }
@@ -168,8 +166,6 @@ pub(crate) fn text_input_outline() -> impl Scene {
             border_radius: size::CORNER_RADIUS_SMALL,
         }
         TextInputOutline
-        // Em-sized chrome needs the chain's `EmSize`.
-        TextStyleRelay
         Pickable::IGNORE
         ThemeBorderToken(tokens::TEXT_INPUT_BORDER)
     }
@@ -201,7 +197,6 @@ pub(crate) fn text_input_field(
             visible_width: visible_width,
             max_characters: max_characters,
         }
-        ThemedText
         TextLayout {
             linebreak: LineBreak::NoWrap,
         }
@@ -443,7 +438,6 @@ pub(crate) fn text_input_prefix_container(content: Box<dyn SceneList>) -> impl S
             flex_shrink: 0.0,
         }
         TextInputPrefix
-        TextStyleRelay
         Children [
             {content},
         ]
@@ -465,7 +459,6 @@ pub(crate) fn text_input_suffix_container(content: Box<dyn SceneList>) -> impl S
             flex_shrink: 0.0,
         }
         TextInputSuffixContainer
-        TextStyleRelay
         Children [
             {content},
         ]

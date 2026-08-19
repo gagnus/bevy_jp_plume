@@ -26,7 +26,7 @@ use crate::containers::{
 };
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
 use crate::display::icon;
-use crate::font_styles::{InheritableFont, TextStyleRelay};
+use crate::font_styles::InheritableFont;
 use crate::theme::{
     Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
 };
@@ -385,6 +385,5 @@ pub(crate) fn dialog_body() -> impl Scene {
             flex_grow: 1.0,
             min_height: Val::ZERO,
         }
-        TextStyleRelay
     }
 }

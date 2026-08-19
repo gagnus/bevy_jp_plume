@@ -161,17 +161,16 @@ fn update_theme(
     }
 }
 
-// Every plume wrapper relays the inherited text styles, so themed text that still
-// resolves no color or no font sits under a broken chain — the regression net for
-// a wrapper the relay sweep missed, or an app subtree with no establishing surface.
-fn warn_unstyled_themed_text(
-    // `PropagateOver<C>` exempts relays, the `Inheritable*` sources, and pinned
-    // text (direct color forms, raw-colored captions, icons, small caps, input
-    // fields) — all of which style their own text.
+// Text styles reach every descendant of an establishing surface, so text that
+// resolves no color or no font sits under no surface at all — the regression
+// net for an app subtree mounted outside `screen`, a dialog or a popup.
+fn warn_unstyled_text(
+    // `PropagateOver<C>` exempts self-styled text (the direct color forms and
+    // the `Inheritable*` sources on text carriers).
     q_no_color: Query<
         (),
         (
-            With<ThemedText>,
+            Or<(With<Text>, With<EditableText>)>,
             Without<Inherited<TextColor>>,
             Without<PropagateOver<TextColor>>,
         ),
@@ -179,7 +178,7 @@ fn warn_unstyled_themed_text(
     q_no_font: Query<
         (),
         (
-            With<ThemedText>,
+            Or<(With<Text>, With<EditableText>)>,
             Without<Inherited<TextFont>>,
             Without<PropagateOver<TextFont>>,
         ),
@@ -192,8 +191,9 @@ fn warn_unstyled_themed_text(
     let no_color = !q_no_color.is_empty();
     if no_color && *color_suspect_last_frame {
         warn_once!(
-            "Themed text resolved no color and falls back to white. Text must sit under a \
-             surface that establishes the style, as `screen`, dialogs and popups do."
+            "Text resolved no color and falls back to white. Text must sit under a surface \
+             that establishes the style, as `screen`, dialogs and popups do; text styled by \
+             hand opts out with `PropagateOver<TextColor>`."
         );
     }
     *color_suspect_last_frame = no_color;
@@ -201,8 +201,9 @@ fn warn_unstyled_themed_text(
     let no_font = !q_no_font.is_empty();
     if no_font && *font_suspect_last_frame {
         warn_once!(
-            "Themed text resolved no font and falls back to the engine default. Text must sit \
-             under a surface that establishes the style, as `screen`, dialogs and popups do."
+            "Text resolved no font and falls back to the engine default. Text must sit under \
+             a surface that establishes the style, as `screen`, dialogs and popups do; text \
+             styled by hand opts out with `PropagateOver<TextFont>`."
         );
     }
     *font_suspect_last_frame = no_font;
@@ -214,11 +215,14 @@ pub(crate) struct ThemePlugin;
 
 impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
-        // Both text-style channels, filtered by the one `ThemedText` opt-in.
+        // Both text-style channels, unfiltered: styles reach every descendant, and
+        // self-styled text opts out with `PropagateOver`. Landing a real `TextFont`
+        // on every node also lets bevy's `sync_font_size_to_em_size` keep `EmSize`
+        // current everywhere, so `Val::Em` chrome needs no plume bookkeeping.
         app.init_resource::<UiTheme>()
             .add_plugins((
-                HierarchyPropagatePlugin::<TextColor, With<ThemedText>>::new(PostUpdate),
-                HierarchyPropagatePlugin::<TextFont, With<ThemedText>>::new(PostUpdate),
+                HierarchyPropagatePlugin::<TextColor>::new(PostUpdate),
+                HierarchyPropagatePlugin::<TextFont>::new(PostUpdate),
             ))
             // Fonts must be current before `measure_text_system` and
             // `detect_text_needs_rerender` run in `UiSystems::Content`.
@@ -238,7 +242,7 @@ impl Plugin for ThemePlugin {
             // After propagation, so text parented this frame has had its chance.
             .add_systems(
                 PostUpdate,
-                warn_unstyled_themed_text
+                warn_unstyled_text
                     .after(PropagateSet::<TextColor>::default())
                     .after(PropagateSet::<TextFont>::default()),
             )
@@ -248,9 +252,7 @@ impl Plugin for ThemePlugin {
             .add_observer(on_changed_inheritable_text_slot)
             .add_observer(on_changed_inheritable_text_color)
             .add_observer(on_changed_text_token)
-            .add_observer(on_changed_text_slot)
-            .add_observer(on_themed_text_inserted::<TextColor>)
-            .add_observer(on_themed_text_inserted::<TextFont>);
+            .add_observer(on_changed_text_slot);
     }
 }
 

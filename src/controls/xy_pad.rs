@@ -24,7 +24,6 @@ use bevy::ui::{
 
 use crate::constants::size;
 use crate::cursor::{CursorLock, EntityCursor};
-use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
 
@@ -149,8 +148,6 @@ impl PlumeXyPad {
             }
             XyPadFrame
             XyPadValue
-            // Em-sized chrome needs the chain's `EmSize`.
-            TextStyleRelay
             ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
             CursorLock
@@ -161,7 +158,6 @@ impl PlumeXyPad {
                         flex_grow: 1.0,
                     }
                     XyPadInner
-                    TextStyleRelay
                     Children [
                         (
                             Node {
@@ -179,7 +175,6 @@ impl PlumeXyPad {
                                 },
                             }
                             XyPadThumb
-                            TextStyleRelay
                             // A white ring with a dark outline reads on any background.
                             bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
                             bevy::ui::Outline {

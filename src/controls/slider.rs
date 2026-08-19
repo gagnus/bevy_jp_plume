@@ -35,7 +35,6 @@ use crate::constants::size;
 use crate::controls::DefaultWidth;
 use crate::cursor::{CursorLock, EntityCursor};
 use crate::focus::FocusIndicator;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, UiTheme, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
@@ -95,8 +94,6 @@ impl PlumeSlider {
                 orientation: SliderOrientation::Horizontal,
             }
             SliderFrame
-            // Em-sized chrome needs the chain's `EmSize`.
-            TextStyleRelay
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             CursorLock
             on(slider_self_update)
@@ -118,7 +115,6 @@ impl PlumeSlider {
                         border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
-                    TextStyleRelay
                     // Bar/track drawn as a gradient, seeded from the theme so the
                     // slider is styled on its first frame regardless of scene-application order.
                     template(|ctx| {
@@ -158,7 +154,6 @@ impl PlumeSlider {
                             // Focus rings follow the node's rounding, so the ring
                             // belongs on the round thumb, not the square frame.
                             FocusIndicator
-                            TextStyleRelay
                             template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
                             UiTransform::default()
                             on(grab_thumb_on_press)

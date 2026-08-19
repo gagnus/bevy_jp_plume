@@ -13,7 +13,6 @@ use bevy::scene::{Scene, bsn};
 use bevy::ui::{AlignSelf, FlexDirection, Node, UiRect, UiSystems, Val};
 
 use crate::constants::size;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBackgroundToken;
 use crate::tokens;
 
@@ -42,11 +41,8 @@ pub struct Separator;
 
 /// Put this on a [`separator`] to run it edge to edge: negative margins mirror
 /// the parent container's padding, tracking it if it changes.
-// `TextStyleRelay` keeps the entity on the font chain so an em-padded parent's
-// mirrored margins resolve at the same em.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-#[require(TextStyleRelay)]
 pub struct SeparatorBleed;
 
 fn apply_separator_bleed(

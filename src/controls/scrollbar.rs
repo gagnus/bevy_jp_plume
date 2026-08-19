@@ -20,7 +20,6 @@ use bevy::ui_widgets::{ControlOrientation, Scrollbar, ScrollbarDragState, Scroll
 
 use crate::constants::size;
 use crate::cursor::EntityCursor;
-use crate::font_styles::TextStyleRelay;
 use crate::theme::ThemeBackgroundToken;
 use crate::tokens;
 
@@ -79,8 +78,6 @@ impl PlumeScrollbar {
             Node {
                 border_radius: {size::SCROLLBAR_WIDTH / 2.0},
             }
-            // The bar and its thumb are em-sized: they need the chain's `EmSize`.
-            TextStyleRelay
             ThemeBackgroundToken(tokens::SCROLLBAR_BG)
             Children [
                 (
@@ -90,7 +87,6 @@ impl PlumeScrollbar {
                         border_radius: {size::SCROLLBAR_WIDTH / 2.0},
                     }
                     ThemedThumb
-                    TextStyleRelay
                     EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
                 ),
             ]
