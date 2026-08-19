@@ -1,12 +1,15 @@
 //! A framework for theming.
+use alloc::collections::BTreeMap;
+
 use bevy::app::{
     App, HierarchyPropagatePlugin, Inherited, Plugin, PostUpdate, PropagateOver, PropagateSet,
 };
 use bevy::color::{Alpha, Color, Oklcha};
 use bevy::ecs::change_detection::DetectChanges;
+use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
-use bevy::ecs::query::{Has, Or, With, Without};
-use bevy::ecs::reflect::ReflectResource;
+use bevy::ecs::query::{Changed, Has, Or, With, Without};
+use bevy::ecs::reflect::{ReflectComponent, ReflectResource};
 use bevy::ecs::resource::Resource;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Local, Query, Res};
@@ -19,17 +22,54 @@ use bevy::ui::widget::Text;
 use bevy::ui::{BorderColor, UiSystems};
 use bevy_immediate::ImmediateSystemSet;
 use rand::RngExt;
+use smol_str::SmolStr;
 
 use crate::imm::PlumeCaps;
 use crate::tokens::ThemeToken;
 
-/// The currently selected user interface theme. Overwriting this resource changes the theme.
+/// Names a [`UiTheme`] palette and, on an entity, the theme it renders with.
+/// Propagates from a `Propagate(ThemeId)` source; no source means the default.
+// Small strings stay inline up to 23 bytes, so propagation's per-node clone
+// never allocates for short names.
+#[derive(Component, Reflect, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug)]
+#[reflect(Component, Default, Debug)]
+pub struct ThemeId(SmolStr);
+
+impl ThemeId {
+    /// The id named `name`; the empty string is the default theme's id.
+    pub fn new(name: impl Into<SmolStr>) -> Self {
+        Self(name.into())
+    }
+
+    /// The id's name; empty for the default theme.
+    pub fn name(&self) -> &str {
+        &self.0
+    }
+}
+
+// One theme's baked slot colors plus the parametric palette they came from.
+#[derive(Clone, Debug, Reflect)]
+struct ThemeEntry {
+    resolved: ThemeResolvedPalette,
+    editable: ThemeEditablePalette,
+}
+
+impl From<&ThemeEditablePalette> for ThemeEntry {
+    fn from(palette: &ThemeEditablePalette) -> Self {
+        Self {
+            resolved: palette.resolve(),
+            editable: palette.clone(),
+        }
+    }
+}
+
+/// The user interface themes, one palette per [`ThemeId`]. Overwriting a
+/// palette via [`Self::set_palette`] restyles every entity on that theme.
 #[derive(Resource, Reflect, Debug)]
 #[reflect(Resource, Default, Debug)]
 pub struct UiTheme {
     tokens: HashMap<ThemeToken, ThemeSlot>,
-    resolved: ThemeResolvedPalette,
-    editable: ThemeEditablePalette,
+    themes: BTreeMap<ThemeId, ThemeEntry>,
 }
 
 impl Default for UiTheme {
@@ -42,29 +82,45 @@ impl From<ThemeEditablePalette> for UiTheme {
     fn from(value: ThemeEditablePalette) -> Self {
         Self {
             tokens: slots::DEFAULT_TOKEN_SLOTS.iter().cloned().collect(),
-            resolved: value.resolve(),
-            editable: value,
+            themes: BTreeMap::from([(ThemeId::default(), ThemeEntry::from(&value))]),
         }
     }
 }
 
 impl UiTheme {
-    /// The resolved color of a palette slot — how an app reads a theme color.
-    pub fn palette(&self, slot: ThemeSlot) -> Color {
-        self.resolved[slot]
+    // The entry for `id`: `None` and unregistered ids (which warn) fall back
+    // to the default theme.
+    fn entry(&self, id: Option<&ThemeId>) -> &ThemeEntry {
+        if let Some(id) = id {
+            match self.themes.get(id) {
+                Some(entry) => return entry,
+                None => warn_once!(
+                    "Theme \"{}\" has no palette; using the default theme.",
+                    id.name()
+                ),
+            }
+        }
+        self.themes
+            .get(&ThemeId::default())
+            .expect("the default theme always has a palette")
     }
 
-    /// The parametric palette this theme was generated from, for an editor to show.
-    pub fn editable(&self) -> &ThemeEditablePalette {
-        &self.editable
+    /// The resolved color of a palette slot in theme `id` — how an app reads a
+    /// theme color. `None` is the default theme.
+    pub fn palette(&self, id: Option<&ThemeId>, slot: ThemeSlot) -> Color {
+        self.entry(id).resolved[slot]
+    }
+
+    /// The parametric palette theme `id` was generated from, for an editor to show.
+    pub fn editable(&self, id: Option<&ThemeId>) -> &ThemeEditablePalette {
+        &self.entry(id).editable
     }
 
     // Lookup a color by design token (tokens are plume-internal). If the theme does
     // not have an entry for that token, logs a warning and returns an error color.
-    pub(crate) fn color(&self, token: &ThemeToken) -> Color {
-        let color = self.tokens.get(token).map(|slot| self.resolved[*slot]);
-        match color {
-            Some(c) => c,
+    pub(crate) fn color(&self, id: Option<&ThemeId>, token: &ThemeToken) -> Color {
+        match self.tokens.get(token) {
+            Some(slot) => self.entry(id).resolved[*slot],
             None => {
                 warn_once!("Theme color {} not found.", token);
                 // Return a bright obnoxious color to make the error obvious.
@@ -73,21 +129,35 @@ impl UiTheme {
         }
     }
 
-    /// Re-resolve every slot color from an editable palette.
-    pub fn set_palette(&mut self, palette: &ThemeEditablePalette) {
-        self.resolved = palette.resolve();
-        self.editable = palette.clone();
+    /// Set or replace theme `id`'s palette, re-resolving every slot color.
+    pub fn set_palette(&mut self, id: ThemeId, palette: &ThemeEditablePalette) {
+        self.themes.insert(id, ThemeEntry::from(palette));
+    }
+
+    /// Drop theme `id`'s palette; entities on it fall back to the default
+    /// theme, which cannot be removed.
+    pub fn remove_palette(&mut self, id: &ThemeId) {
+        if *id != ThemeId::default() {
+            self.themes.remove(id);
+        }
+    }
+
+    /// The registered theme ids, the default theme first.
+    pub fn theme_ids(&self) -> impl Iterator<Item = &ThemeId> {
+        self.themes.keys()
     }
 }
 
-// Themed backgrounds are refreshed by `resolve_backgrounds`, which owns the
-// gradient-or-flat decision and so has to handle the palette swap itself.
+// Recolors themed borders and text: everything on a palette change, per entity
+// on a `ThemeId` change. Backgrounds are `resolve_backgrounds`' job — it owns
+// the gradient-or-flat decision.
 fn update_theme(
     mut q_border: Query<
         (
             &mut BorderColor,
             Option<&ThemeBorderToken>,
             Option<&ThemeBorderSlot>,
+            Option<&ThemeId>,
         ),
         Or<(With<ThemeBorderToken>, With<ThemeBorderSlot>)>,
     >,
@@ -96,6 +166,7 @@ fn update_theme(
             &mut TextColor,
             Option<&ThemeTextToken>,
             Option<&ThemeTextSlot>,
+            Option<&ThemeId>,
         ),
         Or<(With<ThemeTextToken>, With<ThemeTextSlot>)>,
     >,
@@ -104,6 +175,7 @@ fn update_theme(
             Entity,
             Option<&InheritableThemeTextToken>,
             Option<&InheritableThemeTextSlot>,
+            Option<&ThemeId>,
             (Has<Text>, Has<EditableText>),
             Has<ThemeTextSlot>,
             Has<ThemeTextToken>,
@@ -113,57 +185,110 @@ fn update_theme(
             With<InheritableThemeTextSlot>,
         )>,
     >,
+    q_id_changed: Query<Entity, Changed<ThemeId>>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    if theme.is_changed() {
-        for (mut border, theme_border_token, theme_border_slot) in q_border.iter_mut() {
-            if let Some(theme_border_slot) = theme_border_slot {
-                border.set_all(theme.palette(theme_border_slot.0));
-            } else if let Some(theme_border_token) = theme_border_token {
-                border.set_all(theme.color(&theme_border_token.0));
-            }
+    fn apply_border(
+        theme: &UiTheme,
+        (mut border, token, slot, id): (
+            bevy::ecs::change_detection::Mut<BorderColor>,
+            Option<&ThemeBorderToken>,
+            Option<&ThemeBorderSlot>,
+            Option<&ThemeId>,
+        ),
+    ) {
+        if let Some(slot) = slot {
+            border.set_all(theme.palette(id, slot.0));
+        } else if let Some(token) = token {
+            border.set_all(theme.color(id, &token.0));
         }
+    }
 
-        for (mut text_color, theme_text_token, theme_text_slot) in q_text_color.iter_mut() {
-            if let Some(theme_text_slot) = theme_text_slot {
-                text_color.0 = theme.palette(theme_text_slot.0);
-            } else if let Some(theme_text_token) = theme_text_token {
-                text_color.0 = theme.color(&theme_text_token.0);
-            }
+    fn apply_text(
+        theme: &UiTheme,
+        (mut text_color, token, slot, id): (
+            bevy::ecs::change_detection::Mut<TextColor>,
+            Option<&ThemeTextToken>,
+            Option<&ThemeTextSlot>,
+            Option<&ThemeId>,
+        ),
+    ) {
+        if let Some(slot) = slot {
+            text_color.0 = theme.palette(id, slot.0);
+        } else if let Some(token) = token {
+            text_color.0 = theme.color(id, &token.0);
         }
+    }
 
-        for (
+    fn apply_inherit(
+        theme: &UiTheme,
+        commands: &mut Commands,
+        (
             entity,
             inherit_token,
             inherit_slot,
+            id,
             (has_text, has_editable),
             has_direct_slot,
             has_direct_token,
-        ) in &q_inherit
-        {
-            let color = if let Some(inherit_slot) = inherit_slot {
-                theme.palette(inherit_slot.0)
-            } else if let Some(inherit_token) = inherit_token {
-                theme.color(&inherit_token.0)
-            } else {
-                continue;
-            };
-            // Same self-write rule as the insert observers; the direct forms
-            // were refreshed by the loops above.
-            apply_inheritable_color(
-                &mut commands,
-                entity,
-                color,
-                (has_text || has_editable) && !has_direct_slot && !has_direct_token,
-            );
+        ): (
+            Entity,
+            Option<&InheritableThemeTextToken>,
+            Option<&InheritableThemeTextSlot>,
+            Option<&ThemeId>,
+            (bool, bool),
+            bool,
+            bool,
+        ),
+    ) {
+        let color = if let Some(inherit_slot) = inherit_slot {
+            theme.palette(id, inherit_slot.0)
+        } else if let Some(inherit_token) = inherit_token {
+            theme.color(id, &inherit_token.0)
+        } else {
+            return;
+        };
+        // Same self-write rule as the insert observers; the direct forms are
+        // refreshed by the border/text sweeps.
+        apply_inheritable_color(
+            commands,
+            entity,
+            color,
+            (has_text || has_editable) && !has_direct_slot && !has_direct_token,
+        );
+    }
+
+    if theme.is_changed() {
+        for row in q_border.iter_mut() {
+            apply_border(&theme, row);
+        }
+        for row in q_text_color.iter_mut() {
+            apply_text(&theme, row);
+        }
+        for row in &q_inherit {
+            apply_inherit(&theme, &mut commands, row);
+        }
+        return;
+    }
+
+    // A `ThemeId` that landed or changed this frame re-resolves just its entity —
+    // including the frame a themed subtree spawns, before its first paint.
+    for entity in &q_id_changed {
+        if let Ok(row) = q_border.get_mut(entity) {
+            apply_border(&theme, row);
+        }
+        if let Ok(row) = q_text_color.get_mut(entity) {
+            apply_text(&theme, row);
+        }
+        if let Ok(row) = q_inherit.get(entity) {
+            apply_inherit(&theme, &mut commands, row);
         }
     }
 }
 
-// Text styles reach every descendant of an establishing surface, so text that
-// resolves no color or no font sits under no surface at all — the regression
-// net for an app subtree mounted outside `screen`, a dialog or a popup.
+// Regression net: text that resolves no color or font sits under no
+// establishing surface (`screen`, a dialog, a popup).
 fn warn_unstyled_text(
     // `PropagateOver<C>` exempts self-styled text (the direct color forms and
     // the `Inheritable*` sources on text carriers).
@@ -209,20 +334,20 @@ fn warn_unstyled_text(
     *font_suspect_last_frame = no_font;
 }
 
-// Installs the [`UiTheme`] resource, the theme refresh system, both themed
-// text-style propagation channels, and the token-change observers.
+// Installs [`UiTheme`], the style and `ThemeId` propagation channels, the
+// refresh systems, and the token-change observers.
 pub(crate) struct ThemePlugin;
 
 impl Plugin for ThemePlugin {
     fn build(&self, app: &mut App) {
-        // Both text-style channels, unfiltered: styles reach every descendant, and
-        // self-styled text opts out with `PropagateOver`. Landing a real `TextFont`
-        // on every node also lets bevy's `sync_font_size_to_em_size` keep `EmSize`
-        // current everywhere, so `Val::Em` chrome needs no plume bookkeeping.
+        // Unfiltered channels: styles reach every descendant, self-styled text
+        // opts out with `PropagateOver`, and the per-node `TextFont` feeds
+        // bevy's `EmSize` sync, so `Val::Em` chrome just works.
         app.init_resource::<UiTheme>()
             .add_plugins((
                 HierarchyPropagatePlugin::<TextColor>::new(PostUpdate),
                 HierarchyPropagatePlugin::<TextFont>::new(PostUpdate),
+                HierarchyPropagatePlugin::<ThemeId>::new(PostUpdate),
             ))
             // Fonts must be current before `measure_text_system` and
             // `detect_text_needs_rerender` run in `UiSystems::Content`.
@@ -230,14 +355,20 @@ impl Plugin for ThemePlugin {
                 PostUpdate,
                 PropagateSet::<TextFont>::default().in_set(UiSystems::Propagate),
             )
-            // After the imm reconciler's cleanup despawns, so the repaint commands
-            // `resolve_backgrounds` queues can't target an entity whose despawn is
-            // already in an earlier buffer at the same sync point — the ordering
-            // edge inserts a sync point that applies those despawns first.
+            // Ids the imm build inserts this frame propagate before the theme
+            // systems read them: a themed subtree resolves in its spawn frame.
+            .configure_sets(
+                PostUpdate,
+                PropagateSet::<ThemeId>::default()
+                    .after(ImmediateSystemSet::<PlumeCaps>::default()),
+            )
+            // After the imm reconciler, so its cleanup despawns apply before the
+            // repaint commands queued here could target a dead entity.
             .add_systems(
                 PostUpdate,
                 (update_theme, resolve_backgrounds)
-                    .after(ImmediateSystemSet::<PlumeCaps>::default()),
+                    .after(ImmediateSystemSet::<PlumeCaps>::default())
+                    .after(PropagateSet::<ThemeId>::default()),
             )
             // After propagation, so text parented this frame has had its chance.
             .add_systems(
@@ -422,7 +553,7 @@ mod slots;
 pub(crate) mod tokens;
 
 pub(crate) use components::*;
-pub use editor::theme_editor;
+pub use editor::{theme_editor, theme_editor_tabs};
 pub use slots::ThemeSlot;
 
 /// The built-in parametric palettes, ready to hand to [`UiTheme::from`].

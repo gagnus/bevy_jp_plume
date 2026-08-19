@@ -1,6 +1,7 @@
 //! Fill-fn editing a [`ThemeEditablePalette`]: preset buttons plus a slider per
 //! ramp parameter.
 
+use core::cell::Cell;
 use core::ops::RangeInclusive;
 
 use bevy::color::Color;
@@ -11,7 +12,7 @@ use crate::imm::{PlumeImm, Ui};
 use crate::style::font_awesome;
 use crate::theme::dark_theme::default_dark_palette;
 use crate::theme::light_theme::default_light_palette;
-use crate::theme::{OklchaArray, ThemeEditablePalette, ThemeSlot};
+use crate::theme::{OklchaArray, ThemeEditablePalette, ThemeId, ThemeSlot, UiTheme};
 
 /// Palette editor (presets, neutral/accent/text ramps) as a fill-fn for your own
 /// container. Mutates `palette` in place; bake it into the live theme with
@@ -63,6 +64,42 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
         ramp_rows(ui, &mut palette.disabled, 0.2, false)
     })
     .collapsible(false);
+}
+
+/// [`theme_editor`] for every registered theme, behind a tab bar: the default
+/// theme labeled "Default", the rest by their id. Edits bake straight into
+/// `theme`; returns true when one did.
+// Takes plain `&mut UiTheme` so a `ResMut` caller can pass
+// `bypass_change_detection()` and `set_changed()` on true — deref-muting the
+// resource every open frame would repaint the whole UI continuously.
+pub fn theme_editor_tabs(ui: &mut Ui, theme: &mut UiTheme, selected: &mut ThemeId) -> bool {
+    let ids: Vec<ThemeId> = theme.theme_ids().cloned().collect();
+    // Every tab's body closure is built each frame, so the edit reports through
+    // a shared cell rather than a `&mut` each.
+    let edited = Cell::new(None);
+    ui.tabs(selected, |tabs| {
+        for id in &ids {
+            let label = if *id == ThemeId::default() {
+                "Default"
+            } else {
+                id.name()
+            };
+            tabs.tab(id.clone(), label).body(|ui| {
+                let mut palette = theme.editable(Some(id)).clone();
+                theme_editor(ui, &mut palette);
+                if palette != *theme.editable(Some(id)) {
+                    edited.set(Some((id.clone(), palette)));
+                }
+            });
+        }
+    });
+    match edited.take() {
+        Some((id, palette)) => {
+            theme.set_palette(id, &palette);
+            true
+        }
+        None => false,
+    }
 }
 
 // Hue, chroma, then one lightness row per stop. `chroma_max` keeps neutral/text

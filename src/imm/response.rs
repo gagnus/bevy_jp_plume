@@ -42,7 +42,7 @@ use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
 use crate::theme::{
     Flat, Inert, InheritableTextColor, InheritableThemeTextSlot, ThemeBackgroundSlot,
-    ThemeBorderSlot, ThemeSlot,
+    ThemeBorderSlot, ThemeId, ThemeSlot,
 };
 use crate::utils::numeric::Numeric;
 
@@ -473,6 +473,19 @@ impl<K> ImmResponse<'_, '_, '_, K> {
             self.e
                 .entity_commands()
                 .insert(InheritableThemeTextSlot(slot));
+        }
+        self
+    }
+
+    /// Render this widget and everything below it in the theme registered under
+    /// `id` (see [`UiTheme::set_palette`](crate::theme::UiTheme::set_palette)).
+    /// Only ever sets: back to the default theme means not calling this at all.
+    pub fn theme(mut self, id: ThemeId) -> Self {
+        struct ThemeKey;
+        if self.key_changed::<ThemeKey>(&id) {
+            self.e
+                .entity_commands()
+                .insert(bevy::app::Propagate(id.clone()));
         }
         self
     }

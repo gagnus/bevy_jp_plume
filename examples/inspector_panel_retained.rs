@@ -7,23 +7,25 @@ use bevy_jp_plume::retained::{
     Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeColorEdit, PlumeColorPicker,
     PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeRadio,
     PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab,
-    PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, SectionCollapsed, Selected,
-    SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer,
-    icon, menu_anchor, row, screen, separator, small_caps, space,
+    PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, Propagate, SectionCollapsed,
+    Selected, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column,
+    flex_spacer, icon, menu_anchor, row, screen, separator, small_caps, space,
 };
 
 #[path = "common/mod.rs"]
 mod common;
 
 use common::Options;
-use common::inspector_panel::{Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab};
+use common::inspector_panel::{
+    Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab, hud_theme, register_hud_theme,
+};
 
 const GUTTER: Val = Val::Em(6.0);
 
 fn main() {
     let mut app = common::demo_app(false);
     app.insert_resource(Inspector::initial())
-        .add_systems(Startup, scene.spawn())
+        .add_systems(Startup, (register_hud_theme, scene.spawn()))
         .add_systems(
             Update,
             (
@@ -598,9 +600,11 @@ fn document_tab(slot: usize) -> impl Scene {
 }
 
 // The imm twin's floating HUD. A headerless `PlumeDialog` is the retained panel:
-// absolutely positioned, so the corner it pins to is the pane's own.
+// absolutely positioned, so the corner it pins to is the pane's own. The
+// `Propagate` is the retained spelling of the imm twin's `.theme(hud_theme())`.
 fn viewport_hud() -> impl Scene {
     bsn! {
+        template_value(Propagate(hud_theme()))
         @PlumeDialog {
             @header: false,
             @inset: {Corner::BottomRight.inset(em(1), em(1))},

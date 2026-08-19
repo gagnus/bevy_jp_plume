@@ -271,12 +271,28 @@ impl Default for Hierarchy {
     }
 }
 
-/// Adds the inspector panel: its resource, its panel system, and its log.
+/// The viewport HUD's own light theme, exercising per-subtree theming; both
+/// inspector twins render their HUD with it.
+pub fn hud_theme() -> ThemeId {
+    ThemeId::new("Hud")
+}
+
+/// Startup system registering the HUD theme's palette.
+pub fn register_hud_theme(mut theme: ResMut<UiTheme>) {
+    theme.set_palette(
+        hud_theme(),
+        &bevy_jp_plume::theme::palettes::default_light_palette(),
+    );
+}
+
+/// Adds the inspector panel: its resource, its panel system, its HUD theme,
+/// and its log.
 pub struct InspectorPanelPlugin;
 
 impl Plugin for InspectorPanelPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Inspector::initial())
+            .add_systems(Startup, register_hud_theme)
             .add_systems(Update, inspector_panel_ui)
             .add_systems(Update, log_on_change::<Inspector>);
     }
@@ -487,7 +503,8 @@ fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
                     documents.save_active();
                 }
             });
-        });
+        })
+        .theme(hud_theme());
 }
 
 fn panel(

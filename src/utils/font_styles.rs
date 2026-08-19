@@ -46,9 +46,8 @@ impl From<f32> for PlumeFontSize {
 
 /// Establishes the font for descendant text; `None` fields inherit from the
 /// nearest ancestor source (the standard font at a root).
-// No `PropagateOver<TextFont>`: the holder's `Inherited` is its own resolved
-// font, so the propagated output styles the holder too — and, via bevy's
-// `EmSize` sync, its own em-authored layout.
+// Deliberately no `PropagateOver<TextFont>`: the holder receives its own
+// resolved font, which is what drives `EmSize` for its em-sized layout.
 #[derive(Component, Default, Clone, Debug, Reflect, FromTemplate)]
 #[reflect(Component, Default)]
 pub struct InheritableFont {
@@ -79,15 +78,12 @@ pub fn small_caps() -> impl Scene {
     }
 }
 
-// Resolves each `InheritableFont` into a `Propagate<TextFont>` source: `None`
-// fields fill from the nearest ancestor source, or the standard font at a root.
+// Turns each `InheritableFont` into a `Propagate<TextFont>` source: `None`
+// fields fill in from the nearest ancestor holder, or the standard font at a root.
 //
-// A holder resolves from the ancestor chain rather than from its parent's
-// `Inherited<TextFont>` alone, because propagation runs after this system: on the
-// frame a subtree spawns, nothing in it has an inherited value yet. Reading the
-// chain (and resolving the holders on it, outermost first) settles a whole nest
-// in one frame, so a newly spawned caption never renders a frame at the standard
-// size — a jump the layout above it would inherit as a height pop.
+// Ancestor values come from the holders themselves, not `Inherited<TextFont>`,
+// which is stale on the frame a subtree spawns — new text would render one
+// frame at the wrong size, and the layout around it would visibly pop.
 pub(crate) fn resolve_inheritable_font(
     holders: Query<(Entity, &InheritableFont)>,
     parents: Query<&ChildOf>,
@@ -97,16 +93,13 @@ pub(crate) fn resolve_inheritable_font(
     mut chain: Local<Vec<Entity>>,
     mut commands: Commands,
 ) {
-    // Holders resolved this run, keyed by entity: an outer holder is the base for
-    // every holder under it, and one ancestor walk can settle several at once.
+    // Holders already resolved this run; an outer holder is the base for every
+    // holder below it, so one ancestor walk can settle several.
     resolved.clear();
 
     for (entity, _) in &holders {
-        // Walk up collecting the holders above this one, stopping at the first
-        // already resolved this run. Only holders are consulted: `Inherited` is a
-        // copy of some ancestor holder's font, and a fresh node's copy is seeded
-        // from its parent at spawn (by the propagation plugin's `ChildOf`
-        // observer), so on a spawn frame it still holds the pre-scaling font.
+        // Walk up, collecting unresolved holders until one resolved this run
+        // (or the root) provides the base.
         chain.clear();
         let mut base = None;
         let mut cursor = Some(entity);
@@ -146,8 +139,8 @@ pub(crate) fn resolve_inheritable_font(
             resolved.insert(*holder, font.clone());
         }
 
-        // A same-value re-insert would still ripple a re-resolve wave through
-        // nested holders' `Inherited<TextFont>`.
+        // Skip same-value re-inserts: they would still mark `Inherited<TextFont>`
+        // changed all the way down the subtree.
         if existing.get(entity).is_ok_and(|p| p.0 == font) {
             continue;
         }
@@ -187,17 +180,14 @@ mod tests {
         app
     }
 
-    // A scaled container, a plain wrapper, and a caption that only pins a face:
-    // the caption's size has to come from the container, in the frame they spawn.
-    // The wrapper is what makes this bite — the propagation plugin's `ChildOf`
-    // observer seeds its `Inherited<TextFont>` from the unscaled font the
-    // container had before this run, so anything trusting that copy resolves the
-    // caption a frame behind.
+    // The wrapper between container and caption is what makes this bite: its
+    // `Inherited<TextFont>` copy is stale on the spawn frame, so resolving
+    // through it would size the caption a frame late.
     #[test]
     fn nested_holder_scales_in_its_first_frame() {
         let mut app = font_app();
-        // An established tree at the standard font, as a dialog is by the time a
-        // widget appears in it: its settled value is what the observer hands down.
+        // A settled tree at the standard font, as a dialog is by the time a
+        // widget appears in it.
         let root = app.world_mut().spawn(InheritableFont::default()).id();
         app.update();
         app.update();

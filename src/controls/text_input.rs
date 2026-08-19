@@ -1,7 +1,7 @@
 //! Editable text field and its decorative container.
 use bevy::app::{Plugin, PostUpdate, PreUpdate};
 use bevy::camera::visibility::Visibility;
-use bevy::ecs::change_detection::{DetectChanges, DetectChangesMut};
+use bevy::ecs::change_detection::{DetectChanges, DetectChangesMut, Ref};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
@@ -34,7 +34,7 @@ use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 use crate::constants::size;
 use crate::controls::{ButtonVariant, DefaultWidth, SetValue};
 use crate::cursor::EntityCursor;
-use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeTextToken, UiTheme};
+use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeId, ThemeTextToken, UiTheme};
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
@@ -513,21 +513,24 @@ fn order_text_input_prefixes(
     }
 }
 
-// Theme the caret and selection of every field: on a theme change, and on each
-// field as it appears.
+// Theme the caret and selection of every field: on a theme change, on each
+// field as it appears, and on a field whose `ThemeId` landed or changed.
 fn update_text_cursor_color(
-    mut q_field: Query<&mut TextCursorStyle, With<TextInputField>>,
+    mut q_field: Query<(&mut TextCursorStyle, Option<Ref<ThemeId>>), With<TextInputField>>,
     theme: Res<UiTheme>,
 ) {
     let theme_changed = theme.is_changed();
-    for mut cursor_style in q_field.iter_mut() {
-        if !theme_changed && !cursor_style.is_added() {
+    for (mut cursor_style, theme_id) in q_field.iter_mut() {
+        let id_changed = theme_id.as_ref().is_some_and(Ref::is_changed);
+        if !theme_changed && !cursor_style.is_added() && !id_changed {
             continue;
         }
+        let theme_id = theme_id.as_deref();
         let themed = TextCursorStyle {
-            color: theme.color(&tokens::TEXT_INPUT_CURSOR),
-            selection_color: theme.color(&tokens::TEXT_INPUT_SELECTION),
-            unfocused_selection_color: theme.color(&tokens::TEXT_INPUT_SELECTION_UNFOCUSED),
+            color: theme.color(theme_id, &tokens::TEXT_INPUT_CURSOR),
+            selection_color: theme.color(theme_id, &tokens::TEXT_INPUT_SELECTION),
+            unfocused_selection_color: theme
+                .color(theme_id, &tokens::TEXT_INPUT_SELECTION_UNFOCUSED),
             ..*cursor_style
         };
         // A `Changed` tick here re-extracts the node for rendering, so write

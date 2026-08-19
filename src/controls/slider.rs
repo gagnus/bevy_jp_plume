@@ -35,7 +35,7 @@ use crate::constants::size;
 use crate::controls::DefaultWidth;
 use crate::cursor::{CursorLock, EntityCursor};
 use crate::focus::FocusIndicator;
-use crate::theme::{GradientAmount, ThemeBackgroundToken, UiTheme, control_box_shadow};
+use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeId, UiTheme, control_box_shadow};
 use crate::tokens;
 use crate::utils::anim::AnimState;
 use crate::utils::hierarchy::{descendant_get, descendant_get_mut};
@@ -115,12 +115,14 @@ impl PlumeSlider {
                         border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
                     }
                     SliderTrack
-                    // Bar/track drawn as a gradient, seeded from the theme so the
-                    // slider is styled on its first frame regardless of scene-application order.
+                    // Bar/track drawn as a gradient, seeded from the default theme so
+                    // the slider is styled on its first frame regardless of
+                    // scene-application order; a subtree `ThemeId` repaints it the
+                    // same frame via `update_slider_styles_theme`.
                     template(|ctx| {
                         let theme = ctx.resource::<UiTheme>();
-                        let bar = theme.color(&tokens::SLIDER_BAR);
-                        let bg = theme.color(&tokens::SLIDER_BG);
+                        let bar = theme.color(None, &tokens::SLIDER_BAR);
+                        let bg = theme.color(None, &tokens::SLIDER_BG);
                         Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
                             angle: PI * 0.5,
                             stops: vec![
@@ -180,7 +182,13 @@ struct SliderFrame;
 
 fn update_slider_styles(
     q_sliders: Query<
-        (Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered),
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            Has<Pressed>,
+            &Hovered,
+            Option<&ThemeId>,
+        ),
         (
             With<SliderFrame>,
             // Added<SliderFrame> guarantees the initial style pass on spawn.
@@ -207,12 +215,13 @@ fn update_slider_styles(
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
+    for (slider_ent, disabled, pressed, hovered, theme_id) in q_sliders.iter() {
         apply_slider_styles(
             slider_ent,
             disabled,
             pressed,
             hovered.0,
+            theme_id,
             &q_children,
             &mut q_tracks,
             &q_thumbs,
@@ -224,7 +233,16 @@ fn update_slider_styles(
 }
 
 fn update_slider_styles_remove(
-    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<SliderFrame>>,
+    q_sliders: Query<
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            Has<Pressed>,
+            &Hovered,
+            Option<&ThemeId>,
+        ),
+        With<SliderFrame>,
+    >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     mut remove_pressed: RemovedComponents<Pressed>,
     q_children: Query<&Children>,
@@ -246,12 +264,13 @@ fn update_slider_styles_remove(
         .read()
         .chain(remove_pressed.read())
         .for_each(|ent| {
-            if let Ok((slider_ent, disabled, pressed, hovered)) = q_sliders.get(ent) {
+            if let Ok((slider_ent, disabled, pressed, hovered, theme_id)) = q_sliders.get(ent) {
                 apply_slider_styles(
                     slider_ent,
                     disabled,
                     pressed,
                     hovered.0,
+                    theme_id,
                     &q_children,
                     &mut q_tracks,
                     &q_thumbs,
@@ -263,9 +282,20 @@ fn update_slider_styles_remove(
         });
 }
 
-// Re-apply slider styles to every slider when the theme changes.
+// Re-apply slider styles to every slider when the theme changes, and to a
+// slider whose `ThemeId` landed or changed this frame.
 fn update_slider_styles_theme(
-    q_sliders: Query<(Entity, Has<InteractionDisabled>, Has<Pressed>, &Hovered), With<SliderFrame>>,
+    q_sliders: Query<
+        (
+            Entity,
+            Has<InteractionDisabled>,
+            Has<Pressed>,
+            &Hovered,
+            Option<&ThemeId>,
+        ),
+        With<SliderFrame>,
+    >,
+    q_id_changed: Query<(), Changed<ThemeId>>,
     q_children: Query<&Children>,
     mut q_tracks: Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: Query<
@@ -281,15 +311,20 @@ fn update_slider_styles_theme(
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    if !theme.is_changed() {
+    let all = theme.is_changed();
+    if !all && q_id_changed.is_empty() {
         return;
     }
-    for (slider_ent, disabled, pressed, hovered) in q_sliders.iter() {
+    for (slider_ent, disabled, pressed, hovered, theme_id) in q_sliders.iter() {
+        if !all && !q_id_changed.contains(slider_ent) {
+            continue;
+        }
         apply_slider_styles(
             slider_ent,
             disabled,
             pressed,
             hovered.0,
+            theme_id,
             &q_children,
             &mut q_tracks,
             &q_thumbs,
@@ -306,6 +341,7 @@ fn apply_slider_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
+    theme_id: Option<&ThemeId>,
     q_children: &Query<&Children>,
     q_tracks: &mut Query<&mut BackgroundGradient, With<SliderTrack>>,
     q_thumbs: &Query<
@@ -341,6 +377,7 @@ fn apply_slider_styles(
         disabled,
         pressed,
         hovered,
+        theme_id,
         &mut track_background_gradient,
         (thumb_token, thumb_amount),
         has_box_shadow,
@@ -355,14 +392,21 @@ fn set_slider_styles(
     disabled: bool,
     pressed: bool,
     hovered: bool,
+    theme_id: Option<&ThemeId>,
     track_background_gradient: &mut BackgroundGradient,
     thumb_now: (&ThemeBackgroundToken, &GradientAmount),
     has_box_shadow: bool,
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
-    let bar_color = theme.color(&tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered));
-    let bg_color = theme.color(&tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered));
+    let bar_color = theme.color(
+        theme_id,
+        &tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered),
+    );
+    let bg_color = theme.color(
+        theme_id,
+        &tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered),
+    );
     let thumb_token = tokens::sets::SLIDER_THUMB.pick(disabled, pressed, hovered);
 
     // Disabled thumb reads inert: flat fill, no gradient. A `Flat` slider is

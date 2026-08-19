@@ -31,7 +31,7 @@ use crate::constants::size;
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::font_styles::InheritableFont;
 use crate::theme::{
-    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, control_box_shadow,
+    InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, ThemeId, control_box_shadow,
 };
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
@@ -86,22 +86,37 @@ fn track_popup_anchors(
     }
 }
 
-// A parentless (imm) socket sits outside every propagation chain, so the ambient text
-// style is bridged like the rect: the anchor's `Inherited<TextFont>` is copied onto the
-// socket. Nothing else writes `Inherited` on a parentless entity, so the copy stands.
-fn bridge_socket_text_style(
-    q_sockets: Query<(Entity, &PopupAnchor), (With<PopupSocket>, Without<ChildOf>)>,
+// A parentless floating root — an imm popup socket, or either kind of tooltip
+// box — sits outside every propagation chain, so the ambient text style and
+// theme are bridged like the rect: the anchor's `Inherited` values are copied
+// onto it. Nothing else writes `Inherited` on a parentless entity, so the
+// copies stand, and the root's own propagation carries them into its panel.
+fn bridge_floating_anchor_style(
+    q_floating: Query<(Entity, &PopupAnchor), Without<ChildOf>>,
     q_inherited: Query<&Inherited<TextFont>>,
+    q_inherited_theme: Query<&Inherited<ThemeId>>,
     mut commands: Commands,
 ) {
-    for (socket, anchor) in &q_sockets {
-        let Ok(inherited) = q_inherited.get(anchor.0) else {
-            continue;
-        };
-        if q_inherited.get(socket).is_ok_and(|i| i.0 == inherited.0) {
-            continue;
+    for (floating, anchor) in &q_floating {
+        if let Ok(inherited) = q_inherited.get(anchor.0)
+            && !q_inherited.get(floating).is_ok_and(|i| i.0 == inherited.0)
+        {
+            commands.entity(floating).insert(inherited.clone());
         }
-        commands.entity(socket).insert(inherited.clone());
+        match q_inherited_theme.get(anchor.0) {
+            Ok(inherited)
+                if !q_inherited_theme
+                    .get(floating)
+                    .is_ok_and(|i| i.0 == inherited.0) =>
+            {
+                commands.entity(floating).insert(inherited.clone());
+            }
+            // An anchor back on the default theme takes the root with it.
+            Err(_) if q_inherited_theme.contains(floating) => {
+                commands.entity(floating).remove::<Inherited<ThemeId>>();
+            }
+            _ => {}
+        }
     }
 }
 
@@ -412,10 +427,13 @@ impl Plugin for PopupPlugin {
             // Ahead of layout, so `Popover` places the popup against a socket
             // this frame's layout has already moved onto the anchor.
             .add_systems(PostUpdate, track_popup_anchors.in_set(UiSystems::Prepare))
-            // Before the resolver, so the popup re-resolves the same frame.
+            // Before the resolver and the id propagation, so the popup re-resolves
+            // the same frame.
             .add_systems(
                 PostUpdate,
-                bridge_socket_text_style.before(crate::font_styles::resolve_inheritable_font),
+                bridge_floating_anchor_style
+                    .before(crate::font_styles::resolve_inheritable_font)
+                    .before(bevy::app::PropagateSet::<crate::theme::ThemeId>::default()),
             )
             .add_systems(PostUpdate, relay_popup_style.before(UiSystems::Layout))
             .add_systems(Last, despawn_closing_popups);

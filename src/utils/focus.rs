@@ -5,7 +5,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::lifecycle::RemovedComponents;
-use bevy::ecs::query::{Added, Has, With};
+use bevy::ecs::query::{Added, Changed, Has, With};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
@@ -18,7 +18,7 @@ use bevy::reflect::prelude::ReflectDefault;
 use bevy::ui::{InteractionDisabled, Outline, UiSystems};
 
 use crate::constants::size;
-use crate::theme::UiTheme;
+use crate::theme::{ThemeId, UiTheme};
 use crate::tokens;
 
 /// Marker: show a focus outline on this entity when it or an ancestor is focused.
@@ -42,18 +42,26 @@ fn manage_focus_indicators(
     mut commands: Commands,
     input_focus: Res<InputFocus>,
     input_focus_visible: Res<InputFocusVisible>,
-    q_indicators: Query<(Entity, Has<InsetFocusRing>), With<FocusIndicator>>,
-    q_within_indicators: Query<(Entity, Has<InsetFocusRing>), With<FocusWithinIndicator>>,
+    q_indicators: Query<(Entity, Has<InsetFocusRing>, Option<&ThemeId>), With<FocusIndicator>>,
+    q_within_indicators: Query<
+        (Entity, Has<InsetFocusRing>, Option<&ThemeId>),
+        With<FocusWithinIndicator>,
+    >,
+    q_id_changed: Query<(), Changed<ThemeId>>,
     q_children: Query<&Children>,
     q_parents: Query<&ChildOf>,
     theme: Res<UiTheme>,
 ) {
-    if !input_focus.is_changed() && !input_focus_visible.is_changed() && !theme.is_changed() {
+    if !input_focus.is_changed()
+        && !input_focus_visible.is_changed()
+        && !theme.is_changed()
+        && q_id_changed.is_empty()
+    {
         return;
     }
 
-    let ring = |theme: &UiTheme, inset: bool| Outline {
-        color: theme.color(&tokens::FOCUS_RING),
+    let ring = |theme: &UiTheme, inset: bool, theme_id: Option<&ThemeId>| Outline {
+        color: theme.color(theme_id, &tokens::FOCUS_RING),
         width: size::FOCUS_RING_WIDTH,
         offset: if inset {
             size::FOCUS_RING_INSET_OFFSET
@@ -70,8 +78,10 @@ fn manage_focus_indicators(
             .iter_descendants(focus)
             .chain(core::iter::once(focus))
         {
-            if let Ok((_, inset)) = q_indicators.get(entity) {
-                commands.entity(entity).insert(ring(&theme, inset));
+            if let Ok((_, inset, theme_id)) = q_indicators.get(entity) {
+                commands
+                    .entity(entity)
+                    .insert(ring(&theme, inset, theme_id));
                 visited.insert(entity);
             }
         }
@@ -80,14 +90,16 @@ fn manage_focus_indicators(
             .iter_ancestors(focus)
             .chain(core::iter::once(focus))
         {
-            if let Ok((_, inset)) = q_within_indicators.get(entity) {
-                commands.entity(entity).insert(ring(&theme, inset));
+            if let Ok((_, inset, theme_id)) = q_within_indicators.get(entity) {
+                commands
+                    .entity(entity)
+                    .insert(ring(&theme, inset, theme_id));
                 visited.insert(entity);
             }
         }
     }
 
-    for (entity, _) in q_indicators.iter().chain(q_within_indicators.iter()) {
+    for (entity, ..) in q_indicators.iter().chain(q_within_indicators.iter()) {
         if !visited.contains(&entity) {
             commands.entity(entity).remove::<Outline>();
         }

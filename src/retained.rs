@@ -36,6 +36,9 @@ pub use crate::theme::components::{
     Flat, GradientAmount, Inert, InheritableTextColor, InheritableThemeTextSlot,
     ThemeBackgroundSlot, ThemeBorderSlot, ThemeTextSlot, control_box_shadow, dialog_box_shadow,
 };
+// The propagation source a retained scene sets a subtree's [`ThemeId`] with.
+pub use crate::theme::ThemeId;
 pub use crate::utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator, InsetFocusRing};
 pub use crate::utils::font_styles::{FontStyleSystems, InheritableFont, PlumeFontSize, small_caps};
+pub use bevy::app::Propagate;

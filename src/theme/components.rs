@@ -18,7 +18,7 @@ use bevy::ui::{
     InterpolationColorSpace, LinearGradient, percent,
 };
 
-use super::UiTheme;
+use super::{ThemeId, UiTheme};
 use crate::constants::size;
 use crate::theme::slots::ThemeSlot;
 use crate::theme::tokens::ThemeToken;
@@ -174,11 +174,12 @@ pub(crate) struct ThemeTextToken(pub ThemeToken);
 pub struct ThemeTextSlot(pub ThemeSlot);
 
 // Everything that decides what a themed background paints: where the color comes
-// from, and how hard it is shaded.
+// from, which theme resolves it, and how hard it is shaded.
 type BackgroundSource<'w> = (
     Entity,
     Option<&'w ThemeBackgroundToken>,
     Option<&'w ThemeBackgroundSlot>,
+    Option<&'w ThemeId>,
     Option<&'w GradientAmount>,
     Has<Flat>,
 );
@@ -230,21 +231,22 @@ pub(crate) fn set_optional_background(
     }
 }
 
-// Resolve one entity's source components against the theme and paint it.
+// Resolve one entity's source components against its theme and paint it.
 fn resolve_background(
     commands: &mut Commands,
     theme: &UiTheme,
-    (entity, token, slot, amount, flat): (
+    (entity, token, slot, theme_id, amount, flat): (
         Entity,
         Option<&ThemeBackgroundToken>,
         Option<&ThemeBackgroundSlot>,
+        Option<&ThemeId>,
         Option<&GradientAmount>,
         bool,
     ),
 ) {
     let color = match (slot, token) {
-        (Some(slot), _) => theme.palette(slot.0),
-        (None, Some(token)) => theme.color(&token.0),
+        (Some(slot), _) => theme.palette(theme_id, slot.0),
+        (None, Some(token)) => theme.color(theme_id, &token.0),
         (None, None) => return,
     };
     let amount = if flat {
@@ -272,6 +274,7 @@ pub(crate) fn resolve_backgrounds(
             Or<(
                 Changed<ThemeBackgroundToken>,
                 Changed<ThemeBackgroundSlot>,
+                Changed<ThemeId>,
                 Changed<GradientAmount>,
                 Added<Flat>,
             )>,
@@ -306,41 +309,47 @@ pub(crate) fn resolve_backgrounds(
 
 pub(crate) fn on_changed_border_token(
     insert: On<Insert, ThemeBorderToken>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderToken), Changed<ThemeBorderToken>>,
+    mut q_border: Query<
+        (&mut BorderColor, &ThemeBorderToken, Option<&ThemeId>),
+        Changed<ThemeBorderToken>,
+    >,
     theme: Res<UiTheme>,
 ) {
-    if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.color(&theme_border.0));
+    if let Ok((mut border, theme_border, theme_id)) = q_border.get_mut(insert.entity) {
+        border.set_all(theme.color(theme_id, &theme_border.0));
     }
 }
 
 pub(crate) fn on_changed_border_slot(
     insert: On<Insert, ThemeBorderSlot>,
-    mut q_border: Query<(&mut BorderColor, &ThemeBorderSlot), Changed<ThemeBorderSlot>>,
+    mut q_border: Query<
+        (&mut BorderColor, &ThemeBorderSlot, Option<&ThemeId>),
+        Changed<ThemeBorderSlot>,
+    >,
     theme: Res<UiTheme>,
 ) {
-    if let Ok((mut border, theme_border)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.palette(theme_border.0));
+    if let Ok((mut border, theme_border, theme_id)) = q_border.get_mut(insert.entity) {
+        border.set_all(theme.palette(theme_id, theme_border.0));
     }
 }
 
 pub(crate) fn on_changed_text_token(
     insert: On<Insert, ThemeTextToken>,
-    mut q_span: Query<(&mut TextColor, &ThemeTextToken), Changed<ThemeTextToken>>,
+    mut q_span: Query<(&mut TextColor, &ThemeTextToken, Option<&ThemeId>), Changed<ThemeTextToken>>,
     theme: Res<UiTheme>,
 ) {
-    if let Ok((mut text_color, theme_text_color)) = q_span.get_mut(insert.entity) {
-        text_color.0 = theme.color(&theme_text_color.0);
+    if let Ok((mut text_color, theme_text_color, theme_id)) = q_span.get_mut(insert.entity) {
+        text_color.0 = theme.color(theme_id, &theme_text_color.0);
     }
 }
 
 pub(crate) fn on_changed_text_slot(
     insert: On<Insert, ThemeTextSlot>,
-    mut q_span: Query<(&mut TextColor, &ThemeTextSlot), Changed<ThemeTextSlot>>,
+    mut q_span: Query<(&mut TextColor, &ThemeTextSlot, Option<&ThemeId>), Changed<ThemeTextSlot>>,
     theme: Res<UiTheme>,
 ) {
-    if let Ok((mut text_color, theme_text_slot)) = q_span.get_mut(insert.entity) {
-        text_color.0 = theme.palette(theme_text_slot.0);
+    if let Ok((mut text_color, theme_text_slot, theme_id)) = q_span.get_mut(insert.entity) {
+        text_color.0 = theme.palette(theme_id, theme_text_slot.0);
     }
 }
 
@@ -371,13 +380,13 @@ pub(crate) fn apply_inheritable_color(
 // Propagates the resolved text color down to every participating text entity.
 pub(crate) fn on_changed_inheritable_text_token(
     insert: On<Insert, InheritableThemeTextToken>,
-    font_color: Query<&InheritableThemeTextToken>,
+    font_color: Query<(&InheritableThemeTextToken, Option<&ThemeId>)>,
     q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    if let Ok(token) = font_color.get(insert.entity) {
-        let color = theme.color(&token.0);
+    if let Ok((token, theme_id)) = font_color.get(insert.entity) {
+        let color = theme.color(theme_id, &token.0);
         apply_inheritable_color(
             &mut commands,
             insert.entity,
@@ -390,13 +399,13 @@ pub(crate) fn on_changed_inheritable_text_token(
 // Slot counterpart of `on_changed_inheritable_text_token`.
 pub(crate) fn on_changed_inheritable_text_slot(
     insert: On<Insert, InheritableThemeTextSlot>,
-    q_slot: Query<&InheritableThemeTextSlot>,
+    q_slot: Query<(&InheritableThemeTextSlot, Option<&ThemeId>)>,
     q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
     mut commands: Commands,
 ) {
-    if let Ok(slot) = q_slot.get(insert.entity) {
-        let color = theme.palette(slot.0);
+    if let Ok((slot, theme_id)) = q_slot.get(insert.entity) {
+        let color = theme.palette(theme_id, slot.0);
         apply_inheritable_color(
             &mut commands,
             insert.entity,
