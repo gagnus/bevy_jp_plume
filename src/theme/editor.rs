@@ -2,7 +2,7 @@
 //! ramp parameter.
 
 use core::cell::Cell;
-use core::ops::RangeInclusive;
+use core::ops::{DerefMut, RangeInclusive};
 
 use bevy::color::Color;
 use bevy::ui::{Val, em};
@@ -67,13 +67,17 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
 }
 
 /// [`theme_editor`] for every registered theme, behind a tab bar: the default
-/// theme labeled "Default", the rest by their id. Edits bake straight into
-/// `theme`; returns true when one did.
-// Takes plain `&mut UiTheme` so a `ResMut` caller can pass
-// `bypass_change_detection()` and `set_changed()` on true — deref-muting the
-// resource every open frame would repaint the whole UI continuously.
-pub fn theme_editor_tabs(ui: &mut Ui, theme: &mut UiTheme, selected: &mut ThemeId) -> bool {
-    let ids: Vec<ThemeId> = theme.theme_ids().cloned().collect();
+/// theme labeled "Default", the rest by their id. Pass the `ResMut<UiTheme>`
+/// (or a `Mut` reborrow) straight in; edits bake into it and flag it changed.
+// Reads use the immutable deref and never flag the resource; the one write
+// deref-muts, which is what marks it changed — an open editor repaints nothing.
+pub fn theme_editor_tabs(
+    ui: &mut Ui,
+    theme: &mut impl DerefMut<Target = UiTheme>,
+    selected: &mut ThemeId,
+) {
+    let read: &UiTheme = theme;
+    let ids: Vec<ThemeId> = read.theme_ids().cloned().collect();
     // Every tab's body closure is built each frame, so the edit reports through
     // a shared cell rather than a `&mut` each.
     let edited = Cell::new(None);
@@ -85,20 +89,16 @@ pub fn theme_editor_tabs(ui: &mut Ui, theme: &mut UiTheme, selected: &mut ThemeI
                 id.name()
             };
             tabs.tab(id.clone(), label).body(|ui| {
-                let mut palette = theme.editable(Some(id)).clone();
+                let mut palette = read.editable(Some(id)).clone();
                 theme_editor(ui, &mut palette);
-                if palette != *theme.editable(Some(id)) {
+                if palette != *read.editable(Some(id)) {
                     edited.set(Some((id.clone(), palette)));
                 }
             });
         }
     });
-    match edited.take() {
-        Some((id, palette)) => {
-            theme.set_palette(id, &palette);
-            true
-        }
-        None => false,
+    if let Some((id, palette)) = edited.take() {
+        theme.set_palette(id, palette);
     }
 }
 

@@ -22,28 +22,18 @@ impl Plugin for ThemeEditorPlugin {
     }
 }
 
-// Which theme's tab the editor shows.
-#[derive(Resource, Default)]
-struct SelectedTheme(ThemeId);
-
 fn theme_editor_dialog(
     mut root: PlumeRoot,
     mut registry: ResMut<DebugDialogRegistry>,
     mut theme: ResMut<UiTheme>,
-    mut selected: Local<SelectedTheme>,
+    mut selected: Local<ThemeId>,
 ) {
     let mut open = registry.is_open(TITLE);
-    let mut edited = false;
     root.dialog(TITLE, &mut open)
         .width(em(23))
         .max_height(px(500))
         .at_corner(Corner::BottomRight, px(50), px(50))
-        .show(|ui| {
-            edited = theme_editor_tabs(ui, theme.bypass_change_detection(), &mut selected.0);
-        });
-    if edited {
-        theme.set_changed();
-    }
+        .show(|ui| theme_editor_tabs(ui, &mut theme, &mut selected));
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
     }

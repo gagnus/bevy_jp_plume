@@ -281,7 +281,7 @@ pub fn hud_theme() -> ThemeId {
 pub fn register_hud_theme(mut theme: ResMut<UiTheme>) {
     theme.set_palette(
         hud_theme(),
-        &bevy_jp_plume::theme::palettes::default_light_palette(),
+        bevy_jp_plume::theme::palettes::default_light_palette(),
     );
 }
 

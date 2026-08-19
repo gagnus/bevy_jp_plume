@@ -54,11 +54,11 @@ struct ThemeEntry {
     editable: ThemeEditablePalette,
 }
 
-impl From<&ThemeEditablePalette> for ThemeEntry {
-    fn from(palette: &ThemeEditablePalette) -> Self {
+impl From<ThemeEditablePalette> for ThemeEntry {
+    fn from(palette: ThemeEditablePalette) -> Self {
         Self {
             resolved: palette.resolve(),
-            editable: palette.clone(),
+            editable: palette,
         }
     }
 }
@@ -82,7 +82,7 @@ impl From<ThemeEditablePalette> for UiTheme {
     fn from(value: ThemeEditablePalette) -> Self {
         Self {
             tokens: slots::DEFAULT_TOKEN_SLOTS.iter().cloned().collect(),
-            themes: BTreeMap::from([(ThemeId::default(), ThemeEntry::from(&value))]),
+            themes: BTreeMap::from([(ThemeId::default(), ThemeEntry::from(value))]),
         }
     }
 }
@@ -130,7 +130,7 @@ impl UiTheme {
     }
 
     /// Set or replace theme `id`'s palette, re-resolving every slot color.
-    pub fn set_palette(&mut self, id: ThemeId, palette: &ThemeEditablePalette) {
+    pub fn set_palette(&mut self, id: ThemeId, palette: ThemeEditablePalette) {
         self.themes.insert(id, ThemeEntry::from(palette));
     }
 
