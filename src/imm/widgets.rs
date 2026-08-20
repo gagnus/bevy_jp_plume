@@ -1122,10 +1122,16 @@ fn imm_menu_popup<'r, 'w, 's, K>(
     respond(imm_menu_popup_on(anchor, role, "menu_popup", f), false)
 }
 
-// Builds a menu button's popup while its retained `MenuOpen` says open. Unrooted
-// (see `ImmPopup`); the frame's `MenuAnchorLink` routes events back to the anchor.
-// After a close, one extra pass builds it hidden, so a picked item's pending
-// activation still reaches its imm call site before the subtree is dropped.
+// Builds a menu button's popup while its retained `MenuOpen` says open. After a
+// close, one extra pass builds it hidden, so a picked item's pending activation
+// still reaches its imm call site before the subtree is dropped.
+//
+// A bar menu's popup is unrooted (see `ImmPopup`) and reaches its anchor through
+// the frame's `MenuAnchorLink`. A submenu's cannot be: bevy closes a `MenuPopup`
+// whose focused entity is not in its `ChildOf` subtree, and pressing an item in
+// an unrooted submenu takes the focus out of the bar menu that owns it — closing
+// the stack on the press, before the release that would have activated the item.
+// So a submenu hangs under its own row, which is where the retained path puts it.
 pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
     mut anchor: ImmEntity<'r, 'w, 's, PlumeCaps>,
     role: MenuButtonRole,
@@ -1142,7 +1148,7 @@ pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
     }
     let anchor_entity = anchor.entity();
     let nav = open.flatten();
-    anchor = anchor.unrooted_ui(id, |ui| {
+    let build = move |ui: &mut Ui<'w, 's>| {
         ui.ch_id("socket")
             .on_spawn_apply_scene(popup_socket)
             .on_spawn_insert(move || PopupAnchor(anchor_entity))
@@ -1155,7 +1161,11 @@ pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
                 }
                 frame.add_ui(|ui| f(&mut ImmMenu { ui }));
             });
-    });
+    };
+    anchor = match role {
+        MenuButtonRole::Submenu => anchor.add_ui(build),
+        _ => anchor.unrooted_ui(id, build),
+    };
     anchor
 }
 
@@ -1421,7 +1431,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Floating> {
         if !*open {
             return None;
         }
-        let id = surface_id(self.caller, &self.title);
+        let id = surface_id(self.caller, &self.title, self.anchor.is_some());
         let (title, layout, spacing) = (self.title, self.layout, self.spacing);
         let mut entity = self
             .ui
@@ -1460,7 +1470,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
         if !*open {
             return None;
         }
-        let id = surface_id(self.caller, &self.title);
+        let id = surface_id(self.caller, &self.title, self.anchor.is_some());
         let (title, layout, spacing) = (self.title, self.layout, self.spacing);
         let closable = layout.closable;
         let mut barrier = self
@@ -1501,7 +1511,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
     /// Build the panel and its body. Nothing can dismiss a panel, so unlike the
     /// other two modes it has no flag to write back through and always builds.
     pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
-        let id = surface_id(self.caller, &self.title);
+        let id = surface_id(self.caller, &self.title, self.anchor.is_some());
         let (title, layout, spacing) = (self.title, self.layout, self.spacing);
         let Some(target) = self.anchor else {
             let entity = self.ui.ch_loc(id).on_spawn_apply_scene(move || {
@@ -1528,9 +1538,12 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
 }
 
 // Keyed on call site and title, so several surfaces built in one system stay
-// distinct.
-fn surface_id(caller: &'static Location<'static>, title: &str) -> ImmIdBuilder {
-    ImmIdBuilder::Hierarchy(ImmId::new((caller, title)))
+// distinct — and on whether it is anchored, because the two forms are different
+// entities. An anchored panel hangs in a socket applied *on spawn*, so a panel
+// that gains or loses its anchor has to be rebuilt: reusing the entity would
+// leave the socket unapplied and nest a second frame inside the first.
+fn surface_id(caller: &'static Location<'static>, title: &str, anchored: bool) -> ImmIdBuilder {
+    ImmIdBuilder::Hierarchy(ImmId::new((caller, title, anchored)))
 }
 
 // Which surface a frame is being built for. The chrome is otherwise identical:
