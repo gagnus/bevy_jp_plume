@@ -489,6 +489,17 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
     }
 }
 
+/// The viewport's colour for a document: a hue per id, so switching documents
+/// shows in the pane itself and not only in the strip. Shared with the retained
+/// twin, which has to write the same colour by hand.
+pub fn viewport_color(id: DocId) -> Color {
+    Color::hsv(
+        StdRng::seed_from_u64(id.0 as u64).random_range(0.0..360.0),
+        0.5,
+        0.5,
+    )
+}
+
 fn viewport(ui: &mut Ui, document: &Document) -> Entity {
     ui.vertical(|ui| {
         ui.flex_spacer();
@@ -501,11 +512,7 @@ fn viewport(ui: &mut Ui, document: &Document) -> Entity {
         ui.flex_spacer();
     })
     .grow()
-    .background(Color::hsv(
-        StdRng::seed_from_u64(document.id.0 as u64).random_range(0.0..360.0),
-        0.5,
-        0.5,
-    ))
+    .background(viewport_color(document.id))
     .entity
 }
 

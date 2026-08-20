@@ -19,6 +19,7 @@ mod common;
 use common::Options;
 use common::inspector_panel::{
     Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab, hud_theme, register_hud_theme,
+    viewport_color,
 };
 
 const GUTTER: Val = Val::Em(6.0);
@@ -345,15 +346,22 @@ fn push_documents(
         }
     }
 
-    let empty_slot = if documents.open.is_empty() {
-        ThemeSlot::Neutral2
-    } else {
-        ThemeSlot::Transparent
-    };
     for entity in q_panes.iter() {
-        commands
-            .entity(entity)
-            .insert(ThemeBackgroundSlot(empty_slot));
+        // The imm twin paints a hue per document here; a themed slot would keep
+        // overwriting it, so the two are mutually exclusive on this entity.
+        match documents.active_document() {
+            Some(document) => {
+                commands
+                    .entity(entity)
+                    .remove::<ThemeBackgroundSlot>()
+                    .insert(BackgroundColor(viewport_color(document.id)));
+            }
+            None => {
+                commands
+                    .entity(entity)
+                    .insert(ThemeBackgroundSlot(ThemeSlot::Neutral1));
+            }
+        }
     }
     if let Some(index) = documents
         .open
