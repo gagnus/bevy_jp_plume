@@ -35,7 +35,7 @@ use bevy::ui_widgets::{
 };
 
 use crate::constants::{font_awesome, size, z_order};
-use crate::containers::{PopupSocket, Separator, popup_socket};
+use crate::containers::{PopupSocket, PopupSurface, Separator, popup_socket};
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
@@ -200,6 +200,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
             border_radius: size::CORNER_RADIUS,
         }
         MenuPopupFrame
+        PopupSurface
         ThemeBackgroundToken(tokens::MENU_BG)
         ThemeBorderToken(tokens::MENU_BORDER)
         template_value(dialog_box_shadow())

@@ -40,7 +40,8 @@ use disclosure::DisclosurePlugin;
 pub use disclosure::PlumeDisclosure;
 use menu::MenuPlugin;
 pub(crate) use menu::{
-    MenuButtonRole, MenuOpen, MenuShortcutText, imm_menu_anchor, imm_menu_frame, menu_anchor_base,
+    MenuAnchorLink, MenuButtonRole, MenuOpen, MenuShortcutText, imm_menu_anchor, imm_menu_frame,
+    menu_anchor_base,
 };
 pub use menu::{PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps, menu_anchor};
 pub(crate) use number_input::NumberInputFrame;

@@ -165,8 +165,13 @@ pub mod z_order {
     /// still draws over it. Feathers' `FeathersDialog` uses the same layer.
     pub const MODAL: i32 = 99;
 
-    /// Popups, menus and select dropdowns.
+    /// The floor of the popup band: popups, menus and select dropdowns, one
+    /// layer per level of nesting so a popup opened inside another draws over it.
     pub const POPUP: i32 = 100;
+
+    /// The ceiling of that band, one below the tooltips. A nesting deeper than
+    /// the band is wide pins to it rather than climbing into them.
+    pub const POPUP_MAX: i32 = TOOLTIP - 1;
 
     /// Tooltips, over everything; they take no picks.
     pub const TOOLTIP: i32 = 200;

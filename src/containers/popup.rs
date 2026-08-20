@@ -2,6 +2,7 @@
 //! plus the socket that mounts it without disturbing ancestor layout.
 use bevy::app::{Inherited, Last, Plugin, PostUpdate, Update};
 use bevy::camera::visibility::Visibility;
+use bevy::ecs::change_detection::DetectChangesMut;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
@@ -29,6 +30,7 @@ use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, Popover
 use super::dialog::CloseRequested;
 use crate::constants::{size, z_order};
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
+use crate::controls::MenuAnchorLink;
 use crate::font_styles::InheritableFont;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, ThemeId, control_box_shadow,
@@ -207,6 +209,12 @@ pub(crate) fn imm_popup_scene(
 #[reflect(Component, Default)]
 struct PopupRoot;
 
+/// Every floating surface in the popup band, popup frames and menu frames alike:
+/// what [`stack_popups`] counts to give each one its layer.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct PopupSurface;
+
 // Marker for popups dismissed by a press outside their anchor control.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
@@ -227,6 +235,7 @@ impl PlumePopup {
                 row_gap: size::SPACE,
             }
             PopupRoot
+            PopupSurface
             ThemeBackgroundToken(tokens::POPUP_BG)
             ThemeBorderToken(tokens::POPUP_BORDER)
             template_value(control_box_shadow())
@@ -416,6 +425,45 @@ fn relay_popup_style(
     }
 }
 
+// How far a link chain may be followed before it is treated as a cycle. Deeper
+// than any real menu, shallow enough that a malformed one cannot hang a frame.
+const MAX_POPUP_NESTING: usize = 32;
+
+// Popups stack by nesting: one opened from inside another has to draw over it.
+// A flat z leaves that to bevy's tie-break, which sorts equal layers by ECS
+// storage order — so whichever kind of popup a session opened first won every
+// time, for the life of the process.
+fn stack_popups(
+    q_surfaces: Query<Entity, With<PopupSurface>>,
+    q_is_surface: Query<(), With<PopupSurface>>,
+    q_parents: Query<&ChildOf>,
+    q_anchors: Query<&MenuAnchorLink>,
+    mut q_layers: Query<&mut GlobalZIndex>,
+) {
+    for surface in q_surfaces.iter() {
+        let mut depth = 0;
+        let mut cursor = surface;
+        for _ in 0..MAX_POPUP_NESTING {
+            // Step out of `cursor`: an imm menu frame is unrooted, so it reaches
+            // its opener through the link it was given rather than through a parent.
+            cursor = match q_anchors.get(cursor) {
+                Ok(&MenuAnchorLink(anchor)) => anchor,
+                Err(_) => match q_parents.get(cursor) {
+                    Ok(child_of) => child_of.parent(),
+                    Err(_) => break,
+                },
+            };
+            if q_is_surface.contains(cursor) {
+                depth += 1;
+            }
+        }
+        let layer = (z_order::POPUP + depth).min(z_order::POPUP_MAX);
+        if let Ok(mut z) = q_layers.get_mut(surface) {
+            z.set_if_neq(GlobalZIndex(layer));
+        }
+    }
+}
+
 // Registers socket anchor tracking, popup dismissal (outside press, Escape) and
 // the end-of-frame despawn.
 pub(crate) struct PopupPlugin;
@@ -436,6 +484,9 @@ impl Plugin for PopupPlugin {
                     .before(bevy::app::PropagateSet::<crate::theme::ThemeId>::default()),
             )
             .add_systems(PostUpdate, relay_popup_style.before(UiSystems::Layout))
+            // Ahead of the stack it feeds; the hierarchy it walks is whatever
+            // this frame's commands left behind.
+            .add_systems(PostUpdate, stack_popups.before(UiSystems::Stack))
             .add_systems(Last, despawn_closing_popups);
     }
 }
