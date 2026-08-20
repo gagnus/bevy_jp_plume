@@ -168,7 +168,7 @@ impl Plugin for ModalPlugin {
 // Only the outside-click kind needs telling: a menu or select closes itself when
 // the modal takes the focus, which `ModalDialogPlugin` does on spawn.
 fn close_popups_on_modal(
-    _add: On<Add, ModalDialog>,
+    _add: On<Add<ModalDialog>>,
     q_popups: Query<Entity, With<DismissOnOutsideClick>>,
     mut commands: Commands,
 ) {

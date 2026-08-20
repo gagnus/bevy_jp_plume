@@ -13,7 +13,7 @@ use bevy::ecs::resource::Resource;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res, ResMut};
 use bevy::picking::Pickable;
-use bevy::picking::events::{Move, Pointer, Press};
+use bevy::picking::events::{PointerMove, PointerPress};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -131,7 +131,7 @@ enum ShownContent {
 type TooltipSources = Or<(With<Tooltip>, With<TooltipContent>, With<TooltipUi>)>;
 
 fn on_pointer_move(
-    pointer: On<Pointer<Move>>,
+    pointer: On<PointerMove>,
     q_sources: Query<(), TooltipSources>,
     q_childof: Query<&ChildOf>,
     mut controller: ResMut<TooltipController>,
@@ -159,7 +159,7 @@ fn on_pointer_move(
     };
 }
 
-fn on_pointer_press(_press: On<Pointer<Press>>, mut controller: ResMut<TooltipController>) {
+fn on_pointer_press(_press: On<PointerPress>, mut controller: ResMut<TooltipController>) {
     controller.state = TooltipState::Idle;
 }
 

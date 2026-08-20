@@ -166,7 +166,7 @@ impl PlumeDialog {
 /// closes it, not the requester.
 ///
 /// An app owning a retained [`PlumePopup`](crate::retained::PlumePopup) observes
-/// `On<Add, CloseRequested>` and calls [`close_popup`](crate::retained::close_popup);
+/// `On<Add<CloseRequested>>` and calls [`close_popup`](crate::retained::close_popup);
 /// without that, a dismissed popup is hidden but never despawned.
 #[derive(Component)]
 pub struct CloseRequested;

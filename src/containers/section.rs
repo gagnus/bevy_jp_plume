@@ -13,7 +13,7 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query};
 use bevy::picking::PickingSystems;
-use bevy::picking::events::{Click, Pointer};
+use bevy::picking::events::PointerClick;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
@@ -186,7 +186,7 @@ pub(crate) fn section_body() -> impl Scene {
 }
 
 fn toggle_section_collapse(
-    click: On<Pointer<Click>>,
+    click: On<PointerClick>,
     q_headers: Query<&ChildOf, With<SectionHeader>>,
     q_sections: Query<(Option<&SectionCollapsible>, Has<SectionCollapsed>), With<SectionRoot>>,
     mut commands: Commands,

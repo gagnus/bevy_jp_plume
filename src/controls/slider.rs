@@ -16,7 +16,7 @@ use bevy::ecs::system::{Commands, Query, Res};
 use bevy::ecs::template::template;
 use bevy::input_focus::tab_navigation::TabIndex;
 use bevy::picking::PickingSystems;
-use bevy::picking::events::{Pointer, Press};
+use bevy::picking::events::PointerPress;
 use bevy::picking::hover::Hovered;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
@@ -488,7 +488,7 @@ fn update_slider_pos(
 // widget only sets [`Pressed`] on a track click, not a thumb grab; its own
 // release/cancel/drag-end handlers clear it either way.
 fn grab_thumb_on_press(
-    press: On<Pointer<Press>>,
+    press: On<PointerPress>,
     q_child_of: Query<&ChildOf>,
     q_slider: Query<Has<InteractionDisabled>, With<SliderFrame>>,
     mut commands: Commands,

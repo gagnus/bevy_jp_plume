@@ -308,7 +308,7 @@ pub(crate) fn resolve_backgrounds(
 }
 
 pub(crate) fn on_changed_border_token(
-    insert: On<Insert, ThemeBorderToken>,
+    insert: On<Insert<ThemeBorderToken>>,
     mut q_border: Query<
         (&mut BorderColor, &ThemeBorderToken, Option<&ThemeId>),
         Changed<ThemeBorderToken>,
@@ -321,7 +321,7 @@ pub(crate) fn on_changed_border_token(
 }
 
 pub(crate) fn on_changed_border_slot(
-    insert: On<Insert, ThemeBorderSlot>,
+    insert: On<Insert<ThemeBorderSlot>>,
     mut q_border: Query<
         (&mut BorderColor, &ThemeBorderSlot, Option<&ThemeId>),
         Changed<ThemeBorderSlot>,
@@ -334,7 +334,7 @@ pub(crate) fn on_changed_border_slot(
 }
 
 pub(crate) fn on_changed_text_token(
-    insert: On<Insert, ThemeTextToken>,
+    insert: On<Insert<ThemeTextToken>>,
     mut q_span: Query<(&mut TextColor, &ThemeTextToken, Option<&ThemeId>), Changed<ThemeTextToken>>,
     theme: Res<UiTheme>,
 ) {
@@ -344,7 +344,7 @@ pub(crate) fn on_changed_text_token(
 }
 
 pub(crate) fn on_changed_text_slot(
-    insert: On<Insert, ThemeTextSlot>,
+    insert: On<Insert<ThemeTextSlot>>,
     mut q_span: Query<(&mut TextColor, &ThemeTextSlot, Option<&ThemeId>), Changed<ThemeTextSlot>>,
     theme: Res<UiTheme>,
 ) {
@@ -379,7 +379,7 @@ pub(crate) fn apply_inheritable_color(
 
 // Propagates the resolved text color down to every participating text entity.
 pub(crate) fn on_changed_inheritable_text_token(
-    insert: On<Insert, InheritableThemeTextToken>,
+    insert: On<Insert<InheritableThemeTextToken>>,
     font_color: Query<(&InheritableThemeTextToken, Option<&ThemeId>)>,
     q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
@@ -398,7 +398,7 @@ pub(crate) fn on_changed_inheritable_text_token(
 
 // Slot counterpart of `on_changed_inheritable_text_token`.
 pub(crate) fn on_changed_inheritable_text_slot(
-    insert: On<Insert, InheritableThemeTextSlot>,
+    insert: On<Insert<InheritableThemeTextSlot>>,
     q_slot: Query<(&InheritableThemeTextSlot, Option<&ThemeId>)>,
     q_self: Query<(), SelfColorFilter>,
     theme: Res<UiTheme>,
@@ -417,7 +417,7 @@ pub(crate) fn on_changed_inheritable_text_slot(
 
 // Raw counterpart: no theme lookup, the color propagates as given.
 pub(crate) fn on_changed_inheritable_text_color(
-    insert: On<Insert, InheritableTextColor>,
+    insert: On<Insert<InheritableTextColor>>,
     q_color: Query<&InheritableTextColor>,
     q_self: Query<(), SelfColorFilter>,
     mut commands: Commands,

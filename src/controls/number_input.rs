@@ -12,7 +12,9 @@ use bevy::ecs::system::{Commands, Query, Res, ResMut};
 use bevy::input::keyboard::{Key, KeyCode, KeyboardInput};
 use bevy::input::{ButtonInput, ButtonState};
 use bevy::input_focus::{FocusCause, FocusLost, FocusedInput, InputFocus};
-use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press, Release};
+use bevy::picking::events::{
+    PointerCancel, PointerDrag, PointerDragEnd, PointerDragStart, PointerPress, PointerRelease,
+};
 use bevy::picking::pointer::PointerButton;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
@@ -337,7 +339,7 @@ fn number_input_on_focus_lost(
 // upstream reacts. Focus is deliberately not taken — a clean click grants it on
 // release, a drag never does.
 fn scrubber_on_press(
-    mut press: On<Pointer<Press>>,
+    mut press: On<PointerPress>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
     q_frames: Query<Has<InteractionDisabled>, With<NumberInputFrame>>,
     mut commands: Commands,
@@ -363,7 +365,7 @@ fn scrubber_on_press(
 }
 
 fn scrubber_on_drag_start(
-    mut drag_start: On<Pointer<DragStart>>,
+    mut drag_start: On<PointerDragStart>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
     q_frames: Query<(&SliderValue, &SliderRange, &SliderStep), With<NumberInputFrame>>,
     mut commands: Commands,
@@ -397,7 +399,7 @@ fn scrubber_on_drag_start(
 }
 
 fn scrubber_on_drag(
-    mut drag: On<Pointer<Drag>>,
+    mut drag: On<PointerDrag>,
     mut q_scrubbers: Query<(&ChildOf, &mut NumberInputScrubber)>,
     q_frames: Query<
         (
@@ -445,7 +447,7 @@ fn scrubber_on_drag(
 }
 
 fn scrubber_on_drag_end(
-    mut drag_end: On<Pointer<DragEnd>>,
+    mut drag_end: On<PointerDragEnd>,
     q_scrubbers: Query<(&ChildOf, &NumberInputScrubber)>,
     q_frames: Query<&SliderValue, With<NumberInputFrame>>,
     mut commands: Commands,
@@ -480,7 +482,7 @@ fn scrubber_on_drag_end(
 // End of the press: a release that never travelled past the click threshold
 // focuses the field (select-all comes from `SelectAllOnFocus`); a scrub does not.
 fn scrubber_on_release(
-    mut release: On<Pointer<Release>>,
+    mut release: On<PointerRelease>,
     q_scrubbers: Query<(&ChildOf, &NumberInputScrubber)>,
     q_children: Query<&Children>,
     q_fields: Query<(), With<TextInputField>>,
@@ -515,7 +517,7 @@ fn scrubber_on_release(
 
 // Pointer lost mid-gesture: abandon the scrub and restore the pre-drag value.
 fn scrubber_on_cancel(
-    mut cancel: On<Pointer<Cancel>>,
+    mut cancel: On<PointerCancel>,
     q_scrubbers: Query<(&ChildOf, &NumberInputScrubber)>,
     q_frames: Query<&SliderValue, With<NumberInputFrame>>,
     mut commands: Commands,

@@ -44,9 +44,3 @@ argh = "0.1.13"
 [features]
 default = []
 custom_cursor = ["bevy/custom_cursor"]
-
-# Local taffy with the upstream max-content fix (container padding inflating
-# auto-height items); fixed upstream in taffy 0.13.0 — drop this patch when
-# the bevy fork's bevy_ui moves to taffy >= 0.13.
-[patch.crates-io]
-taffy = { path = "../3rdParty/taffy" }

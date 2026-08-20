@@ -13,8 +13,8 @@ use bevy::ecs::system::{Local, Query};
 use bevy::ecs::template::EntityTemplate;
 use bevy::input::mouse::MouseScrollUnit;
 use bevy::log::warn_once;
-use bevy::math::Rect;
-use bevy::picking::events::{Pointer, Scroll};
+use bevy::math::{Rect, Vec2};
+use bevy::picking::events::PointerScroll;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -169,7 +169,7 @@ fn relay_scroll_content_style(
 // A wheel reports its notches on `y`, so a region that only scrolls sideways would
 // never move. Send that delta down its one axis instead, as a browser does.
 fn scroll_sideways_on_wheel(
-    scroll: On<Pointer<Scroll>>,
+    scroll: On<PointerScroll>,
     mut query_areas: Query<(&Node, &ComputedNode, &mut ScrollPosition), With<ScrollArea>>,
 ) {
     let Ok((node, computed, mut position)) = query_areas.get_mut(scroll.entity) else {
@@ -239,7 +239,18 @@ fn warn_unbounded_scroll_area(
             return false;
         };
         let rect = Rect::from_center_size(transform.translation, node.size);
-        rect.max.y > clip.clip.max.y + CLIP_EPSILON || rect.min.y < clip.clip.min.y - CLIP_EPSILON
+        // `CalculatedClip` carries one rect per clipping ancestor, each in that
+        // ancestor's own space: any one of them cutting the region off counts.
+        let Some(clip_rects) = clip.rects() else {
+            return true;
+        };
+        clip_rects.iter().any(|clip_rect| {
+            let to_local = clip_rect.world_to_clip_local;
+            let top = to_local.transform_point2(Vec2::new(transform.translation.x, rect.min.y));
+            let bottom = to_local.transform_point2(Vec2::new(transform.translation.x, rect.max.y));
+            bottom.y > clip_rect.rect.max.y + CLIP_EPSILON
+                || top.y < clip_rect.rect.min.y - CLIP_EPSILON
+        })
     });
 
     // Layout settles over a frame or two, so a single-frame reading proves nothing.

@@ -15,7 +15,11 @@ use bevy::input::ButtonInput;
 use bevy::input::keyboard::KeyCode;
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
-use bevy::picking::events::{Click, Drag, DragEnd, DragStart, Pointer, Press};
+use bevy::ecs::event::{EntityEvent, PropagateEntityTrigger};
+use bevy::picking::events::{
+    PointerClick, PointerDrag, PointerDragEnd, PointerDragStart, PointerEvent, PointerPress,
+    PointerTraversal,
+};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -256,11 +260,11 @@ impl PlumePopup {
             // inside it must not bubble on to that surface: a retained socket is a
             // hierarchy child, and its anchor's ancestors would read the popup's
             // presses and drags as their own (a canvas node drag, a window raise).
-            on(stop_pointer::<Press>)
-            on(stop_pointer::<Click>)
-            on(stop_pointer::<DragStart>)
-            on(stop_pointer::<Drag>)
-            on(stop_pointer::<DragEnd>)
+            on(stop_pointer::<PointerPress>)
+            on(stop_pointer::<PointerClick>)
+            on(stop_pointer::<PointerDragStart>)
+            on(stop_pointer::<PointerDrag>)
+            on(stop_pointer::<PointerDragEnd>)
             Children [
                 {props.contents},
             ]
@@ -300,7 +304,11 @@ fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
 
 // Ends a pointer event's ancestor walk at the popup root. Entity observers below
 // and on the root have already run; only the world outside the popup loses it.
-fn stop_pointer<E: core::fmt::Debug + Clone + Reflect>(mut event: On<Pointer<E>>) {
+fn stop_pointer<E>(mut event: On<E>)
+where
+    E: PointerEvent
+        + for<'t> EntityEvent<Trigger<'t> = PropagateEntityTrigger<true, E, PointerTraversal>>,
+{
     event.propagate(false);
 }
 
@@ -308,7 +316,7 @@ fn stop_pointer<E: core::fmt::Debug + Clone + Reflect>(mut event: On<Pointer<E>>
 // only for drags that bubbled up unconsumed. The first drag drops `Popover` so the
 // manual position stops fighting auto-placement; reopening restores it.
 fn on_popup_drag(
-    drag: On<Pointer<Drag>>,
+    drag: On<PointerDrag>,
     q_childof: Query<&ChildOf>,
     q_is_popup: Query<(), With<PopupRoot>>,
     mut q_popup: Query<(&mut UiTransform, Has<Popover>), With<PopupRoot>>,
@@ -357,7 +365,7 @@ fn despawn_closing_popups(q_closing: Query<Entity, With<ClosingPopup>>, mut comm
 // the closing. The scope is the socket's parent, so presses on the anchor (e.g. the
 // swatch) stay toggle-only.
 fn on_dismiss_outside_press(
-    mut click: On<Pointer<Press>>,
+    mut click: On<PointerPress>,
     q_childof: Query<&ChildOf>,
     q_popups: Query<(Entity, Option<&DismissScope>), With<DismissOnOutsideClick>>,
     mut commands: Commands,

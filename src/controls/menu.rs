@@ -17,7 +17,7 @@ use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::input_focus::tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation};
 use bevy::input_focus::{FocusCause, FocusedInput, InputFocus, InputFocusSystems};
 use bevy::picking::PickingSystems;
-use bevy::picking::events::{Click, Pointer};
+use bevy::picking::events::PointerClick;
 use bevy::picking::hover::Hovered;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
@@ -551,7 +551,7 @@ fn classify_menu_buttons(
 }
 
 fn on_menu_opened(
-    ev: On<Add, MenuOpen>,
+    ev: On<Add<MenuOpen>>,
     q_open: Query<(&MenuOpen, Option<&MenuButtonRole>)>,
     q_children: Query<&Children>,
     q_socket: Query<(), With<PopupSocket>>,
@@ -592,7 +592,7 @@ fn on_menu_opened(
 }
 
 fn on_menu_closed(
-    ev: On<Remove, MenuOpen>,
+    ev: On<Remove<MenuOpen>>,
     q_children: Query<&Children>,
     q_socket: Query<(), With<PopupSocket>>,
     q_frame: Query<(), With<MenuPopupFrame>>,
@@ -755,7 +755,7 @@ fn submenu_hover(
 
 // A click on a submenu row opens it (hover normally has already).
 fn submenu_on_click(
-    mut ev: On<Pointer<Click>>,
+    mut ev: On<PointerClick>,
     q_subs: Query<(&MenuButtonRole, Has<MenuOpen>, Has<InteractionDisabled>), With<MenuButtonRow>>,
     mut commands: Commands,
 ) {

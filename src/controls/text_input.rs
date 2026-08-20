@@ -21,13 +21,12 @@ use bevy::reflect::Reflect;
 use bevy::reflect::std_traits::ReflectDefault;
 use bevy::scene::prelude::*;
 use bevy::text::{
-    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextFont,
-    TextLayout, TextReadWriteMode,
+    EditableText, EditableTextFilter, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
+    TextReadWriteMode,
 };
 use bevy::ui::widget::Text;
 use bevy::ui::{
-    AlignItems, ComputedUiRenderTargetInfo, InteractionDisabled, Node, PositionType, UiRect,
-    UiSystems, Val,
+    AlignItems, InteractionDisabled, Node, PositionType, UiRect, UiSystems, Val,
 };
 use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
@@ -878,7 +877,6 @@ impl Plugin for TextInputPlugin {
             PreUpdate,
             (
                 update_text_cursor_color,
-                reapply_field_text_styles,
                 update_text_input_styles,
                 update_text_input_styles_remove,
                 update_text_input_styles_focus,
@@ -900,22 +898,5 @@ impl Plugin for TextInputPlugin {
                 .before(UiSystems::Layout),
         )
         .add_observer(text_input_on_set_value);
-    }
-}
-
-// Upstream's editable-style sync misses `TextLayout`/`LineHeight` changes made
-// before target info or a loading font arrives; re-touch both when a gate re-opens.
-fn reapply_field_text_styles(
-    mut q_fields: Query<
-        (&mut TextLayout, &mut LineHeight),
-        (
-            With<TextInputField>,
-            Or<(Added<ComputedUiRenderTargetInfo>, Changed<TextFont>)>,
-        ),
-    >,
-) {
-    for (mut layout, mut line_height) in q_fields.iter_mut() {
-        layout.set_changed();
-        line_height.set_changed();
     }
 }

@@ -13,7 +13,9 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
 use bevy::math::Vec2;
-use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press, Release};
+use bevy::picking::events::{
+    PointerCancel, PointerDrag, PointerDragEnd, PointerDragStart, PointerPress, PointerRelease,
+};
 use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
@@ -672,26 +674,26 @@ fn position_divider(
 
 // The divider has no headless widget behind it, so it keeps its own `Pressed`, which
 // holds the active style and cursor when the pointer outruns the strip mid-drag.
-fn press_divider(press: On<Pointer<Press>>, mut commands: Commands) {
+fn press_divider(press: On<PointerPress>, mut commands: Commands) {
     commands.entity(press.event_target()).insert(Pressed);
 }
 
-fn release_divider(release: On<Pointer<Release>>, mut commands: Commands) {
+fn release_divider(release: On<PointerRelease>, mut commands: Commands) {
     commands.entity(release.event_target()).remove::<Pressed>();
 }
 
-fn drag_end_divider(drag_end: On<Pointer<DragEnd>>, mut commands: Commands) {
+fn drag_end_divider(drag_end: On<PointerDragEnd>, mut commands: Commands) {
     commands.entity(drag_end.event_target()).remove::<Pressed>();
 }
 
-fn cancel_divider(cancel: On<Pointer<Cancel>>, mut commands: Commands) {
+fn cancel_divider(cancel: On<PointerCancel>, mut commands: Commands) {
     commands.entity(cancel.event_target()).remove::<Pressed>();
 }
 
 // A fresh gesture starts from the seam as laid out, not wherever the last
 // drag's pointer ran ahead to.
 fn drag_start_divider(
-    drag_start: On<Pointer<DragStart>>,
+    drag_start: On<PointerDragStart>,
     mut q_dividers: Query<&mut SplitDivider>,
     q_child_of: Query<&ChildOf>,
     q_splitters: Query<(&SplitAxis, &Children), With<SplitterRoot>>,
@@ -722,7 +724,7 @@ fn drag_start_divider(
 // Past a collapsible pane's floor, `COLLAPSE_POINT` of that floor is the
 // hysteresis point — inward it snaps closed, outward it reopens.
 fn drag_divider(
-    mut drag: On<Pointer<Drag>>,
+    mut drag: On<PointerDrag>,
     mut q_dividers: Query<&mut SplitDivider>,
     q_child_of: Query<&ChildOf>,
     mut q_splitters: Query<(

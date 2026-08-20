@@ -14,7 +14,7 @@ use bevy::ecs::observer::On;
 use bevy::ecs::query::{Changed, Has, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query};
-use bevy::picking::events::{Pointer, Press};
+use bevy::picking::events::PointerPress;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -188,7 +188,7 @@ fn on_button_activate(
 // co-fire at this hop regardless of the swallow.
 #[allow(clippy::too_many_arguments)]
 fn on_button_press(
-    mut press: On<Pointer<Press>>,
+    mut press: On<PointerPress>,
     q_childof: Query<&ChildOf>,
     q_is_button: Query<(), With<ColorEditButton>>,
     q_edit: Query<(Entity, Has<InteractionDisabled>), With<ColorEditFrame>>,
@@ -387,7 +387,7 @@ fn sync_disabled(
 
 // Fulfil an outside-press close request on this control's popup.
 fn on_popup_close_requested(
-    ev: On<Add, CloseRequested>,
+    ev: On<Add<CloseRequested>>,
     q_popup: Query<(), With<ColorEditPopup>>,
     mut commands: Commands,
 ) {

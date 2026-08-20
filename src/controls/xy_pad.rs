@@ -13,7 +13,9 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query, Res};
 use bevy::math::Vec2;
 use bevy::picking::Pickable;
-use bevy::picking::events::{Cancel, Drag, DragEnd, DragStart, Pointer, Press};
+use bevy::picking::events::{
+    PointerCancel, PointerDrag, PointerDragEnd, PointerDragStart, PointerPress,
+};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
@@ -318,7 +320,7 @@ fn apply_pointer(
 
 #[allow(clippy::too_many_arguments)]
 fn on_pointer_press(
-    mut press: On<Pointer<Press>>,
+    mut press: On<PointerPress>,
     q_inner: Query<
         (
             &ComputedNode,
@@ -343,7 +345,7 @@ fn on_pointer_press(
         node,
         node_target,
         transform,
-        press.pointer_location.position,
+        press.pointer.position,
         ui_scale.0,
     );
     let engaged = pos.is_some_and(|pos| ring_hit(pos, q_ring.get(pad).ok()));
@@ -362,7 +364,7 @@ fn on_pointer_press(
 }
 
 fn on_drag_start(
-    mut drag_start: On<Pointer<DragStart>>,
+    mut drag_start: On<PointerDragStart>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     q_engaged: Query<&XyPadPressEngaged>,
     mut q_dragging: Query<(&mut XyPadDragging, Has<InteractionDisabled>)>,
@@ -390,7 +392,7 @@ fn on_drag_start(
 }
 
 fn on_drag(
-    mut drag: On<Pointer<Drag>>,
+    mut drag: On<PointerDrag>,
     q_inner: Query<
         (
             &ComputedNode,
@@ -413,7 +415,7 @@ fn on_drag(
         drag.propagate(false);
         apply_pointer(
             drag.entity,
-            drag.pointer_location.position,
+            drag.pointer.position,
             ui_scale.0,
             &q_inner,
             &q_disabled,
@@ -425,7 +427,7 @@ fn on_drag(
 }
 
 fn on_drag_end(
-    mut drag_end: On<Pointer<DragEnd>>,
+    mut drag_end: On<PointerDragEnd>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     mut q_dragging: Query<&mut XyPadDragging>,
     mut commands: Commands,
@@ -440,7 +442,7 @@ fn on_drag_end(
 }
 
 fn on_drag_cancel(
-    drag_cancel: On<Pointer<Cancel>>,
+    drag_cancel: On<PointerCancel>,
     q_inner: Query<&ChildOf, With<XyPadInner>>,
     mut q_dragging: Query<&mut XyPadDragging>,
     mut commands: Commands,
