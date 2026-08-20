@@ -289,33 +289,30 @@ fn sync_select_all_on_focus(
 #[reflect(Component, Default)]
 struct TextInputSeeded;
 
-// Push a scene-seeded [`TextInputValue`] into the field's buffer, once. The mirror
-// below re-inserts `TextInputValue`, which re-fires `Added`; seeding again there
-// would queue a second replacement on top of the first and double the text.
+// Push a scene-seeded [`TextInputValue`] into the field's buffer, once.
+// `TextInputSeeded` is what marks that done, and is inserted only once the field
+// has actually taken the value: a frame whose children have not spawned yet is
+// left unseeded and retried, rather than losing the scene's text for good.
 fn seed_text_input_value(
-    q_seeded: Query<
-        (Entity, &TextInputValue),
-        (
-            With<TextInputFrame>,
-            Added<TextInputValue>,
-            Without<TextInputSeeded>,
-        ),
-    >,
+    q_seeded: Query<(Entity, &TextInputValue), (With<TextInputFrame>, Without<TextInputSeeded>)>,
     q_children: Query<&Children>,
     mut q_fields: Query<&mut EditableText, With<TextInputField>>,
     mut commands: Commands,
 ) {
     for (frame_ent, value) in q_seeded.iter() {
-        commands.entity(frame_ent).insert(TextInputSeeded);
         let Ok(children) = q_children.get(frame_ent) else {
             continue;
         };
         let Some(field_ent) = children.iter().copied().find(|&c| q_fields.contains(c)) else {
             continue;
         };
-        if let Ok(mut editable_text) = q_fields.get_mut(field_ent) {
+        let Ok(mut editable_text) = q_fields.get_mut(field_ent) else {
+            continue;
+        };
+        if editable_text.value() != value.0.as_str() {
             set_editable_text(&mut editable_text, value.0.clone());
         }
+        commands.entity(frame_ent).insert(TextInputSeeded);
     }
 }
 
@@ -326,7 +323,7 @@ fn mirror_text_input_value(
         (Entity, &ChildOf, &EditableText),
         (With<TextInputField>, Changed<EditableText>),
     >,
-    q_frames: Query<Option<&TextInputValue>, With<TextInputFrame>>,
+    q_frames: Query<(Option<&TextInputValue>, Has<TextInputSeeded>), With<TextInputFrame>>,
     focus: Res<InputFocus>,
     mut commands: Commands,
 ) {
@@ -337,9 +334,15 @@ fn mirror_text_input_value(
             continue;
         }
         let frame_ent = child_of.parent();
-        let Ok(mirror) = q_frames.get(frame_ent) else {
+        let Ok((mirror, seeded)) = q_frames.get(frame_ent) else {
             continue;
         };
+        // A value still waiting to be seeded: the buffer is empty by
+        // construction rather than by the user, and mirroring it would report
+        // that emptiness as an edit and wipe the app's own text.
+        if mirror.is_some() && !seeded {
+            continue;
+        }
         let text = editable_text.value().to_string();
         if mirror.is_none_or(|mirror| mirror.0 != text) {
             commands
@@ -882,8 +885,9 @@ impl Plugin for TextInputPlugin {
                 update_text_input_placeholders,
                 sync_select_all_on_focus,
                 sync_adornment_disabled,
-                seed_text_input_value,
-                mirror_text_input_value,
+                // Ordered: the mirror reads the buffer the seed writes, and
+                // running it first would mirror an empty field over the seed.
+                (seed_text_input_value, mirror_text_input_value).chain(),
             )
                 .in_set(PickingSystems::Last),
         )
