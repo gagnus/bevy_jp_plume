@@ -19,8 +19,8 @@ use bevy_immediate::{
 use caps::PlumeOccurrences;
 pub use response::{ImmResponse, kind};
 pub use widgets::{
-    Corner, ImmDialog, ImmMenu, ImmMenuBar, ImmPanel, ImmPopup, ImmSelect, ImmTab, ImmTabs,
-    PlumeImm, tab_header,
+    Corner, Floating, ImmDialog, ImmMenu, ImmMenuBar, ImmPopup, ImmSelect, ImmTab, ImmTabs, Modal,
+    Panel, Placed, PlumeImm, Titled, tab_header,
 };
 
 use crate::containers::SplitSize;
@@ -175,14 +175,32 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     /// Movable floating dialog — the other top-level surface. Configure via the
     /// returned [`ImmDialog`] and build the body with [`ImmDialog::show`].
     #[track_caller]
-    pub fn dialog<'a>(&'a mut self, title: &str, open: &'a mut bool) -> ImmDialog<'a, 'w, 's> {
+    pub fn dialog<'a>(
+        &'a mut self,
+        title: &str,
+        open: &'a mut bool,
+    ) -> ImmDialog<'a, 'w, 's, Floating> {
         self.imm.dialog(title, open)
     }
 
-    /// Headerless floating surface — a [`Self::dialog`] with no title bar. Configure
-    /// via the returned [`ImmPanel`] and build the body with [`ImmPanel::show`].
+    /// Modal dialog — centred over a barrier that blocks the app behind it until
+    /// it is answered. The same [`ImmDialog`] builder in its [`Modal`] mode, minus
+    /// the placement and drag a centred surface has no use for.
     #[track_caller]
-    pub fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
+    pub fn modal<'a>(
+        &'a mut self,
+        title: &str,
+        open: &'a mut bool,
+    ) -> ImmDialog<'a, 'w, 's, Modal> {
+        self.imm.modal(title, open)
+    }
+
+    /// Headerless floating surface — a [`Self::dialog`] with no title bar, ✕ or
+    /// drag. Top-level like the other two: it floats over the app, pinned to the
+    /// viewport or, via [`ImmPanel::at_corner_of`], to another entity's rect.
+    /// The same [`ImmDialog`] builder in its [`Panel`] mode.
+    #[track_caller]
+    pub fn panel(&mut self) -> ImmDialog<'_, 'w, 's, Panel> {
         self.imm.panel()
     }
 

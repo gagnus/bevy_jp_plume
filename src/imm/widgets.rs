@@ -5,6 +5,7 @@ use core::panic::Location;
 
 use bevy::camera::visibility::Visibility;
 use bevy::color::Color;
+use bevy::ecs::entity::Entity;
 use bevy::ecs::event::EntityEvent;
 use bevy::ecs::observer::On;
 use bevy::ecs::system::Commands;
@@ -12,7 +13,7 @@ use bevy::ecs::world::EntityWorldMut;
 use bevy::scene::{Scene, bsn, bsn_list, on, template_value};
 use bevy::ui::widget::Text;
 use bevy::ui::{JustifyContent, Node, UiRect, Val};
-use bevy::ui_widgets::RequestClose;
+use bevy::ui_widgets::{ModalDialog, RequestClose};
 use bevy_immediate::ui::activated::ImmUiActivated;
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
 use bevy_immediate::ui::interaction::ImmUiInteraction;
@@ -27,10 +28,10 @@ use crate::constants::{FaIcon, size};
 use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
     PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
-    flex_spacer, imm_popup_scene, popup_socket, row, screen, scroll_content, scroll_frame,
-    scroll_viewport, scrollbar, section_body, section_frame, separator, space, splitter_divider,
-    splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame,
-    tabs_frame,
+    flex_spacer, imm_popup_scene, modal_barrier, popup_socket, row, screen, scroll_content,
+    scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
+    splitter_divider, splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip,
+    tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -150,14 +151,6 @@ pub trait PlumeImm<'w, 's> {
     /// [`ImmMenuBar`] context. Bodies only run while their menu is open.
     fn menu_bar(&mut self, f: impl FnOnce(&mut ImmMenuBar<'_, 'w, 's>)) -> ImmResponse<'_, 'w, 's>;
 
-    /// Headerless floating surface — a [`dialog`](crate::imm::PlumeRoot::dialog)
-    /// with no title bar, ✕ or drag. Useful nested, pinned to the container it is
-    /// declared in — see [`ImmPanel::at_corner`].
-    ///
-    /// Not inside a [`scroll_area_vertical`](Self::scroll_area_vertical): it would
-    /// scroll with the content rather than float over it.
-    fn panel(&mut self) -> ImmPanel<'_, 'w, 's>;
-
     /// Horizontal, center-aligned container (label-beside-control). Children pack
     /// left; use [`Self::flex_spacer`] or `.grow()` to distribute width.
     /// The response chains `.grow()`/`.width()` to size the row itself.
@@ -269,16 +262,70 @@ impl<'w, 's> Ui<'w, 's> {
     }
 
     #[track_caller]
-    pub(crate) fn dialog<'a>(
+    pub(crate) fn panel(&mut self) -> ImmDialog<'_, 'w, 's, Panel> {
+        ImmDialog {
+            ui: self,
+            caller: Location::caller(),
+            // A panel has no title bar to show one in; it still keys the
+            // surface id, where an empty one leaves the call site to do it.
+            title: String::new(),
+            open: None,
+            layout: DialogLayout {
+                width: Val::Auto,
+                height: Val::Auto,
+                max_height: Val::Auto,
+                inset: UiRect {
+                    left: size::DEFAULT_DIALOG_POS.x,
+                    top: size::DEFAULT_DIALOG_POS.y,
+                    ..UiRect::AUTO
+                },
+                closable: false,
+                movable: false,
+            },
+            spacing: BodySpacing::default(),
+            anchor: None,
+            mode: PhantomData,
+        }
+    }
+
+    #[track_caller]
+    pub(crate) fn modal<'a>(
         &'a mut self,
         title: &str,
         open: &'a mut bool,
-    ) -> ImmDialog<'a, 'w, 's> {
+    ) -> ImmDialog<'a, 'w, 's, Modal> {
         ImmDialog {
             ui: self,
             caller: Location::caller(),
             title: title.to_owned(),
-            open,
+            open: Some(open),
+            layout: DialogLayout {
+                width: Val::Auto,
+                height: Val::Auto,
+                // A modal is centred on its barrier, so its ceiling is that box
+                // and it leaves the inset for the barrier's flex to resolve.
+                max_height: Val::Percent(100.0),
+                inset: UiRect::AUTO,
+                closable: true,
+                movable: false,
+            },
+            spacing: BodySpacing::default(),
+            anchor: None,
+            mode: PhantomData,
+        }
+    }
+
+    #[track_caller]
+    pub(crate) fn dialog<'a>(
+        &'a mut self,
+        title: &str,
+        open: &'a mut bool,
+    ) -> ImmDialog<'a, 'w, 's, Floating> {
+        ImmDialog {
+            ui: self,
+            caller: Location::caller(),
+            title: title.to_owned(),
+            open: Some(open),
             layout: DialogLayout {
                 width: Val::Auto,
                 height: Val::Auto,
@@ -292,6 +339,8 @@ impl<'w, 's> Ui<'w, 's> {
                 movable: true,
             },
             spacing: BodySpacing::default(),
+            anchor: None,
+            mode: PhantomData,
         }
     }
 }
@@ -696,27 +745,6 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(|| bsn! { @PlumeMenuBar })
             .add_ui(|ui| f(&mut ImmMenuBar { ui }));
         respond(entity, false)
-    }
-
-    #[track_caller]
-    fn panel(&mut self) -> ImmPanel<'_, 'w, 's> {
-        ImmPanel {
-            ui: self,
-            caller: Location::caller(),
-            layout: DialogLayout {
-                width: Val::Auto,
-                height: Val::Auto,
-                max_height: Val::Auto,
-                inset: UiRect {
-                    left: size::DEFAULT_DIALOG_POS.x,
-                    top: size::DEFAULT_DIALOG_POS.y,
-                    ..UiRect::AUTO
-                },
-                closable: false,
-                movable: false,
-            },
-            spacing: BodySpacing::default(),
-        }
     }
 
     #[track_caller]
@@ -1261,68 +1289,61 @@ impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
     }
 }
 
-/// Deferred dialog configuration returned by
-/// [`PlumeRoot::dialog`](crate::imm::PlumeRoot::dialog); it only exists once
-/// [`Self::show`] runs.
-#[must_use = "a dialog does nothing until .show(|ui| …) builds it"]
-pub struct ImmDialog<'a, 'w, 's> {
+/// A dialog the app places and the user drags — [`ImmDialog`]'s default mode.
+pub struct Floating;
+
+/// A dialog centred on a barrier that blocks the app behind it, answered before
+/// the app behind it can be touched.
+pub struct Modal;
+
+/// A headerless surface floating over the app — no title bar, ✕ or drag. The one
+/// mode that can hang off another entity's rect, via [`Self::at_corner_of`].
+pub struct Panel;
+
+/// Modes the app positions itself. Excludes [`Modal`], which its barrier centres.
+pub trait Placed {}
+impl Placed for Floating {}
+impl Placed for Panel {}
+
+/// Modes with a title bar, which is where a ✕ would go. Excludes [`Panel`].
+pub trait Titled {}
+impl Titled for Floating {}
+impl Titled for Modal {}
+
+/// Deferred configuration for one of plume's top-level surfaces.
+#[must_use = "a surface does nothing until .show(|ui| …) builds it"]
+pub struct ImmDialog<'a, 'w, 's, M = Floating> {
     ui: &'a mut Ui<'w, 's>,
     caller: &'static Location<'static>,
     title: String,
-    open: &'a mut bool,
+    open: Option<&'a mut bool>,
     layout: DialogLayout,
     spacing: BodySpacing,
+    anchor: Option<Entity>,
+    mode: PhantomData<M>,
 }
 
-impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
-    /// Fix the dialog's width (default `Val::Auto` hugs the content). Rows that
+// What every mode configures.
+impl<'e, 'w, 's, M> ImmDialog<'e, 'w, 's, M> {
+    /// Fix the width (default `Val::Auto` hugs the content). Rows that
     /// distribute space (`.grow()`, `flex_spacer`) need one to resolve against.
     pub fn width(mut self, width: Val) -> Self {
         self.layout.width = width;
         self
     }
 
-    /// Fix the dialog's outer height, title bar included, scrolling the body once
-    /// the content outgrows it. Prefer [`Self::max_height`] unless the dialog
-    /// should hold its size while near-empty.
+    /// Fix the outer height, title bar included, scrolling the body once the
+    /// content outgrows it. Prefer [`Self::max_height`] unless it should hold
+    /// its size while near-empty.
     pub fn height(mut self, height: Val) -> Self {
         self.layout.height = height;
         self
     }
 
-    /// Cap the dialog's outer height: it hugs its content until it would exceed
+    /// Cap the outer height: it hugs its content until it would exceed
     /// `max_height`, then stops growing and scrolls the body.
     pub fn max_height(mut self, max_height: Val) -> Self {
         self.layout.max_height = max_height;
-        self
-    }
-
-    /// Initial position (default `120, 120`). Spawn-time only — once open, the
-    /// user's dragging owns the position.
-    pub fn at(mut self, left: Val, top: Val) -> Self {
-        self.layout.inset = UiRect {
-            left,
-            top,
-            ..UiRect::AUTO
-        };
-        self
-    }
-
-    /// Initial position from corner, `left` and `top` in from its two edges.
-    pub fn at_corner(mut self, corner: Corner, left: Val, top: Val) -> Self {
-        self.layout.inset = corner.inset(left, top);
-        self
-    }
-
-    /// `false` omits the ✕ button, for dialogs dismissed only by an action button.
-    pub fn closable(mut self, closable: bool) -> Self {
-        self.layout.closable = closable;
-        self
-    }
-
-    /// `false` omits the drag handle, pinning the dialog in place.
-    pub fn movable(mut self, movable: bool) -> Self {
-        self.layout.movable = movable;
         self
     }
 
@@ -1333,10 +1354,51 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self
     }
 
-    /// Set the body's padding, overriding the default [`size::SPACE`]. A dialog
-    /// whose content is one full-bleed surface takes [`Val::ZERO`] here.
+    /// Set the body's padding, overriding the default [`size::SPACE`]. A surface
+    /// whose content is one full-bleed fill takes [`Val::ZERO`] here.
     pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
         self.spacing.padding = Some(padding.into());
+        self
+    }
+}
+
+// Placement. Not a modal's: it would work — the frame is absolute inside its
+// barrier — but one placed off-centre is a different widget, and the mode is
+// what holds that rule.
+impl<'e, 'w, 's, M: Placed> ImmDialog<'e, 'w, 's, M> {
+    /// Position from the viewport's top-left (default `120, 120` for a dialog).
+    /// Spawn-time only where the user can drag it — after that the drag owns it.
+    pub fn at(mut self, left: Val, top: Val) -> Self {
+        self.layout.inset = UiRect {
+            left,
+            top,
+            ..UiRect::AUTO
+        };
+        self
+    }
+
+    /// Pin to a corner of the viewport, `x` and `y` in from its two edges.
+    pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
+        self.layout.inset = corner.inset(x, y);
+        self
+    }
+}
+
+// The ✕, which lives in a title bar, so only the modes that have one.
+impl<'e, 'w, 's, M: Titled> ImmDialog<'e, 'w, 's, M> {
+    /// `false` omits the ✕ button, for a surface dismissed only by an action
+    /// button. On a [`Modal`] it drops the barrier click and Escape with it,
+    /// leaving the body's own buttons as the only answer.
+    pub fn closable(mut self, closable: bool) -> Self {
+        self.layout.closable = closable;
+        self
+    }
+}
+
+impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Floating> {
+    /// `false` omits the drag handle, pinning the dialog in place.
+    pub fn movable(mut self, movable: bool) -> Self {
+        self.layout.movable = movable;
         self
     }
 
@@ -1346,58 +1408,183 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's> {
         self,
         f: impl FnOnce(&mut Ui<'w, 's>),
     ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
-        fn dialog_scene(title: String, layout: DialogLayout) -> impl Scene {
-            let DialogLayout {
-                width,
-                height,
-                max_height,
-                inset,
-                closable,
-                movable,
-            } = layout;
+        fn scene(title: String, layout: DialogLayout) -> impl Scene {
             bsn! {
-                // Empty body: the imm layer reconciles the body itself.
-                dialog_frame(DialogChrome {
-                    name: format!("PlumeDialog({title})").into(),
-                    body: Box::new(bsn_list![]),
-                    header: Some(DialogHeader {
-                        title: Box::new(
-                            bsn_list![
-                                (
-                                    caption(title)
-                                    InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
-                                ),
-                            ],
-                        ),
-                        closable,
-                        movable,
-                    }),
-                    width,
-                    height,
-                    max_height,
-                    inset,
-                })
+                dialog_frame_scene(title, layout, SurfaceChrome::Dialog)
                 on(|close: On<RequestClose>, mut commands: Commands| {
                     commands.entity(close.event_target()).insert(CloseRequested);
                 })
             }
         }
 
-        if !*self.open {
+        let open = self.open?;
+        if !*open {
             return None;
         }
-        let id = ImmIdBuilder::Hierarchy(ImmId::new((self.caller, self.title.as_str())));
-        let (title, layout) = (self.title, self.layout);
+        let id = surface_id(self.caller, &self.title);
+        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
         let mut entity = self
             .ui
             .ch_loc(id)
-            .on_spawn_apply_scene(move || dialog_scene(title, layout));
+            .on_spawn_apply_scene(move || scene(title, layout));
         if entity.close_requested() {
-            *self.open = false;
+            *open = false;
             entity.entity_commands().despawn();
             return None;
         }
-        Some(reconcile_frame_body(entity, layout, self.spacing, f))
+        Some(reconcile_frame_body(entity, layout, spacing, f))
+    }
+}
+
+impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
+    /// Build the modal and its body. While `*open` the modal exists and `f`
+    /// fills its body; a dismissal writes back through `open`.
+    pub fn show(
+        self,
+        f: impl FnOnce(&mut Ui<'w, 's>),
+    ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
+        fn barrier_scene(closable: bool) -> impl Scene {
+            bsn! {
+                modal_barrier()
+                // Every dismissal — the ✕, a barrier click, Escape — arrives
+                // here, since `RequestClose` propagates up out of the frame.
+                {closable.then(|| bsn! {
+                    on(|close: On<RequestClose>, mut commands: Commands| {
+                        commands.entity(close.event_target()).insert(CloseRequested);
+                    })
+                })}
+            }
+        }
+
+        let open = self.open?;
+        if !*open {
+            return None;
+        }
+        let id = surface_id(self.caller, &self.title);
+        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
+        let closable = layout.closable;
+        let mut barrier = self
+            .ui
+            .ch_loc(id)
+            .on_spawn_apply_scene(move || barrier_scene(closable));
+        if barrier.close_requested() {
+            *open = false;
+            barrier.entity_commands().despawn();
+            return None;
+        }
+        // The frame is the barrier's child, which is what centres it, so the body
+        // reconciles a level below the entity this mode owns.
+        let barrier = barrier.add_ui(move |ui| {
+            let frame = ui.ch_id("modal_frame").on_spawn_apply_scene(move || {
+                dialog_frame_scene(title, layout, SurfaceChrome::Modal)
+            });
+            reconcile_frame_body(frame, layout, spacing, f);
+        });
+        Some(respond(barrier, false))
+    }
+}
+
+impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
+    /// Pin the panel to a corner of `target`'s rect rather than the viewport's,
+    /// `x` and `y` in from that rect's edges. It floats over `target` without
+    /// becoming its child, so a clipping or scrolling ancestor of `target`
+    /// neither cuts the panel off nor counts it as content.
+    ///
+    /// The rect is the one last frame's layout settled, so the panel trails a
+    /// resize by a frame.
+    pub fn at_corner_of(mut self, target: Entity, corner: Corner, x: Val, y: Val) -> Self {
+        self.anchor = Some(target);
+        self.layout.inset = corner.inset(x, y);
+        self
+    }
+
+    /// Build the panel and its body. Nothing can dismiss a panel, so unlike the
+    /// other two modes it has no flag to write back through and always builds.
+    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
+        let id = surface_id(self.caller, &self.title);
+        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
+        let Some(target) = self.anchor else {
+            let entity = self.ui.ch_loc(id).on_spawn_apply_scene(move || {
+                dialog_frame_scene(title, layout, SurfaceChrome::Panel)
+            });
+            return reconcile_frame_body(entity, layout, spacing, f);
+        };
+        // Anchored: the panel hangs in a socket that tracks `target`'s rect, so
+        // its inset is measured from that rect. The same primitive a popup sits
+        // over its control with, and it takes no picks of its own.
+        let socket = self
+            .ui
+            .ch_loc(id)
+            .on_spawn_apply_scene(popup_socket)
+            .on_spawn_insert(move || PopupAnchor(target));
+        let socket = socket.add_ui(move |ui| {
+            let frame = ui.ch_id("panel_frame").on_spawn_apply_scene(move || {
+                dialog_frame_scene(title, layout, SurfaceChrome::Panel)
+            });
+            reconcile_frame_body(frame, layout, spacing, f);
+        });
+        respond(socket, false)
+    }
+}
+
+// Keyed on call site and title, so several surfaces built in one system stay
+// distinct.
+fn surface_id(caller: &'static Location<'static>, title: &str) -> ImmIdBuilder {
+    ImmIdBuilder::Hierarchy(ImmId::new((caller, title)))
+}
+
+// Which surface a frame is being built for. The chrome is otherwise identical:
+// what differs — the inset a modal leaves `Auto` for its barrier to centre on,
+// the drag a pinned surface does without — is already settled in `layout`.
+#[derive(Clone, Copy, PartialEq)]
+enum SurfaceChrome {
+    Dialog,
+    Modal,
+    Panel,
+}
+
+// The frame every mode mounts. The modal is marked so it stays out of the
+// floating stack's z and its `TabGroup` turns modal; the panel goes headerless,
+// which drops the ✕ and the drag handle with the title bar.
+fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome) -> impl Scene {
+    let DialogLayout {
+        width,
+        height,
+        max_height,
+        inset,
+        closable,
+        movable,
+    } = layout;
+    let name = match chrome {
+        SurfaceChrome::Dialog => format!("PlumeDialog({title})"),
+        SurfaceChrome::Modal => format!("PlumeModal({title})"),
+        SurfaceChrome::Panel => "PlumePanel".to_owned(),
+    };
+    let header = match chrome {
+        SurfaceChrome::Panel => None,
+        _ => Some(DialogHeader {
+            title: Box::new(bsn_list![
+                (
+                    caption(title)
+                    InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
+                ),
+            ]),
+            closable,
+            movable,
+        }),
+    };
+    bsn! {
+        // Empty body: the imm layer reconciles the body itself.
+        dialog_frame(DialogChrome {
+            name: name.into(),
+            body: Box::new(bsn_list![]),
+            header,
+            width,
+            height,
+            max_height,
+            inset,
+        })
+        {(chrome == SurfaceChrome::Modal).then(|| bsn! { ModalDialog })}
     }
 }
 
@@ -1487,104 +1674,6 @@ impl Corner {
             top,
             bottom,
         }
-    }
-}
-
-/// Deferred panel configuration returned by [`PlumeImm::panel`]; the panel only
-/// exists once [`Self::show`] runs.
-#[must_use = "a panel does nothing until .show(|ui| …) builds it"]
-pub struct ImmPanel<'a, 'w, 's> {
-    ui: &'a mut Ui<'w, 's>,
-    caller: &'static Location<'static>,
-    layout: DialogLayout,
-    spacing: BodySpacing,
-}
-
-impl<'e, 'w, 's> ImmPanel<'e, 'w, 's> {
-    /// Fix the panel's width (default `Val::Auto` hugs the content).
-    pub fn width(mut self, width: Val) -> Self {
-        self.layout.width = width;
-        self
-    }
-
-    /// Fix the panel's outer height, scrolling the body once the content outgrows it.
-    pub fn height(mut self, height: Val) -> Self {
-        self.layout.height = height;
-        self
-    }
-
-    /// Cap the panel's outer height: it hugs its content until it would exceed
-    /// `max_height`, then stops growing and scrolls the body.
-    pub fn max_height(mut self, max_height: Val) -> Self {
-        self.layout.max_height = max_height;
-        self
-    }
-
-    /// Position, in from the top-left of whatever the panel is declared in — the
-    /// surrounding container, or the viewport at root scope. Spawn-time only.
-    pub fn at(mut self, left: Val, top: Val) -> Self {
-        self.layout.inset = UiRect {
-            left,
-            top,
-            ..UiRect::AUTO
-        };
-        self
-    }
-
-    /// Pin the panel to a corner of whatever it is declared in — the surrounding
-    /// container, or the viewport at root scope — `x` and `y` in from its edges.
-    /// An ordinary absolute child, so a clipping container cuts it off at its edge.
-    pub fn at_corner(mut self, corner: Corner, x: Val, y: Val) -> Self {
-        self.layout.inset = corner.inset(x, y);
-        self
-    }
-
-    /// Set the gap between the items the body stacks, overriding the default
-    /// [`size::SPACE`].
-    pub fn gap(mut self, gap: Val) -> Self {
-        self.spacing.gap = Some(gap);
-        self
-    }
-
-    /// Set the body's padding, overriding the default [`size::SPACE`]. Nested
-    /// chrome that has to sit tight against its surroundings wants this.
-    pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
-        self.spacing.padding = Some(padding.into());
-        self
-    }
-
-    /// Build the panel and its body.
-    pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
-        // Headerless: `header: None` drops the title bar (and so the ✕ and drag handle),
-        // and there is no `RequestClose` observer, since a panel has no ✕.
-        fn panel_scene(layout: DialogLayout) -> impl Scene {
-            let DialogLayout {
-                width,
-                height,
-                max_height,
-                inset,
-                ..
-            } = layout;
-            bsn! {
-                dialog_frame(DialogChrome {
-                    name: "PlumePanel".into(),
-                    body: Box::new(bsn_list![]),
-                    header: None,
-                    width,
-                    height,
-                    max_height,
-                    inset,
-                })
-            }
-        }
-
-        let id = ImmIdBuilder::Hierarchy(ImmId::new(self.caller));
-        let layout = self.layout;
-        let entity = self
-            .ui
-            .ch_loc(id)
-            .on_spawn_apply_scene(move || panel_scene(layout));
-        reconcile_frame_body(entity, layout, self.spacing, f)
     }
 }
 

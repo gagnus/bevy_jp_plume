@@ -25,7 +25,7 @@ use bevy_immediate::{ImmEntity, ImmId, imm_id};
 use super::caps::{ImmPlumeChecked, ImmPlumeFocus, ImmPlumeMenu, ImmPlumeTooltip};
 use super::widgets::{ImmMenu, imm_menu_popup_on};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
-use crate::constants::size;
+use crate::constants::{size, z_order};
 use crate::containers::{
     BodyGap, BodyPadding, PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed,
     SplitCollapsible, SplitDividerAutoHide, SplitMin, SplitPane, SplitSized,
@@ -907,11 +907,12 @@ impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Screen> {
-    /// Where this screen sits in the window's stack, back to front. Bevy breaks
-    /// `GlobalZIndex` ties on archetype order, so an app drawing more than one screen
-    /// says so here — system ordering won't. Popups (100) and tooltips (200) stay above.
+    /// Where this screen sits in the window's stack, back to front.
+    ///
+    /// Clamped to [`z_order::APP_MAX`]: everything above belongs to plume's.
     pub fn z_index(mut self, z: i32) -> Self {
         struct ZIndexKey;
+        let z = z.min(z_order::APP_MAX);
         if self.key_changed::<ZIndexKey>(z) {
             self.e.entity_commands().insert(GlobalZIndex(z));
         }

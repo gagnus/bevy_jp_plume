@@ -27,7 +27,7 @@ use bevy::ui_widgets::MenuPopup;
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 
 use super::dialog::CloseRequested;
-use crate::constants::size;
+use crate::constants::{size, z_order};
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::font_styles::InheritableFont;
 use crate::theme::{
@@ -210,7 +210,7 @@ struct PopupRoot;
 // Marker for popups dismissed by a press outside their anchor control.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
-struct DismissOnOutsideClick;
+pub(crate) struct DismissOnOutsideClick;
 
 impl PlumePopup {
     fn scene(props: PlumePopupProps) -> impl Scene {
@@ -230,7 +230,7 @@ impl PlumePopup {
             ThemeBackgroundToken(tokens::POPUP_BG)
             ThemeBorderToken(tokens::POPUP_BORDER)
             template_value(control_box_shadow())
-            GlobalZIndex(100)
+            GlobalZIndex(z_order::POPUP)
             template_value(popover_for(props.placement, props.place_very_close))
             OverrideClip
             InheritableThemeTextToken(tokens::TEXT_DIM)

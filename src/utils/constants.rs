@@ -150,6 +150,28 @@ pub mod size {
     pub const ICON_WIDTH: Val = Val::Em(1.0);
 }
 
+/// Global stacking layers, back to front. Only the order matters — bevy sorts
+/// the roots by the value and then discards it.
+pub mod z_order {
+    /// Where bevy's `DialogStack` starts placing floating dialogs, mirroring its
+    /// private `FLOATING_Z_BASE`; it owns this and the 39 layers above.
+    pub const FLOATING_DIALOG: i32 = 50;
+
+    /// The highest an app screen may take, one below the floating dialogs.
+    /// [`z_index`](crate::imm::ImmResponse::z_index) clamps to it.
+    pub const APP_MAX: i32 = FLOATING_DIALOG - 1;
+
+    /// A modal and its barrier, one below the popups so a dropdown inside one
+    /// still draws over it. Feathers' `FeathersDialog` uses the same layer.
+    pub const MODAL: i32 = 99;
+
+    /// Popups, menus and select dropdowns.
+    pub const POPUP: i32 = 100;
+
+    /// Tooltips, over everything; they take no picks.
+    pub const TOOLTIP: i32 = 200;
+}
+
 /// The FontAwesome face a glyph is drawn from.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum FaFace {

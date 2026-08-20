@@ -210,6 +210,9 @@ pub struct Inspector {
     pub show_hud: bool,
     /// Autosave flag; driven from the View menu, only logged.
     pub autosave: bool,
+    /// The Export modal: whether it is up, and what its select is set to.
+    pub export_open: bool,
+    pub export_cull: Cull,
 }
 
 impl Inspector {
@@ -293,8 +296,17 @@ impl Plugin for InspectorPanelPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Inspector::initial())
             .add_systems(Startup, register_hud_theme)
-            .add_systems(Update, inspector_panel_ui)
+            .add_systems(Update, (export_shortcut, inspector_panel_ui).chain())
             .add_systems(Update, log_on_change::<Inspector>);
+    }
+}
+
+// Ctrl+E, so the modal has an opener that is not a press: a press would dismiss
+// an open popup on its way, which is the case the modal's own dismissal covers.
+fn export_shortcut(keys: Res<ButtonInput<KeyCode>>, mut state: ResMut<Inspector>) {
+    let ctrl = keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight);
+    if ctrl && keys.just_pressed(KeyCode::KeyE) {
+        state.export_open = true;
     }
 }
 
@@ -305,6 +317,11 @@ fn inspector_panel_ui(
 ) {
     let mut s = state.clone();
     let mut rem = *rem_size;
+    // Lifted out of the destructure below: the menu item that opens the modal
+    // runs inside the screen, and the modal itself is built after it.
+    let mut export_open = s.export_open;
+    let mut viewport_entity = None;
+
     root.screen(|ui| {
         let Inspector {
             tab,
@@ -314,13 +331,16 @@ fn inspector_panel_ui(
             hierarchy,
             show_hud,
             autosave,
+            ..
         } = &mut s;
 
-        top_bar(ui, documents, show_hud, autosave);
+        top_bar(ui, documents, show_hud, autosave, &mut export_open);
 
         ui.split_horizontal(
             split,
-            |ui| document_pane(ui, documents, *show_hud),
+            |ui| {
+                viewport_entity = document_pane(ui, documents);
+            },
             |ui| panel(ui, tab, material, hierarchy, autosave, &mut rem),
         )
         // The panel is the sized pane, so the document pane alone absorbs
@@ -334,13 +354,29 @@ fn inspector_panel_ui(
         .grow();
     })
     .background_slot(ThemeSlot::Neutral0);
+
+    if s.show_hud
+        && let Some(viewport_entity) = viewport_entity
+    {
+        viewport_hud(&mut root, &mut s.documents, viewport_entity);
+    }
+
+    export_modal(&mut root, &mut export_open, &mut s.export_cull);
+    s.export_open = export_open;
+
     state.set_if_neq(s);
     rem_size.set_if_neq(rem);
 }
 
 // The File and View menus sharing a line with the document strip. The retained
 // twin (`top_bar` there too) binds with `on()` where this takes `&mut`s.
-fn top_bar(ui: &mut Ui, documents: &mut Documents, show_hud: &mut bool, autosave: &mut bool) {
+fn top_bar(
+    ui: &mut Ui,
+    documents: &mut Documents,
+    show_hud: &mut bool,
+    autosave: &mut bool,
+    export_open: &mut bool,
+) {
     ui.horizontal(|ui| {
         ui.menu_bar(|bar| {
             bar.menu("File", |menu| {
@@ -359,6 +395,10 @@ fn top_bar(ui: &mut Ui, documents: &mut Documents, show_hud: &mut bool, autosave
                     }
                 });
                 menu.separator();
+                if menu.item("Export…").shortcut("Ctrl+E").clicked {
+                    *export_open = true;
+                }
+                menu.separator();
                 menu.item("Exit").enabled(false);
             });
             bar.menu("View", |menu| {
@@ -373,18 +413,17 @@ fn top_bar(ui: &mut Ui, documents: &mut Documents, show_hud: &mut bool, autosave
 
 // The one viewport the open documents share, with the HUD floating in its
 // corner; the strip that picks the document lives in `top_bar`.
-fn document_pane(ui: &mut Ui, documents: &mut Documents, show_hud: bool) {
+fn document_pane(ui: &mut Ui, documents: &mut Documents) -> Option<Entity> {
+    let mut viewport_entity = None;
     ui.vertical(|ui| {
-        match documents.active_document() {
+        viewport_entity = Some(match documents.active_document() {
             Some(document) => viewport(ui, document),
             None => empty_viewport(ui),
-        }
-        if show_hud {
-            viewport_hud(ui, documents);
-        }
+        });
     })
     .gap(Val::ZERO)
     .grow();
+    viewport_entity
 }
 
 fn document_strip(ui: &mut Ui, documents: &mut Documents) {
@@ -450,7 +489,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
     }
 }
 
-fn viewport(ui: &mut Ui, document: &Document) {
+fn viewport(ui: &mut Ui, document: &Document) -> Entity {
     ui.vertical(|ui| {
         ui.flex_spacer();
         ui.horizontal(|ui| {
@@ -466,10 +505,11 @@ fn viewport(ui: &mut Ui, document: &Document) {
         StdRng::seed_from_u64(document.id.0 as u64).random_range(0.0..360.0),
         0.5,
         0.5,
-    ));
+    ))
+    .entity
 }
 
-fn empty_viewport(ui: &mut Ui) {
+fn empty_viewport(ui: &mut Ui) -> Entity {
     ui.vertical(|ui| {
         ui.flex_spacer();
         ui.horizontal(|ui| {
@@ -481,14 +521,15 @@ fn empty_viewport(ui: &mut Ui) {
         ui.flex_spacer();
     })
     .grow()
-    .background_slot(ThemeSlot::Neutral1);
+    .background_slot(ThemeSlot::Neutral1)
+    .entity
 }
 
 // Declared inside the pane, so its corner is the pane's and it follows the
 // splitter with no anchoring to arrange.
-fn viewport_hud(ui: &mut Ui, documents: &mut Documents) {
-    ui.panel()
-        .at_corner(Corner::BottomRight, em(1), em(1))
+fn viewport_hud(root: &mut PlumeRoot, documents: &mut Documents, viewport: Entity) {
+    root.panel()
+        .at_corner_of(viewport, Corner::BottomRight, em(1), em(1))
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.icon(font_awesome::solid::CUBES);
@@ -677,6 +718,48 @@ fn footer(ui: &mut Ui, rem: &mut RemSize) {
             .precision(0);
         ui.caption(&format!("{}", rem.0)).width(em(2));
     });
+}
+
+// The modal the File menu opens. It carries a select and tooltipped buttons on
+// purpose: both open surfaces of their own, and a modal is the one place their
+// layering has to be checked — the popup sits over the barrier, the tooltip over
+// everything.
+fn export_modal(root: &mut PlumeRoot, open: &mut bool, cull: &mut Cull) {
+    let mut answered = false;
+    root.modal("Export Scene", open).width(em(26.0)).show(|ui| {
+        ui.caption("Nothing behind this takes a click until it is answered.")
+            .text_color_slot(ThemeSlot::Text1);
+        ui.horizontal(|ui| {
+            ui.caption("Culling").width(em(6.0));
+            ui.select(cull, |select| {
+                for option in Cull::ALL {
+                    select.option(*option, option.label());
+                }
+            })
+            .grow();
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.tool_button(font_awesome::solid::FOLDER_OPEN)
+                .tooltip("Pick the output directory");
+            ui.tool_button(font_awesome::solid::ARROW_ROTATE_LEFT)
+                .tooltip("Reset these settings to their defaults");
+            ui.flex_spacer();
+            answered |= ui
+                .button("Cancel")
+                .variant(ButtonVariant::Outline)
+                .tooltip("Close without writing anything")
+                .clicked;
+            answered |= ui
+                .button("Export")
+                .primary()
+                .tooltip("Write the scene with the settings above")
+                .clicked;
+        });
+    });
+    if answered {
+        *open = false;
+    }
 }
 
 fn field(ui: &mut Ui, label: &str, f: impl FnOnce(&mut Ui)) {

@@ -3,6 +3,7 @@ mod body;
 mod column;
 mod dialog;
 mod flex_spacer;
+mod modal;
 mod popup;
 mod row;
 mod screen;
@@ -19,6 +20,8 @@ pub use column::column;
 pub use dialog::{CloseRequested, PlumeDialog, PlumeDialogProps};
 pub(crate) use dialog::{DialogChrome, DialogHeader, DialogPlugin, dialog_body, dialog_frame};
 pub use flex_spacer::flex_spacer;
+pub(crate) use modal::{ModalPlugin, modal_barrier};
+pub use modal::{PlumeModal, PlumeModalProps, modal_title};
 pub(crate) use popup::*;
 pub use popup::{
     PlumePopup, PlumePopupProps, PopupDismiss, PopupPlacement, PopupSocket, close_popup,

@@ -4,12 +4,13 @@
 use bevy::prelude::*;
 use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
-    Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeColorEdit, PlumeColorPicker,
-    PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeRadio,
-    PlumeRadioGroup, PlumeScrollArea, PlumeSection, PlumeSlider, PlumeSplitter, PlumeTab,
-    PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, Propagate, SectionCollapsed,
-    Selected, SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column,
-    flex_spacer, icon, menu_anchor, row, screen, separator, small_caps, space,
+    Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeButton, PlumeColorEdit,
+    PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar,
+    PlumeMenuButton, PlumeModal, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection,
+    PlumeSelect, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
+    PlumeToggleSwitch, PlumeToolButton, Propagate, RequestClose, SectionCollapsed, Selected,
+    SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer,
+    icon, menu_anchor, modal_title, row, screen, separator, small_caps, space,
 };
 
 #[path = "common/mod.rs"]
@@ -405,6 +406,76 @@ fn root() -> impl Scene {
     }
 }
 
+// The imm twin's `export_modal`: a select and tooltipped buttons inside a modal,
+// which is where their layering has to be checked — the select's popup over the
+// barrier, the tooltips over everything.
+fn export_modal() -> impl Scene {
+    bsn! {
+        @PlumeModal {
+            @title: bsn_list![modal_title("Export Scene")],
+            @width: em(26.0),
+            @contents: bsn_list![
+                caption("Nothing behind this takes a click until it is answered."),
+                (
+                    row()
+                    Children [
+                        (caption("Culling") Node { width: em(6.0) }),
+                        (
+                            @PlumeSelect {
+                                @options: {Cull::select_options()},
+                                @selected: 0,
+                            }
+                            Node { width: Val::ZERO, flex_grow: 1.0 }
+                        ),
+                    ]
+                ),
+                separator(),
+                (
+                    row()
+                    Children [
+                        (
+                            @PlumeToolButton {
+                                @caption: bsn! { icon(font_awesome::solid::FOLDER_OPEN) },
+                            }
+                            Tooltip("Pick the output directory")
+                        ),
+                        (
+                            @PlumeToolButton {
+                                @caption: bsn! { icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
+                            }
+                            Tooltip("Reset these settings to their defaults")
+                        ),
+                        flex_spacer(),
+                        (
+                            @PlumeButton {
+                                @caption: bsn! { caption("Cancel") },
+                                @variant: ButtonVariant::Outline,
+                            }
+                            Tooltip("Close without writing anything")
+                            on(close_export_modal)
+                        ),
+                        (
+                            @PlumeButton {
+                                @caption: bsn! { caption("Export") },
+                                @variant: ButtonVariant::Primary,
+                            }
+                            Tooltip("Write the scene with the settings above")
+                            on(close_export_modal)
+                        ),
+                    ]
+                ),
+            ],
+        }
+    }
+}
+
+// `RequestClose` propagates, so triggering it on the button reaches the modal.
+fn close_export_modal(activate: On<Activate>, mut commands: Commands) {
+    commands.trigger(RequestClose {
+        source: activate.event_target(),
+    });
+}
+
 // The menus and the document strip share one line, the retained twin of the imm
 // example's `top_bar`.
 fn top_bar() -> impl Scene {
@@ -471,6 +542,19 @@ fn menu_bar() -> impl Scene {
                             recent_item("vault_01.wgsl"),
                             recent_item("torch_02.ron"),
                         ]
+                    ),
+                    separator(),
+                    (
+                        @PlumeMenuButton { @label: "Export…" }
+                        // Parentless: the barrier is a fixed, full-viewport layout
+                        // root, so it needs no place in the tree.
+                        on(|_: On<Activate>,
+                            q_open: Query<(), With<PlumeModal>>,
+                            mut commands: Commands| {
+                            if q_open.iter().next().is_none() {
+                                commands.spawn_scene(export_modal());
+                            }
+                        })
                     ),
                     separator(),
                     (

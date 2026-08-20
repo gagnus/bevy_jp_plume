@@ -24,7 +24,7 @@ use bevy::ui::{
     JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
 };
 
-use crate::constants::{fonts, size};
+use crate::constants::{fonts, size, z_order};
 use crate::containers::PopupAnchor;
 use crate::display::caption;
 use crate::font_styles::{InheritableFont, PlumeFontSize};
@@ -304,7 +304,7 @@ pub(crate) fn tooltip_box() -> impl Scene {
         }
         FixedNode
         TooltipBox
-        GlobalZIndex(200)
+        GlobalZIndex(z_order::TOOLTIP)
         Pickable::IGNORE
     }
 }

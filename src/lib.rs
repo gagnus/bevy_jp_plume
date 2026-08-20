@@ -51,6 +51,7 @@ impl Plugin for PlumeCorePlugin {
             imm::ImmPlugin,
             UiAnimPlugin,
             containers::DialogPlugin,
+            containers::ModalPlugin,
             containers::PopupPlugin,
             display::TooltipPlugin,
             containers::ScrollAreaPlugin,
@@ -58,6 +59,8 @@ impl Plugin for PlumeCorePlugin {
             containers::SeparatorPlugin,
             containers::SplitterPlugin,
             containers::TabsPlugin,
+        ));
+        app.add_plugins((
             CursorIconPlugin,
             ThemePlugin,
             // Click-to-focus plus Tab/Shift-Tab traversal of every control; tabbable
