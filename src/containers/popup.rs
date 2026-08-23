@@ -5,6 +5,7 @@ use bevy::camera::visibility::Visibility;
 use bevy::ecs::change_detection::DetectChangesMut;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
+use bevy::ecs::event::{EntityEvent, PropagateEntityTrigger};
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::observer::On;
 use bevy::ecs::query::{Has, Or, With, Without};
@@ -15,7 +16,6 @@ use bevy::input::ButtonInput;
 use bevy::input::keyboard::KeyCode;
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
-use bevy::ecs::event::{EntityEvent, PropagateEntityTrigger};
 use bevy::picking::events::{
     PointerClick, PointerDrag, PointerDragEnd, PointerDragStart, PointerEvent, PointerPress,
     PointerTraversal,

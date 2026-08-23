@@ -25,9 +25,7 @@ use bevy::text::{
     TextReadWriteMode,
 };
 use bevy::ui::widget::Text;
-use bevy::ui::{
-    AlignItems, InteractionDisabled, Node, PositionType, UiRect, UiSystems, Val,
-};
+use bevy::ui::{AlignItems, InteractionDisabled, Node, PositionType, UiRect, UiSystems, Val};
 use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
 use crate::constants::size;

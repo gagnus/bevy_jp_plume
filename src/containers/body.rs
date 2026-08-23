@@ -1,5 +1,6 @@
 //! Body spacing shared by every container with a frame/body split: two
 //! components a caller sets on the frame, which each widget's relay forwards.
+use bevy::ecs::change_detection::Mut;
 use bevy::ecs::component::Component;
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::reflect::Reflect;
@@ -20,8 +21,12 @@ pub struct BodyPadding(pub UiRect);
 
 // Write whichever of the two the caller set onto `node`; the other keeps what the
 // scene gave it. Both gap axes, since the non-stacking one is inert without wrapping.
+//
+// Takes the `Mut` itself: the relays call this every frame, and a bare `&mut Node`
+// at the boundary would tick change detection — relayouting the whole tree — even
+// when the guards below then write nothing.
 pub(crate) fn apply_body_style(
-    node: &mut Node,
+    node: &mut Mut<Node>,
     gap: Option<&BodyGap>,
     padding: Option<&BodyPadding>,
 ) {
