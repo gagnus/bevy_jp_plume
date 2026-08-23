@@ -21,7 +21,7 @@ use bevy::scene::prelude::*;
 use bevy::ui::{
     AlignItems, AlignSelf, AngularColorStop, BackgroundGradient, BorderGradient, BorderRadius,
     ColorStop, ConicGradient, Display, FlexDirection, Gradient, InterpolationColorSpace,
-    JustifyContent, LinearGradient, Node, PositionType, UiPosition, UiRect, Val, Val2, em, percent,
+    JustifyContent, LinearGradient, Node, PositionType, UiPosition, UiRect, Val, em, percent,
 };
 use bevy::ui_widgets::{SliderValue, ValueChange};
 
@@ -50,11 +50,6 @@ const RING_RADIUS: f32 = (WHEEL_SIZE_PX - RING_THICKNESS_PX) / 2.0 / WHEEL_SIZE_
 // Presses engage the wheel only on the painted band, plus 4px of slop each side.
 const RING_HIT_WIDTH: f32 = (RING_THICKNESS_PX + 8.0) / WHEEL_SIZE_PX;
 const ALPHA_BAR_HEIGHT: Val = size::em_from_px(20.0);
-
-const ALPHA_RETICLE_SIZE: Val2 = Val2 {
-    x: Val::Em(1.0),
-    y: size::em_from_px(24.0),
-};
 
 /// Scene props for [`PlumeColorPicker`].
 #[derive(Clone)]
@@ -189,14 +184,18 @@ impl PlumeColorPicker {
             .alpha
             .then(|| -> Box<dyn Scene> {
                 Box::new(bsn! {
-                    Node { width: percent(100), height: ALPHA_BAR_HEIGHT }
+                    Node { 
+                        width: percent(100),
+                        height: ALPHA_BAR_HEIGHT,
+                        padding: UiRect::horizontal(size::SPACE),
+                    }
                     Children [
                         (
                             Node {
                                 position_type: PositionType::Absolute,
-                                left: Val::ZERO,
+                                left: size::SPACE,
                                 top: Val::ZERO,
-                                right: Val::ZERO,
+                                right: size::SPACE,
                                 bottom: Val::ZERO,
                             }
                             CheckerUnderlay
@@ -204,16 +203,16 @@ impl PlumeColorPicker {
                         (
                             Node {
                                 position_type: PositionType::Absolute,
-                                left: Val::ZERO,
+                                left: size::SPACE,
                                 top: Val::ZERO,
-                                right: Val::ZERO,
+                                right: size::SPACE,
                                 bottom: Val::ZERO,
                             }
                             ColorPickerAlphaRamp
                         ),
                         (
                             @PlumeXyPad {
-                                @reticle_size: ALPHA_RETICLE_SIZE,
+                                @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
                             }
                             Node {
                                 width: percent(100),
