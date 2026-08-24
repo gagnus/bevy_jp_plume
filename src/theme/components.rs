@@ -245,8 +245,8 @@ fn resolve_background(
     ),
 ) {
     let color = match (slot, token) {
-        (Some(slot), _) => theme.palette(theme_id, slot.0),
-        (None, Some(token)) => theme.color(theme_id, &token.0),
+        (Some(slot), _) => theme.slot_color(theme_id, slot.0),
+        (None, Some(token)) => theme.token_color(theme_id, &token.0),
         (None, None) => return,
     };
     let amount = if flat {
@@ -316,7 +316,7 @@ pub(crate) fn on_changed_border_token(
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut border, theme_border, theme_id)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.color(theme_id, &theme_border.0));
+        border.set_all(theme.token_color(theme_id, &theme_border.0));
     }
 }
 
@@ -329,7 +329,7 @@ pub(crate) fn on_changed_border_slot(
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut border, theme_border, theme_id)) = q_border.get_mut(insert.entity) {
-        border.set_all(theme.palette(theme_id, theme_border.0));
+        border.set_all(theme.slot_color(theme_id, theme_border.0));
     }
 }
 
@@ -339,7 +339,7 @@ pub(crate) fn on_changed_text_token(
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut text_color, theme_text_color, theme_id)) = q_span.get_mut(insert.entity) {
-        text_color.0 = theme.color(theme_id, &theme_text_color.0);
+        text_color.0 = theme.token_color(theme_id, &theme_text_color.0);
     }
 }
 
@@ -349,7 +349,7 @@ pub(crate) fn on_changed_text_slot(
     theme: Res<UiTheme>,
 ) {
     if let Ok((mut text_color, theme_text_slot, theme_id)) = q_span.get_mut(insert.entity) {
-        text_color.0 = theme.palette(theme_id, theme_text_slot.0);
+        text_color.0 = theme.slot_color(theme_id, theme_text_slot.0);
     }
 }
 
@@ -386,7 +386,7 @@ pub(crate) fn on_changed_inheritable_text_token(
     mut commands: Commands,
 ) {
     if let Ok((token, theme_id)) = font_color.get(insert.entity) {
-        let color = theme.color(theme_id, &token.0);
+        let color = theme.token_color(theme_id, &token.0);
         apply_inheritable_color(
             &mut commands,
             insert.entity,
@@ -405,7 +405,7 @@ pub(crate) fn on_changed_inheritable_text_slot(
     mut commands: Commands,
 ) {
     if let Ok((slot, theme_id)) = q_slot.get(insert.entity) {
-        let color = theme.palette(theme_id, slot.0);
+        let color = theme.slot_color(theme_id, slot.0);
         apply_inheritable_color(
             &mut commands,
             insert.entity,

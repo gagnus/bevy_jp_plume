@@ -89,9 +89,9 @@ pub fn theme_editor_tabs(
                 id.name()
             };
             tabs.tab(id.clone(), label).body(|ui| {
-                let mut palette = read.editable(Some(id)).clone();
+                let mut palette = read.editable_palette(Some(id)).clone();
                 theme_editor(ui, &mut palette);
-                if palette != *read.editable(Some(id)) {
+                if palette != *read.editable_palette(Some(id)) {
                     edited.set(Some((id.clone(), palette)));
                 }
             });

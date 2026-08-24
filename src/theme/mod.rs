@@ -105,20 +105,20 @@ impl UiTheme {
             .expect("the default theme always has a palette")
     }
 
-    /// The resolved color of a palette slot in theme `id` — how an app reads a
-    /// theme color. `None` is the default theme.
-    pub fn palette(&self, id: Option<&ThemeId>, slot: ThemeSlot) -> Color {
+    /// The resolved color of a palette slot in theme `id`. `None` is the
+    /// default theme.
+    pub fn slot_color(&self, id: Option<&ThemeId>, slot: ThemeSlot) -> Color {
         self.entry(id).resolved[slot]
     }
 
     /// The parametric palette theme `id` was generated from, for an editor to show.
-    pub fn editable(&self, id: Option<&ThemeId>) -> &ThemeEditablePalette {
+    pub fn editable_palette(&self, id: Option<&ThemeId>) -> &ThemeEditablePalette {
         &self.entry(id).editable
     }
 
     // Lookup a color by design token (tokens are plume-internal). If the theme does
     // not have an entry for that token, logs a warning and returns an error color.
-    pub(crate) fn color(&self, id: Option<&ThemeId>, token: &ThemeToken) -> Color {
+    pub(crate) fn token_color(&self, id: Option<&ThemeId>, token: &ThemeToken) -> Color {
         match self.tokens.get(token) {
             Some(slot) => self.entry(id).resolved[*slot],
             None => {
@@ -199,9 +199,9 @@ fn update_theme(
         ),
     ) {
         if let Some(slot) = slot {
-            border.set_all(theme.palette(id, slot.0));
+            border.set_all(theme.slot_color(id, slot.0));
         } else if let Some(token) = token {
-            border.set_all(theme.color(id, &token.0));
+            border.set_all(theme.token_color(id, &token.0));
         }
     }
 
@@ -215,9 +215,9 @@ fn update_theme(
         ),
     ) {
         if let Some(slot) = slot {
-            text_color.0 = theme.palette(id, slot.0);
+            text_color.0 = theme.slot_color(id, slot.0);
         } else if let Some(token) = token {
-            text_color.0 = theme.color(id, &token.0);
+            text_color.0 = theme.token_color(id, &token.0);
         }
     }
 
@@ -243,9 +243,9 @@ fn update_theme(
         ),
     ) {
         let color = if let Some(inherit_slot) = inherit_slot {
-            theme.palette(id, inherit_slot.0)
+            theme.slot_color(id, inherit_slot.0)
         } else if let Some(inherit_token) = inherit_token {
-            theme.color(id, &inherit_token.0)
+            theme.token_color(id, &inherit_token.0)
         } else {
             return;
         };

@@ -527,10 +527,10 @@ fn update_text_cursor_color(
         }
         let theme_id = theme_id.as_deref();
         let themed = TextCursorStyle {
-            color: theme.color(theme_id, &tokens::TEXT_INPUT_CURSOR),
-            selection_color: theme.color(theme_id, &tokens::TEXT_INPUT_SELECTION),
+            color: theme.token_color(theme_id, &tokens::TEXT_INPUT_CURSOR),
+            selection_color: theme.token_color(theme_id, &tokens::TEXT_INPUT_SELECTION),
             unfocused_selection_color: theme
-                .color(theme_id, &tokens::TEXT_INPUT_SELECTION_UNFOCUSED),
+                .token_color(theme_id, &tokens::TEXT_INPUT_SELECTION_UNFOCUSED),
             ..*cursor_style
         };
         // A `Changed` tick here re-extracts the node for rendering, so write

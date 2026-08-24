@@ -121,8 +121,8 @@ impl PlumeSlider {
                     // same frame via `update_slider_styles_theme`.
                     template(|ctx| {
                         let theme = ctx.resource::<UiTheme>();
-                        let bar = theme.color(None, &tokens::SLIDER_BAR);
-                        let bg = theme.color(None, &tokens::SLIDER_BG);
+                        let bar = theme.token_color(None, &tokens::SLIDER_BAR);
+                        let bg = theme.token_color(None, &tokens::SLIDER_BG);
                         Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
                             angle: PI * 0.5,
                             stops: vec![
@@ -399,11 +399,11 @@ fn set_slider_styles(
     theme: &UiTheme,
     commands: &mut Commands,
 ) {
-    let bar_color = theme.color(
+    let bar_color = theme.token_color(
         theme_id,
         &tokens::sets::SLIDER_BAR.pick(disabled, pressed, hovered),
     );
-    let bg_color = theme.color(
+    let bg_color = theme.token_color(
         theme_id,
         &tokens::sets::SLIDER_BG.pick(disabled, pressed, hovered),
     );

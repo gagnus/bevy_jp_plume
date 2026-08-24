@@ -61,7 +61,7 @@ fn manage_focus_indicators(
     }
 
     let ring = |theme: &UiTheme, inset: bool, theme_id: Option<&ThemeId>| Outline {
-        color: theme.color(theme_id, &tokens::FOCUS_RING),
+        color: theme.token_color(theme_id, &tokens::FOCUS_RING),
         width: size::FOCUS_RING_WIDTH,
         offset: if inset {
             size::FOCUS_RING_INSET_OFFSET

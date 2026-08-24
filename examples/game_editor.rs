@@ -227,7 +227,7 @@ fn editor_ui(
         toolbar(
             ui,
             &mut state,
-            theme.palette(None, ThemeSlot::Neutral1),
+            theme.slot_color(None, ThemeSlot::Neutral1),
             &mut theme_editor_open,
         );
         // The split fills all the height the toolbar leaves; its children stretch
