@@ -60,7 +60,8 @@ use slider::SliderPlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
 use text_input::TextInputPlugin;
 pub use text_input::{
-    NoBlurOnEnter, NoSelectAllOnFocus, PlumeTextInput, PlumeTextInputProps, TextInputValue,
+    NoBlurOnEnter, NoSelectAllOnFocus, NoVerticalArrows, PlumeTextInput, PlumeTextInputProps,
+    TextInputValue,
 };
 pub(crate) use text_input::{
     TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_outline,

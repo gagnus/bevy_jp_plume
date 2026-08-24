@@ -18,7 +18,7 @@ use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::picking::Pickable;
 use bevy::picking::events::{
     PointerClick, PointerDrag, PointerDragEnd, PointerDragStart, PointerEvent, PointerPress,
-    PointerTraversal,
+    PointerScroll, PointerTraversal,
 };
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
@@ -129,10 +129,11 @@ fn bridge_floating_anchor_style(
 /// Where a popup opens relative to its anchor.
 #[derive(Default, Clone, Copy, PartialEq)]
 pub enum PopupPlacement {
-    /// Below the anchor, start-aligned; flips above when out of room.
+    /// Below the anchor, centred; slides along it, then flips above, then beside.
     #[default]
     Below,
-    /// Beside the anchor, center-aligned; tries right, left, above, below.
+    /// Beside the anchor, centred; slides along it, tries right, left, then
+    /// below, above.
     Beside,
 }
 
@@ -259,12 +260,14 @@ impl PlumePopup {
             // A popup floats over whatever its anchor sits in, so pointer activity
             // inside it must not bubble on to that surface: a retained socket is a
             // hierarchy child, and its anchor's ancestors would read the popup's
-            // presses and drags as their own (a canvas node drag, a window raise).
+            // presses, drags and wheel as their own (a canvas node drag, a window
+            // raise, a canvas zoom under a popup's own scroll list).
             on(stop_pointer::<PointerPress>)
             on(stop_pointer::<PointerClick>)
             on(stop_pointer::<PointerDragStart>)
             on(stop_pointer::<PointerDrag>)
             on(stop_pointer::<PointerDragEnd>)
+            on(stop_pointer::<PointerScroll>)
             Children [
                 {props.contents},
             ]
@@ -273,7 +276,9 @@ impl PlumePopup {
 }
 
 // Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
-// measures them against the popup's parent — the socket, i.e. the anchor rect.
+// measures them against the popup's parent — the socket, i.e. the anchor rect —
+// and takes the first that fits, never sliding one that does not: so each side
+// is offered centred, then aligned to either end, before the next side.
 fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
     let sides = match placement {
         PopupPlacement::Below => &[
@@ -290,14 +295,17 @@ fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
         ],
     };
 
-    let side_to_position = |side| PopoverPlacement {
-        side,
-        align: PopoverAlign::Center,
-        gap: if place_very_close { 2.0 } else { 8.0 },
-    };
+    let gap = if place_very_close { 2.0 } else { 8.0 };
+    let positions = sides
+        .iter()
+        .flat_map(|&side| {
+            [PopoverAlign::Center, PopoverAlign::Start, PopoverAlign::End]
+                .map(|align| PopoverPlacement { side, align, gap })
+        })
+        .collect();
 
     Popover {
-        positions: sides.map(side_to_position).to_vec(),
+        positions,
         window_margin: 10.0,
     }
 }

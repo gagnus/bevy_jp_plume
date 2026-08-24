@@ -23,14 +23,14 @@ pub use crate::containers::{
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoBlurOnEnter, NoDrag,
-    NoSelectAllOnFocus, PlumeButton, PlumeButtonProps, PlumeCheckbox, PlumeCheckboxProps,
-    PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker, PlumeColorPickerProps, PlumeColorSwatch,
-    PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar, PlumeMenuButton, PlumeMenuButtonProps,
-    PlumeNumberInput, PlumeNumberInputProps, PlumeRadio, PlumeRadioGroup, PlumeRadioProps,
-    PlumeScrollbar, PlumeScrollbarProps, PlumeSelect, PlumeSelectProps, PlumeSlider,
-    PlumeSliderProps, PlumeTextInput, PlumeTextInputProps, PlumeToggleSwitch, PlumeToolButton,
-    ScrollbarGutter, ScrollbarHidden, SelectedIndex, SetValue, TextInputValue, menu_anchor,
-    select_options,
+    NoSelectAllOnFocus, NoVerticalArrows, PlumeButton, PlumeButtonProps, PlumeCheckbox,
+    PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker,
+    PlumeColorPickerProps, PlumeColorSwatch, PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar,
+    PlumeMenuButton, PlumeMenuButtonProps, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
+    PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect,
+    PlumeSelectProps, PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps,
+    PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter, ScrollbarHidden, SelectedIndex, SetValue,
+    TextInputValue, menu_anchor, select_options,
 };
 pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, icon};
 // The propagation source a retained scene sets a subtree's [`ThemeId`] with.

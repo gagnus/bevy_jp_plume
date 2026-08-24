@@ -99,6 +99,7 @@ impl PlumeTextInput {
                     text_input_field(props.visible_width, props.max_characters)
                     {props.filter.map(|filter| bsn! { template_value(filter) })}
                     on(text_input_on_enter)
+                    on(text_input_on_vertical_arrow)
                     Children [
                         {props.placeholder.map(|placeholder| bsn_list![
                             text_input_placeholder(placeholder),
@@ -229,6 +230,36 @@ fn text_input_on_enter(
     }
 }
 
+// Up and Down on a field whose frame carries [`NoVerticalArrows`]. Bevy's field
+// handler has already run — global observers precede entity ones at each hop —
+// and queued a caret move (to the text's start on Up) and stopped the bubble;
+// both are undone here.
+fn text_input_on_vertical_arrow(
+    mut key_input: On<FocusedInput<KeyboardInput>>,
+    mut query_fields: Query<(&ChildOf, &mut EditableText), With<TextInputField>>,
+    query_no_arrows: Query<(), With<NoVerticalArrows>>,
+) {
+    if !matches!(
+        key_input.input.key_code,
+        KeyCode::ArrowUp | KeyCode::ArrowDown
+    ) {
+        return;
+    }
+    let Ok((child_of, mut editable_text)) = query_fields.get_mut(key_input.event_target()) else {
+        return;
+    };
+    if !query_no_arrows.contains(child_of.parent()) {
+        return;
+    }
+    if matches!(
+        editable_text.pending_edits.last(),
+        Some(TextEdit::Up(_) | TextEdit::Down(_))
+    ) {
+        editable_text.pending_edits.pop();
+    }
+    key_input.propagate(true);
+}
+
 // Replace the buffer contents (select-all + insert) when they differ.
 pub(crate) fn set_editable_text(editable_text: &mut EditableText, replacement: String) {
     // A queued replacement has not reached `value()` yet, so comparing against it
@@ -256,6 +287,12 @@ pub struct NoSelectAllOnFocus;
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
 pub struct NoBlurOnEnter;
+
+/// Opt-out marker on a [`PlumeTextInput`] frame: Up and Down are not the field's.
+/// They leave the caret alone and bubble on, for a field whose list they navigate.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Default, Clone)]
+pub struct NoVerticalArrows;
 
 // Relay the frame's [`NoSelectAllOnFocus`] to its field, in both directions. Running as a system
 // (not at insertion time) means the field is always spawned by the time the marker is read.
