@@ -130,6 +130,7 @@ impl PlumeColorEdit {
                                 Node {
                                     width: SWATCH_SIZE,
                                     height: SWATCH_SIZE,
+                                    flex_grow: 1.0,
                                 }
                             ),
                             icon(font_awesome::solid::ANGLE_DOWN),
@@ -137,6 +138,9 @@ impl PlumeColorEdit {
                     }
                     ActivateOnPress
                     ColorEditButton
+                    Node {
+                        flex_grow: 1.0,
+                    }
                 ),
                 // The picker popup spawns into this socket while open.
                 popup_socket(),
