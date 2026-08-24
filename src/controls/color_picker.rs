@@ -184,7 +184,7 @@ impl PlumeColorPicker {
             .alpha
             .then(|| -> Box<dyn Scene> {
                 Box::new(bsn! {
-                    Node { 
+                    Node {
                         width: percent(100),
                         height: ALPHA_BAR_HEIGHT,
                         padding: UiRect::horizontal(size::SPACE),

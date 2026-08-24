@@ -1,6 +1,7 @@
 //! Immediate-mode API: write plain systems taking [`Ui`] and call widgets on it;
 //! a reconciler maps the calls onto retained plume scenes.
 mod caps;
+mod data;
 mod response;
 mod widgets;
 
@@ -17,6 +18,7 @@ use bevy_immediate::{
     BevyImmediatePlugin, Imm, ImmCtx, ImmEntity, ImmId, ImmIdBuilder, ImmScopeGuard,
 };
 use caps::PlumeOccurrences;
+pub use data::ImmDataAppExt;
 pub use response::{ImmResponse, kind};
 pub use widgets::{
     Corner, Floating, ImmDialog, ImmMenu, ImmMenuBar, ImmPopup, ImmSelect, ImmTab, ImmTabs, Modal,
