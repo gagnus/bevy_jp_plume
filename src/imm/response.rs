@@ -233,7 +233,7 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
             placement: Default::default(),
             movable: false,
             close_on_click_outside: true,
-            spacing: Default::default(),
+            style: Default::default(),
         }
     }
 

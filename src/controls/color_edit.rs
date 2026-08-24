@@ -255,7 +255,7 @@ fn toggle_popup(
     commands
         .spawn_scene(bsn! {
             @PlumePopup {
-                @placement: PopupPlacement::Beside,
+                @placement: PopupPlacement::Below,
                 @dismiss: PopupDismiss::OutsideClick,
                 @movable: true,
                 @contents: bsn_list![

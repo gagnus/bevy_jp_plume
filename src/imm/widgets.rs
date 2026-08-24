@@ -12,7 +12,7 @@ use bevy::ecs::system::Commands;
 use bevy::ecs::world::EntityWorldMut;
 use bevy::scene::{Scene, bsn, bsn_list, on, template_value};
 use bevy::ui::widget::Text;
-use bevy::ui::{JustifyContent, Node, UiRect, Val};
+use bevy::ui::{BackgroundColor, JustifyContent, Node, UiRect, Val};
 use bevy::ui_widgets::{ModalDialog, RequestClose};
 use bevy_immediate::ui::activated::ImmUiActivated;
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -42,6 +42,8 @@ use crate::controls::{
 use crate::display;
 use crate::display::caption;
 use crate::font_styles::{InheritableFont, small_caps};
+use crate::theme::ThemeSlot;
+use crate::theme::components::{ThemeBackgroundSlot, ThemeBackgroundToken};
 use crate::utils::numeric::Numeric;
 
 /// Widget calls for immediate-mode systems. Implemented by [`Ui`]; import it
@@ -295,7 +297,7 @@ impl<'w, 's> Ui<'w, 's> {
                 closable: false,
                 movable: false,
             },
-            spacing: BodySpacing::default(),
+            style: FrameStyle::default(),
             anchor: None,
             mode: PhantomData,
         }
@@ -322,7 +324,7 @@ impl<'w, 's> Ui<'w, 's> {
                 closable: true,
                 movable: false,
             },
-            spacing: BodySpacing::default(),
+            style: FrameStyle::default(),
             anchor: None,
             mode: PhantomData,
         }
@@ -351,7 +353,7 @@ impl<'w, 's> Ui<'w, 's> {
                 closable: true,
                 movable: true,
             },
-            spacing: BodySpacing::default(),
+            style: FrameStyle::default(),
             anchor: None,
             mode: PhantomData,
         }
@@ -1371,7 +1373,7 @@ pub struct ImmDialog<'a, 'w, 's, M = Floating> {
     title: String,
     open: Option<&'a mut bool>,
     layout: DialogLayout,
-    spacing: BodySpacing,
+    style: FrameStyle,
     anchor: Option<Entity>,
     mode: PhantomData<M>,
 }
@@ -1403,14 +1405,14 @@ impl<'e, 'w, 's, M> ImmDialog<'e, 'w, 's, M> {
     /// Set the gap between the items the body stacks, overriding the default
     /// [`size::SPACE`].
     pub fn gap(mut self, gap: Val) -> Self {
-        self.spacing.gap = Some(gap);
+        self.style.gap = Some(gap);
         self
     }
 
     /// Set the body's padding, overriding the default [`size::SPACE`]. A surface
     /// whose content is one full-bleed fill takes [`Val::ZERO`] here.
     pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
-        self.spacing.padding = Some(padding.into());
+        self.style.padding = Some(padding.into());
         self
     }
 }
@@ -1475,7 +1477,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Floating> {
             return None;
         }
         let id = surface_id(self.caller, &self.title, self.anchor.is_some());
-        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
+        let (title, layout, style) = (self.title, self.layout, self.style);
         let mut entity = self
             .ui
             .ch_loc(id)
@@ -1485,7 +1487,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Floating> {
             entity.entity_commands().despawn();
             return None;
         }
-        Some(reconcile_frame_body(entity, layout, spacing, f))
+        Some(reconcile_frame_body(entity, layout, style, f))
     }
 }
 
@@ -1514,7 +1516,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
             return None;
         }
         let id = surface_id(self.caller, &self.title, self.anchor.is_some());
-        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
+        let (title, layout, style) = (self.title, self.layout, self.style);
         let closable = layout.closable;
         let mut barrier = self
             .ui
@@ -1531,7 +1533,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
             let frame = ui.ch_id("modal_frame").on_spawn_apply_scene(move || {
                 dialog_frame_scene(title, layout, SurfaceChrome::Modal)
             });
-            reconcile_frame_body(frame, layout, spacing, f);
+            reconcile_frame_body(frame, layout, style, f);
         });
         Some(respond(barrier, false))
     }
@@ -1551,16 +1553,31 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
         self
     }
 
+    /// Paint the panel from a theme slot in place of the dialog background.
+    /// A panel's only, since a dialog's header keeps its own fill: a body
+    /// recoloured under a themed header is a different widget.
+    pub fn background_slot(mut self, slot: ThemeSlot) -> Self {
+        self.style.background = Some(FrameBackground::Slot(slot));
+        self
+    }
+
+    /// Paint the panel a fixed color in place of the dialog background. It
+    /// stands outside the theme, so a palette swap leaves it be.
+    pub fn background(mut self, color: Color) -> Self {
+        self.style.background = Some(FrameBackground::Color(color));
+        self
+    }
+
     /// Build the panel and its body. Nothing can dismiss a panel, so unlike the
     /// other two modes it has no flag to write back through and always builds.
     pub fn show(self, f: impl FnOnce(&mut Ui<'w, 's>)) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
         let id = surface_id(self.caller, &self.title, self.anchor.is_some());
-        let (title, layout, spacing) = (self.title, self.layout, self.spacing);
+        let (title, layout, style) = (self.title, self.layout, self.style);
         let Some(target) = self.anchor else {
             let entity = self.ui.ch_loc(id).on_spawn_apply_scene(move || {
                 dialog_frame_scene(title, layout, SurfaceChrome::Panel)
             });
-            return reconcile_frame_body(entity, layout, spacing, f);
+            return reconcile_frame_body(entity, layout, style, f);
         };
         // Anchored: the panel hangs in a socket that tracks `target`'s rect, so
         // its inset is measured from that rect. The same primitive a popup sits
@@ -1574,7 +1591,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
             let frame = ui.ch_id("panel_frame").on_spawn_apply_scene(move || {
                 dialog_frame_scene(title, layout, SurfaceChrome::Panel)
             });
-            reconcile_frame_body(frame, layout, spacing, f);
+            reconcile_frame_body(frame, layout, style, f);
         });
         respond(socket, false)
     }
@@ -1644,22 +1661,37 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
     }
 }
 
-// A floating surface's body spacing, as its builder chain collected it. Applied to
-// the surface's own frame; the widget's relay is what puts it on the right node.
+// A floating surface's styling as its builder chain collected it: the body's
+// spacing and the frame's fill. Applied to the surface's own frame; the widget's
+// relay is what puts the spacing on the right node.
 #[derive(Clone, Copy, Default)]
-pub(crate) struct BodySpacing {
+pub(crate) struct FrameStyle {
     gap: Option<Val>,
     padding: Option<UiRect>,
+    background: Option<FrameBackground>,
 }
 
-impl BodySpacing {
+// The fill a caller asked for in place of the frame's own `DIALOG_BG`.
+#[derive(Clone, Copy, Debug)]
+enum FrameBackground {
+    Slot(ThemeSlot),
+    Color(Color),
+}
+
+impl FrameStyle {
     // Insert whichever the caller set onto `entity`; an unset one is left absent, so
-    // the scene's own value stands. One guard keyed on both, as in the tab sizing.
+    // the scene's own value stands. One guard keyed on all, as in the tab sizing.
     fn apply(self, entity: &mut ImmEntity<'_, '_, '_, PlumeCaps>) {
-        struct BodySpacingKey;
-        let Self { gap, padding } = self;
-        if (gap.is_some() || padding.is_some())
-            && entity.hash_update_typ::<BodySpacingKey>(Some(imm_id(format!("{gap:?}{padding:?}"))))
+        struct FrameStyleKey;
+        let Self {
+            gap,
+            padding,
+            background,
+        } = self;
+        if (gap.is_some() || padding.is_some() || background.is_some())
+            && entity.hash_update_typ::<FrameStyleKey>(Some(imm_id(format!(
+                "{gap:?}{padding:?}{background:?}"
+            ))))
         {
             let mut commands = entity.entity_commands();
             if let Some(gap) = gap {
@@ -1667,6 +1699,19 @@ impl BodySpacing {
             }
             if let Some(padding) = padding {
                 commands.insert(BodyPadding(padding));
+            }
+            match background {
+                Some(FrameBackground::Slot(slot)) => {
+                    commands.insert(ThemeBackgroundSlot(slot));
+                }
+                // A fixed color is outside the theme: the sources go too, or the
+                // next palette swap paints over it.
+                Some(FrameBackground::Color(color)) => {
+                    commands
+                        .insert(BackgroundColor(color))
+                        .remove::<(ThemeBackgroundToken, ThemeBackgroundSlot)>();
+                }
+                None => {}
             }
         }
     }
@@ -1743,7 +1788,7 @@ pub struct ImmPopup<'r, 'a, 'w, 's, K> {
     pub(crate) placement: PopupPlacement,
     pub(crate) movable: bool,
     pub(crate) close_on_click_outside: bool,
-    pub(crate) spacing: BodySpacing,
+    pub(crate) style: FrameStyle,
 }
 
 impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
@@ -1770,13 +1815,13 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
     /// Set the gap between the items the popup stacks, overriding the default
     /// [`size::SPACE`].
     pub fn gap(mut self, gap: Val) -> Self {
-        self.spacing.gap = Some(gap);
+        self.style.gap = Some(gap);
         self
     }
 
     /// Set the popup's padding, overriding the default [`size::SPACE_TIGHT`].
     pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
-        self.spacing.padding = Some(padding.into());
+        self.style.padding = Some(padding.into());
         self
     }
 
@@ -1799,7 +1844,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
             placement,
             movable,
             close_on_click_outside,
-            spacing,
+            style,
         } = self;
         if !*open {
             return anchor;
@@ -1825,7 +1870,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
                         closed = true;
                         popup.entity_commands().despawn();
                     } else {
-                        spacing.apply(&mut popup);
+                        style.apply(&mut popup);
                         popup.add_ui(f);
                     }
                 });
@@ -1843,7 +1888,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
 fn reconcile_frame_body<'e, 'w, 's>(
     mut entity: ImmEntity<'e, 'w, 's, PlumeCaps>,
     layout: DialogLayout,
-    spacing: BodySpacing,
+    style: FrameStyle,
     f: impl FnOnce(&mut Ui<'w, 's>),
 ) -> ImmResponse<'e, 'w, 's, kind::Dialog> {
     struct FrameSizeKey;
@@ -1864,7 +1909,7 @@ fn reconcile_frame_body<'e, 'w, 's>(
     }
     // On the frame, not the body: `relay_dialog_body_style` is what knows which node
     // stacks the content, and that changes with the height knobs above.
-    spacing.apply(&mut entity);
+    style.apply(&mut entity);
     let entity = entity.add_ui(move |ui| {
         let body = ui.ch_id("dialog_body").on_spawn_apply_scene(dialog_body);
         if layout.height == Val::Auto && layout.max_height == Val::Auto {
