@@ -20,18 +20,18 @@ use bevy_immediate::ui::interaction::ImmUiInteraction;
 use bevy_immediate::{ImmEntity, ImmId, ImmIdBuilder, imm_id};
 
 use super::caps::{
-    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeMenu, ImmPlumeSelect, ImmPlumeSplit,
-    ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
+    ImmPlumeChecked, ImmPlumeColor, ImmPlumeDialog, ImmPlumeMenu, ImmPlumeReorder, ImmPlumeSelect,
+    ImmPlumeSplit, ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
 };
 use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
     PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
-    flex_spacer, imm_popup_scene, modal_barrier, popup_socket, row, screen, scroll_content,
-    scroll_frame, scroll_viewport, scrollbar, section_body, section_frame, separator, space,
-    splitter_divider, splitter_frame, splitter_pane, tab_body, tab_button, tab_chrome, tab_strip,
-    tab_strip_frame, tabs_frame,
+    flex_spacer, imm_popup_scene, modal_barrier, popup_socket, reorderable_frame, reorderable_grip,
+    reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar,
+    section_body, section_frame, separator, space, splitter_divider, splitter_frame, splitter_pane,
+    tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -244,6 +244,19 @@ pub trait PlumeImm<'w, 's> {
     /// Scope child ids by `id`, making widget identity follow the key instead of call
     /// order — for entries that reorder, where occurrence indices are positional.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
+
+    /// Vertical list the user drags to reorder by the grip plume draws at each
+    /// item's left; `f` fills the rest of the item's row. `key` must be stable
+    /// and unique across items — identity follows it, not position, so a step
+    /// moves entities rather than respawning them (hash an id, never the item
+    /// itself). A move is written into `items` before `f` runs; `.changed`
+    /// reports it.
+    fn reorderable<T, K: core::hash::Hash>(
+        &mut self,
+        items: &mut [T],
+        key: impl Fn(&T) -> K,
+        f: impl FnMut(&mut Ui<'w, 's>, &mut T),
+    ) -> ImmResponse<'_, 'w, 's, kind::Reorderable>;
 }
 
 // The two surfaces that open a pass, handed out by [`PlumeRoot`] alone: nested, they
@@ -983,6 +996,36 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R {
         let mut scope = self.with_add_id_pref(id);
         f(Ui::wrap_mut(&mut scope))
+    }
+
+    #[track_caller]
+    fn reorderable<T, K: core::hash::Hash>(
+        &mut self,
+        items: &mut [T],
+        key: impl Fn(&T) -> K,
+        mut f: impl FnMut(&mut Ui<'w, 's>, &mut T),
+    ) -> ImmResponse<'_, 'w, 's, kind::Reorderable> {
+        let mut changed = false;
+        // Before the items build, so this pass declares the moved order and the
+        // layout-order sort agrees with the swap the grip already made.
+        let entity = self
+            .ch_loc(loc_id(()))
+            .on_spawn_apply_scene(reorderable_frame)
+            .plume_reorder(items, &mut changed);
+        let entity = entity.add_ui(|ui| {
+            for item in items.iter_mut() {
+                ui.push_id(key(item), |ui| {
+                    ui.ch_id("reorderable_item")
+                        .on_spawn_apply_scene(reorderable_item)
+                        .add_ui(|ui| {
+                            ui.ch_id("reorderable_grip")
+                                .on_spawn_apply_scene(reorderable_grip);
+                            f(ui, item);
+                        });
+                });
+            }
+        });
+        respond(entity, changed)
     }
 }
 

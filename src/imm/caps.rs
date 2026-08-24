@@ -13,7 +13,7 @@ use bevy_immediate::{
     CapSet, ImmCapAccessRequests, ImmCapability, ImmEntity, ImmId, ImplCap, imm_id,
 };
 
-use crate::containers::{CloseRequested, SplitSize};
+use crate::containers::{CloseRequested, ReorderMailbox, SplitSize};
 use crate::controls::{ColorPickerValue, MenuOpen, SelectedIndex, SetValue, TextInputValue};
 use crate::display::TooltipShowing;
 use crate::utils::numeric::Numeric;
@@ -442,6 +442,46 @@ impl ImmCapability for CapabilityPlumeIds {
     fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
         app.init_resource::<PlumeOccurrences>();
         cap_req.request_resource_write::<PlumeOccurrences>(app.world_mut());
+    }
+}
+
+/// Lets the imm layer take the steps a reorderable's grip has made since the
+/// last pass.
+pub struct CapabilityPlumeReorder;
+
+impl ImmCapability for CapabilityPlumeReorder {
+    fn build<Cap: CapSet>(app: &mut bevy::app::App, cap_req: &mut ImmCapAccessRequests<Cap>) {
+        cap_req.request_component_write::<ReorderMailbox>(app.world_mut());
+    }
+}
+
+/// Widget-side entry point for [`CapabilityPlumeReorder`].
+pub trait ImmPlumeReorder {
+    /// Applies the moves the grip has made since the last pass to `items`,
+    /// setting `changed` if there were any.
+    fn plume_reorder<T>(self, items: &mut [T], changed: &mut bool) -> Self;
+}
+
+impl<Cap> ImmPlumeReorder for ImmEntity<'_, '_, '_, Cap>
+where
+    Cap: ImplCap<CapabilityPlumeReorder>,
+{
+    fn plume_reorder<T>(mut self, items: &mut [T], changed: &mut bool) -> Self {
+        // Not spawned yet: the scene seeds the mailbox.
+        let Ok(mut entity) = self.cap_get_entity_mut() else {
+            return self;
+        };
+        let Some(mut mailbox) = entity.get_mut::<ReorderMailbox>() else {
+            return self;
+        };
+        // Checked before the take, so an idle list doesn't flag the mailbox changed.
+        if mailbox.0.is_some()
+            && let Some(step) = mailbox.0.take()
+            && step.apply(items)
+        {
+            *changed = true;
+        }
+        self
     }
 }
 

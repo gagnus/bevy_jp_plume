@@ -6,11 +6,12 @@ use bevy_jp_plume::prelude::*;
 use bevy_jp_plume::retained::{
     Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeButton, PlumeColorEdit,
     PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar,
-    PlumeMenuButton, PlumeModal, PlumeRadio, PlumeRadioGroup, PlumeScrollArea, PlumeSection,
-    PlumeSelect, PlumeSlider, PlumeSplitter, PlumeTab, PlumeTabs, PlumeTextInput,
-    PlumeToggleSwitch, PlumeToolButton, Propagate, RequestClose, SectionCollapsed, Selected,
-    SetValue, SliderValue, ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer,
-    icon, menu_anchor, modal_title, row, screen, separator, small_caps, space,
+    PlumeMenuButton, PlumeModal, PlumeRadio, PlumeRadioGroup, PlumeReorderable,
+    PlumeReorderableItem, PlumeScrollArea, PlumeSection, PlumeSelect, PlumeSlider, PlumeSplitter,
+    PlumeTab, PlumeTabs, PlumeTextInput, PlumeToggleSwitch, PlumeToolButton, Propagate,
+    ReorderMove, RequestClose, SectionCollapsed, Selected, SetValue, SliderValue,
+    ThemeBackgroundSlot, Tooltip, ValueChange, caption, column, flex_spacer, icon, menu_anchor,
+    modal_title, row, screen, separator, small_caps, space,
 };
 
 #[path = "common/mod.rs"]
@@ -18,8 +19,8 @@ mod common;
 
 use common::Options;
 use common::inspector_panel::{
-    Blend, Cull, Inspector, MAX_DOCUMENTS, Material, SceneNode, Tab, hud_theme, register_hud_theme,
-    viewport_color,
+    Blend, Cull, Inspector, Layer, LayerId, MAX_DOCUMENTS, Material, SceneNode, Tab, hud_theme,
+    register_hud_theme, viewport_color,
 };
 
 const GUTTER: Val = Val::Em(6.0);
@@ -38,6 +39,7 @@ fn main() {
                 push_hud_visible,
                 push_panel_tab,
                 push_rem_value,
+                push_layers,
             ),
         );
     app.run();
@@ -55,6 +57,8 @@ enum Bound {
     Roughness,
     Filter,
     Picker,
+    // By identity, not index: a dragged row keeps its binding.
+    Opacity(LayerId),
 }
 
 impl Bound {
@@ -62,6 +66,7 @@ impl Bound {
         Some(match self {
             Bound::Metallic => &mut s.material.metallic,
             Bound::Roughness => &mut s.material.roughness,
+            Bound::Opacity(id) => &mut layer_mut(s, id)?.opacity,
             _ => return None,
         })
     }
@@ -102,6 +107,53 @@ impl Bound {
 // Marks a tree row with the node it draws, so the filter/fold system can hide it.
 #[derive(Component, Clone, Copy, Default)]
 struct TreeRow(usize);
+
+// The layer list's root, its rows, and each row's enabled toggle.
+#[derive(Component, Clone, Copy, Default)]
+struct LayerList;
+
+#[derive(Component, Clone, Copy)]
+struct LayerRow(LayerId);
+
+#[derive(Component, Clone, Copy)]
+struct LayerEnabled(LayerId);
+
+fn layer_mut(s: &mut Inspector, id: LayerId) -> Option<&mut Layer> {
+    s.material.layers.iter_mut().find(|layer| layer.id == id)
+}
+
+// The list's order is its `Children` order; a model-side change (Revert)
+// is pushed by re-parenting the rows in model order. A drag has already moved
+// the row, so its own step finds nothing to do here.
+fn push_layers(
+    state: Res<Inspector>,
+    q_lists: Query<(Entity, &Children), With<LayerList>>,
+    q_rows: Query<&LayerRow>,
+    q_enabled: Query<(Entity, &LayerEnabled)>,
+    mut commands: Commands,
+) {
+    if !state.is_changed() {
+        return;
+    }
+    let layers = &state.material.layers;
+    for (list, children) in q_lists.iter() {
+        let row_of = |id: LayerId| {
+            children
+                .iter()
+                .find(|child| q_rows.get(*child).is_ok_and(|row| row.0 == id))
+        };
+        let ordered: Vec<Entity> = layers.iter().filter_map(|layer| row_of(layer.id)).collect();
+        if ordered.len() == children.len() && ordered.iter().copied().ne(children.iter()) {
+            commands.entity(list).replace_children(&ordered);
+        }
+    }
+    for (entity, enabled) in q_enabled.iter() {
+        if let Some(layer) = layers.iter().find(|layer| layer.id == enabled.0) {
+            let value = layer.enabled;
+            commands.trigger(SetValue { entity, value });
+        }
+    }
+}
 
 // Marks a panel tab's body with the tab that shows it; the strip is bodyless,
 // so `push_panel_tab` does the swapping.
@@ -901,6 +953,7 @@ fn material_tab(m: Material) -> impl Scene {
     let (name, base, emissive) = (m.name, m.base_color, m.emissive);
     let (metallic, roughness) = (m.metallic, m.roughness);
     let (blend, cull) = (m.blend, m.cull);
+    let layers = m.layers;
     bsn! {
         @PlumeScrollArea {
             @contents: bsn_list![
@@ -941,6 +994,7 @@ fn material_tab(m: Material) -> impl Scene {
                         slider_row("Roughness", roughness, Bound::Roughness),
                     ],
                 },
+                layers_section(layers),
                 (
                     @PlumeSection {
                         @header: bsn! {
@@ -958,6 +1012,72 @@ fn material_tab(m: Material) -> impl Scene {
                 ),
             ],
         }
+    }
+}
+
+// The imm twin's `ui.reorderable`: rows the grip drags, each step landing in the
+// model through `ValueChange<ReorderMove>` on the list.
+fn layers_section(layers: Vec<Layer>) -> impl Scene {
+    let rows: Vec<_> = layers.into_iter().map(layer_row).collect();
+    bsn! {
+        @PlumeSection {
+            @header: bsn! {
+                caption("Layers")
+                small_caps()
+            },
+            @contents: bsn_list![
+                (
+                    @PlumeReorderable { @contents: {Box::new(rows) as Box<dyn SceneList>} }
+                    LayerList
+                    on(|ev: On<ValueChange<ReorderMove>>, mut s: ResMut<Inspector>| {
+                        ev.value.apply(&mut s.material.layers);
+                    })
+                ),
+            ],
+        }
+    }
+}
+
+fn layer_row(layer: Layer) -> impl Scene {
+    let Layer {
+        id,
+        name,
+        icon: glyph,
+        opacity,
+        enabled,
+    } = layer;
+    let label_width = GUTTER * 0.6;
+    bsn! {
+        @PlumeReorderableItem {
+            @contents: bsn_list![
+                icon(glyph),
+                (
+                    caption(name)
+                    Node { width: label_width }
+                ),
+                (
+                    @PlumeSlider {
+                        @min: 0.0,
+                        @max: 1.0,
+                        @precision: {Some(2)},
+                    }
+                    SliderValue(opacity)
+                    Node { width: Val::ZERO, flex_grow: 1.0 }
+                    on_number(Bound::Opacity(id))
+                ),
+                (
+                    @PlumeToggleSwitch
+                    template_value(LayerEnabled(id))
+                    {enabled.then(|| bsn! { Checked })}
+                    on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                        if let Some(layer) = layer_mut(&mut s, id) {
+                            layer.enabled = ev.value;
+                        }
+                    })
+                ),
+            ],
+        }
+        template_value(LayerRow(id))
     }
 }
 

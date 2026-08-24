@@ -90,6 +90,8 @@ pub const WINDOW_BG: ThemeToken = ThemeToken::new_static("plume.window.bg");
 pub const TEXT_MAIN: ThemeToken = ThemeToken::new_static("plume.text.main");
 /// Dim text
 pub const TEXT_DIM: ThemeToken = ThemeToken::new_static("plume.text.dim");
+/// Disabled text on a neutral surface
+pub const TEXT_DISABLED: ThemeToken = ThemeToken::new_static("plume.text.disabled");
 
 // Normal buttons
 

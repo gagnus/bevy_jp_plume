@@ -135,6 +135,7 @@ pub enum ThemeSlot {
     /// - `SWITCH_SLIDE_BG_DISABLED`
     /// - `TAB_INDICATOR_DISABLED`
     /// - `TAB_TEXT_DISABLED`
+    /// - `TEXT_DISABLED`
     /// - `TEXT_INPUT_BG_DISABLED`
     /// - `TEXT_INPUT_BORDER_DISABLED`
     Disabled1,
@@ -304,6 +305,7 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::WINDOW_BG, ThemeSlot::Neutral0),
     (tokens::TEXT_MAIN, ThemeSlot::Text0),
     (tokens::TEXT_DIM, ThemeSlot::Text1),
+    (tokens::TEXT_DISABLED, ThemeSlot::Disabled1),
     (tokens::BUTTON_BG, ThemeSlot::Neutral4),
     (tokens::BUTTON_BG_HOVER, ThemeSlot::Neutral5),
     (tokens::BUTTON_BG_PRESSED, ThemeSlot::Neutral6),

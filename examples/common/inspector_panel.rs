@@ -234,10 +234,13 @@ pub struct Material {
     pub cull: Cull,
     pub metallic: f32,
     pub roughness: f32,
+    /// Paint order, bottom first; the reorderable list's model.
+    pub layers: Vec<Layer>,
 }
 
 impl Default for Material {
     fn default() -> Self {
+        use font_awesome::solid as fa;
         Self {
             name: "Brick_Wall_01".into(),
             base_color: Color::srgb(0.62, 0.31, 0.24),
@@ -246,6 +249,38 @@ impl Default for Material {
             cull: Cull::default(),
             metallic: 0.0,
             roughness: 0.72,
+            layers: vec![
+                Layer::new(1, "Base", fa::LAYER_GROUP, 1.0),
+                Layer::new(2, "Dirt", fa::DROPLET, 0.6),
+                Layer::new(3, "Moss", fa::LEAF, 0.35),
+                Layer::new(4, "Decal", fa::STAMP, 0.8),
+            ],
+        }
+    }
+}
+
+/// A layer's identity, whatever its position in the stack.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LayerId(pub u32);
+
+/// One layer of the material: reordered by drag, faded by its slider.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Layer {
+    pub id: LayerId,
+    pub name: String,
+    pub icon: FaIcon,
+    pub opacity: f32,
+    pub enabled: bool,
+}
+
+impl Layer {
+    fn new(id: u32, name: &str, icon: FaIcon, opacity: f32) -> Self {
+        Self {
+            id: LayerId(id),
+            name: name.into(),
+            icon,
+            opacity,
+            enabled: true,
         }
     }
 }
@@ -663,6 +698,21 @@ fn material_fields(ui: &mut Ui, s: &mut Material) {
         modified_row(ui, "Roughness", s.roughness != defaults.roughness, |ui| {
             ui.slider(&mut s.roughness, 0.0..=1.0).grow().precision(2);
         });
+    });
+
+    // Drag a layer's grip to restack; the order is the model's, so Revert
+    // restores it like any other field.
+    ui.section("Layers", |ui| {
+        ui.reorderable(
+            &mut s.layers,
+            |layer| layer.id,
+            |ui, layer| {
+                ui.icon(layer.icon);
+                ui.caption(&layer.name).no_wrap().width(GUTTER * 0.6);
+                ui.slider(&mut layer.opacity, 0.0..=1.0).grow().precision(2);
+                ui.toggle(&mut layer.enabled);
+            },
+        );
     });
 
     ui.section("Color picker", |ui| {

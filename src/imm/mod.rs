@@ -46,8 +46,8 @@ mod cap_set {
     use super::PlumeCaps;
     use super::caps::{
         CapabilityPlumeChecked, CapabilityPlumeColor, CapabilityPlumeDialog, CapabilityPlumeIds,
-        CapabilityPlumeMenu, CapabilityPlumeSelect, CapabilityPlumeText, CapabilityPlumeTooltip,
-        CapabilityPlumeValue,
+        CapabilityPlumeMenu, CapabilityPlumeReorder, CapabilityPlumeSelect, CapabilityPlumeText,
+        CapabilityPlumeTooltip, CapabilityPlumeValue,
     };
 
     impl_capability_set!(
@@ -68,6 +68,7 @@ mod cap_set {
             CapabilityPlumeIds,
             CapabilityPlumeTooltip,
             CapabilityPlumeMenu,
+            CapabilityPlumeReorder,
         )
     );
 }

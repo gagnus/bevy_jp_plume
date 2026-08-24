@@ -5,6 +5,7 @@ mod dialog;
 mod flex_spacer;
 mod modal;
 mod popup;
+mod reorderable;
 mod row;
 mod screen;
 mod scroll_area;
@@ -26,6 +27,13 @@ pub(crate) use popup::*;
 pub use popup::{
     PlumePopup, PlumePopupProps, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket,
+};
+pub use reorderable::{
+    PlumeReorderable, PlumeReorderableItem, PlumeReorderableItemProps, PlumeReorderableProps,
+    ReorderMove,
+};
+pub(crate) use reorderable::{
+    ReorderMailbox, ReorderablePlugin, reorderable_frame, reorderable_grip, reorderable_item,
 };
 pub use row::row;
 pub use screen::{Screen, screen};

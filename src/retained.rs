@@ -14,12 +14,14 @@ pub use bevy::ui_widgets::{Activate, RequestClose, SliderValue, ValueChange};
 
 pub use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, PlumeDialog, PlumeDialogProps, PlumeModal,
-    PlumeModalProps, PlumePopup, PlumePopupProps, PlumeScrollArea, PlumeScrollAreaProps,
+    PlumeModalProps, PlumePopup, PlumePopupProps, PlumeReorderable, PlumeReorderableItem,
+    PlumeReorderableItemProps, PlumeReorderableProps, PlumeScrollArea, PlumeScrollAreaProps,
     PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps,
-    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, Screen, ScrollAxis,
-    SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitMin,
-    SplitPane, SplitSize, SplitSized, TabTarget, close_popup, column, flex_spacer, modal_title,
-    popup_socket, row, screen, separator, space, tab_body, tab_label,
+    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, ReorderMove, Screen,
+    ScrollAxis, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
+    SplitDividerAutoHide, SplitMin, SplitPane, SplitSize, SplitSized, TabTarget, close_popup,
+    column, flex_spacer, modal_title, popup_socket, row, screen, separator, space, tab_body,
+    tab_label,
 };
 pub use crate::controls::{
     ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoBlurOnEnter, NoDrag,

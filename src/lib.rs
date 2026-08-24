@@ -54,6 +54,7 @@ impl Plugin for PlumeCorePlugin {
             containers::ModalPlugin,
             containers::PopupPlugin,
             display::TooltipPlugin,
+            containers::ReorderablePlugin,
             containers::ScrollAreaPlugin,
             containers::SectionPlugin,
             containers::SeparatorPlugin,

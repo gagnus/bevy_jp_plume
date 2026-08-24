@@ -132,6 +132,8 @@ pub mod kind {
     pub struct Split;
     /// A menu's rows: `item` / `item_toggle` / `submenu`.
     pub struct MenuItem;
+    /// `reorderable`.
+    pub struct Reorderable;
 
     impl Numeric for Slider {}
     impl Numeric for Number {}
@@ -178,6 +180,8 @@ pub mod kind {
     impl PickThrough for Caption {}
     impl PickThrough for Icon {}
     impl PickThrough for Separator {}
+    impl Gapped for Reorderable {}
+    impl PickThrough for Reorderable {}
 }
 
 /// What a widget reported this frame, plus chainable builders for
