@@ -2154,9 +2154,9 @@ mod tests {
     // Three widgets from ONE call site (the loop body) under one parent.
     fn three_siblings(mut root: PlumeRoot, mut recorded: ResMut<Recorded>) {
         let mut frame = Vec::new();
-        root.push_id("sibling-test", |ui| {
+        root.push_id("sibling-test", |root| {
             for _ in 0..3 {
-                frame.push(ui.ch_loc(loc_id(())).entity());
+                frame.push(root.imm.ch_loc(loc_id(())).entity());
             }
         });
         recorded.0.push(frame);

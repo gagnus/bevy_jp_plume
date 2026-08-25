@@ -16,7 +16,7 @@ use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout
 use bevy::ui::widget::Text;
 use bevy::ui::{
     AlignItems, AlignSelf, BackgroundColor, BorderColor, BorderRadius, Checkable, Display,
-    GlobalZIndex, Node, Overflow, UiRect, Val, Val2,
+    GlobalZIndex, Node, Overflow, UiRect, UiTransform, Val, Val2,
 };
 use bevy::ui_widgets::{SliderPrecision, SliderRange, SliderStep, SliderValue};
 use bevy_immediate::ui::disabled::ImmUiInteractionsDisabled;
@@ -340,6 +340,17 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     /// Enable or disable the control (manages [`bevy::ui::InteractionDisabled`]).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.e = self.e.interactions_enabled(enabled);
+        self
+    }
+
+    /// Move, scale or rotate the widget without touching layout — the geometry
+    /// pass applies a [`UiTransform`], so this is how chrome animates per frame.
+    /// Skipped while the transform is unchanged, so a resting widget costs nothing.
+    pub fn transform(mut self, transform: UiTransform) -> Self {
+        struct TransformKey;
+        if self.key_changed::<TransformKey>(format!("{transform:?}")) {
+            self.e.entity_commands().insert(transform);
+        }
         self
     }
 

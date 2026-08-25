@@ -160,11 +160,19 @@ impl<'r, 'w, 's> ImmEntityExt<'w, 's> for ImmEntity<'r, 'w, 's, PlumeCaps> {
 ///
 /// Widgets are unreachable at root scope: the root is virtual, so one there would
 /// anchor at the viewport origin with no font ancestor, both silently.
+#[repr(transparent)]
 pub struct PlumeRoot<'w, 's> {
-    imm: Ui<'w, 's>,
+    pub(crate) imm: Ui<'w, 's>,
 }
 
 impl<'w, 's> PlumeRoot<'w, 's> {
+    // A scoped root over a borrowed `Ui`, the way `Ui::wrap_mut` sits over an
+    // `Imm`: `repr(transparent)` makes the cast layout-identical.
+    pub(crate) fn wrap_mut<'a>(ui: &'a mut Ui<'w, 's>) -> &'a mut Self {
+        // SAFETY: `PlumeRoot` is `repr(transparent)` over exactly this type.
+        unsafe { &mut *(ui as *mut Ui<'w, 's> as *mut Self) }
+    }
+
     /// Full-screen surface for a system's top-level content: a transparent, padded
     /// column filling the viewport, establishing the standard font and text color.
     #[track_caller]
@@ -208,13 +216,16 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     }
 
     /// Scope surface ids by `id`, for keying several screens/dialogs built in a
-    /// loop by data rather than call order. See [`PlumeImm::push_id`].
+    /// loop by data rather than call order — the closure gets a root scoped to
+    /// `id`, so it can build surfaces and nothing else. The `Ui` counterpart is
+    /// [`PlumeImm::push_id`].
     pub fn push_id<R>(
         &mut self,
         id: impl core::hash::Hash,
-        f: impl FnOnce(&mut Ui<'w, 's>) -> R,
+        f: impl FnOnce(&mut PlumeRoot<'w, 's>) -> R,
     ) -> R {
-        self.imm.push_id(id, f)
+        let mut scope = self.imm.with_add_id_pref(id);
+        f(PlumeRoot::wrap_mut(Ui::wrap_mut(&mut scope)))
     }
 }
 
