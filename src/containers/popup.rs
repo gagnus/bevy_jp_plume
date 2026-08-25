@@ -375,6 +375,8 @@ fn despawn_closing_popups(q_closing: Query<Entity, With<ClosingPopup>>, mut comm
 fn on_dismiss_outside_press(
     mut click: On<PointerPress>,
     q_childof: Query<&ChildOf>,
+    q_links: Query<&MenuAnchorLink>,
+    q_anchors: Query<&PopupAnchor>,
     q_popups: Query<(Entity, Option<&DismissScope>), With<DismissOnOutsideClick>>,
     mut commands: Commands,
 ) {
@@ -383,6 +385,17 @@ fn on_dismiss_outside_press(
     // not read as "outside" when its bubble climbs above the popup.
     if click.entity != click.original_event_target() {
         return;
+    }
+    // The press target and everything it sits inside, openers included: a menu
+    // opened from a row of a popup is unrooted, but a press on its items must
+    // not dismiss the popup it came from — that would despawn the row, the menu
+    // and the activation together.
+    let mut lineage = vec![click.entity];
+    while lineage.len() < MAX_LINEAGE
+        && let Some(&last) = lineage.last()
+        && let Some(next) = step_to_opener(last, &q_childof, &q_links, &q_anchors)
+    {
+        lineage.push(next);
     }
     for (popup, dismiss_scope) in q_popups.iter() {
         let scope = match dismiss_scope {
@@ -395,12 +408,10 @@ fn on_dismiss_outside_press(
         };
         // Inside = on the anchor scope or in the popup itself (an imm popup is
         // not a descendant of its anchor, so it needs its own check).
-        let inside = scope.into_iter().chain([popup]).any(|root| {
-            click.entity == root
-                || q_childof
-                    .iter_ancestors(click.entity)
-                    .any(|ancestor| ancestor == root)
-        });
+        let inside = scope
+            .into_iter()
+            .chain([popup])
+            .any(|root| lineage.contains(&root));
         if !inside {
             commands
                 .entity(popup)
@@ -444,6 +455,27 @@ fn relay_popup_style(
 // How far a link chain may be followed before it is treated as a cycle. Deeper
 // than any real menu, shallow enough that a malformed one cannot hang a frame.
 const MAX_POPUP_NESTING: usize = 32;
+// The same bound for a full walk to the root, which also climbs `ChildOf`.
+const MAX_LINEAGE: usize = 256;
+
+// One step from a popup's content towards what opened it. An imm menu frame is
+// unrooted and jumps through its `MenuAnchorLink`; a parentless socket through
+// its `PopupAnchor`; anything else climbs to its parent. Following this from a
+// press is what makes a popup opened from inside another count as inside it.
+fn step_to_opener(
+    entity: Entity,
+    q_parents: &Query<&ChildOf>,
+    q_links: &Query<&MenuAnchorLink>,
+    q_anchors: &Query<&PopupAnchor>,
+) -> Option<Entity> {
+    if let Ok(&MenuAnchorLink(anchor)) = q_links.get(entity) {
+        return Some(anchor);
+    }
+    if let Ok(child_of) = q_parents.get(entity) {
+        return Some(child_of.parent());
+    }
+    q_anchors.get(entity).ok().map(|anchor| anchor.0)
+}
 
 // Popups stack by nesting: one opened from inside another has to draw over it.
 // A flat z leaves that to bevy's tie-break, which sorts equal layers by ECS
@@ -453,21 +485,17 @@ fn stack_popups(
     q_surfaces: Query<Entity, With<PopupSurface>>,
     q_is_surface: Query<(), With<PopupSurface>>,
     q_parents: Query<&ChildOf>,
-    q_anchors: Query<&MenuAnchorLink>,
+    q_links: Query<&MenuAnchorLink>,
+    q_anchors: Query<&PopupAnchor>,
     mut q_layers: Query<&mut GlobalZIndex>,
 ) {
     for surface in q_surfaces.iter() {
         let mut depth = 0;
         let mut cursor = surface;
         for _ in 0..MAX_POPUP_NESTING {
-            // Step out of `cursor`: an imm menu frame is unrooted, so it reaches
-            // its opener through the link it was given rather than through a parent.
-            cursor = match q_anchors.get(cursor) {
-                Ok(&MenuAnchorLink(anchor)) => anchor,
-                Err(_) => match q_parents.get(cursor) {
-                    Ok(child_of) => child_of.parent(),
-                    Err(_) => break,
-                },
+            cursor = match step_to_opener(cursor, &q_parents, &q_links, &q_anchors) {
+                Some(opener) => opener,
+                None => break,
             };
             if q_is_surface.contains(cursor) {
                 depth += 1;
