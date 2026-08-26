@@ -53,7 +53,7 @@ use scrollbar::ScrollbarPlugin;
 pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter, ScrollbarHidden};
 use select::SelectPlugin;
 pub(crate) use select::set_select_max_visible;
-pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, select_options};
+pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, SetSelectOptions, select_options};
 pub use set_value::SetValue;
 pub(crate) use set_value::SetValuePlugin;
 use slider::SliderPlugin;

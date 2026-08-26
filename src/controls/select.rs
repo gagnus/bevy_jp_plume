@@ -637,6 +637,32 @@ fn select_on_set_selected_index(
     }
 }
 
+/// Replace a [`PlumeSelect`]'s options, in the shape of [`PlumeSelectProps::options`].
+/// The selection stays where it still exists; no `ValueChange` is emitted.
+#[derive(EntityEvent)]
+pub struct SetSelectOptions {
+    /// The select root.
+    pub entity: Entity,
+    /// The new labels, each with whether it can be picked.
+    pub options: Vec<(String, bool)>,
+}
+
+// The open popup, if any, rebuilds from the options on its next open.
+fn select_on_set_options(
+    ev: On<SetSelectOptions>,
+    mut q_select: Query<(&mut SelectOptions, &mut SelectedIndex), With<SelectFrame>>,
+) {
+    let Ok((mut options, mut index)) = q_select.get_mut(ev.entity) else {
+        return;
+    };
+    // the event is borrowed, so its options are copied in
+    options.0 = ev.options.clone();
+    let last = options.0.len().saturating_sub(1);
+    if index.0 > last {
+        index.0 = last;
+    }
+}
+
 // The button caption always shows the selected option's label.
 fn sync_caption(
     q_selects: Query<
@@ -1038,6 +1064,7 @@ impl Plugin for SelectPlugin {
             ),
         )
         .add_systems(PostUpdate, update_active_row_outline)
-        .add_observer(select_on_set_selected_index);
+        .add_observer(select_on_set_selected_index)
+        .add_observer(select_on_set_options);
     }
 }
