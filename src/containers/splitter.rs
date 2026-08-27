@@ -24,7 +24,7 @@ use bevy::scene::prelude::*;
 use bevy::text::{EmSize, RemSize};
 use bevy::ui::{
     AlignItems, AlignSelf, ComputedNode, ComputedUiRenderTargetInfo, FlexDirection, JustifyContent,
-    Node, Overflow, PositionType, Pressed, UiSystems, Val,
+    Node, Overflow, PositionType, Pressed, UiSystems, Val, ZIndex,
 };
 use bevy::ui_widgets::ValueChange;
 use bevy::window::SystemCursorIcon;
@@ -349,9 +349,15 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         SplitAxis::Horizontal => (size::HAIRLINE, Val::Auto),
         SplitAxis::Vertical => (Val::Auto, size::HAIRLINE),
     };
+    // Laid out along the axis, so the line's `Stretch` spans the seam.
+    let flex_direction = match axis {
+        SplitAxis::Horizontal => FlexDirection::Row,
+        SplitAxis::Vertical => FlexDirection::Column,
+    };
     bsn! {
         Node {
             position_type: PositionType::Absolute,
+            flex_direction: flex_direction,
             width: width,
             height: height,
             top: top,
@@ -361,6 +367,9 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
         }
+        // Above both panes: the strip straddles the seam, and the later pane
+        // would otherwise paint over its half of the line.
+        ZIndex(1)
         SplitDivider
         Hovered
         EntityCursor::System(cursor)
