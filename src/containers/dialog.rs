@@ -288,7 +288,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
         InheritableFont
         template_value(dialog_box_shadow())
         LayoutConfig {
-            use_rounding: false,
+            use_rounding: true,
         }
         Children [
             {title_bar},

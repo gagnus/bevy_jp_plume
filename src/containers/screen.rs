@@ -40,7 +40,7 @@ pub fn screen() -> impl Scene {
         InheritableThemeTextToken(tokens::TEXT_DIM)
         InheritableFont
         LayoutConfig {
-            use_rounding: false,
+            use_rounding: true,
         }
     }
 }
