@@ -66,14 +66,12 @@ pub enum ThemeSlot {
 
     /// Control hover
     /// - `BUTTON_BG_HOVER`
-    /// - `BUTTON_OUTLINE_BORDER_HOVER`
     /// - `MENU_ITEM_BG_HOVER`
     /// - `MENU_BUTTON_BG_HOVER`
     Neutral5,
 
     /// Control pressed
     /// - `BUTTON_BG_PRESSED`
-    /// - `BUTTON_OUTLINE_BORDER_PRESSED`
     Neutral6,
 
     /// Bright text.
@@ -217,6 +215,8 @@ pub enum ThemeSlot {
     /// - `BUTTON_BORDER_NONE`
     /// - `BUTTON_OUTLINE_BG`
     /// - `BUTTON_OUTLINE_BG_DISABLED`
+    /// - `BUTTON_OUTLINE_BORDER_HOVER`
+    /// - `BUTTON_OUTLINE_BORDER_PRESSED`
     /// - `BUTTON_PLAIN_BG`
     /// - `BUTTON_PLAIN_BG_DISABLED`
     /// - `CHECKBOX_BG`
@@ -329,8 +329,11 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::BUTTON_OUTLINE_BG_PRESSED, ThemeSlot::Neutral4),
     (tokens::BUTTON_OUTLINE_BG_DISABLED, ThemeSlot::Transparent),
     (tokens::BUTTON_OUTLINE_BORDER, ThemeSlot::Neutral4),
-    (tokens::BUTTON_OUTLINE_BORDER_HOVER, ThemeSlot::Neutral5),
-    (tokens::BUTTON_OUTLINE_BORDER_PRESSED, ThemeSlot::Neutral6),
+    (tokens::BUTTON_OUTLINE_BORDER_HOVER, ThemeSlot::Transparent),
+    (
+        tokens::BUTTON_OUTLINE_BORDER_PRESSED,
+        ThemeSlot::Transparent,
+    ),
     (tokens::BUTTON_OUTLINE_BORDER_DISABLED, ThemeSlot::Disabled1),
     (tokens::BUTTON_BORDER_NONE, ThemeSlot::Transparent),
     (tokens::BUTTON_CHECKED_BG, ThemeSlot::Accent0),
