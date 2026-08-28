@@ -457,11 +457,12 @@ impl ThemeEditablePalette {
         loop {
             let hue = rand::rng().random_range(0.0..360.0);
             let complementary_neutral = rand::rng().random_bool(0.5);
+            let boosted_neutral_chroma = rand::rng().random_bool(0.25);
             let dark = rand::rng().random_bool(0.666);
             let palette = if dark {
-                dark_theme::dark_palette(hue, complementary_neutral)
+                dark_theme::dark_palette(hue, complementary_neutral, boosted_neutral_chroma)
             } else {
-                light_theme::light_palette(hue, complementary_neutral)
+                light_theme::light_palette(hue, complementary_neutral, boosted_neutral_chroma)
             };
             if !palette.is_accent_close_to_danger() {
                 return palette;

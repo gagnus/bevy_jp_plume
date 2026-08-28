@@ -7,11 +7,15 @@ use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 pub fn default_light_palette() -> ThemeEditablePalette {
     // Blue, well clear of the fixed danger hue: a red accent would make a destructive
     // action indistinguishable from the confirm button next to it.
-    light_palette(250.0, false)
+    light_palette(250.0, false, false)
 }
 
 /// Plume light palette editable inputs with given hue.
-pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePalette {
+pub fn light_palette(
+    hue: f32,
+    complementary_neutral: bool,
+    boosted_neutral_chroma: bool,
+) -> ThemeEditablePalette {
     let neutral_hue = if complementary_neutral {
         (hue + 180.0) % 360.0
     } else {
@@ -20,7 +24,7 @@ pub fn light_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePale
     ThemeEditablePalette {
         neutrals: OklchaArray {
             hue: neutral_hue,
-            chroma: 0.008,
+            chroma: if boosted_neutral_chroma { 0.04 } else { 0.02 },
             l: [0.92, 0.88, 0.82, 0.77, 0.74, 0.71, 0.69],
         },
         accent: OklchaArray {

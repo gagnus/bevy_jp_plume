@@ -5,11 +5,15 @@ use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 
 /// Default plume dark palette editable inputs.
 pub fn default_dark_palette() -> ThemeEditablePalette {
-    dark_palette(120.0, true)
+    dark_palette(120.0, true, false)
 }
 
 /// Plume dark palette editable inputs with given hue.
-pub fn dark_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePalette {
+pub fn dark_palette(
+    hue: f32,
+    complementary_neutral: bool,
+    boosted_neutral_chroma: bool,
+) -> ThemeEditablePalette {
     let neutral_hue = if complementary_neutral {
         (hue + 180.0) % 360.0
     } else {
@@ -18,7 +22,7 @@ pub fn dark_palette(hue: f32, complementary_neutral: bool) -> ThemeEditablePalet
     ThemeEditablePalette {
         neutrals: OklchaArray {
             hue: neutral_hue,
-            chroma: 0.015,
+            chroma: if boosted_neutral_chroma { 0.035 } else { 0.015 },
             l: [0.24, 0.28, 0.32, 0.37, 0.42, 0.45, 0.48],
         },
         accent: OklchaArray {
