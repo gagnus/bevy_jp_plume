@@ -1,6 +1,6 @@
 //! Shared popup panel: the floating chrome a control anchors over the UI,
 //! plus the socket that mounts it without disturbing ancestor layout.
-use bevy::app::{Inherited, Last, Plugin, PostUpdate, Update};
+use bevy::app::{Inherited, Last, Plugin, PostUpdate, Propagate, Update};
 use bevy::camera::visibility::Visibility;
 use bevy::ecs::change_detection::DetectChangesMut;
 use bevy::ecs::component::Component;
@@ -51,6 +51,12 @@ pub struct PopupSocket;
 #[derive(Component, Clone, Copy)]
 pub(crate) struct PopupAnchor(pub Entity);
 
+// A socket whose anchor only places it. A panel hung at a corner of something
+// is still the app's, so it keeps the root's theme and text style rather than
+// taking its anchor's, as a popup or tooltip does.
+#[derive(Component, Clone, Copy, Default)]
+pub(crate) struct PlacementAnchor;
+
 /// Mount point for a control's popup: spawn it as a child of the control the
 /// popup should anchor to, then spawn a [`PlumePopup`] into it to open.
 // `FixedNode` makes it a layout root — it neither inherits ancestor layout and
@@ -97,10 +103,13 @@ fn track_popup_anchors(
 // theme are bridged like the rect: the anchor's `Inherited` values are copied
 // onto it. Nothing else writes `Inherited` on a parentless entity, so the
 // copies stand, and the root's own propagation carries them into its panel.
+// A root given a theme of its own (`Propagate<ThemeId>`) keeps it: the bridge
+// would otherwise overwrite it every frame. A `PlacementAnchor` bridges nothing.
 fn bridge_floating_anchor_style(
-    q_floating: Query<(Entity, &PopupAnchor), Without<ChildOf>>,
+    q_floating: Query<(Entity, &PopupAnchor), (Without<ChildOf>, Without<PlacementAnchor>)>,
     q_inherited: Query<&Inherited<TextFont>>,
     q_inherited_theme: Query<&Inherited<ThemeId>>,
+    q_own_theme: Query<(), With<Propagate<ThemeId>>>,
     mut commands: Commands,
 ) {
     for (floating, anchor) in &q_floating {
@@ -108,6 +117,9 @@ fn bridge_floating_anchor_style(
             && !q_inherited.get(floating).is_ok_and(|i| i.0 == inherited.0)
         {
             commands.entity(floating).insert(inherited.clone());
+        }
+        if q_own_theme.contains(floating) {
+            continue;
         }
         match q_inherited_theme.get(anchor.0) {
             Ok(inherited)

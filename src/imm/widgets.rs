@@ -26,12 +26,12 @@ use super::caps::{
 use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
 use crate::constants::{FaIcon, size};
 use crate::containers::{
-    BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PopupAnchor, PopupDismiss,
-    PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
-    flex_spacer, imm_popup_scene, modal_barrier, popup_socket, reorderable_frame, reorderable_grip,
-    reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar,
-    section_body, section_frame, separator, space, splitter_divider, splitter_frame, splitter_pane,
-    tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
+    BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PlacementAnchor, PopupAnchor,
+    PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body,
+    dialog_frame, flex_spacer, imm_popup_scene, modal_barrier, popup_socket, reorderable_frame,
+    reorderable_grip, reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport,
+    scrollbar, section_body, section_frame, separator, space, splitter_divider, splitter_frame,
+    splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -1586,7 +1586,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
             .ui
             .ch_loc(id)
             .on_spawn_apply_scene(popup_socket)
-            .on_spawn_insert(move || PopupAnchor(target));
+            .on_spawn_insert(move || (PopupAnchor(target), PlacementAnchor));
         let socket = socket.add_ui(move |ui| {
             let frame = ui.ch_id("panel_frame").on_spawn_apply_scene(move || {
                 dialog_frame_scene(title, layout, SurfaceChrome::Panel)
@@ -1904,6 +1904,22 @@ fn reconcile_frame_body<'e, 'w, 's>(
                     node.width = layout.width;
                     node.height = layout.height;
                     node.max_height = layout.max_height;
+                }
+            });
+    }
+    // Keyed on the asked-for inset alone, so a surface the user has dragged is
+    // only moved when its caller asks for somewhere new — a stack re-slotting
+    // its panels, say.
+    struct FrameInsetKey;
+    if entity.hash_update_typ::<FrameInsetKey>(Some(imm_id(format!("{:?}", layout.inset)))) {
+        entity
+            .entity_commands()
+            .queue(move |mut entity: EntityWorldMut| {
+                if let Some(mut node) = entity.get_mut::<Node>() {
+                    node.left = layout.inset.left;
+                    node.top = layout.inset.top;
+                    node.right = layout.inset.right;
+                    node.bottom = layout.inset.bottom;
                 }
             });
     }
