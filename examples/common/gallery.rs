@@ -206,6 +206,9 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
                 .variant(ButtonCheckableVariant::Outline)
                 .tooltip("Outline toggle")
                 .enabled(!disabled);
+            ui.separator();
+            ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
+            ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
         });
         ui.horizontal(|ui| {
             ui.toggle(&mut state.toggle_a).enabled(!disabled);
@@ -216,21 +219,18 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
             ui.radio(&mut state.radio, RadioChoice::B, "B")
                 .enabled(!disabled);
             ui.separator();
-            ui.disclosure(&mut state.disclosure_a).enabled(!disabled);
-            ui.disclosure(&mut state.disclosure_b).enabled(!disabled);
-            ui.separator();
             ui.color_edit(&mut state.color).enabled(!disabled);
+            ui.select(&mut state.select, |select| {
+                select.option(SelectChoice::Alpha, "Alpha");
+                select.option(SelectChoice::Beta, "Beta");
+                select.option(SelectChoice::Gamma, "Gamma");
+                select.option(SelectChoice::Delta, "Delta").enabled(false);
+            })
+            .max_visible(3)
+            .enabled(!disabled);
         });
 
         ui.slider(&mut state.slider, 0.0..=100.0).enabled(!disabled);
-        ui.select(&mut state.select, |select| {
-            select.option(SelectChoice::Alpha, "Alpha");
-            select.option(SelectChoice::Beta, "Beta");
-            select.option(SelectChoice::Gamma, "Gamma");
-            select.option(SelectChoice::Delta, "Delta").enabled(false);
-        })
-        .max_visible(3)
-        .enabled(!disabled);
         ui.horizontal(|ui| {
             ui.text_edit(&mut state.text)
                 .placeholder("Type here")

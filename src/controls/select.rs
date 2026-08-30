@@ -182,9 +182,12 @@ impl PlumeSelect {
                 (
                     Node {
                         position_type: PositionType::Absolute,
-                        width: Val::ZERO,
+                        // Effectively unbounded, so rows shrink-wrap their label
+                        // instead of collapsing to min_width and wrapping it.
+                        width: px(1.0e5),
                         height: Val::ZERO,
                         overflow: Overflow::clip(),
+                        align_items: AlignItems::FlexStart,
                     }
                     Pickable::IGNORE
                     Visibility::Hidden
