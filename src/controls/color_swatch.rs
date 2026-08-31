@@ -54,11 +54,11 @@ pub struct PlumeColorSwatch;
 #[reflect(Component, Clone, Default)]
 pub struct ColorSwatchValue(pub Color);
 
-// A checkerboard layer marking translucency, tiled behind whatever sits over it.
-// The texture is attached by `attach_checker`, which owns the shared handle.
+/// A checkerboard layer marking translucency, tiled behind whatever sits over
+/// it; the texture attaches itself. Size it with a [`Node`](bevy::ui::Node).
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
-pub(crate) struct CheckerUnderlay;
+pub struct CheckerUnderlay;
 
 // Marks the fill layer the swatch's color is painted onto.
 #[derive(Component, Default, Clone, Reflect)]

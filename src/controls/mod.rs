@@ -33,7 +33,9 @@ pub use color_edit::{PlumeColorEdit, PlumeColorEditProps};
 use color_picker::ColorPickerPlugin;
 pub use color_picker::{ColorPickerValue, PlumeColorPicker, PlumeColorPickerProps};
 use color_swatch::ColorSwatchPlugin;
-pub use color_swatch::{ColorSwatchValue, PlumeColorSwatch, PlumeColorSwatchProps};
+pub use color_swatch::{
+    CheckerUnderlay, ColorSwatchValue, PlumeColorSwatch, PlumeColorSwatchProps,
+};
 pub use default_width::DefaultWidth;
 use default_width::DefaultWidthPlugin;
 use disclosure::DisclosurePlugin;

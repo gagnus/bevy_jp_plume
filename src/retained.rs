@@ -24,9 +24,9 @@ pub use crate::containers::{
     tab_label,
 };
 pub use crate::controls::{
-    ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter, NoBlurOnEnter, NoDrag,
-    NoSelectAllOnFocus, NoVerticalArrows, PlumeButton, PlumeButtonProps, PlumeCheckbox,
-    PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker,
+    CheckerUnderlay, ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter,
+    NoBlurOnEnter, NoDrag, NoSelectAllOnFocus, NoVerticalArrows, PlumeButton, PlumeButtonProps,
+    PlumeCheckbox, PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker,
     PlumeColorPickerProps, PlumeColorSwatch, PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar,
     PlumeMenuButton, PlumeMenuButtonProps, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
     PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect,
