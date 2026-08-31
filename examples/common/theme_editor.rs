@@ -15,7 +15,7 @@ impl Plugin for ThemeEditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_debug_dialog(
             TITLE,
-            font_awesome::solid::PALETTE,
+            lucide::PALETTE,
             self.0,
             theme_editor_dialog,
         );

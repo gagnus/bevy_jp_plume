@@ -129,7 +129,7 @@ impl Plugin for TreeViewPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<OutlinerState>().add_debug_dialog(
             TITLE,
-            font_awesome::solid::SITEMAP,
+            lucide::FOLDER_TREE,
             self.0,
             tree_view_dialog,
         );
@@ -164,14 +164,14 @@ fn tree_view_dialog(
 
             ui.horizontal(|ui| {
                 if ui
-                    .icon_button(font_awesome::solid::ANGLES_DOWN, "Expand")
+                    .icon_button(lucide::CHEVRONS_DOWN, "Expand")
                     .variant(ButtonVariant::Outline)
                     .clicked
                 {
                     set_all = Some(true);
                 }
                 if ui
-                    .icon_button(font_awesome::solid::ANGLES_UP, "Collapse")
+                    .icon_button(lucide::CHEVRONS_UP, "Collapse")
                     .variant(ButtonVariant::Outline)
                     .clicked
                 {

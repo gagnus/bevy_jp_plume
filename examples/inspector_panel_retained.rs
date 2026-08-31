@@ -495,13 +495,13 @@ fn export_modal() -> impl Scene {
                     Children [
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(font_awesome::solid::FOLDER_OPEN) },
+                                @caption: bsn! { icon(lucide::FOLDER_OPEN) },
                             }
                             Tooltip("Pick the output directory")
                         ),
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
+                                @caption: bsn! { icon(lucide::UNDO_2) },
                             }
                             Tooltip("Reset these settings to their defaults")
                         ),
@@ -560,7 +560,7 @@ fn top_bar() -> impl Scene {
                     ),
                     (
                         @PlumeToolButton {
-                            @caption: bsn! { icon(font_awesome::solid::PLUS) },
+                            @caption: bsn! { icon(lucide::PLUS) },
                             @variant: ButtonVariant::Plain,
                         }
                         Flat
@@ -696,7 +696,7 @@ fn document_tab(slot: usize) -> impl Scene {
     bsn! {
         @PlumeTab {
             @caption: bsn_list![
-                icon(font_awesome::solid::FILE_CODE),
+                icon(lucide::FILE_CODE),
                 (
                     // `tab_label`'s box, hand-built because the caption inside it
                     // has to carry the marker `push_documents` writes through.
@@ -726,7 +726,7 @@ fn document_tab(slot: usize) -> impl Scene {
                 ),
                 (
                     @PlumeToolButton {
-                        @caption: bsn! { icon(font_awesome::solid::XMARK) },
+                        @caption: bsn! { icon(lucide::X) },
                         @variant: ButtonVariant::Plain,
                     }
                     Flat
@@ -756,7 +756,7 @@ fn viewport_hud() -> impl Scene {
                 (
                     row()
                     Children [
-                        icon(font_awesome::solid::CUBES),
+                        icon(lucide::BOXES),
                         (
                             caption("")
                             HudCount
@@ -764,7 +764,7 @@ fn viewport_hud() -> impl Scene {
                         separator(),
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(font_awesome::solid::FLOPPY_DISK) },
+                                @caption: bsn! { icon(lucide::SAVE) },
                                 @variant: ButtonVariant::Plain,
                             }
                             Flat
@@ -792,7 +792,7 @@ fn viewport() -> impl Scene {
                 row()
                 Children [
                     flex_spacer(),
-                    icon(font_awesome::solid::CUBES),
+                    icon(lucide::BOXES),
                     (
                         caption("")
                         ViewportLabel
@@ -858,7 +858,7 @@ fn tab_row() -> impl Scene {
                         (
                             @PlumeTab {
                                 @caption: bsn_list![
-                                    icon(font_awesome::solid::PALETTE),
+                                    icon(lucide::PALETTE),
                                     caption("Material"),
                                 ],
                             }
@@ -866,7 +866,7 @@ fn tab_row() -> impl Scene {
                         ),
                         @PlumeTab {
                             @caption: bsn_list![
-                                icon(font_awesome::solid::SITEMAP),
+                                icon(lucide::FOLDER_TREE),
                                 caption("Hierarchy"),
                             ],
                         },
@@ -879,14 +879,14 @@ fn tab_row() -> impl Scene {
             flex_spacer(),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(font_awesome::solid::FLOPPY_DISK) },
+                    @caption: bsn! { icon(lucide::SAVE) },
                 }
                 Flat
                 Tooltip("Save material")
             ),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(font_awesome::solid::ARROW_ROTATE_LEFT) },
+                    @caption: bsn! { icon(lucide::UNDO_2) },
                 }
                 Flat
                 Tooltip("Revert to the last saved values")
@@ -898,7 +898,7 @@ fn tab_row() -> impl Scene {
             // which keeps its tool-button look. Rows are the menu bar's.
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(font_awesome::solid::ELLIPSIS_VERTICAL) },
+                    @caption: bsn! { icon(lucide::ELLIPSIS_VERTICAL) },
                 }
                 Flat
                 Tooltip("More material actions")
@@ -1094,7 +1094,7 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
             (
                 row()
                 Children [
-                    icon(font_awesome::solid::MAGNIFYING_GLASS),
+                    icon(lucide::SEARCH),
                     (
                         @PlumeTextInput { @placeholder: {Some("Filter…".to_string())} }
                         Node { width: Val::ZERO, flex_grow: 1.0 }

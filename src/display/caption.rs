@@ -3,7 +3,7 @@ use bevy::scene::{Scene, bsn};
 use bevy::text::FontSourceTemplate;
 use bevy::ui::widget::Text;
 
-use crate::constants::FaIcon;
+use crate::constants::Icon;
 use crate::font_styles::InheritableFont;
 
 /// A caption within, say, a button using inherited color.
@@ -15,7 +15,7 @@ pub fn caption(text: impl Into<String>) -> impl Scene {
 
 /// A FontAwesome icon, drawn in the face its glyph belongs to; size inherits,
 /// so icons track the surrounding text.
-pub fn icon(icon: FaIcon) -> impl Scene {
+pub fn icon(icon: Icon) -> impl Scene {
     let glyph = icon.glyph();
     let font_path = icon.face().font_path();
     bsn! {

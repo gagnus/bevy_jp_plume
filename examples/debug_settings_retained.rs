@@ -361,7 +361,7 @@ fn clear_capture_button() -> Box<dyn SceneList> {
     Box::new(bsn_list![
         (
             @PlumeToolButton {
-                @caption: bsn_list![icon(font_awesome::solid::XMARK)],
+                @caption: bsn_list![icon(lucide::X)],
                 @variant: ButtonVariant::Plain,
             }
             Tooltip("Clear")
@@ -394,7 +394,7 @@ fn capture_warning(display: Display) -> Box<dyn SceneList> {
             CaptureWarning
             Children [
                 (
-                    icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                    icon(lucide::TRIANGLE_ALERT)
                     template_value(ThemeTextSlot(ThemeSlot::Danger0))
                     Tooltip("Should leave it blank!")
                 ),
@@ -528,7 +528,7 @@ fn footer() -> impl Scene {
                     (
                         @PlumeButton {
                             @caption: bsn_list![
-                                icon(font_awesome::solid::ARROW_ROTATE_LEFT),
+                                icon(lucide::UNDO_2),
                                 caption("Reset to defaults"),
                             ],
                             @variant: ButtonVariant::Outline,
@@ -537,7 +537,7 @@ fn footer() -> impl Scene {
                             (
                                 row()
                                 Children [
-                                    icon(font_awesome::solid::ARROW_ROTATE_LEFT),
+                                    icon(lucide::UNDO_2),
                                     (
                                         caption("Reset to defaults")
                                         template_value(ThemeTextSlot(ThemeSlot::Text0))

@@ -66,7 +66,7 @@ impl Plugin for PlayerProfilePlugin {
         app.init_resource::<ProfileSettings>()
             .add_debug_dialog(
                 TITLE,
-                font_awesome::solid::PERSON,
+                lucide::PERSON_STANDING,
                 self.0,
                 player_profile_dialog,
             )
@@ -143,7 +143,7 @@ fn player_profile_dialog(
 
             ui.horizontal(|ui| {
                 if ui
-                    .icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset")
+                    .icon_button(lucide::UNDO_2, "Reset")
                     .variant(ButtonVariant::Outline)
                     .clicked
                 {

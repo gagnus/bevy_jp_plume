@@ -21,7 +21,7 @@ use bevy::scene::prelude::*;
 use bevy::ui::{AlignItems, InteractionDisabled, Node, Val};
 use bevy::ui_widgets::{Activate, ActivateOnPress, ValueChange};
 
-use crate::constants::{font_awesome, size};
+use crate::constants::{lucide, size};
 use crate::containers::{
     CloseRequested, PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup,
     popup_socket,
@@ -133,7 +133,7 @@ impl PlumeColorEdit {
                                     flex_grow: 1.0,
                                 }
                             ),
-                            icon(font_awesome::solid::ANGLE_DOWN),
+                            icon(lucide::CHEVRON_DOWN),
                         ],
                     }
                     ActivateOnPress

@@ -155,7 +155,7 @@ impl Plugin for DebugSettingsPlugin {
         app.init_resource::<DebugSettings>()
             .add_debug_dialog(
                 TITLE,
-                font_awesome::solid::BUG,
+                lucide::BUG,
                 self.0,
                 debug_settings_dialog,
             )
@@ -195,11 +195,11 @@ fn debug_settings_dialog(
 
             ui.horizontal(|ui| {
                 let (mut do_reset, mut keep) = (false, false);
-                ui.icon_button(font_awesome::solid::ARROW_ROTATE_LEFT, "Reset to defaults")
+                ui.icon_button(lucide::UNDO_2, "Reset to defaults")
                     .variant(ButtonVariant::Outline)
                     .tooltip_container(|ui| {
                         ui.horizontal(|ui| {
-                            ui.icon(font_awesome::solid::ARROW_ROTATE_LEFT);
+                            ui.icon(lucide::UNDO_2);
                             ui.caption("Reset to defaults")
                                 .text_color_slot(ThemeSlot::Text0);
                         });
@@ -296,7 +296,7 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
                 .placeholder("Beside the app")
                 .prefix_container(|ui| {
                     clear = ui
-                        .tool_button(font_awesome::solid::XMARK)
+                        .tool_button(lucide::X)
                         .flat()
                         .variant(ButtonVariant::Plain)
                         .font_scale(0.8)
@@ -312,7 +312,7 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
             if !s.capture_dir.is_empty() {
                 text_edit.suffix_container(|ui| {
                     ui.horizontal(|ui| {
-                        ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                        ui.icon(lucide::TRIANGLE_ALERT)
                             .text_color_slot(ThemeSlot::Danger0)
                             .tooltip("Should leave it blank!");
                     })

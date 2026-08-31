@@ -58,13 +58,13 @@ enum ColliderKind {
 struct SceneNode {
     id: u32,
     label: String,
-    icon: FaIcon,
+    icon: Icon,
     visible: bool,
     expanded: bool,
     children: Vec<SceneNode>,
 }
 
-fn leaf(id: u32, label: &str, icon: FaIcon, visible: bool) -> SceneNode {
+fn leaf(id: u32, label: &str, icon: Icon, visible: bool) -> SceneNode {
     SceneNode {
         id,
         label: label.to_owned(),
@@ -78,7 +78,7 @@ fn leaf(id: u32, label: &str, icon: FaIcon, visible: bool) -> SceneNode {
 fn branch(
     id: u32,
     label: &str,
-    icon: FaIcon,
+    icon: Icon,
     expanded: bool,
     children: Vec<SceneNode>,
 ) -> SceneNode {
@@ -149,28 +149,28 @@ fn sample_tree() -> Vec<SceneNode> {
         branch(
             1,
             "The Sunless Keep",
-            font_awesome::solid::DUNGEON,
+            lucide::CASTLE,
             true,
             vec![
                 branch(
                     2,
                     "Entrance Hall",
-                    font_awesome::solid::ARCHWAY,
+                    lucide::LANDMARK,
                     true,
                     vec![
-                        leaf(3, "Torch Sconce", font_awesome::solid::LIGHTBULB, true),
-                        leaf(4, "Oak Door", font_awesome::solid::DOOR_CLOSED, true),
-                        leaf(5, "Cobweb", font_awesome::solid::CUBE, false),
+                        leaf(3, "Torch Sconce", lucide::LIGHTBULB, true),
+                        leaf(4, "Oak Door", lucide::DOOR_CLOSED, true),
+                        leaf(5, "Cobweb", lucide::BOX, false),
                     ],
                 ),
                 branch(
                     6,
                     "Crypt Level",
-                    font_awesome::solid::LAYER_GROUP,
+                    lucide::LAYERS,
                     false,
                     vec![
-                        leaf(7, "Sarcophagus", font_awesome::solid::CUBE, true),
-                        leaf(8, "Cursed Altar", font_awesome::solid::CUBE, true),
+                        leaf(7, "Sarcophagus", lucide::BOX, true),
+                        leaf(8, "Cursed Altar", lucide::BOX, true),
                     ],
                 ),
             ],
@@ -178,21 +178,21 @@ fn sample_tree() -> Vec<SceneNode> {
         branch(
             9,
             "Encounters",
-            font_awesome::solid::DRAGON,
+            lucide::SWORDS,
             true,
             vec![
-                leaf(10, "Wandering Wraith", font_awesome::solid::GHOST, true),
-                leaf(11, "Gravekeeper", font_awesome::solid::SKULL, true),
+                leaf(10, "Wandering Wraith", lucide::GHOST, true),
+                leaf(11, "Gravekeeper", lucide::SKULL, true),
             ],
         ),
         branch(
             12,
             "Lighting",
-            font_awesome::solid::LIGHTBULB,
+            lucide::LIGHTBULB,
             false,
             vec![
-                leaf(13, "Sun", font_awesome::solid::LIGHTBULB, true),
-                leaf(14, "Torch Flicker", font_awesome::solid::LIGHTBULB, true),
+                leaf(13, "Sun", lucide::LIGHTBULB, true),
+                leaf(14, "Torch Flicker", lucide::LIGHTBULB, true),
             ],
         ),
     ]
@@ -250,24 +250,24 @@ fn editor_ui(
 
 fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut bool) {
     ui.horizontal(|ui| {
-        ui.tool_button(font_awesome::solid::FILE);
-        ui.tool_button(font_awesome::solid::FOLDER_OPEN);
-        ui.tool_button(font_awesome::solid::FLOPPY_DISK);
+        ui.tool_button(lucide::FILE);
+        ui.tool_button(lucide::FOLDER_OPEN);
+        ui.tool_button(lucide::SAVE);
         ui.separator();
 
-        ui.tool_button(font_awesome::solid::ARROW_ROTATE_LEFT);
-        ui.tool_button(font_awesome::solid::ARROW_ROTATE_RIGHT);
-        ui.tool_button(font_awesome::solid::PASTE);
-        ui.tool_button(font_awesome::solid::TRASH);
+        ui.tool_button(lucide::UNDO_2);
+        ui.tool_button(lucide::REDO_2);
+        ui.tool_button(lucide::CLIPBOARD_PASTE);
+        ui.tool_button(lucide::TRASH_2);
         ui.separator();
 
         for (tool, icon) in [
-            (Tool::Select, font_awesome::solid::ARROW_POINTER),
-            (Tool::Move, font_awesome::solid::ARROWS_UP_DOWN_LEFT_RIGHT),
-            (Tool::Rotate, font_awesome::solid::ROTATE),
+            (Tool::Select, lucide::MOUSE_POINTER_2),
+            (Tool::Move, lucide::MOVE),
+            (Tool::Rotate, lucide::ROTATE_CW),
             (
                 Tool::Scale,
-                font_awesome::solid::UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER,
+                lucide::SCALING,
             ),
         ] {
             let mut selected = state.tool == tool;
@@ -277,29 +277,41 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
         }
         ui.separator();
 
-        ui.tool_button(font_awesome::solid::MAGNET)
+        ui.tool_button(lucide::MAGNET)
             .checkable(&mut state.snap_to_grid)
             .flat();
-        ui.tool_button(font_awesome::solid::BORDER_ALL)
+        ui.tool_button(lucide::GRID_3X3)
             .checkable(&mut state.show_grid)
             .flat();
 
         ui.flex_spacer();
         if ui
-            .tool_button(font_awesome::solid::PLAY)
+            .tool_button(lucide::PLAY)
             .checkable(&mut state.playing)
             .flat()
             .clicked
         {
             state.playing = true;
         }
-        ui.tool_button(font_awesome::solid::PAUSE);
-        if ui.tool_button(font_awesome::solid::STOP).clicked {
+        ui.tool_button(lucide::PAUSE);
+        if ui.tool_button(lucide::SQUARE).clicked {
             state.playing = false;
         }
 
+        // just to put the icons from windows chrome into the window...
         ui.separator();
-        ui.tool_button(font_awesome::solid::PALETTE)
+        ui.tool_button(lucide::MINUS)
+            .variant(ButtonVariant::Plain);
+        ui.tool_button(lucide::COPY)
+            .variant(ButtonVariant::Plain);
+        ui.tool_button(lucide::MAXIMIZE)
+            .variant(ButtonVariant::Plain);
+        ui.tool_button(lucide::X)
+            .flat()
+            .variant(ButtonVariant::Plain);
+
+        ui.separator();
+        ui.tool_button(lucide::PALETTE)
             .checkable(theme_editor_open);
     })
     .background(bg)
@@ -309,14 +321,14 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
 fn left_panel(ui: &mut Ui, state: &mut Editor) {
     ui.tabs(&mut state.left_tab, |tabs| {
         tabs.tab(LeftTab::Scene, "Scene")
-            .icon(font_awesome::solid::SITEMAP)
+            .icon(lucide::FOLDER_TREE)
             .body(|ui| {
                 for (i, node) in state.tree.iter_mut().enumerate() {
                     ui.push_id(i, |ui| tree_row(ui, node, &mut state.selected, 0));
                 }
             });
         tabs.tab(LeftTab::Prefabs, "Prefabs")
-            .icon(font_awesome::solid::CUBES)
+            .icon(lucide::BOXES)
             .body(|ui| {
                 ui.caption("Prefab palette — drag a prefab into the scene.");
             });
@@ -344,9 +356,9 @@ fn tree_row(ui: &mut Ui, node: &mut SceneNode, selected: &mut u32, depth: usize)
             let show_eye = ui.hovered() || !node.visible;
             if ui
                 .tool_button(if node.visible {
-                    font_awesome::solid::EYE
+                    lucide::EYE
                 } else {
-                    font_awesome::solid::EYE_SLASH
+                    lucide::EYE_OFF
                 })
                 .variant(ButtonVariant::Plain)
                 .inert()
@@ -386,7 +398,7 @@ fn center_panel(ui: &mut Ui, state: &mut Editor) {
 fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
     ui.tabs(&mut state.bottom_tab, |tabs| {
         tabs.tab(BottomTab::Output, "Output")
-            .icon(font_awesome::solid::LIST)
+            .icon(lucide::LIST)
             .body(|ui| {
                 for line in [
                     "[info] Loaded dungeon seed 0xC0FFEE (42 rooms)",
@@ -398,7 +410,7 @@ fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
                 }
             });
         tabs.tab(BottomTab::Assets, "Assets")
-            .icon(font_awesome::solid::FOLDER_OPEN)
+            .icon(lucide::FOLDER_OPEN)
             .body(|ui| {
                 ui.caption("Asset browser — imported meshes, textures and materials appear here.");
             });
@@ -412,12 +424,12 @@ fn right_panel(ui: &mut Ui, state: &mut Editor) {
     let mut right_tab = state.right_tab;
     ui.tabs(&mut right_tab, |tabs| {
         tabs.tab(RightTab::Properties, "Properties")
-            .icon(font_awesome::solid::SLIDERS)
+            .icon(lucide::SLIDERS_HORIZONTAL)
             .body(|ui| {
                 inspector(ui, state);
             });
         tabs.tab(RightTab::Add, "Add")
-            .icon(font_awesome::solid::PLUS)
+            .icon(lucide::PLUS)
             .body(|ui| {
                 ui.caption("Component browser — pick a component to add to the entity.");
             });

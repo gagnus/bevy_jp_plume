@@ -21,7 +21,7 @@ use bevy::ui::{
     AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
 };
 
-use crate::constants::{font_awesome, size};
+use crate::constants::{lucide, size};
 use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::cursor::EntityCursor;
 use crate::display::icon;
@@ -156,7 +156,7 @@ pub(crate) fn section_frame(
                 on(toggle_section_collapse)
                 Children [
                     {collapsible.then(|| bsn! {
-                        icon(font_awesome::solid::ANGLE_DOWN)
+                        icon(lucide::CHEVRON_DOWN)
                         Node { width: size::ICON_WIDTH }
                         SectionChevron
                         template_value(AnimState::rotation(0.0, -FRAC_PI_2))

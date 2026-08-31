@@ -27,7 +27,7 @@ use bevy::ui::{
 use bevy::ui_widgets::ValueChange;
 use bevy::window::SystemCursorIcon;
 
-use crate::constants::{font_awesome, size};
+use crate::constants::{lucide, size};
 use crate::cursor::{CursorLock, EntityCursor};
 use crate::display::icon;
 use crate::theme::InheritableThemeTextToken;
@@ -240,7 +240,7 @@ pub(crate) fn reorderable_item() -> impl Scene {
 // while pressed, so it survives the pointer outrunning the glyph mid-drag.
 pub(crate) fn reorderable_grip() -> impl Scene {
     bsn! {
-        icon(font_awesome::solid::GRIP_LINES_VERTICAL)
+        icon(lucide::GRIP_VERTICAL)
         Node { width: size::ICON_WIDTH }
         ReorderGrip
         Hovered

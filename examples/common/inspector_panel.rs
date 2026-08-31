@@ -80,14 +80,14 @@ impl Options for Cull {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SceneNode {
     pub name: String,
-    pub icon: FaIcon,
+    pub icon: Icon,
     pub depth: usize,
     pub expanded: bool,
     pub visible: bool,
 }
 
 impl SceneNode {
-    fn new(name: &str, icon: FaIcon, depth: usize) -> Self {
+    fn new(name: &str, icon: Icon, depth: usize) -> Self {
         Self {
             name: name.into(),
             icon,
@@ -240,7 +240,6 @@ pub struct Material {
 
 impl Default for Material {
     fn default() -> Self {
-        use font_awesome::solid as fa;
         Self {
             name: "Brick_Wall_01".into(),
             base_color: Color::srgb(0.62, 0.31, 0.24),
@@ -250,10 +249,10 @@ impl Default for Material {
             metallic: 0.0,
             roughness: 0.72,
             layers: vec![
-                Layer::new(1, "Base", fa::LAYER_GROUP, 1.0),
-                Layer::new(2, "Dirt", fa::DROPLET, 0.6),
-                Layer::new(3, "Moss", fa::LEAF, 0.35),
-                Layer::new(4, "Decal", fa::STAMP, 0.8),
+                Layer::new(1, "Base", lucide::LAYERS, 1.0),
+                Layer::new(2, "Dirt", lucide::DROPLET, 0.6),
+                Layer::new(3, "Moss", lucide::LEAF, 0.35),
+                Layer::new(4, "Decal", lucide::STAMP, 0.8),
             ],
         }
     }
@@ -268,13 +267,13 @@ pub struct LayerId(pub u32);
 pub struct Layer {
     pub id: LayerId,
     pub name: String,
-    pub icon: FaIcon,
+    pub icon: Icon,
     pub opacity: f32,
     pub enabled: bool,
 }
 
 impl Layer {
-    fn new(id: u32, name: &str, icon: FaIcon, opacity: f32) -> Self {
+    fn new(id: u32, name: &str, icon: Icon, opacity: f32) -> Self {
         Self {
             id: LayerId(id),
             name: name.into(),
@@ -293,17 +292,16 @@ pub struct Hierarchy {
 
 impl Default for Hierarchy {
     fn default() -> Self {
-        use font_awesome::solid as fa;
         Self {
             filter: String::new(),
             nodes: vec![
-                SceneNode::new("Dungeon", fa::SITEMAP, 0),
-                SceneNode::new("Corridor_A", fa::CUBE, 1),
-                SceneNode::new("Torch_01", fa::FIRE, 2),
-                SceneNode::new("Torch_02", fa::FIRE, 2),
-                SceneNode::new("Vault", fa::CUBE, 1),
-                SceneNode::new("Chest", fa::BOX_ARCHIVE, 2),
-                SceneNode::new("Spawn_Point", fa::LOCATION_DOT, 1),
+                SceneNode::new("Dungeon", lucide::FOLDER_TREE, 0),
+                SceneNode::new("Corridor_A", lucide::BOX, 1),
+                SceneNode::new("Torch_01", lucide::FLAME, 2),
+                SceneNode::new("Torch_02", lucide::FLAME, 2),
+                SceneNode::new("Vault", lucide::BOX, 1),
+                SceneNode::new("Chest", lucide::ARCHIVE, 2),
+                SceneNode::new("Spawn_Point", lucide::MAP_PIN, 1),
             ],
         }
     }
@@ -471,7 +469,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
         ui.tabs(&mut active, |tabs| {
             for document in &documents.open {
                 tabs.tab_container(Some(document.id), |ui| {
-                    ui.icon(font_awesome::solid::FILE_CODE).no_shrink();
+                    ui.icon(lucide::FILE_CODE).no_shrink();
                     // Its own clipping box, so a squeezed name is cut at its
                     // edge instead of running on under the ✕.
                     ui.horizontal(|ui| {
@@ -480,13 +478,13 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
                     .clip();
                     ui.flex_spacer();
                     let hover = ui.hovered();
-                    ui.icon(font_awesome::solid::CIRCLE)
+                    ui.icon(lucide::DOT)
                         .no_shrink()
-                        .font_scale(0.5)
+                        .font_scale(2.0)
                         .text_color(Color::WHITE)
                         .displayed(document.dirty && !hover);
                     if ui
-                        .tool_button(font_awesome::solid::XMARK)
+                        .tool_button(lucide::X)
                         .no_shrink()
                         .flat()
                         .font_scale(0.8)
@@ -506,7 +504,7 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
         })
         .grow();
         if ui
-            .tool_button(font_awesome::solid::PLUS)
+            .tool_button(lucide::PLUS)
             .variant(ButtonVariant::Plain)
             .flat()
             .tooltip("Open a new document")
@@ -540,7 +538,7 @@ fn viewport(ui: &mut Ui, document: &Document) -> Entity {
         ui.flex_spacer();
         ui.horizontal(|ui| {
             ui.flex_spacer();
-            ui.icon(font_awesome::solid::CUBES);
+            ui.icon(lucide::BOXES);
             ui.caption(&document.name).text_color_slot(ThemeSlot::Text1);
             ui.flex_spacer();
         });
@@ -574,11 +572,11 @@ fn viewport_hud(root: &mut PlumeRoot, documents: &mut Documents, viewport: Entit
         .at_corner_of(viewport, Corner::BottomRight, em(1), em(1))
         .show(|ui| {
             ui.horizontal(|ui| {
-                ui.icon(font_awesome::solid::CUBES);
+                ui.icon(lucide::BOXES);
                 ui.caption(&format!("{} open", documents.open.len()));
                 ui.separator();
                 if ui
-                    .tool_button(font_awesome::solid::FLOPPY_DISK)
+                    .tool_button(lucide::SAVE)
                     .flat()
                     .tooltip("Save the active document")
                     .clicked
@@ -602,19 +600,19 @@ fn panel(
         ui.horizontal(|ui| {
             ui.tabs(tab, |tabs| {
                 tabs.tab(Tab::Material, "Material")
-                    .icon(font_awesome::solid::PALETTE)
+                    .icon(lucide::PALETTE)
                     .no_body();
                 tabs.tab(Tab::Hierarchy, "Hierarchy")
-                    .icon(font_awesome::solid::SITEMAP)
+                    .icon(lucide::FOLDER_TREE)
                     .no_body();
             });
 
             ui.flex_spacer();
-            ui.tool_button(font_awesome::solid::FLOPPY_DISK)
+            ui.tool_button(lucide::SAVE)
                 .flat()
                 .tooltip("Save material");
             if ui
-                .tool_button(font_awesome::solid::ARROW_ROTATE_LEFT)
+                .tool_button(lucide::UNDO_2)
                 .flat()
                 .tooltip("Revert to the last saved values")
                 .clicked
@@ -623,7 +621,7 @@ fn panel(
             }
             // A drop-down off the app's own button rather than a menu bar's: the
             // button keeps its tool-button look and opens the same menu rows.
-            ui.tool_button(font_awesome::solid::ELLIPSIS_VERTICAL)
+            ui.tool_button(lucide::ELLIPSIS_VERTICAL)
                 .flat()
                 .tooltip("More material actions")
                 .menu(|menu| {
@@ -674,7 +672,7 @@ fn material_fields(ui: &mut Ui, s: &mut Material) {
         });
         if s.name.trim().is_empty() {
             ui.horizontal(|ui| {
-                ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION);
+                ui.icon(lucide::TRIANGLE_ALERT);
                 ui.caption("A material needs a name").no_wrap();
             })
             .text_color(Color::srgb(0.90, 0.35, 0.32));
@@ -723,7 +721,7 @@ fn material_fields(ui: &mut Ui, s: &mut Material) {
 
 fn hierarchy_tab(ui: &mut Ui, s: &mut Hierarchy) {
     ui.horizontal(|ui| {
-        ui.icon(font_awesome::solid::MAGNIFYING_GLASS);
+        ui.icon(lucide::SEARCH);
         ui.text_edit(&mut s.filter).grow().placeholder("Filter…");
     });
     let filter = s.filter.to_lowercase();
@@ -797,9 +795,9 @@ fn export_modal(root: &mut PlumeRoot, open: &mut bool, cull: &mut Cull) {
         });
         ui.separator();
         ui.horizontal(|ui| {
-            ui.tool_button(font_awesome::solid::FOLDER_OPEN)
+            ui.tool_button(lucide::FOLDER_OPEN)
                 .tooltip("Pick the output directory");
-            ui.tool_button(font_awesome::solid::ARROW_ROTATE_LEFT)
+            ui.tool_button(lucide::UNDO_2)
                 .tooltip("Reset these settings to their defaults");
             ui.flex_spacer();
             answered |= ui

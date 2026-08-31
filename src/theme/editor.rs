@@ -9,7 +9,7 @@ use bevy::ui::{Val, em};
 
 use crate::controls::ButtonVariant;
 use crate::imm::{PlumeImm, Ui};
-use crate::style::font_awesome;
+use crate::style::lucide;
 use crate::theme::dark_theme::default_dark_palette;
 use crate::theme::light_theme::default_light_palette;
 use crate::theme::{OklchaArray, ThemeEditablePalette, ThemeId, ThemeSlot, UiTheme};
@@ -174,7 +174,7 @@ fn param_row(
             }
             None => {
                 if is_dangerous {
-                    ui.icon(font_awesome::solid::TRIANGLE_EXCLAMATION)
+                    ui.icon(lucide::TRIANGLE_ALERT)
                         .text_color_slot(ThemeSlot::Danger0)
                         .width(em(1))
                         .tooltip("This hue/chroma is very close to the 'Danger' color");

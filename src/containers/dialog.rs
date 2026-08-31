@@ -19,7 +19,7 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
-use crate::constants::{font_awesome, size};
+use crate::constants::{lucide, size};
 use crate::containers::{
     BodyGap, BodyPadding, ScrollAxis, ScrollContent, apply_body_style, flex_spacer, scroll_content,
     scroll_content_of, scroll_frame, scroll_viewport, scrollbar_node,
@@ -355,7 +355,7 @@ pub(crate) fn dialog_close() -> impl Scene {
     bsn! {
         @PlumeToolButton {
             @variant: ButtonVariant::Plain,
-            @caption: bsn! { icon(font_awesome::solid::XMARK) },
+            @caption: bsn! { icon(lucide::X) },
         }
         // Keep the ✕'s hover/press fill flat.
         Flat

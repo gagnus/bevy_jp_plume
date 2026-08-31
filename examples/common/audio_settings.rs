@@ -40,7 +40,7 @@ impl Plugin for AudioSettingsPlugin {
         app.init_resource::<AudioSettings>()
             .add_debug_dialog(
                 TITLE,
-                font_awesome::solid::VOLUME,
+                lucide::VOLUME_2,
                 self.0,
                 audio_settings_dialog,
             )

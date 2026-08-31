@@ -34,7 +34,7 @@ use bevy::ui_widgets::{
     MenuFocusSystem, MenuItem, MenuLayout, MenuPopup, ValueChange,
 };
 
-use crate::constants::{font_awesome, size, z_order};
+use crate::constants::{lucide, size, z_order};
 use crate::containers::{PopupSocket, PopupSurface, Separator, popup_socket};
 use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
@@ -147,7 +147,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
         Children [
             (
                 // Check gutter: reserved on every item so labels align.
-                icon(font_awesome::solid::CHECK)
+                icon(lucide::CHECK)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCheckIcon
@@ -175,7 +175,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             ),
             (
                 // Submenu caret gutter; only submenus show the glyph.
-                icon(font_awesome::solid::ANGLE_RIGHT)
+                icon(lucide::CHEVRON_RIGHT)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCaretIcon

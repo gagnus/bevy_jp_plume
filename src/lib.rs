@@ -45,6 +45,7 @@ impl Plugin for PlumeCorePlugin {
         embedded_asset!(app, "assets/fonts/NotoSansMono-Regular.ttf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Solid.otf");
         embedded_asset!(app, "assets/fonts/FontAwesome-Regular.otf");
+        embedded_asset!(app, "assets/fonts/Lucide.ttf");
 
         app.add_plugins((
             ControlsPlugin,

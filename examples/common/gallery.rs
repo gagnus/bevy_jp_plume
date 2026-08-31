@@ -178,30 +178,30 @@ fn gallery_card(ui: &mut Ui, state: &mut GalleryState, bg_slot: ThemeSlot, disab
             ui.checkbox(&mut state.checkbox_a, "Off").enabled(!disabled);
             ui.checkbox(&mut state.checkbox_b, "On").enabled(!disabled);
             ui.separator();
-            ui.tool_button(font_awesome::solid::BOLD)
+            ui.tool_button(lucide::BOLD)
                 .checkable(&mut state.toggle_normal_a)
                 .tooltip("Normal toggle")
                 .enabled(!disabled);
-            ui.tool_button(font_awesome::solid::BOLD)
+            ui.tool_button(lucide::BOLD)
                 .checkable(&mut state.toggle_normal_b)
                 .tooltip("Normal toggle")
                 .enabled(!disabled);
-            ui.tool_button(font_awesome::solid::MAGNET)
+            ui.tool_button(lucide::MAGNET)
                 .checkable(&mut state.toggle_plain_a)
                 .variant(ButtonCheckableVariant::Plain)
                 .tooltip("Plain toggle")
                 .enabled(!disabled);
-            ui.tool_button(font_awesome::solid::MAGNET)
+            ui.tool_button(lucide::MAGNET)
                 .checkable(&mut state.toggle_plain_b)
                 .variant(ButtonCheckableVariant::Plain)
                 .tooltip("Plain toggle")
                 .enabled(!disabled);
-            ui.tool_button(font_awesome::solid::BORDER_ALL)
+            ui.tool_button(lucide::GRID_3X3)
                 .checkable(&mut state.toggle_outline_a)
                 .variant(ButtonCheckableVariant::Outline)
                 .tooltip("Outline toggle")
                 .enabled(!disabled);
-            ui.tool_button(font_awesome::solid::BORDER_ALL)
+            ui.tool_button(lucide::GRID_3X3)
                 .checkable(&mut state.toggle_outline_b)
                 .variant(ButtonCheckableVariant::Outline)
                 .tooltip("Outline toggle")

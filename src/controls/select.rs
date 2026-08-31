@@ -36,7 +36,7 @@ use bevy::ui_widgets::{
     listbox_update_selection,
 };
 
-use crate::constants::{font_awesome, size};
+use crate::constants::{lucide, size};
 use crate::containers::{
     PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup, popup_socket,
 };
@@ -172,7 +172,7 @@ impl PlumeSelect {
                         Node {
                             flex_grow: 1.0,
                         },
-                        icon(font_awesome::solid::ANGLE_DOWN),
+                        icon(lucide::CHEVRON_DOWN),
                     ]
                 ),
                 popup_socket(),
@@ -327,7 +327,7 @@ impl PlumeSelectOption {
             Children [
                 (
                     // Hidden ticks still occupy layout, so every label shares the gutter.
-                    icon(font_awesome::solid::CHECK)
+                    icon(lucide::CHECK)
                     Node {
                         width: size::ICON_WIDTH,
                     }

@@ -25,7 +25,7 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Activate, Button, ControlOrientation, ValueChange};
 
-use crate::constants::{FaIcon, size};
+use crate::constants::{Icon, size};
 use crate::containers::{
     BodyGap, BodyPadding, ScrollAxis, apply_body_style, scroll_frame, scroll_viewport,
     scrollbar_node,
@@ -294,7 +294,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
 
 // A tab with a text label and an optional leading icon: the imm layer's tab, and
 // the shorthand a retained caller reaches for over a hand-built caption.
-pub(crate) fn tab_button(label: String, icon: Option<FaIcon>) -> impl Scene {
+pub(crate) fn tab_button(label: String, icon: Option<Icon>) -> impl Scene {
     bsn! {
         tab_chrome()
         Children [

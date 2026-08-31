@@ -20,8 +20,9 @@ and travel with anything you ship.
 | ---- | --------- | ------- |
 | Noto Sans, Noto Sans Mono | The Noto Project Authors | [SIL OFL 1.1](src/assets/fonts/NotoSans-LICENSE.txt) |
 | Font Awesome 7 Free (Solid, Regular) | Font Awesome | [SIL OFL 1.1](src/assets/fonts/FontAwesome-LICENSE.txt) |
+| Lucide | Lucide Icons and Contributors | [ISC](src/assets/fonts/Lucide-LICENSE.txt) |
 
-Both licenses require that the copyright notice and license text accompany
-redistribution, and Font Awesome's icon artwork is CC BY 4.0, which asks for
-attribution. Crediting "Noto Sans" and "Font Awesome" wherever your
-application lists third-party notices covers both.
+All three licenses require that the copyright notice and license text
+accompany redistribution. Font Awesome's icon artwork is additionally
+CC BY 4.0, which asks for attribution, and a subset of Lucide's icons is
+MIT (inherited from Feather; both notices are in its license file).

@@ -11,7 +11,7 @@ use bevy_jp_plume::prelude::*;
 #[derive(Resource, Default)]
 pub struct DebugDialogRegistry {
     set_all_open: bool,
-    dialogs: BTreeMap<&'static str, (FaIcon, bool)>,
+    dialogs: BTreeMap<&'static str, (Icon, bool)>,
 }
 
 impl DebugDialogRegistry {
@@ -20,7 +20,7 @@ impl DebugDialogRegistry {
     }
 
     /// Register a dialog with its initial open state. First registration wins.
-    pub fn register(&mut self, title: &'static str, icon: FaIcon, open: bool) {
+    pub fn register(&mut self, title: &'static str, icon: Icon, open: bool) {
         self.dialogs
             .entry(title)
             .or_insert((icon, open || self.set_all_open));
@@ -42,7 +42,7 @@ impl DebugDialogRegistry {
         }
     }
 
-    fn entries(&self) -> Vec<(&'static str, (FaIcon, bool))> {
+    fn entries(&self) -> Vec<(&'static str, (Icon, bool))> {
         self.dialogs.iter().map(|(&k, &v)| (k, v)).collect()
     }
 }
@@ -63,7 +63,7 @@ pub trait AddDebugDialog {
     fn add_debug_dialog<M>(
         &mut self,
         title: &'static str,
-        icon: FaIcon,
+        icon: Icon,
         open: bool,
         system: impl IntoScheduleConfigs<ScheduleSystem, M>,
     ) -> &mut Self;
@@ -73,7 +73,7 @@ impl AddDebugDialog for App {
     fn add_debug_dialog<M>(
         &mut self,
         title: &'static str,
-        icon: FaIcon,
+        icon: Icon,
         open: bool,
         system: impl IntoScheduleConfigs<ScheduleSystem, M>,
     ) -> &mut Self {

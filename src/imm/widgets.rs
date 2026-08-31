@@ -24,7 +24,7 @@ use super::caps::{
     ImmPlumeSplit, ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
 };
 use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
-use crate::constants::{FaIcon, size};
+use crate::constants::{Icon, size};
 use crate::containers::{
     BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PlacementAnchor, PopupAnchor,
     PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body,
@@ -90,14 +90,14 @@ pub trait PlumeImm<'w, 's> {
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Push button with a leading FontAwesome icon before the label.
-    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
+    fn icon_button(&mut self, icon: Icon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
-    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button>;
+    fn tool_button(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// A non-interactive FontAwesome glyph in the current text color — the icon
     /// counterpart to [`Self::caption`].
-    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Icon>;
+    fn icon(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Icon>;
 
     /// A push button whose content is built by `f` instead of a single label.
     /// The row it lays that content out in is the app's: chain `.padding()` and
@@ -485,7 +485,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn icon_button(&mut self, icon: FaIcon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
+    fn icon_button(&mut self, icon: Icon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
         // Keyed on the face, not the glyph: the face selects the font asset. The icon
         // is the first `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
@@ -513,7 +513,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn tool_button(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Button> {
+    fn tool_button(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Button> {
         // Keyed on the face, not the glyph: the face selects the font asset.
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
@@ -532,7 +532,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     }
 
     #[track_caller]
-    fn icon(&mut self, icon: FaIcon) -> ImmResponse<'_, 'w, 's, kind::Icon> {
+    fn icon(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Icon> {
         // Keyed on the face, not the glyph: the face selects the font asset.
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
@@ -840,7 +840,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                             let mut tab = match header {
                                 // The label and glyph key the tab: a renamed tab respawns.
                                 TabHeader::Label { label, icon } => ui
-                                    .ch_id(("tab", slot, &label, icon.map(FaIcon::glyph)))
+                                    .ch_id(("tab", slot, &label, icon.map(Icon::glyph)))
                                     .on_spawn_apply_scene(move || tab_button(label, icon)),
                                 TabHeader::Content(content) => ui
                                     .ch_id(("tab_container", slot))
@@ -1242,7 +1242,7 @@ struct TabEntry<'t, 'w, 's, T> {
 }
 
 enum TabHeader<'t, 'w, 's> {
-    Label { label: String, icon: Option<FaIcon> },
+    Label { label: String, icon: Option<Icon> },
     Content(Box<dyn FnOnce(&mut Ui<'w, 's>) + 't>),
 }
 
@@ -1336,7 +1336,7 @@ impl<'t, 'w, 's, T, H> ImmTab<'_, 't, 'w, 's, T, H> {
 
 impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
     /// Leading FontAwesome icon, before the label.
-    pub fn icon(self, icon: FaIcon) -> Self {
+    pub fn icon(self, icon: Icon) -> Self {
         if let TabHeader::Label { icon: slot, .. } = &mut self.entry.header {
             *slot = Some(icon);
         }
