@@ -102,7 +102,7 @@ impl PlumeSlider {
             // Default step = 1% of range: arrow keys (and a11y increments) move a
             // continuous slider usefully instead of by the headless default of 1.0.
             SliderStep({props.step.unwrap_or((props.max - props.min) / 100.0)})
-            {props.precision.map(|precision| bsn! { SliderPrecision(precision) })}
+            @{props.precision.map(|precision| bsn! { SliderPrecision(precision) })}
             Children [
                 (
                     // Inset half a knob each end so the thumb's sweep, not the bare
@@ -151,12 +151,12 @@ impl PlumeSlider {
                                 },
                                 border_radius: BorderRadius::MAX,
                             }
-                            template_value(control_box_shadow())
+                            control_box_shadow()
                             SliderThumb
                             // Focus rings follow the node's rounding, so the ring
                             // belongs on the round thumb, not the square frame.
                             FocusIndicator
-                            template_value(AnimState::scale(1.0, THUMB_GRABBED_SCALE))
+                            AnimState::scale(1.0, THUMB_GRABBED_SCALE)
                             UiTransform::default()
                             on(grab_thumb_on_press)
                             ThemeBackgroundToken(tokens::SLIDER_THUMB)

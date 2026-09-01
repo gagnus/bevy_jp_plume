@@ -75,13 +75,7 @@ fn leaf(id: u32, label: &str, icon: Icon, visible: bool) -> SceneNode {
     }
 }
 
-fn branch(
-    id: u32,
-    label: &str,
-    icon: Icon,
-    expanded: bool,
-    children: Vec<SceneNode>,
-) -> SceneNode {
+fn branch(id: u32, label: &str, icon: Icon, expanded: bool, children: Vec<SceneNode>) -> SceneNode {
     SceneNode {
         id,
         label: label.to_owned(),
@@ -265,10 +259,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             (Tool::Select, lucide::MOUSE_POINTER_2),
             (Tool::Move, lucide::MOVE),
             (Tool::Rotate, lucide::ROTATE_CW),
-            (
-                Tool::Scale,
-                lucide::SCALING,
-            ),
+            (Tool::Scale, lucide::SCALING),
         ] {
             let mut selected = state.tool == tool;
             if ui.tool_button(icon).checkable(&mut selected).flat().clicked {
@@ -300,10 +291,8 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
 
         // just to put the icons from windows chrome into the window...
         ui.separator();
-        ui.tool_button(lucide::MINUS)
-            .variant(ButtonVariant::Plain);
-        ui.tool_button(lucide::COPY)
-            .variant(ButtonVariant::Plain);
+        ui.tool_button(lucide::MINUS).variant(ButtonVariant::Plain);
+        ui.tool_button(lucide::COPY).variant(ButtonVariant::Plain);
         ui.tool_button(lucide::MAXIMIZE)
             .variant(ButtonVariant::Plain);
         ui.tool_button(lucide::X)
@@ -311,8 +300,7 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             .variant(ButtonVariant::Plain);
 
         ui.separator();
-        ui.tool_button(lucide::PALETTE)
-            .checkable(theme_editor_open);
+        ui.tool_button(lucide::PALETTE).checkable(theme_editor_open);
     })
     .background(bg)
     .padding(size::SPACE_TIGHT);

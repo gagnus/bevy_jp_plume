@@ -157,9 +157,9 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             column_gap: Val::ZERO,
         }
         Children [
-            space(em(0.25)),
+            @space(em(0.25)),
             (
-                caption(label)
+                @caption(label)
                 Node { width: em(1), flex_shrink: 0.0 }
             ),
             (
@@ -241,7 +241,7 @@ impl PlumeColorPicker {
                 align_items: AlignItems::Start,
             }
             ColorPickerFrame
-            template_value(ColorPickerValue(props.initial_color))
+            ColorPickerValue({props.initial_color})
             Children [
                 // The wheel over the alpha bar, which spans the wheel's width.
                 (
@@ -324,16 +324,16 @@ impl PlumeColorPicker {
                             }
                             ColorPickerSwatch
                         ),
-                        space(size::SPACE_TIGHT),
+                        @space(size::SPACE_TIGHT),
                         // sRGB channels and alpha, then a gap, then the HSV channels.
-                        channel_row("R", Channel::R, 3, 1.0),
-                        channel_row("G", Channel::G, 3, 1.0),
-                        channel_row("B", Channel::B, 3, 1.0),
+                        @channel_row("R", Channel::R, 3, 1.0),
+                        @channel_row("G", Channel::G, 3, 1.0),
+                        @channel_row("B", Channel::B, 3, 1.0),
                         {alpha_row},
-                        space(size::SPACE_TIGHT),
-                        channel_row("H", Channel::H, 0, 360.0),
-                        channel_row("S", Channel::S, 3, 1.0),
-                        channel_row("V", Channel::V, 3, 1.0),
+                        @space(size::SPACE_TIGHT),
+                        @channel_row("H", Channel::H, 0, 360.0),
+                        @channel_row("S", Channel::S, 3, 1.0),
+                        @channel_row("V", Channel::V, 3, 1.0),
                     ]
                 ),
             ]

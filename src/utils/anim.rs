@@ -78,6 +78,14 @@ pub(crate) struct AnimState {
     hide_at_zero: bool,
 }
 
+// Exists so `bsn!` accepts a bare `AnimState` expression (blanket `FromTemplate`
+// needs `Default`). A no-op scale, never a meaningful animation.
+impl Default for AnimState {
+    fn default() -> Self {
+        Self::new(AnimOutput::Scale(1.0, 1.0))
+    }
+}
+
 impl AnimState {
     /// Point the animation at `target`. First call adopts it instantly so ensure
     /// it is called once during setup.

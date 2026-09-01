@@ -38,12 +38,7 @@ pub struct AudioSettingsPlugin(pub bool);
 impl Plugin for AudioSettingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AudioSettings>()
-            .add_debug_dialog(
-                TITLE,
-                lucide::VOLUME_2,
-                self.0,
-                audio_settings_dialog,
-            )
+            .add_debug_dialog(TITLE, lucide::VOLUME_2, self.0, audio_settings_dialog)
             .add_systems(Update, log_on_change::<AudioSettings>);
     }
 }

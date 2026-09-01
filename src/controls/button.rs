@@ -123,7 +123,7 @@ impl PlumeButton {
         let box_shadow = props
             .variant
             .filled()
-            .then(|| bsn! { template_value(control_box_shadow()) });
+            .then(|| bsn! { control_box_shadow() });
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -134,9 +134,9 @@ impl PlumeButton {
                 border_radius: {props.border_radius},
             }
             Button
-            template_value(props.variant)
-            {box_shadow}
-            {props.checkable.then(|| bsn! { Checkable })}
+            props.variant
+            @box_shadow
+            @{props.checkable.then(|| bsn! { Checkable })}
             Hovered
             TabIndex(0)
             FocusIndicator

@@ -50,8 +50,8 @@ mod tests {
         let world = app.world_mut();
         let entity = world
             .spawn_scene(bsn! {
-                caption("Hello")
-                small_caps()
+                @caption("Hello")
+                @small_caps()
                 InheritableFont { font_size: PlumeFontSize::Em(1.25) }
             })
             .expect("scene spawns")

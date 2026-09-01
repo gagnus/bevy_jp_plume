@@ -114,8 +114,8 @@ impl PlumeColorEdit {
                 align_items: AlignItems::Start,
             }
             ColorEditFrame
-            template_value(ColorPickerValue(initial_color))
-            {rgb_only}
+            ColorPickerValue({initial_color})
+            @rgb_only
             Children [
                 // The button is the click target that toggles the popup.
                 (
@@ -133,7 +133,7 @@ impl PlumeColorEdit {
                                     flex_grow: 1.0,
                                 }
                             ),
-                            icon(lucide::CHEVRON_DOWN),
+                            @icon(lucide::CHEVRON_DOWN),
                         ],
                     }
                     ActivateOnPress
@@ -143,7 +143,7 @@ impl PlumeColorEdit {
                     }
                 ),
                 // The picker popup spawns into this socket while open.
-                popup_socket(),
+                @popup_socket(),
             ]
         }
     }

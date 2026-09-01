@@ -12,6 +12,7 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::resource::Resource;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res, ResMut};
+use bevy::log::warn;
 use bevy::picking::Pickable;
 use bevy::picking::events::{PointerMove, PointerPress};
 use bevy::reflect::Reflect;
@@ -43,6 +44,17 @@ pub struct Tooltip(pub String);
 /// shows. Takes precedence over [`Tooltip`] text on the same control.
 #[derive(Component, Clone)]
 pub struct TooltipContent(Arc<dyn Fn() -> Box<dyn SceneList> + Send + Sync>);
+
+// The default exists so `bsn!` accepts `TooltipContent` entries (blanket
+// `FromTemplate` needs `Default`); an unset one shows nothing and says so.
+impl Default for TooltipContent {
+    fn default() -> Self {
+        Self(Arc::new(|| {
+            warn!("TooltipContent contents not specified");
+            Box::new(bsn_list![])
+        }))
+    }
+}
 
 impl TooltipContent {
     /// Wrap a factory producing the tooltip's contents scene.
@@ -323,7 +335,7 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
         TooltipPanel
         ThemeBackgroundToken(tokens::TOOLTIP_BG)
         ThemeBorderToken(tokens::TOOLTIP_BORDER)
-        template_value(control_box_shadow())
+        control_box_shadow()
         Pickable::IGNORE
         InheritableThemeTextToken(tokens::TOOLTIP_TEXT)
         // Fully specified: tooltips stay standard-sized inside scaled subtrees.
@@ -336,13 +348,13 @@ pub(crate) fn tooltip_chrome() -> impl Scene {
 
 fn tooltip_panel(text: String) -> impl Scene {
     bsn! {
-        tooltip_box()
+        @tooltip_box()
         Children [
             (
-                tooltip_chrome()
+                @tooltip_chrome()
                 Children [
                     (
-                        caption(text)
+                        @caption(text)
                         Pickable::IGNORE
                     ),
                 ]
@@ -353,10 +365,10 @@ fn tooltip_panel(text: String) -> impl Scene {
 
 fn rich_tooltip_panel(contents: Box<dyn SceneList>) -> impl Scene {
     bsn! {
-        tooltip_box()
+        @tooltip_box()
         Children [
             (
-                tooltip_chrome()
+                @tooltip_chrome()
                 Children [
                     {contents},
                 ]

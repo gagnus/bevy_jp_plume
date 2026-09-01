@@ -66,8 +66,8 @@ pub struct CheckerUnderlay;
 struct ColorSwatchFill;
 
 // Whether this swatch shows alpha; `false` paints its color opaque.
-#[derive(Component, Clone, Reflect)]
-#[reflect(Component, Clone)]
+#[derive(Component, Clone, Default, Reflect)]
+#[reflect(Component, Clone, Default)]
 struct SwatchAlpha(bool);
 
 impl PlumeColorSwatch {
@@ -93,8 +93,8 @@ impl PlumeColorSwatch {
                 height: size::ROW_HEIGHT,
                 width: size::ROW_HEIGHT,
             }
-            template_value(ColorSwatchValue(props.initial_color))
-            template_value(SwatchAlpha(props.alpha))
+            ColorSwatchValue({props.initial_color})
+            SwatchAlpha({props.alpha})
             Children [
                 {checker},
                 (

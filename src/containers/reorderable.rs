@@ -66,7 +66,7 @@ impl PlumeReorderable {
     pub fn scene(props: PlumeReorderableProps) -> impl Scene {
         let contents = props.contents;
         bsn! {
-            reorderable_frame()
+            @reorderable_frame()
             Children [
                 {contents},
             ]
@@ -100,9 +100,9 @@ impl PlumeReorderableItem {
     pub fn scene(props: PlumeReorderableItemProps) -> impl Scene {
         let contents = props.contents;
         bsn! {
-            reorderable_item()
+            @reorderable_item()
             Children [
-                reorderable_grip(),
+                @reorderable_grip(),
                 {contents},
             ]
         }
@@ -240,7 +240,7 @@ pub(crate) fn reorderable_item() -> impl Scene {
 // while pressed, so it survives the pointer outrunning the glyph mid-drag.
 pub(crate) fn reorderable_grip() -> impl Scene {
     bsn! {
-        icon(lucide::GRIP_VERTICAL)
+        @icon(lucide::GRIP_VERTICAL)
         Node { width: size::ICON_WIDTH }
         ReorderGrip
         Hovered

@@ -243,20 +243,20 @@ impl PlumeSplitter {
             second,
         } = props;
         bsn! {
-            splitter_frame(axis, SplitSize::new(size), sized_pane)
-            template_value(SplitMin { first: min_first, second: min_second })
-            template_value(SplitDividerAutoHide(auto_hide))
-            template_value(SplitCollapsible { first: collapsible_first, second: collapsible_second })
+            @splitter_frame(axis, SplitSize::new(size), sized_pane)
+            SplitMin { first: min_first, second: min_second }
+            SplitDividerAutoHide(auto_hide)
+            SplitCollapsible { first: collapsible_first, second: collapsible_second }
             Children [
                 (
-                    splitter_pane(SplitPane::First)
+                    @splitter_pane(SplitPane::First)
                     Children [
                         {first},
                     ]
                 ),
-                splitter_divider(axis),
+                @splitter_divider(axis),
                 (
-                    splitter_pane(SplitPane::Second)
+                    @splitter_pane(SplitPane::Second)
                     Children [
                         {second},
                     ]
@@ -295,9 +295,9 @@ pub(crate) fn splitter_frame(
             min_height: Val::ZERO,
         }
         SplitterRoot
-        template_value(axis)
-        template_value(size)
-        template_value(SplitSized(sized_pane))
+        axis
+        size
+        SplitSized(sized_pane)
         SplitMin
         // `Pickable` is per-entity, so the frame is its own hit over the same area as
         // the panes and must ignore picks too, or theirs buys nothing. The divider
@@ -315,7 +315,7 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
             min_width: Val::ZERO,
             min_height: Val::ZERO,
         }
-        template_value(pane)
+        pane
         // A pane is pure layout, like `screen`, so it lets picks fall through its empty
         // parts — content over a 3d viewport is the case that needs it.
         Pickable::IGNORE

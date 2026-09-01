@@ -112,10 +112,10 @@ struct TreeRow(usize);
 #[derive(Component, Clone, Copy, Default)]
 struct LayerList;
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct LayerRow(LayerId);
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct LayerEnabled(LayerId);
 
 fn layer_mut(s: &mut Inspector, id: LayerId) -> Option<&mut Layer> {
@@ -157,7 +157,7 @@ fn push_layers(
 
 // Marks a panel tab's body with the tab that shows it; the strip is bodyless,
 // so `push_panel_tab` does the swapping.
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct TabPane(Tab);
 
 // Marks the footer's live rem readout.
@@ -199,9 +199,16 @@ enum NodeBound {
     Visible(usize),
 }
 
+// Manual: `#[default]` needs a unit variant, and both variants carry an index.
+impl Default for NodeBound {
+    fn default() -> Self {
+        NodeBound::Expanded(0)
+    }
+}
+
 fn on_number(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<f32>>, mut s: ResMut<Inspector>| {
             if let Some(field) = bound.number(&mut s) {
                 *field = ev.value;
@@ -212,7 +219,7 @@ fn on_number(bound: Bound) -> impl Scene {
 
 fn on_text(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<String>>, mut s: ResMut<Inspector>| {
             if let Some(field) = bound.text(&mut s) {
                 field.clone_from(&ev.value);
@@ -223,7 +230,7 @@ fn on_text(bound: Bound) -> impl Scene {
 
 fn on_color(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<Color>>, mut s: ResMut<Inspector>| {
             if let Some(field) = bound.color(&mut s) {
                 *field = ev.value;
@@ -234,7 +241,7 @@ fn on_color(bound: Bound) -> impl Scene {
 
 fn on_choice(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
             bound.set_choice(&mut s, ev.value);
         })
@@ -323,13 +330,13 @@ fn push_tree_rows(
 
 // The strip's pooled tabs and the header parts a system pushes into: retained tabs
 // are spawned once, so opening and closing shows and hides slots.
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct DocSlot(usize);
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct DocName(usize);
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 struct DocDirty(usize);
 
 #[derive(Component, Default, Clone)]
@@ -434,15 +441,15 @@ fn push_documents(
 struct InspectorPanel;
 
 fn scene() -> impl SceneList {
-    bsn_list![root()]
+    bsn_list![@root()]
 }
 
 fn root() -> impl Scene {
     bsn! {
-        screen()
-        template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
+        @screen()
+        ThemeBackgroundSlot(ThemeSlot::Neutral0)
         Children [
-            top_bar(),
+            @top_bar(),
             (
                 // The viewport and the panel, with a divider to re-proportion
                 // them. The panel is the sized pane, anchored in em so it holds
@@ -456,8 +463,8 @@ fn root() -> impl Scene {
                     @min_first: Val::ZERO,
                     @min_second: em(28),
                     @collapsible_second: true,
-                    @first: bsn_list![documents()],
-                    @second: bsn_list![panel()],
+                    @first: bsn_list![@documents()],
+                    @second: bsn_list![@panel()],
                     @auto_hide: true,
                 }
                 Node { flex_grow: 1.0 }
@@ -472,14 +479,14 @@ fn root() -> impl Scene {
 fn export_modal() -> impl Scene {
     bsn! {
         @PlumeModal {
-            @title: bsn_list![modal_title("Export Scene")],
+            @title: bsn_list![@modal_title("Export Scene")],
             @width: em(26.0),
             @contents: bsn_list![
-                caption("Nothing behind this takes a click until it is answered."),
+                @caption("Nothing behind this takes a click until it is answered."),
                 (
-                    row()
+                    @row()
                     Children [
-                        (caption("Culling") Node { width: em(6.0) }),
+                        (@caption("Culling") Node { width: em(6.0) }),
                         (
                             @PlumeSelect {
                                 @options: {Cull::select_options()},
@@ -489,26 +496,26 @@ fn export_modal() -> impl Scene {
                         ),
                     ]
                 ),
-                separator(),
+                @separator(),
                 (
-                    row()
+                    @row()
                     Children [
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(lucide::FOLDER_OPEN) },
+                                @caption: bsn! { @icon(lucide::FOLDER_OPEN) },
                             }
                             Tooltip("Pick the output directory")
                         ),
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(lucide::UNDO_2) },
+                                @caption: bsn! { @icon(lucide::UNDO_2) },
                             }
                             Tooltip("Reset these settings to their defaults")
                         ),
-                        flex_spacer(),
+                        @flex_spacer(),
                         (
                             @PlumeButton {
-                                @caption: bsn! { caption("Cancel") },
+                                @caption: bsn! { @caption("Cancel") },
                                 @variant: ButtonVariant::Outline,
                             }
                             Tooltip("Close without writing anything")
@@ -516,7 +523,7 @@ fn export_modal() -> impl Scene {
                         ),
                         (
                             @PlumeButton {
-                                @caption: bsn! { caption("Export") },
+                                @caption: bsn! { @caption("Export") },
                                 @variant: ButtonVariant::Primary,
                             }
                             Tooltip("Write the scene with the settings above")
@@ -541,12 +548,12 @@ fn close_export_modal(activate: On<Activate>, mut commands: Commands) {
 fn top_bar() -> impl Scene {
     let tabs: Vec<_> = (0..MAX_DOCUMENTS).map(document_tab).collect();
     bsn! {
-        row()
+        @row()
         Children [
-            menu_bar(),
-            separator(),
+            @menu_bar(),
+            @separator(),
             (
-                row()
+                @row()
                 Children [
                     (
                         // No `@body`, and no tab names one: a strip that only
@@ -560,7 +567,7 @@ fn top_bar() -> impl Scene {
                     ),
                     (
                         @PlumeToolButton {
-                            @caption: bsn! { icon(lucide::PLUS) },
+                            @caption: bsn! { @icon(lucide::PLUS) },
                             @variant: ButtonVariant::Plain,
                         }
                         Flat
@@ -594,16 +601,16 @@ fn menu_bar() -> impl Scene {
                         }
                         on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.save_active())
                     ),
-                    separator(),
+                    @separator(),
                     (
                         @PlumeMenuButton { @label: "Recent" }
                         Children [
-                            recent_item("corridor_00.rs"),
-                            recent_item("vault_01.wgsl"),
-                            recent_item("torch_02.ron"),
+                            @recent_item("corridor_00.rs"),
+                            @recent_item("vault_01.wgsl"),
+                            @recent_item("torch_02.ron"),
                         ]
                     ),
-                    separator(),
+                    @separator(),
                     (
                         @PlumeMenuButton { @label: "Export…" }
                         // Parentless: the barrier is a fixed, full-viewport layout
@@ -616,7 +623,7 @@ fn menu_bar() -> impl Scene {
                             }
                         })
                     ),
-                    separator(),
+                    @separator(),
                     (
                         @PlumeMenuButton { @label: "Exit" }
                         InteractionDisabled
@@ -679,15 +686,15 @@ struct HudRoot;
 // the strip that picks the document lives in `top_bar`.
 fn documents() -> impl Scene {
     bsn! {
-        column()
+        @column()
         Node {
             flex_grow: 1.0,
             min_height: Val::ZERO,
             row_gap: Val::ZERO,
         }
         Children [
-            viewport(),
-            viewport_hud(),
+            @viewport(),
+            @viewport_hud(),
         ]
     }
 }
@@ -696,16 +703,16 @@ fn document_tab(slot: usize) -> impl Scene {
     bsn! {
         @PlumeTab {
             @caption: bsn_list![
-                icon(lucide::FILE_CODE),
+                @icon(lucide::FILE_CODE),
                 (
                     // `tab_label`'s box, hand-built because the caption inside it
                     // has to carry the marker `push_documents` writes through.
-                    row()
+                    @row()
                     Node { min_width: Val::ZERO, overflow: Overflow::clip() }
                     Children [
                         (
-                            caption("")
-                            template_value(DocName(slot))
+                            @caption("")
+                            DocName(slot)
                             Node { min_width: Val::ZERO }
                             TextLayout { linebreak: LineBreak::NoWrap }
                         ),
@@ -721,12 +728,12 @@ fn document_tab(slot: usize) -> impl Scene {
                         flex_shrink: 0.0,
                         display: Display::None,
                     }
-                    template_value(DocDirty(slot))
+                    DocDirty(slot)
                     BackgroundColor(Color::WHITE)
                 ),
                 (
                     @PlumeToolButton {
-                        @caption: bsn! { icon(lucide::X) },
+                        @caption: bsn! { @icon(lucide::X) },
                         @variant: ButtonVariant::Plain,
                     }
                     Flat
@@ -738,7 +745,7 @@ fn document_tab(slot: usize) -> impl Scene {
                 ),
             ],
         }
-        template_value(DocSlot(slot))
+        DocSlot(slot)
         Node { display: Display::None, min_width: em(6) }
     }
 }
@@ -747,24 +754,25 @@ fn document_tab(slot: usize) -> impl Scene {
 // absolutely positioned, so the corner it pins to is the pane's own. The
 // `Propagate` is the retained spelling of the imm twin's `.theme(hud_theme())`.
 fn viewport_hud() -> impl Scene {
+    let theme = hud_theme();
     bsn! {
-        template_value(Propagate(hud_theme()))
+        Propagate::<ThemeId>(theme)
         @PlumeDialog {
             @header: false,
             @inset: {Corner::BottomRight.inset(em(1), em(1))},
             @contents: bsn_list![
                 (
-                    row()
+                    @row()
                     Children [
-                        icon(lucide::BOXES),
+                        @icon(lucide::BOXES),
                         (
-                            caption("")
+                            @caption("")
                             HudCount
                         ),
-                        separator(),
+                        @separator(),
                         (
                             @PlumeToolButton {
-                                @caption: bsn! { icon(lucide::SAVE) },
+                                @caption: bsn! { @icon(lucide::SAVE) },
                                 @variant: ButtonVariant::Plain,
                             }
                             Flat
@@ -783,24 +791,24 @@ fn viewport_hud() -> impl Scene {
 
 fn viewport() -> impl Scene {
     bsn! {
-        column()
+        @column()
         ViewportPane
         Node { flex_grow: 1.0, min_height: Val::ZERO }
         Children [
-            flex_spacer(),
+            @flex_spacer(),
             (
-                row()
+                @row()
                 Children [
-                    flex_spacer(),
-                    icon(lucide::BOXES),
+                    @flex_spacer(),
+                    @icon(lucide::BOXES),
                     (
-                        caption("")
+                        @caption("")
                         ViewportLabel
                     ),
-                    flex_spacer(),
+                    @flex_spacer(),
                 ]
             ),
-            flex_spacer(),
+            @flex_spacer(),
         ]
     }
 }
@@ -813,7 +821,7 @@ fn panel() -> impl Scene {
         ..
     } = Inspector::initial();
     bsn! {
-        column()
+        @column()
         InspectorPanel
         // Width and minimum belong to the splitter now; the panel just fills
         // the pane it is given. The tab row sits on the screen's own ground;
@@ -824,20 +832,20 @@ fn panel() -> impl Scene {
             row_gap: Val::ZERO,
         }
         Children [
-            tab_row(),
+            @tab_row(),
             (
-                column()
+                @column()
                 Node {
                     flex_grow: 1.0,
                     min_height: Val::ZERO,
                     padding: size::SPACE,
                 }
-                template_value(ThemeBackgroundSlot(ThemeSlot::Neutral1))
+                ThemeBackgroundSlot(ThemeSlot::Neutral1)
                 Children [
-                    tab_pane(Tab::Material, bsn_list![material_tab(material)]),
-                    tab_pane(Tab::Hierarchy, bsn_list![hierarchy_tab(hierarchy.nodes)]),
-                    separator(),
-                    footer(),
+                    @tab_pane(Tab::Material, bsn_list![@material_tab(material)]),
+                    @tab_pane(Tab::Hierarchy, bsn_list![@hierarchy_tab(hierarchy.nodes)]),
+                    @separator(),
+                    @footer(),
                 ]
             ),
         ]
@@ -849,7 +857,7 @@ fn panel() -> impl Scene {
 // `push_panel_tab` swaps the panes below.
 fn tab_row() -> impl Scene {
     bsn! {
-        row()
+        @row()
         Node { padding: UiRect::right(size::SPACE) }
         Children [
             (
@@ -858,16 +866,16 @@ fn tab_row() -> impl Scene {
                         (
                             @PlumeTab {
                                 @caption: bsn_list![
-                                    icon(lucide::PALETTE),
-                                    caption("Material"),
+                                    @icon(lucide::PALETTE),
+                                    @caption("Material"),
                                 ],
                             }
                             Selected
                         ),
                         @PlumeTab {
                             @caption: bsn_list![
-                                icon(lucide::FOLDER_TREE),
-                                caption("Hierarchy"),
+                                @icon(lucide::FOLDER_TREE),
+                                @caption("Hierarchy"),
                             ],
                         },
                     ],
@@ -876,17 +884,17 @@ fn tab_row() -> impl Scene {
                     s.tab = Tab::from_index(ev.value);
                 })
             ),
-            flex_spacer(),
+            @flex_spacer(),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(lucide::SAVE) },
+                    @caption: bsn! { @icon(lucide::SAVE) },
                 }
                 Flat
                 Tooltip("Save material")
             ),
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(lucide::UNDO_2) },
+                    @caption: bsn! { @icon(lucide::UNDO_2) },
                 }
                 Flat
                 Tooltip("Revert to the last saved values")
@@ -898,11 +906,11 @@ fn tab_row() -> impl Scene {
             // which keeps its tool-button look. Rows are the menu bar's.
             (
                 @PlumeToolButton {
-                    @caption: bsn! { icon(lucide::ELLIPSIS_VERTICAL) },
+                    @caption: bsn! { @icon(lucide::ELLIPSIS_VERTICAL) },
                 }
                 Flat
                 Tooltip("More material actions")
-                menu_anchor(bsn_list![
+                @menu_anchor(bsn_list![
                     (
                         @PlumeMenuButton {
                             @label: "Copy Values",
@@ -914,7 +922,7 @@ fn tab_row() -> impl Scene {
                         @PlumeMenuButton { @label: "Paste Values" }
                         InteractionDisabled
                     ),
-                    separator(),
+                    @separator(),
                     (
                         @PlumeMenuButton { @label: "Autosave" }
                         Checkable
@@ -936,8 +944,8 @@ fn tab_pane(tab: Tab, contents: impl SceneList) -> impl Scene {
         Display::None
     };
     bsn! {
-        column()
-        template_value(TabPane(tab))
+        @column()
+        TabPane(tab)
         Node {
             flex_grow: 1.0,
             min_height: Val::ZERO,
@@ -959,14 +967,14 @@ fn material_tab(m: Material) -> impl Scene {
             @contents: bsn_list![
                 @PlumeSection {
                     @header: bsn! {
-                        caption("Surface")
-                        small_caps()
+                        @caption("Surface")
+                        @small_caps()
                     },
                     @contents: bsn_list![
                         (
-                            row()
+                            @row()
                             Children [
-                                field_label("Name"),
+                                @field_label("Name"),
                                 @PlumeColorSwatch { @initial_color: base },
                                 (
                                     @PlumeTextInput {
@@ -974,37 +982,37 @@ fn material_tab(m: Material) -> impl Scene {
                                         @placeholder: {Some("Material name".to_string())},
                                     }
                                     Node { width: Val::ZERO, flex_grow: 1.0 }
-                                    on_text(Bound::Name)
+                                    @on_text(Bound::Name)
                                 ),
                             ]
                         ),
-                        color_row("Base color", base, Bound::BaseColor),
-                        color_row("Emissive", emissive, Bound::Emissive),
+                        @color_row("Base color", base, Bound::BaseColor),
+                        @color_row("Emissive", emissive, Bound::Emissive),
                     ],
                 },
                 @PlumeSection {
                     @header: bsn! {
-                        caption("Shading")
-                        small_caps()
+                        @caption("Shading")
+                        @small_caps()
                     },
                     @contents: bsn_list![
-                        radio_row("Blend", blend, Bound::Blend),
-                        radio_row("Cull", cull, Bound::Cull),
-                        slider_row("Metallic", metallic, Bound::Metallic),
-                        slider_row("Roughness", roughness, Bound::Roughness),
+                        @radio_row("Blend", blend, Bound::Blend),
+                        @radio_row("Cull", cull, Bound::Cull),
+                        @slider_row("Metallic", metallic, Bound::Metallic),
+                        @slider_row("Roughness", roughness, Bound::Roughness),
                     ],
                 },
-                layers_section(layers),
+                @layers_section(layers),
                 (
                     @PlumeSection {
                         @header: bsn! {
-                            caption("Color picker")
-                            small_caps()
+                            @caption("Color picker")
+                            @small_caps()
                         },
                         @contents: bsn_list![
                             (
                                 @PlumeColorPicker { @initial_color: base }
-                                on_color(Bound::Picker)
+                                @on_color(Bound::Picker)
                             ),
                         ],
                     }
@@ -1022,8 +1030,8 @@ fn layers_section(layers: Vec<Layer>) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Layers")
-                small_caps()
+                @caption("Layers")
+                @small_caps()
             },
             @contents: bsn_list![
                 (
@@ -1050,9 +1058,9 @@ fn layer_row(layer: Layer) -> impl Scene {
     bsn! {
         @PlumeReorderableItem {
             @contents: bsn_list![
-                icon(glyph),
+                @icon(glyph),
                 (
-                    caption(name)
+                    @caption(name)
                     Node { width: label_width }
                 ),
                 (
@@ -1063,12 +1071,12 @@ fn layer_row(layer: Layer) -> impl Scene {
                     }
                     SliderValue(opacity)
                     Node { width: Val::ZERO, flex_grow: 1.0 }
-                    on_number(Bound::Opacity(id))
+                    @on_number(Bound::Opacity(id))
                 ),
                 (
                     @PlumeToggleSwitch
-                    template_value(LayerEnabled(id))
-                    {enabled.then(|| bsn! { Checked })}
+                    LayerEnabled(id)
+                    @{enabled.then(|| bsn! { Checked })}
                     on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
                         if let Some(layer) = layer_mut(&mut s, id) {
                             layer.enabled = ev.value;
@@ -1077,7 +1085,7 @@ fn layer_row(layer: Layer) -> impl Scene {
                 ),
             ],
         }
-        template_value(LayerRow(id))
+        LayerRow(id)
     }
 }
 
@@ -1088,17 +1096,17 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
         .map(|(i, node)| node_row(i, node))
         .collect();
     bsn! {
-        column()
+        @column()
         Node { flex_grow: 1.0, min_height: Val::ZERO }
         Children [
             (
-                row()
+                @row()
                 Children [
-                    icon(lucide::SEARCH),
+                    @icon(lucide::SEARCH),
                     (
                         @PlumeTextInput { @placeholder: {Some("Filter…".to_string())} }
                         Node { width: Val::ZERO, flex_grow: 1.0 }
-                        on_text(Bound::Filter)
+                        @on_text(Bound::Filter)
                     ),
                 ]
             ),
@@ -1111,24 +1119,24 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
     let (name, glyph, depth) = (node.name, node.icon, node.depth);
     let parent_of_next = node.expanded;
     bsn! {
-        row()
+        @row()
         TreeRow(index)
         Children [
-            space(em(depth)),
+            @space(em(depth)),
             (
                 @PlumeDisclosure
-                template_value(NodeBound::Expanded(index))
-                {parent_of_next.then(|| bsn! { Checked })}
+                NodeBound::Expanded(index)
+                @{parent_of_next.then(|| bsn! { Checked })}
                 on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
                     s.hierarchy.nodes[index].expanded = ev.value;
                 })
             ),
-            icon(glyph),
-            caption(name),
-            flex_spacer(),
+            @icon(glyph),
+            @caption(name),
+            @flex_spacer(),
             (
                 @PlumeToggleSwitch
-                template_value(NodeBound::Visible(index))
+                NodeBound::Visible(index)
                 Checked
                 on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
                     s.hierarchy.nodes[index].visible = ev.value;
@@ -1140,9 +1148,9 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
 
 fn footer() -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            field_label("Rem"),
+            @field_label("Rem"),
             (
                 @PlumeSlider {
                     @min: 10.,
@@ -1157,7 +1165,7 @@ fn footer() -> impl Scene {
                 })
             ),
             (
-                caption(format!("{}", size::MEDIUM_FONT_PX))
+                @caption(format!("{}", size::MEDIUM_FONT_PX))
                 RemValue
                 Node { width: em(2) }
             ),
@@ -1168,19 +1176,19 @@ fn footer() -> impl Scene {
 fn field_label(text: &str) -> impl Scene {
     let text = text.to_string();
     bsn! {
-        caption(text)
+        @caption(text)
         Node { width: GUTTER }
     }
 }
 
 fn color_row(label: &str, color: Color, bound: Bound) -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            field_label(label),
+            @field_label(label),
             (
                 @PlumeColorEdit { @initial_color: color }
-                on_color(bound)
+                @on_color(bound)
             ),
         ]
     }
@@ -1188,9 +1196,9 @@ fn color_row(label: &str, color: Color, bound: Bound) -> impl Scene {
 
 fn slider_row(label: &str, value: f32, bound: Bound) -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            field_label(label),
+            @field_label(label),
             (
                 @PlumeSlider {
                     @min: 0.0,
@@ -1199,7 +1207,7 @@ fn slider_row(label: &str, value: f32, bound: Bound) -> impl Scene {
                 }
                 SliderValue(value)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
-                on_number(bound)
+                @on_number(bound)
             ),
         ]
     }
@@ -1211,26 +1219,26 @@ fn radio_row<T: Options>(label: &str, selected: T, bound: Bound) -> impl Scene {
         .map(|&option| {
             let checked = option == selected;
             bsn! {
-                @PlumeRadio { @caption: bsn! { caption(option.label().to_string()) } }
-                {checked.then(|| bsn! { Checked })}
+                @PlumeRadio { @caption: bsn! { @caption(option.label().to_string()) } }
+                @{checked.then(|| bsn! { Checked })}
             }
         })
         .collect();
     bsn! {
-        row()
+        @row()
         Children [
-            field_label(label),
+            @field_label(label),
             (
                 @PlumeRadioGroup
                 Node {
                     flex_direction: FlexDirection::Row,
                     column_gap: size::SPACE,
                 }
-                template_value(bound)
+                bound
                 Children [
                     {radios},
                 ]
-                on_choice(bound)
+                @on_choice(bound)
             ),
         ]
     }

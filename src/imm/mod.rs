@@ -9,8 +9,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 
 use bevy::app::Plugin;
 use bevy::ecs::change_detection::Tick;
-use bevy::ecs::query::FilteredAccessSet;
-use bevy::ecs::system::{SystemMeta, SystemParam, SystemParamValidationError};
+use bevy::ecs::system::{SystemAccess, SystemMeta, SystemParam, SystemParamValidationError};
 use bevy::ecs::world::World;
 use bevy::ecs::world::unsafe_world_cell::UnsafeWorldCell;
 use bevy::picking::hover::Hovered;
@@ -285,15 +284,10 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
     fn init_access(
         state: &Self::State,
         system_meta: &mut SystemMeta,
-        component_access_set: &mut FilteredAccessSet,
+        system_access: &mut SystemAccess,
         world: &mut World,
     ) {
-        <CtxStatic as SystemParam>::init_access(
-            &state.ctx,
-            system_meta,
-            component_access_set,
-            world,
-        );
+        <CtxStatic as SystemParam>::init_access(&state.ctx, system_meta, system_access, world);
     }
 
     fn apply(state: &mut Self::State, system_meta: &SystemMeta, world: &mut World) {

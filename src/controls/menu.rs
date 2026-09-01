@@ -12,6 +12,7 @@ use bevy::ecs::query::{Changed, Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, ResMut};
+use bevy::ecs::template::FromTemplate;
 use bevy::input::ButtonState;
 use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::input_focus::tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation};
@@ -98,16 +99,16 @@ pub struct PlumeMenuButtonProps {
 impl PlumeMenuButton {
     fn scene(props: PlumeMenuButtonProps) -> impl Scene {
         bsn! {
-            menu_button_row(props.label, props.shortcut)
+            @menu_button_row(props.label, props.shortcut)
             Children [
                 (
-                    popup_socket()
+                    @popup_socket()
                     MenuChrome
                     Children [
                         (
                             // Pre-rendered popup: hidden while closed, so items keep
                             // their observers and state across open/close.
-                            menu_frame_chrome()
+                            @menu_frame_chrome()
                             MenuChrome
                             Node { display: Display::None }
                             Visibility::Hidden
@@ -147,7 +148,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
         Children [
             (
                 // Check gutter: reserved on every item so labels align.
-                icon(lucide::CHECK)
+                @icon(lucide::CHECK)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCheckIcon
@@ -157,7 +158,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
                 // The popup's height is first measured inside the narrow anchor
                 // socket; a wrapping label bakes that taller estimate into the
                 // frame. Menu labels never wrap.
-                caption(label)
+                @caption(label)
                 TextLayout { linebreak: LineBreak::NoWrap }
                 MenuChrome
             ),
@@ -166,7 +167,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
                 MenuChrome
             ),
             (
-                caption(shortcut)
+                @caption(shortcut)
                 Node { display: shortcut_display }
                 TextLayout { linebreak: LineBreak::NoWrap }
                 MenuChrome
@@ -175,7 +176,7 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
             ),
             (
                 // Submenu caret gutter; only submenus show the glyph.
-                icon(lucide::CHEVRON_RIGHT)
+                @icon(lucide::CHEVRON_RIGHT)
                 Node { width: size::ICON_WIDTH }
                 MenuChrome
                 MenuCaretIcon
@@ -203,7 +204,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
         PopupSurface
         ThemeBackgroundToken(tokens::MENU_BG)
         ThemeBorderToken(tokens::MENU_BORDER)
-        template_value(dialog_box_shadow())
+        dialog_box_shadow()
         GlobalZIndex(z_order::POPUP)
         OverrideClip
         InheritableThemeTextToken(tokens::TEXT_DIM)
@@ -223,13 +224,13 @@ pub(crate) fn imm_menu_anchor(
     let item = role == MenuButtonRole::Item;
     let submenu = role == MenuButtonRole::Submenu;
     bsn! {
-        menu_button_row(label, shortcut)
+        @menu_button_row(label, shortcut)
         MenuSelfManaged
-        template_value(role)
-        {bar.then(|| bsn! { MenuButton })}
-        {item.then(|| bsn! { MenuItem })}
-        {submenu.then(|| bsn! { AccessibilityNode(accesskit::Node::new(Role::MenuItem)) })}
-        {checkable.then(|| bsn! { Checkable })}
+        role
+        @{bar.then(|| bsn! { MenuButton })}
+        @{item.then(|| bsn! { MenuItem })}
+        @{submenu.then(|| bsn! { AccessibilityNode(accesskit::Node::new(Role::MenuItem)) })}
+        @{checkable.then(|| bsn! { Checkable })}
     }
 }
 
@@ -241,7 +242,7 @@ pub(crate) fn menu_anchor_base() -> impl Scene {
         MenuButtonRow
         MenuAnchorHost
         MenuSelfManaged
-        template_value(MenuButtonRole::Bar)
+        MenuButtonRole::Bar
         MenuButton
         on(menu_root_on_menu_event)
     }
@@ -252,20 +253,20 @@ pub(crate) fn menu_anchor_base() -> impl Scene {
 /// Imm twin: [`ImmResponse::menu`](crate::imm::ImmResponse::menu).
 pub fn menu_anchor(items: impl SceneList) -> impl Scene {
     bsn! {
-        menu_anchor_base()
+        @menu_anchor_base()
         Children [
             (
-                popup_socket()
+                @popup_socket()
                 MenuChrome
                 Children [
                     (
                         // Wired here rather than by the classifier, which this anchor
                         // opts out of along with the child adoption that would
                         // swallow the control's own children.
-                        menu_frame_chrome()
+                        @menu_frame_chrome()
                         MenuChrome
                         MenuPopup
-                        template_value(popover_for(MenuButtonRole::Bar))
+                        popover_for(MenuButtonRole::Bar)
                         Node { display: Display::None }
                         Visibility::Hidden
                         Children [
@@ -289,17 +290,17 @@ pub(crate) fn imm_menu_frame(
     let bar_focus = (!submenu).then(|| MenuFocusState::Opening(nav.unwrap_or(NavAction::First)));
     let sub_focus = submenu.then_some(nav).flatten().map(SubmenuOpening);
     bsn! {
-        menu_frame_chrome()
-        template_value(MenuAnchorLink(anchor))
-        template_value(popover_for(role))
+        @menu_frame_chrome()
+        MenuAnchorLink(anchor)
+        popover_for(role)
         on(imm_frame_on_menu_event)
-        {(!submenu).then(|| bsn! { MenuPopup })}
-        {submenu.then(|| bsn! {
-            template_value(TabGroup::modal())
+        @{(!submenu).then(|| bsn! { MenuPopup })}
+        @{submenu.then(|| bsn! {
+            TabGroup::modal()
             AccessibilityNode(accesskit::Node::new(Role::MenuListPopup))
         })}
-        {bar_focus.map(|state| bsn! { template_value(state) })}
-        {sub_focus.map(|state| bsn! { template_value(state) })}
+        @{bar_focus.map(|state| bsn! { state })}
+        @{sub_focus.map(|state| bsn! { state })}
     }
 }
 
@@ -366,11 +367,12 @@ struct MenuCaretIcon;
 pub(crate) struct MenuShortcutText;
 
 // What a menu button is, derived from where it sits.
-#[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(crate) enum MenuButtonRole {
     // Opens a menu below itself: a bar child or a standalone dropdown button.
     Bar,
     // A pickable row inside a menu.
+    #[default]
     Item,
     // A row that opens a nested menu beside itself.
     Submenu,
@@ -399,7 +401,7 @@ pub(crate) struct MenuAnchorHost;
 // On an imm popup frame: the menu button it belongs to. The frame is unrooted
 // (not a descendant of its anchor), so event routing and ancestor walks jump
 // through this instead of `ChildOf`.
-#[derive(Component, Clone, Copy)]
+#[derive(Component, FromTemplate, Clone, Copy)]
 pub(crate) struct MenuAnchorLink(pub(crate) Entity);
 
 // A just-opened submenu popup waiting for its first-item focus; the headless

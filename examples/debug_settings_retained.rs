@@ -152,7 +152,7 @@ fn push_ui_scale(
 
 fn on_flag(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<bool>>, mut s: ResMut<DebugSettings>| {
             if let Some(field) = bound.flag(&mut s) {
                 *field = ev.value;
@@ -163,7 +163,7 @@ fn on_flag(bound: Bound) -> impl Scene {
 
 fn on_number(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<f32>>, mut s: ResMut<DebugSettings>| {
             if let Some(field) = bound.number(&mut s) {
                 *field = ev.value;
@@ -174,7 +174,7 @@ fn on_number(bound: Bound) -> impl Scene {
 
 fn on_text(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<String>>, mut s: ResMut<DebugSettings>| {
             if let Some(field) = bound.text(&mut s) {
                 field.clone_from(&ev.value);
@@ -185,7 +185,7 @@ fn on_text(bound: Bound) -> impl Scene {
 
 fn on_choice(bound: Bound) -> impl Scene {
     bsn! {
-        template_value(bound)
+        bound
         on(move |ev: On<ValueChange<usize>>, mut s: ResMut<DebugSettings>| {
             bound.set_choice(&mut s, ev.value);
         })
@@ -193,7 +193,7 @@ fn on_choice(bound: Bound) -> impl Scene {
 }
 
 fn scene() -> impl SceneList {
-    bsn_list![root()]
+    bsn_list![@root()]
 }
 
 fn root() -> impl Scene {
@@ -202,9 +202,9 @@ fn root() -> impl Scene {
             width: percent(100),
             height: percent(100),
         }
-        template_value(ThemeBackgroundSlot(ThemeSlot::Neutral0))
+        ThemeBackgroundSlot(ThemeSlot::Neutral0)
         Children [
-            debug_options_dialog(),
+            @debug_options_dialog(),
         ]
     }
 }
@@ -214,35 +214,35 @@ fn debug_options_dialog() -> impl Scene {
     bsn! {
         @PlumeDialog {
             @title: bsn! {
-                caption("Debug Options")
+                @caption("Debug Options")
                 InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
             },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
             @contents: bsn_list![
                 (
-                    row()
+                    @row()
                     Node { align_items: AlignItems::Start }
                     Children [
                         (
-                            debug_column()
+                            @debug_column()
                             Children [
-                                rendering_section(&s),
-                                physics_section(&s),
-                                interface_section(&s),
+                                @rendering_section(&s),
+                                @physics_section(&s),
+                                @interface_section(&s),
                             ]
                         ),
                         (
-                            debug_column()
+                            @debug_column()
                             Children [
-                                diagnostics_section(&s),
-                                cheats_section(&s),
+                                @diagnostics_section(&s),
+                                @cheats_section(&s),
                             ]
                         ),
                     ]
                 ),
-                separator(),
-                footer(),
+                @separator(),
+                @footer(),
             ],
         }
     }
@@ -254,22 +254,22 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Rendering")
-                small_caps()
+                @caption("Rendering")
+                @small_caps()
             },
             @contents: bsn_list![
                 (
-                    checkbox("Wireframe", Bound::Wireframe, wireframe)
+                    @checkbox("Wireframe", Bound::Wireframe, wireframe)
                     Tooltip("Draw all meshes as wireframe")
                 ),
-                checkbox("Show colliders", Bound::ShowColliders, show_colliders),
-                checkbox("Freeze frustum culling", Bound::FreezeCulling, freeze),
+                @checkbox("Show colliders", Bound::ShowColliders, show_colliders),
+                @checkbox("Freeze frustum culling", Bound::FreezeCulling, freeze),
                 (
-                    select_row("View mode", Bound::ViewMode, ViewMode::select_options(), view_mode, 4)
+                    @select_row("View mode", Bound::ViewMode, ViewMode::select_options(), view_mode, 4)
                     Tooltip("Which render pass fills the viewport")
                 ),
                 (
-                    slider_row("Gamma", Bound::Gamma, gamma, 0.5, 3.0, 2, None)
+                    @slider_row("Gamma", Bound::Gamma, gamma, 0.5, 3.0, 2, None)
                     Tooltip("Display gamma correction")
                 ),
             ],
@@ -282,15 +282,15 @@ fn physics_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Physics")
-                small_caps()
+                @caption("Physics")
+                @small_caps()
             },
             @contents: bsn_list![
                 (
-                    checkbox("Pause simulation", Bound::PauseSim, pause_sim)
+                    @checkbox("Pause simulation", Bound::PauseSim, pause_sim)
                     Tooltip("Halt the physics clock; rendering keeps running")
                 ),
-                slider_row("Time scale", Bound::TimeScale, time_scale, 0.5, 2.0, 2, None),
+                @slider_row("Time scale", Bound::TimeScale, time_scale, 0.5, 2.0, 2, None),
             ],
         }
     }
@@ -301,12 +301,12 @@ fn interface_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Interface")
-                small_caps()
+                @caption("Interface")
+                @small_caps()
             },
             @contents: bsn_list![
                 (
-                    slider_row("UI scale", Bound::UiScale, ui_scale, 0.5, 2.0, 2, None)
+                    @slider_row("UI scale", Bound::UiScale, ui_scale, 0.5, 2.0, 2, None)
                     Tooltip("Scales this dialog's text and everything sized from it")
                 ),
             ],
@@ -320,15 +320,15 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Diagnostics")
-                small_caps()
+                @caption("Diagnostics")
+                @small_caps()
             },
             @contents: bsn_list![
-                toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay),
-                toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
-                select_row("Overlay", Bound::Overlay, OverlayCorner::select_options(), overlay, 4),
-                select_row("Log level", Bound::LogLevel, LogLevel::select_options(), log_level, 3),
-                capture_row(s),
+                @toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay),
+                @toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector),
+                @select_row("Overlay", Bound::Overlay, OverlayCorner::select_options(), overlay, 4),
+                @select_row("Log level", Bound::LogLevel, LogLevel::select_options(), log_level, 3),
+                @capture_row(s),
             ],
         }
     }
@@ -340,9 +340,9 @@ fn capture_row(s: &DebugSettings) -> impl Scene {
     let value = s.capture_dir.clone();
     let warning_display = capture_warning_display(s);
     bsn! {
-        row()
+        @row()
         Children [
-            field_label("Capture to"),
+            @field_label("Capture to"),
             (
                 @PlumeTextInput {
                     @value: value,
@@ -351,7 +351,7 @@ fn capture_row(s: &DebugSettings) -> impl Scene {
                     @suffix_container: {Some(capture_warning(warning_display))},
                 }
                 Node { width: Val::ZERO, flex_grow: 1.0 }
-                on_text(Bound::CaptureDir)
+                @on_text(Bound::CaptureDir)
             ),
         ]
     }
@@ -361,7 +361,7 @@ fn clear_capture_button() -> Box<dyn SceneList> {
     Box::new(bsn_list![
         (
             @PlumeToolButton {
-                @caption: bsn_list![icon(lucide::X)],
+                @caption: bsn_list![@icon(lucide::X)],
                 @variant: ButtonVariant::Plain,
             }
             Tooltip("Clear")
@@ -389,13 +389,13 @@ fn capture_warning_display(s: &DebugSettings) -> Display {
 fn capture_warning(display: Display) -> Box<dyn SceneList> {
     Box::new(bsn_list![
         (
-            row()
+            @row()
             Node { display: display, padding: UiRect::right(size::SPACE_TIGHT) }
             CaptureWarning
             Children [
                 (
-                    icon(lucide::TRIANGLE_ALERT)
-                    template_value(ThemeTextSlot(ThemeSlot::Danger0))
+                    @icon(lucide::TRIANGLE_ALERT)
+                    ThemeTextSlot(ThemeSlot::Danger0)
                     Tooltip("Should leave it blank!")
                 ),
             ]
@@ -423,13 +423,13 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
     bsn! {
         @PlumeSection {
             @header: bsn! {
-                caption("Cheats")
-                small_caps()
+                @caption("Cheats")
+                @small_caps()
             },
             @contents: bsn_list![
-                checkbox("Noclip", Bound::Noclip, noclip),
-                checkbox("Infinite health", Bound::InfiniteHealth, infinite_health),
-                slider_row("Move speed", Bound::MoveSpeed, move_speed, 1.0, 40.0, 0, Some("m/s".into())),
+                @checkbox("Noclip", Bound::Noclip, noclip),
+                @checkbox("Infinite health", Bound::InfiniteHealth, infinite_health),
+                @slider_row("Move speed", Bound::MoveSpeed, move_speed, 1.0, 40.0, 0, Some("m/s".into())),
             ],
         }
     }
@@ -478,17 +478,17 @@ fn reset_confirm_popup() -> impl Scene {
             @dismiss: PopupDismiss::OutsideClick,
             @contents: bsn_list![
                 (
-                    caption("Reset all settings to defaults?")
+                    @caption("Reset all settings to defaults?")
                     TextLayout { linebreak: LineBreak::NoWrap }
                     Node { min_width: Val::ZERO }
                 ),
                 (
-                    row()
+                    @row()
                     Children [
-                        flex_spacer(),
+                        @flex_spacer(),
                         (
                             @PlumeButton {
-                                @caption: bsn! { caption("Reset") },
+                                @caption: bsn! { @caption("Reset") },
                                 @variant: ButtonVariant::Primary,
                             }
                             on(|_: On<Activate>,
@@ -501,7 +501,7 @@ fn reset_confirm_popup() -> impl Scene {
                         ),
                         (
                             @PlumeButton {
-                                @caption: bsn! { caption("Keep") },
+                                @caption: bsn! { @caption("Keep") },
                                 @variant: ButtonVariant::Outline,
                             }
                             on(|_: On<Activate>,
@@ -520,48 +520,48 @@ fn reset_confirm_popup() -> impl Scene {
 
 fn footer() -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
             (
-                row()
+                @row()
                 Children [
                     (
                         @PlumeButton {
                             @caption: bsn_list![
-                                icon(lucide::UNDO_2),
-                                caption("Reset to defaults"),
+                                @icon(lucide::UNDO_2),
+                                @caption("Reset to defaults"),
                             ],
                             @variant: ButtonVariant::Outline,
                         }
-                        template_value(TooltipContent::new(|| bsn_list![
+                        TooltipContent::new(|| bsn_list![
                             (
-                                row()
+                                @row()
                                 Children [
-                                    icon(lucide::UNDO_2),
+                                    @icon(lucide::UNDO_2),
                                     (
-                                        caption("Reset to defaults")
-                                        template_value(ThemeTextSlot(ThemeSlot::Text0))
+                                        @caption("Reset to defaults")
+                                        ThemeTextSlot(ThemeSlot::Text0)
                                     ),
                                 ]
                             ),
-                            caption("Every debug option returns to its default value"),
-                        ]))
+                            @caption("Every debug option returns to its default value"),
+                        ])
                         on(open_reset_confirm)
                     ),
-                    popup_socket(),
+                    @popup_socket(),
                 ]
             ),
-            flex_spacer(),
+            @flex_spacer(),
             (
                 @PlumeButton {
-                    @caption: bsn! { caption("Cancel") },
+                    @caption: bsn! { @caption("Cancel") },
                     @variant: ButtonVariant::Outline,
                 }
                 Tooltip("Discard changes and close")
             ),
             (
                 @PlumeButton {
-                    @caption: bsn! { caption("Apply") },
+                    @caption: bsn! { @caption("Apply") },
                     @variant: ButtonVariant::Primary,
                 }
                 Tooltip("Apply changes and close")
@@ -572,7 +572,7 @@ fn footer() -> impl Scene {
 
 fn debug_column() -> impl Scene {
     bsn! {
-        column()
+        @column()
         Node {
             width: Val::ZERO,
             flex_grow: 1.0,
@@ -587,30 +587,30 @@ fn maybe_checked(checked: bool) -> impl Scene {
 fn checkbox(label: &str, bound: Bound, checked: bool) -> impl Scene {
     let label = label.to_string();
     bsn! {
-        @PlumeCheckbox { @caption: bsn! { caption(label) } }
-        maybe_checked(checked)
-        on_flag(bound)
+        @PlumeCheckbox { @caption: bsn! { @caption(label) } }
+        @maybe_checked(checked)
+        @on_flag(bound)
     }
 }
 
 fn field_label(text: &str) -> impl Scene {
     let text = text.to_string();
     bsn! {
-        caption(text)
+        @caption(text)
         Node { width: em(84.0 / BASE_FONT_PX) }
     }
 }
 
 fn toggle_row(label: &str, bound: Bound, checked: bool) -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            caption(label.to_string()),
-            flex_spacer(),
+            @caption(label.to_string()),
+            @flex_spacer(),
             (
                 @PlumeToggleSwitch
-                maybe_checked(checked)
-                on_flag(bound)
+                @maybe_checked(checked)
+                @on_flag(bound)
             ),
         ]
     }
@@ -624,9 +624,9 @@ fn select_row(
     max_visible: usize,
 ) -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            field_label(label),
+            @field_label(label),
             (
                 @PlumeSelect {
                     @options: options,
@@ -634,7 +634,7 @@ fn select_row(
                     @max_visible: max_visible,
                 }
                 Node { width: Val::ZERO, flex_grow: 1.0 }
-                on_choice(bound)
+                @on_choice(bound)
             ),
         ]
     }
@@ -650,9 +650,9 @@ fn slider_row(
     suffix: Option<String>,
 ) -> impl Scene {
     bsn! {
-        row()
+        @row()
         Children [
-            field_label(label),
+            @field_label(label),
             (
                 @PlumeSlider {
                     @min: min,
@@ -661,7 +661,7 @@ fn slider_row(
                 }
                 SliderValue(value)
                 Node { width: Val::ZERO, flex_grow: 1.0 }
-                on_number(bound)
+                @on_number(bound)
             ),
             (
                 @PlumeNumberInput {
@@ -671,7 +671,7 @@ fn slider_row(
                     @max: max,
                     @suffix: suffix,
                 }
-                on_number(bound)
+                @on_number(bound)
             ),
         ]
     }

@@ -80,18 +80,18 @@ impl PlumeTabs {
     /// Scene function for a tab container.
     pub fn scene(props: PlumeTabsProps) -> impl Scene {
         bsn! {
-            tabs_frame()
+            @tabs_frame()
             SelectedIndex
             Children [
                 (
-                    tab_strip_frame()
+                    @tab_strip_frame()
                     Children [
                         (
                             #strip_viewport
-                            scroll_viewport(ScrollAxis::Horizontal)
+                            @scroll_viewport(ScrollAxis::Horizontal)
                             Children [
                                 (
-                                    tab_strip()
+                                    @tab_strip()
                                     Children [
                                         {props.header},
                                     ]
@@ -103,7 +103,7 @@ impl PlumeTabs {
                                 @target: #strip_viewport,
                                 @orientation: ControlOrientation::Horizontal,
                             }
-                            scrollbar_node(ScrollAxis::Horizontal)
+                            @scrollbar_node(ScrollAxis::Horizontal)
                         ),
                     ]
                 ),
@@ -146,8 +146,8 @@ impl PlumeTab {
         // building one is an error — a bodyless tab simply carries no `TabTarget`.
         let has_target = !matches!(target, EntityTemplate::None);
         bsn! {
-            tab_chrome()
-            {has_target.then(|| bsn! { TabTarget(target) })}
+            @tab_chrome()
+            @{has_target.then(|| bsn! { TabTarget(target) })}
             Children [
                 {props.caption},
             ]
@@ -222,7 +222,7 @@ pub(crate) fn tabs_frame() -> impl Scene {
 // rather than on the strip, which a crowded strip's tabs overflow.
 pub(crate) fn tab_strip_frame() -> impl Scene {
     bsn! {
-        scroll_frame(ScrollAxis::Horizontal)
+        @scroll_frame(ScrollAxis::Horizontal)
         ScrollbarHidden
         ThemeBackgroundToken(tokens::TAB_BAR_BG)
     }
@@ -296,13 +296,13 @@ pub(crate) fn tab_chrome() -> impl Scene {
 // the shorthand a retained caller reaches for over a hand-built caption.
 pub(crate) fn tab_button(label: String, icon: Option<Icon>) -> impl Scene {
     bsn! {
-        tab_chrome()
+        @tab_chrome()
         Children [
             {icon.map(|glyph| bsn! {
-                display::icon(glyph)
+                @display::icon(glyph)
                 Node { flex_shrink: 0.0 }
             })},
-            tab_label(label),
+            @tab_label(label),
         ]
     }
 }
@@ -320,7 +320,7 @@ pub fn tab_label(label: impl Into<String>) -> impl Scene {
         }
         Children [
             (
-                caption(label)
+                @caption(label)
                 Node { min_width: Val::ZERO }
                 TextLayout { linebreak: LineBreak::NoWrap }
             ),

@@ -13,12 +13,7 @@ pub struct ThemeEditorPlugin(pub bool);
 
 impl Plugin for ThemeEditorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_debug_dialog(
-            TITLE,
-            lucide::PALETTE,
-            self.0,
-            theme_editor_dialog,
-        );
+        app.add_debug_dialog(TITLE, lucide::PALETTE, self.0, theme_editor_dialog);
     }
 }
 

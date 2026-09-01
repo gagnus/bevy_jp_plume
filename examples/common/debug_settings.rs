@@ -153,12 +153,7 @@ pub struct DebugSettingsPlugin(pub bool);
 impl Plugin for DebugSettingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DebugSettings>()
-            .add_debug_dialog(
-                TITLE,
-                lucide::BUG,
-                self.0,
-                debug_settings_dialog,
-            )
+            .add_debug_dialog(TITLE, lucide::BUG, self.0, debug_settings_dialog)
             .add_systems(Update, log_on_change::<DebugSettings>);
     }
 }

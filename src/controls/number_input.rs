@@ -130,7 +130,7 @@ struct NumberInputScrubber {
 impl PlumeNumberInput {
     fn scene(props: PlumeNumberInputProps) -> impl Scene {
         bsn! {
-            text_input_frame()
+            @text_input_frame()
             // A value does measure, but a content-sized field would resize as
             // digits come and go, so it keeps a fixed fallback.
             DefaultWidth(size::em_from_px(60.0))
@@ -139,9 +139,9 @@ impl PlumeNumberInput {
             SliderRange::new(props.min, props.max)
             SliderStep({props.step})
             Children [
-                text_input_outline(),
+                @text_input_outline(),
                 (
-                    text_input_field(None, None)
+                    @text_input_field(None, None)
                     EditableTextFilter::new(|c| {
                         c.is_ascii_digit() || matches!(c, '.' | '-' | '+' | 'e' | 'E')
                     })
@@ -158,7 +158,7 @@ impl PlumeNumberInput {
                     on(number_input_on_key)
                     on(number_input_on_focus_lost)
                 ),
-                {props.suffix.map(|suffix| bsn_list![text_input_suffix(suffix)])},
+                {props.suffix.map(|suffix| bsn_list![@text_input_suffix(suffix)])},
                 (
                     // Scrub/click catcher covering the whole frame, field and suffix alike.
                     Node {
@@ -169,7 +169,7 @@ impl PlumeNumberInput {
                         bottom: Val::ZERO,
                     }
                     NumberInputScrubber
-                    template_value(Pickable::default())
+                    Pickable::default()
                     EntityCursor::System(SystemCursorIcon::Pointer)
                     CursorLock
                     on(scrubber_on_press)

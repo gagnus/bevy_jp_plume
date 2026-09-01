@@ -143,9 +143,9 @@ impl PlumeSelect {
                 align_items: AlignItems::Stretch,
             }
             SelectFrame
-            template_value(SelectOptions(options))
-            template_value(SelectedIndex(selected))
-            template_value(SelectMaxVisible(max_visible))
+            SelectOptions(options)
+            SelectedIndex(selected)
+            SelectMaxVisible(max_visible)
             on(on_menu_event)
             Children [
                 (
@@ -153,7 +153,7 @@ impl PlumeSelect {
                         // The caption is pinned to the measured widest label, so a
                         // label with a space in it would wrap on a sub-pixel shortfall.
                         @caption: bsn! {
-                            caption(initial_caption)
+                            @caption(initial_caption)
                             SelectCaption
                             TextLayout {
                                 linebreak: LineBreak::NoWrap,
@@ -172,10 +172,10 @@ impl PlumeSelect {
                         Node {
                             flex_grow: 1.0,
                         },
-                        icon(lucide::CHEVRON_DOWN),
+                        @icon(lucide::CHEVRON_DOWN),
                     ]
                 ),
-                popup_socket(),
+                @popup_socket(),
                 // Ghost rows in a zero-size clipped overlay: laid out (so the labels
                 // get real text measurement) without occupying space or taking picks;
                 // despawned once `measure_select_width` has sized the button.
@@ -209,7 +209,7 @@ fn option_row(label: String) -> impl Scene {
     bsn! {
         @PlumeSelectOption
         Children [
-            caption(label),
+            @caption(label),
         ]
     }
 }
@@ -224,10 +224,10 @@ fn option_rows(options: &[(String, bool)], selected: usize) -> Box<dyn SceneList
                 let label = label.clone();
                 let disabled = !*enabled;
                 bsn! {
-                    option_row(label)
+                    @option_row(label)
                     SelectOptionIndex(index)
-                    {disabled.then(|| bsn! { InteractionDisabled })}
-                    {(index == selected).then(|| bsn! { Selected })}
+                    @{disabled.then(|| bsn! { InteractionDisabled })}
+                    @{(index == selected).then(|| bsn! { Selected })}
                 }
             })
             .collect::<Vec<_>>(),
@@ -263,7 +263,7 @@ impl PlumeSelectOptions {
                 align_items: AlignItems::Stretch,
                 justify_content: JustifyContent::Start,
             }
-            template_value(ScrollbarGutter(size::SCROLLBAR_GUTTER.try_add(size::SPACE).unwrap()))
+            ScrollbarGutter({size::SCROLLBAR_GUTTER.try_add(size::SPACE).unwrap()})
             ListBox
             // Focusable for arrow-key selection.
             TabIndex(0)
@@ -327,7 +327,7 @@ impl PlumeSelectOption {
             Children [
                 (
                     // Hidden ticks still occupy layout, so every label shares the gutter.
-                    icon(lucide::CHECK)
+                    @icon(lucide::CHECK)
                     Node {
                         width: size::ICON_WIDTH,
                     }
@@ -426,7 +426,7 @@ fn open_select_popup(
                 ],
             }
             SelectPopup
-            template_value(MenuFocusState::Opening(nav))
+            MenuFocusState::Opening(nav)
             // The select's own chrome tokens, over the generic popup ones.
             ThemeBackgroundToken(tokens::SELECT_BG)
             ThemeBorderToken(tokens::SELECT_BORDER)

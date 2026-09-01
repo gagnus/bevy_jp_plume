@@ -12,6 +12,7 @@ use bevy::ecs::query::{Has, Or, With, Without};
 use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res};
+use bevy::ecs::template::FromTemplate;
 use bevy::input::ButtonInput;
 use bevy::input::keyboard::KeyCode;
 use bevy::input_focus::tab_navigation::TabGroup;
@@ -198,7 +199,7 @@ impl Default for PlumePopupProps {
 
 // Outside-press dismissal scope for an imm popup: presses on the anchor don't
 // dismiss. Retained popups omit this and scope to their control root instead.
-#[derive(Component, Clone, Copy)]
+#[derive(Component, FromTemplate, Clone, Copy)]
 struct DismissScope(pub Entity);
 
 // The imm layer's popup: the same chrome the retained path spawns, scoped to the
@@ -216,7 +217,7 @@ pub(crate) fn imm_popup_scene(
             @dismiss: dismiss,
             @movable: movable,
         }
-        template_value(DismissScope(anchor))
+        DismissScope(anchor)
     }
 }
 
@@ -255,20 +256,20 @@ impl PlumePopup {
             PopupSurface
             ThemeBackgroundToken(tokens::POPUP_BG)
             ThemeBorderToken(tokens::POPUP_BORDER)
-            template_value(control_box_shadow())
+            control_box_shadow()
             GlobalZIndex(z_order::POPUP)
-            template_value(popover_for(props.placement, props.place_very_close))
+            popover_for(props.placement, props.place_very_close)
             OverrideClip
             InheritableThemeTextToken(tokens::TEXT_DIM)
             // Parentless socket: resolves to the standard font. Empty braces
             // stop bsn claiming the next interpolation block as a field list.
             InheritableFont {}
-            {(props.dismiss == PopupDismiss::FocusOut).then(|| bsn! { MenuPopup })}
-            {(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn! { DismissOnOutsideClick })}
+            @{(props.dismiss == PopupDismiss::FocusOut).then(|| bsn! { MenuPopup })}
+            @{(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn! { DismissOnOutsideClick })}
             // A focus-out popup's focus is owned by the menu machinery; the rest
             // scope Tab traversal like a dialog does.
-            {(props.dismiss != PopupDismiss::FocusOut).then(|| bsn! { TabGroup::new(0) })}
-            {props.movable.then(|| bsn! { on(on_popup_drag) })}
+            @{(props.dismiss != PopupDismiss::FocusOut).then(|| bsn! { TabGroup::new(0) })}
+            @{props.movable.then(|| bsn! { on(on_popup_drag) })}
             // A popup floats over whatever its anchor sits in, so pointer activity
             // inside it must not bubble on to that surface: a retained socket is a
             // hierarchy child, and its anchor's ancestors would read the popup's

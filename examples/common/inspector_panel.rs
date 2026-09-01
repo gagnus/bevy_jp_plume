@@ -259,7 +259,7 @@ impl Default for Material {
 }
 
 /// A layer's identity, whatever its position in the stack.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct LayerId(pub u32);
 
 /// One layer of the material: reordered by drag, faded by its slider.
@@ -608,9 +608,7 @@ fn panel(
             });
 
             ui.flex_spacer();
-            ui.tool_button(lucide::SAVE)
-                .flat()
-                .tooltip("Save material");
+            ui.tool_button(lucide::SAVE).flat().tooltip("Save material");
             if ui
                 .tool_button(lucide::UNDO_2)
                 .flat()

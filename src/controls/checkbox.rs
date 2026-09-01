@@ -116,7 +116,7 @@ impl PlumeCheckbox {
                             }
                             UiTransform::from_rotation(Rot2::FRAC_PI_4)
                             CheckboxMark
-                            template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
+                            AnimState::scale(0.0, 1.0).hide_at_zero()
                             Visibility::Hidden
                             ThemeBorderToken(tokens::CHECKBOX_MARK)
                         ),

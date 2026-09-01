@@ -10,7 +10,7 @@ use bevy::ecs::event::EntityEvent;
 use bevy::ecs::observer::On;
 use bevy::ecs::system::Commands;
 use bevy::ecs::world::EntityWorldMut;
-use bevy::scene::{Scene, bsn, bsn_list, on, template_value};
+use bevy::scene::{Scene, bsn, bsn_list, on};
 use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, JustifyContent, Node, UiRect, Val};
 use bevy::ui_widgets::{ModalDialog, RequestClose};
@@ -479,7 +479,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
         let entity = self.ch_loc(loc_id(label)).on_spawn_apply_scene(
-            move || bsn! { @PlumeButton { @caption: bsn! { caption(label_owned) } } },
+            move || bsn! { @PlumeButton { @caption: bsn! { @caption(label_owned) } } },
         );
         respond(entity, false)
     }
@@ -495,8 +495,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                 bsn! {
                     @PlumeButton {
                         @caption: bsn_list![
-                            display::icon(icon),
-                            caption(label_owned),
+                            @display::icon(icon),
+                            @caption(label_owned),
                         ],
                     }
                 }
@@ -518,7 +518,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut entity = self
             .ch_loc(loc_id(icon.face()))
             .on_spawn_apply_scene(move || {
-                bsn! { @PlumeToolButton { @caption: bsn! { display::icon(icon) } } }
+                bsn! { @PlumeToolButton { @caption: bsn! { @display::icon(icon) } } }
             });
         struct ToolGlyph;
         if entity.hash_update_typ::<ToolGlyph>(Some(imm_id(icon.glyph())))
@@ -589,7 +589,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(label))
             .on_spawn_apply_scene(
-                move || bsn! { @PlumeCheckbox { @caption: bsn! { caption(label_owned) } } },
+                move || bsn! { @PlumeCheckbox { @caption: bsn! { @caption(label_owned) } } },
             )
             .plume_checked(value, &mut changed);
         respond(entity, changed)
@@ -620,7 +620,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let entity = self
             .ch_loc(loc_id(label))
             .on_spawn_apply_scene(
-                move || bsn! { @PlumeRadio { @caption: bsn! { caption(label_owned) } } },
+                move || bsn! { @PlumeRadio { @caption: bsn! { @caption(label_owned) } } },
             )
             .plume_checked(&mut checked, &mut changed);
         let selected = changed && checked;
@@ -794,11 +794,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_loc(loc_id(header))
             .on_spawn_apply_scene(move || {
                 bsn! {
-                    section_frame(
+                    @section_frame(
                         bsn_list![
                             (
-                                caption(header_owned)
-                                small_caps()
+                                @caption(header_owned)
+                                @small_caps()
                             ),
                         ],
                         true,
@@ -892,8 +892,8 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || {
                 bsn! {
-                    tabs_frame()
-                    template_value(SelectedIndex(initial))
+                    @tabs_frame()
+                    SelectedIndex(initial)
                 }
             })
             .plume_select(&mut index, &mut changed);
@@ -1465,7 +1465,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Floating> {
     ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
         fn scene(title: String, layout: DialogLayout) -> impl Scene {
             bsn! {
-                dialog_frame_scene(title, layout, SurfaceChrome::Dialog)
+                @dialog_frame_scene(title, layout, SurfaceChrome::Dialog)
                 on(|close: On<RequestClose>, mut commands: Commands| {
                     commands.entity(close.event_target()).insert(CloseRequested);
                 })
@@ -1500,10 +1500,10 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
     ) -> Option<ImmResponse<'e, 'w, 's, kind::Dialog>> {
         fn barrier_scene(closable: bool) -> impl Scene {
             bsn! {
-                modal_barrier()
+                @modal_barrier()
                 // Every dismissal — the ✕, a barrier click, Escape — arrives
                 // here, since `RequestClose` propagates up out of the frame.
-                {closable.then(|| bsn! {
+                @{closable.then(|| bsn! {
                     on(|close: On<RequestClose>, mut commands: Commands| {
                         commands.entity(close.event_target()).insert(CloseRequested);
                     })
@@ -1638,7 +1638,7 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
         _ => Some(DialogHeader {
             title: Box::new(bsn_list![
                 (
-                    caption(title)
+                    @caption(title)
                     InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
                 ),
             ]),
@@ -1648,7 +1648,7 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
     };
     bsn! {
         // Empty body: the imm layer reconciles the body itself.
-        dialog_frame(DialogChrome {
+        @dialog_frame(DialogChrome {
             name: name.into(),
             body: Box::new(bsn_list![]),
             header,
@@ -1657,7 +1657,7 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
             max_height,
             inset,
         })
-        {(chrome == SurfaceChrome::Modal).then(|| bsn! { ModalDialog })}
+        @{(chrome == SurfaceChrome::Modal).then(|| bsn! { ModalDialog })}
     }
 }
 

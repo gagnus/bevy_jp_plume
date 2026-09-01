@@ -88,27 +88,27 @@ impl PlumeTextInput {
             "`suffix` and `suffix_container` are exclusive: the trailing slot holds one thing"
         );
         bsn! {
-            text_input_frame()
+            @text_input_frame()
             TextInputValue({props.value})
             Children [
-                text_input_outline(),
+                @text_input_outline(),
                 {props.prefix_container.map(|content| bsn_list![
-                    text_input_prefix_container(content),
+                    @text_input_prefix_container(content),
                 ])},
                 (
-                    text_input_field(props.visible_width, props.max_characters)
-                    {props.filter.map(|filter| bsn! { template_value(filter) })}
+                    @text_input_field(props.visible_width, props.max_characters)
+                    @{props.filter.map(|filter| bsn! { filter })}
                     on(text_input_on_enter)
                     on(text_input_on_vertical_arrow)
                     Children [
                         {props.placeholder.map(|placeholder| bsn_list![
-                            text_input_placeholder(placeholder),
+                            @text_input_placeholder(placeholder),
                         ])},
                     ]
                 ),
-                {props.suffix.map(|suffix| bsn_list![text_input_suffix(suffix)])},
+                {props.suffix.map(|suffix| bsn_list![@text_input_suffix(suffix)])},
                 {props.suffix_container.map(|content| bsn_list![
-                    text_input_suffix_container(content),
+                    @text_input_suffix_container(content),
                 ])},
             ]
         }
@@ -189,7 +189,7 @@ pub(crate) fn text_input_field(
         TabIndex(0)
         TextInput
         SelectAllOnFocus
-        template_value(TextReadWriteMode::Editable)
+        TextReadWriteMode::Editable
         EditableText {
             cursor_width: 0.3,
             visible_width: visible_width,
@@ -198,7 +198,7 @@ pub(crate) fn text_input_field(
         TextLayout {
             linebreak: LineBreak::NoWrap,
         }
-        template_value(LineHeight::RelativeToFont(20.0 / size::MEDIUM_FONT_PX))
+        LineHeight::RelativeToFont({20.0 / size::MEDIUM_FONT_PX})
         TextCursorStyle::default()
     }
 }

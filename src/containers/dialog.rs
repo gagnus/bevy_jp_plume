@@ -12,7 +12,7 @@ use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::ui::{
     AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, LayoutConfig, Node,
     PositionType, UiRect, UiSystems, Val,
@@ -104,14 +104,14 @@ impl PlumeDialog {
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
             Box::new(bsn_list![
                 (
-                    scroll_frame(ScrollAxis::Vertical)
+                    @scroll_frame(ScrollAxis::Vertical)
                     Children [
                         (
                             #inner
-                            scroll_viewport(ScrollAxis::Vertical)
+                            @scroll_viewport(ScrollAxis::Vertical)
                             Children [
                                 (
-                                    scroll_content(ScrollAxis::Vertical)
+                                    @scroll_content(ScrollAxis::Vertical)
                                     Children [
                                         {contents},
                                     ]
@@ -123,7 +123,7 @@ impl PlumeDialog {
                                 @target: #inner,
                                 @orientation: ControlOrientation::Vertical,
                             }
-                            scrollbar_node(ScrollAxis::Vertical)
+                            @scrollbar_node(ScrollAxis::Vertical)
                         ),
                     ]
                 ),
@@ -132,13 +132,13 @@ impl PlumeDialog {
             contents
         };
         bsn! {
-            dialog_frame(DialogChrome {
+            @dialog_frame(DialogChrome {
                 name: "PlumeDialog".into(),
                 // The public dialog builds its whole body eagerly and hands the
                 // frame a padded `dialog_body` wrapping it.
                 body: Box::new(bsn_list![
                     (
-                        dialog_body()
+                        @dialog_body()
                         Children [
                             {body},
                         ]
@@ -244,21 +244,21 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     border: UiRect::bottom(size::HAIRLINE),
                     border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                 }
-                {movable.then(|| bsn! { DialogDragHandle })}
+                @{movable.then(|| bsn! { DialogDragHandle })}
                 InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
                 ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
                 ThemeBorderToken(tokens::DIALOG_BORDER)
                 Children [
                     {title},
                     // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
-                    flex_spacer(),
-                    {closable.then(|| bsn_list![dialog_close()])},
+                    @flex_spacer(),
+                    {closable.then(|| bsn_list![@dialog_close()])},
                 ]
             }
         },
     );
     bsn! {
-        template_value(name)
+        name
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
@@ -286,7 +286,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
         // A genuine UI root, often parentless: the all-inherit default
         // resolves to the standard font when nothing flows in from above.
         InheritableFont
-        template_value(dialog_box_shadow())
+        dialog_box_shadow()
         LayoutConfig {
             use_rounding: true,
         }
@@ -355,7 +355,7 @@ pub(crate) fn dialog_close() -> impl Scene {
     bsn! {
         @PlumeToolButton {
             @variant: ButtonVariant::Plain,
-            @caption: bsn! { icon(lucide::X) },
+            @caption: bsn! { @icon(lucide::X) },
         }
         // Keep the ✕'s hover/press fill flat.
         Flat

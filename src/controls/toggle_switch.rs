@@ -61,7 +61,7 @@ impl PlumeToggleSwitch {
             on(checkbox_self_update)
             ThemeBackgroundToken(tokens::SWITCH_BG)
             GradientAmount::STANDARD
-            template_value(control_box_shadow())
+            control_box_shadow()
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             Children [
@@ -92,11 +92,11 @@ impl PlumeToggleSwitch {
                         border_radius: BorderRadius::MAX,
                     }
                     ToggleSwitchSlide
-                    template_value(AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL))
+                    AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL)
                     UiTransform::default()
                     ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)
                     GradientAmount(SLIDE_GRADIENT_AMOUNT)
-                    template_value(control_box_shadow())
+                    control_box_shadow()
                 ),
             ]
         }

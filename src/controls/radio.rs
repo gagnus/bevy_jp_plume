@@ -115,7 +115,7 @@ impl PlumeRadio {
                                 border_radius: BorderRadius::MAX,
                             }
                             RadioMark
-                            template_value(AnimState::scale(0.0, 1.0).hide_at_zero())
+                            AnimState::scale(0.0, 1.0).hide_at_zero()
                             UiTransform::default()
                             Visibility::Hidden
                             ThemeBackgroundToken(tokens::RADIO_MARK)

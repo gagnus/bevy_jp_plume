@@ -16,7 +16,7 @@ use bevy::picking::PickingSystems;
 use bevy::picking::events::PointerClick;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on, template_value};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::ui::{
     AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
 };
@@ -101,13 +101,13 @@ impl PlumeSection {
             collapsible,
         } = props;
         bsn! {
-            section_frame(
+            @section_frame(
                 header,
                 collapsible,
                 // Empty for the imm layer, which reconciles the body itself.
                 bsn_list![
                     (
-                        section_body()
+                        @section_body()
                         Children [
                             {contents},
                         ]
@@ -134,7 +134,7 @@ pub(crate) fn section_frame(
             border_radius: size::CORNER_RADIUS,
         }
         SectionRoot
-        template_value(SectionCollapsible(collapsible))
+        SectionCollapsible(collapsible)
         ThemeBackgroundToken(tokens::SECTION_BODY_BG)
         Children [
             (
@@ -156,10 +156,10 @@ pub(crate) fn section_frame(
                 on(toggle_section_collapse)
                 Children [
                     {collapsible.then(|| bsn! {
-                        icon(lucide::CHEVRON_DOWN)
+                        @icon(lucide::CHEVRON_DOWN)
                         Node { width: size::ICON_WIDTH }
                         SectionChevron
-                        template_value(AnimState::rotation(0.0, -FRAC_PI_2))
+                        AnimState::rotation(0.0, -FRAC_PI_2)
                         UiTransform::default()
                     })},
                     {header},

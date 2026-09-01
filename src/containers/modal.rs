@@ -72,22 +72,22 @@ impl PlumeModal {
             closable,
         } = props;
         bsn! {
-            modal_barrier()
+            @modal_barrier()
             // Every dismissal — the ✕, a barrier click, Escape — arrives here,
             // since `RequestClose` propagates up out of the frame. Closing
             // despawns the modal, as it does for [`PlumeDialog`].
-            {closable.then(|| bsn! {
+            @{closable.then(|| bsn! {
                 on(|close: On<RequestClose>, mut commands: Commands| {
                     commands.entity(close.event_target()).despawn();
                 })
             })}
             Children [
                 (
-                    modal_frame(DialogChrome {
+                    @modal_frame(DialogChrome {
                         name: "PlumeModal".into(),
                         body: Box::new(bsn_list![
                             (
-                                dialog_body()
+                                @dialog_body()
                                 Children [
                                     {contents},
                                 ]
@@ -113,7 +113,7 @@ impl PlumeModal {
 pub fn modal_title(title: impl Into<String>) -> impl Scene {
     let title = title.into();
     bsn! {
-        caption(title)
+        @caption(title)
         InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
     }
 }
@@ -147,7 +147,7 @@ pub(crate) fn modal_barrier() -> impl Scene {
 // stack's z (so the barrier's layer holds) and turns its `TabGroup` modal.
 fn modal_frame(chrome: DialogChrome) -> impl Scene {
     bsn! {
-        dialog_frame(chrome)
+        @dialog_frame(chrome)
         ModalDialog
     }
 }

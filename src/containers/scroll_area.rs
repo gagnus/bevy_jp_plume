@@ -75,7 +75,7 @@ pub(crate) fn scroll_frame(axis: ScrollAxis) -> impl Scene {
     // A horizontal region hugs its height in the column it sits in; `.grow()` is
     // the caller's to add.
     let flex_grow = match axis {
-        ScrollAxis::Vertical => 1.0,
+        ScrollAxis::Vertical => 1.0_f32,
         ScrollAxis::Horizontal => 0.0,
     };
     bsn! {
@@ -317,14 +317,14 @@ impl PlumeScrollArea {
     fn scene(props: PlumeScrollAreaProps) -> impl Scene {
         let PlumeScrollAreaProps { contents, axis } = props;
         bsn! {
-            scroll_frame(axis)
+            @scroll_frame(axis)
             Children [
                 (
                     #viewport
-                    scroll_viewport(axis)
+                    @scroll_viewport(axis)
                     Children [
                         (
-                            scroll_content(axis)
+                            @scroll_content(axis)
                             Children [
                                 {contents},
                             ]
@@ -336,7 +336,7 @@ impl PlumeScrollArea {
                         @target: #viewport,
                         @orientation: {axis.orientation()},
                     }
-                    scrollbar_node(axis)
+                    @scrollbar_node(axis)
                 ),
             ]
         }
@@ -351,6 +351,6 @@ pub(crate) fn scrollbar(target: Entity, axis: ScrollAxis) -> impl Scene {
             @target: EntityTemplate::from(target),
             @orientation: {axis.orientation()},
         }
-        scrollbar_node(axis)
+        @scrollbar_node(axis)
     }
 }
