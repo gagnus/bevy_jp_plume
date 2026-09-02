@@ -90,13 +90,13 @@ pub trait PlumeImm<'w, 's> {
     /// Push button; `.clicked` on the response fires once per activation.
     fn button(&mut self, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
-    /// Push button with a leading FontAwesome icon before the label.
+    /// Push button with a leading icon before the label.
     fn icon_button(&mut self, icon: Icon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
     /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
     fn tool_button(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
-    /// A non-interactive FontAwesome glyph in the current text color — the icon
+    /// A non-interactive icon glyph in the current text color — the icon
     /// counterpart to [`Self::caption`].
     fn icon(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Icon>;
 
@@ -488,20 +488,18 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
     #[track_caller]
     fn icon_button(&mut self, icon: Icon, label: &str) -> ImmResponse<'_, 'w, 's, kind::Button> {
         let label_owned = label.to_owned();
-        // Keyed on the face, not the glyph: the face selects the font asset. The icon
-        // is the first `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
-        let mut entity = self
-            .ch_loc(loc_id((icon.face(), label)))
-            .on_spawn_apply_scene(move || {
-                bsn! {
-                    @PlumeButton {
-                        @caption: bsn_list![
-                            @display::icon(icon),
-                            @caption(label_owned),
-                        ],
-                    }
+        // Not keyed on the glyph: it updates in place below. The icon is the first
+        // `Text` child, ahead of the label, so `set_icon_glyph` lands on it.
+        let mut entity = self.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
+            bsn! {
+                @PlumeButton {
+                    @caption: bsn_list![
+                        @display::icon(icon),
+                        @caption(label_owned),
+                    ],
                 }
-            });
+            }
+        });
         struct IconButtonGlyph;
         if entity.hash_update_typ::<IconButtonGlyph>(Some(imm_id(icon.glyph())))
             && !entity.will_be_spawned()
@@ -515,12 +513,10 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn tool_button(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Button> {
-        // Keyed on the face, not the glyph: the face selects the font asset.
-        let mut entity = self
-            .ch_loc(loc_id(icon.face()))
-            .on_spawn_apply_scene(move || {
-                bsn! { @PlumeToolButton { @caption: bsn! { @display::icon(icon) } } }
-            });
+        // Not keyed on the glyph: it updates in place below.
+        let mut entity = self.ch_loc(loc_id(())).on_spawn_apply_scene(move || {
+            bsn! { @PlumeToolButton { @caption: bsn! { @display::icon(icon) } } }
+        });
         struct ToolGlyph;
         if entity.hash_update_typ::<ToolGlyph>(Some(imm_id(icon.glyph())))
             && !entity.will_be_spawned()
@@ -534,9 +530,9 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
 
     #[track_caller]
     fn icon(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Icon> {
-        // Keyed on the face, not the glyph: the face selects the font asset.
+        // Not keyed on the glyph: it updates in place below.
         let mut entity = self
-            .ch_loc(loc_id(icon.face()))
+            .ch_loc(loc_id(()))
             .on_spawn_apply_scene(move || display::icon(icon));
         struct IconGlyph;
         if entity.hash_update_typ::<IconGlyph>(Some(imm_id(icon.glyph())))
@@ -1336,7 +1332,7 @@ impl<'t, 'w, 's, T, H> ImmTab<'_, 't, 'w, 's, T, H> {
 }
 
 impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
-    /// Leading FontAwesome icon, before the label.
+    /// Leading icon, before the label.
     pub fn icon(self, icon: Icon) -> Self {
         if let TabHeader::Label { icon: slot, .. } = &mut self.entry.header {
             *slot = Some(icon);

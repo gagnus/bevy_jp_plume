@@ -2,5 +2,5 @@
 //! button variants — the values that describe a control's shape rather than its color.
 
 pub use crate::controls::{ButtonCheckableVariant, ButtonVariant};
-pub use crate::utils::constants::{Icon, IconFace, font_awesome, fonts, lucide, size, z_order};
+pub use crate::utils::constants::{Icon, fonts, lucide, size, z_order};
 pub use crate::utils::rounded_corners::RoundedCorners;

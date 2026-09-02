@@ -13,11 +13,11 @@ pub fn caption(text: impl Into<String>) -> impl Scene {
     }
 }
 
-/// A FontAwesome icon, drawn in the face its glyph belongs to; size inherits,
-/// so icons track the surrounding text.
+/// An icon glyph, drawn in the embedded icon font; size inherits, so icons
+/// track the surrounding text.
 pub fn icon(icon: Icon) -> impl Scene {
     let glyph = icon.glyph();
-    let font_path = icon.face().font_path();
+    let font_path = icon.font_path();
     bsn! {
         Text(glyph)
         InheritableFont {

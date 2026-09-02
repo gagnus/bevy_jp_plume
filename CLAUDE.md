@@ -1,7 +1,7 @@
 # bevy_jp_plume ("Plume")
 
-A bevy_ui control framework for game editors. Forked from `bevy_feathers`
-(bevy fork at `../3rdParty/bevy`, branch `local`) and diverging deliberately.
+A bevy_ui control framework for game debug UI. Forked from `bevy_feathers`
+and diverging deliberately.
 
 - Code style + Bevy naming: [docs/code_rules.md](docs/code_rules.md)
 - Scene composition + imm/retained rules: [docs/plume_rules.md](docs/plume_rules.md)
@@ -9,6 +9,7 @@ A bevy_ui control framework for game editors. Forked from `bevy_feathers`
 ## Plume rules (non-negotiable)
 
 ### Comments: very, very minimal — HARD LIMIT
+
 The Comments section of code_rules.md applies at maximum strictness. Never
 write plan/step references ("implements step 2"), history or attribution
 notes, or multi-line explanations of anything a reader can see in the code.
@@ -16,6 +17,7 @@ One line stating a non-obvious constraint is the ceiling. When in doubt,
 write no comment.
 
 ### Plume-only surface
+
 Apps import only `bevy_jp_plume`. Never require a consumer to mix plume
 types with the underlying `bevy_ui_widgets` types. Everything an app
 legitimately touches (`Checked`, `Selected`, `SliderValue`, `ValueChange`,
@@ -23,12 +25,14 @@ legitimately touches (`Checked`, `Selected`, `SliderValue`, `ValueChange`,
 reach down (e.g. `RadioGroup`), plume provides its own variant.
 
 ### Controls work when dropped in
+
 Every control must behave sensibly with nothing but its `@PlumeX { ... }`
 constructor — no obscure companion components required. Controls
 self-update their own value (still emitting `ValueChange`); app-vs-widget
 conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 
 ### Debug-overlay-first
+
 The target is debug overlays over a running game (imgui/egui's emphasis),
 not a full Unity-style editor. `PlumeDialog` is the movable/floating
 dialog and the primary container; there is no modal dialog. Full-screen
@@ -36,6 +40,7 @@ roots (menu bar, root panels) are in scope; `group`/`section` for
 structure within a surface.
 
 ### Full keyboard reach
+
 Every interactive control is tabbable (`TabIndex(0)`) and keyboard-
 operable via the headless `bevy_ui_widgets` handlers (Enter/Space
 activates, arrows move sliders/radios/lists). Keyboard focus shows a

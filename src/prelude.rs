@@ -3,7 +3,5 @@
 pub use crate::PlumePlugins;
 pub use crate::containers::{SplitPane, SplitSize};
 pub use crate::imm::{Corner, ImmDataAppExt, Numeric, PaneUi, PlumeImm, PlumeRoot, Ui};
-pub use crate::style::{
-    ButtonCheckableVariant, ButtonVariant, Icon, RoundedCorners, font_awesome, lucide, size,
-};
+pub use crate::style::{ButtonCheckableVariant, ButtonVariant, Icon, RoundedCorners, lucide, size};
 pub use crate::theme::{PlumeIgnore, ThemeId, ThemeSlot, UiTheme};
