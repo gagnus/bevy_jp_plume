@@ -7,7 +7,6 @@ use common::audio_settings::AudioSettingsPlugin;
 use common::debug_settings::DebugSettingsPlugin;
 use common::player_profile::PlayerProfilePlugin;
 use common::theme_editor::ThemeEditorPlugin;
-use common::tree_view::TreeViewPlugin;
 
 fn main() {
     let mut app = common::demo_app(true);
@@ -16,7 +15,6 @@ fn main() {
         DebugSettingsPlugin(false),
         PlayerProfilePlugin(false),
         ThemeEditorPlugin(false),
-        TreeViewPlugin(false),
     ));
     app.run();
 }
