@@ -21,8 +21,8 @@ use bevy::ui::{
     AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
 };
 
+use crate::body::{BodyGap, BodyPadding, apply_body_style};
 use crate::constants::{lucide, size};
-use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::cursor::EntityCursor;
 use crate::display::icon;
 use crate::theme::{InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken};

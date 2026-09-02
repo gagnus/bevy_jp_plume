@@ -14,8 +14,9 @@ use bevy_immediate::{
 };
 
 use crate::containers::{CloseRequested, ReorderMailbox, SplitSize};
-use crate::controls::{ColorPickerValue, MenuOpen, SelectedIndex, SetValue, TextInputValue};
+use crate::controls::{ColorPickerValue, MenuOpen, SelectedIndex, TextInputValue};
 use crate::display::TooltipShowing;
+use crate::set_value::SetValue;
 use crate::utils::numeric::Numeric;
 
 /// Synchronizes an app [`Numeric`] with a control's [`SliderValue`] (slider,

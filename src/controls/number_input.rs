@@ -29,10 +29,11 @@ use bevy::window::SystemCursorIcon;
 
 use crate::constants::{fonts, size};
 use crate::controls::{
-    DefaultWidth, TextInputField, set_editable_text, text_input_field, text_input_frame,
-    text_input_outline, text_input_suffix,
+    TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_outline,
+    text_input_suffix,
 };
 use crate::cursor::{CursorLock, EntityCursor};
+use crate::default_width::DefaultWidth;
 use crate::font_styles::InheritableFont;
 
 // Pointer travel (px) below which a press-and-release is a click (focus the

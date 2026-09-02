@@ -12,29 +12,33 @@ pub use bevy::input_focus::tab_navigation::TabGroup;
 pub use bevy::ui::{Checkable, Checked, InteractionDisabled, Selected};
 pub use bevy::ui_widgets::{Activate, RequestClose, SliderValue, ValueChange};
 
+pub use crate::body::{BodyGap, BodyPadding};
 pub use crate::containers::{
-    BodyGap, BodyPadding, CloseRequested, PlumeDialog, PlumeDialogProps, PlumeModal,
-    PlumeModalProps, PlumePopup, PlumePopupProps, PlumeReorderable, PlumeReorderableItem,
-    PlumeReorderableItemProps, PlumeReorderableProps, PlumeScrollArea, PlumeScrollAreaProps,
-    PlumeSection, PlumeSectionProps, PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps,
-    PlumeTabs, PlumeTabsProps, PopupDismiss, PopupPlacement, PopupSocket, ReorderMove, Screen,
-    ScrollAxis, SectionCollapsed, SeparatorBleed, SplitAxis, SplitCollapsible,
-    SplitDividerAutoHide, SplitMin, SplitPane, SplitSize, SplitSized, TabTarget, close_popup,
-    column, flex_spacer, modal_title, popup_socket, row, screen, separator, space, tab_body,
-    tab_label,
+    CloseRequested, PlumeDialog, PlumeDialogProps, PlumeModal, PlumeModalProps, PlumePopup,
+    PlumePopupProps, PlumeReorderable, PlumeReorderableItem, PlumeReorderableItemProps,
+    PlumeReorderableProps, PlumeScrollArea, PlumeScrollAreaProps, PlumeSection, PlumeSectionProps,
+    PlumeSplitter, PlumeSplitterProps, PlumeTab, PlumeTabProps, PlumeTabs, PlumeTabsProps,
+    PopupDismiss, PopupPlacement, PopupSocket, ReorderMove, Screen, ScrollAxis, SectionCollapsed,
+    SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitMin, SplitPane, SplitSize, SplitSized,
+    TabTarget, close_popup, column, modal_title, popup_socket, row, screen, tab_body, tab_label,
 };
 pub use crate::controls::{
-    CheckerUnderlay, ColorPickerValue, ColorSwatchValue, DefaultWidth, EditableTextFilter,
-    NoBlurOnEnter, NoDrag, NoSelectAllOnFocus, NoVerticalArrows, PlumeButton, PlumeButtonProps,
-    PlumeCheckbox, PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker,
+    CheckerUnderlay, ColorPickerValue, ColorSwatchValue, EditableTextFilter, NoBlurOnEnter, NoDrag,
+    NoSelectAllOnFocus, NoVerticalArrows, PlumeButton, PlumeButtonProps, PlumeCheckbox,
+    PlumeCheckboxProps, PlumeColorEdit, PlumeColorEditProps, PlumeColorPicker,
     PlumeColorPickerProps, PlumeColorSwatch, PlumeColorSwatchProps, PlumeDisclosure, PlumeMenuBar,
     PlumeMenuButton, PlumeMenuButtonProps, PlumeNumberInput, PlumeNumberInputProps, PlumeRadio,
     PlumeRadioGroup, PlumeRadioProps, PlumeScrollbar, PlumeScrollbarProps, PlumeSelect,
     PlumeSelectProps, PlumeSlider, PlumeSliderProps, PlumeTextInput, PlumeTextInputProps,
     PlumeToggleSwitch, PlumeToolButton, ScrollbarGutter, ScrollbarHidden, SelectedIndex,
-    SetSelectOptions, SetValue, TextInputValue, menu_anchor, select_options,
+    SetSelectOptions, TextInputValue, menu_anchor, select_options,
 };
-pub use crate::display::{Tooltip, TooltipContent, TooltipSettings, caption, icon};
+pub use crate::default_width::DefaultWidth;
+pub use crate::display::{
+    SeparatorBleed, Tooltip, TooltipContent, TooltipSettings, caption, flex_spacer, icon,
+    separator, space,
+};
+pub use crate::set_value::SetValue;
 // The propagation source a retained scene sets a subtree's [`ThemeId`] with.
 pub use crate::theme::ThemeId;
 pub use crate::theme::components::{

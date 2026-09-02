@@ -24,14 +24,15 @@ use super::caps::{
     ImmPlumeSplit, ImmPlumeText, ImmPlumeValue, PlumeOccurrences,
 };
 use super::{ImmEntityExt, ImmResponse, PaneUi, PlumeCaps, Ui, kind};
+use crate::body::{BodyGap, BodyPadding};
 use crate::constants::{Icon, size};
 use crate::containers::{
-    BodyGap, BodyPadding, CloseRequested, DialogChrome, DialogHeader, PlacementAnchor, PopupAnchor,
-    PopupDismiss, PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body,
-    dialog_frame, flex_spacer, imm_popup_scene, modal_barrier, popup_socket, reorderable_frame,
-    reorderable_grip, reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport,
-    scrollbar, section_body, section_frame, separator, space, splitter_divider, splitter_frame,
-    splitter_pane, tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
+    CloseRequested, DialogChrome, DialogHeader, PlacementAnchor, PopupAnchor, PopupDismiss,
+    PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
+    imm_popup_scene, modal_barrier, popup_socket, reorderable_frame, reorderable_grip,
+    reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar,
+    section_body, section_frame, splitter_divider, splitter_frame, splitter_pane, tab_body,
+    tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -40,7 +41,7 @@ use crate::controls::{
     SelectedIndex, imm_menu_anchor, imm_menu_frame, set_icon_glyph,
 };
 use crate::display;
-use crate::display::caption;
+use crate::display::{caption, flex_spacer, separator, space};
 use crate::font_styles::{InheritableFont, small_caps};
 use crate::theme::ThemeSlot;
 use crate::theme::components::{ThemeBackgroundSlot, ThemeBackgroundToken};

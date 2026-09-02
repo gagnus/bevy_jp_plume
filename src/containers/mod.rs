@@ -1,8 +1,6 @@
 //! Meta-module containing all containers: passive widgets that hold other widgets.
-mod body;
 mod column;
 mod dialog;
-mod flex_spacer;
 mod modal;
 mod popup;
 mod reorderable;
@@ -10,17 +8,12 @@ mod row;
 mod screen;
 mod scroll_area;
 mod section;
-mod separator;
-mod space;
 mod splitter;
 mod tabs;
 
-pub(crate) use body::apply_body_style;
-pub use body::{BodyGap, BodyPadding};
 pub use column::column;
 pub use dialog::{CloseRequested, PlumeDialog, PlumeDialogProps};
 pub(crate) use dialog::{DialogChrome, DialogHeader, DialogPlugin, dialog_body, dialog_frame};
-pub use flex_spacer::flex_spacer;
 pub(crate) use modal::{ModalPlugin, modal_barrier};
 pub use modal::{PlumeModal, PlumeModalProps, modal_title};
 pub(crate) use popup::*;
@@ -41,9 +34,6 @@ pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
 pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
-pub(crate) use separator::SeparatorPlugin;
-pub use separator::{Separator, SeparatorBleed, separator};
-pub use space::space;
 pub use splitter::{
     PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitMin,
     SplitPane, SplitSize, SplitSized,

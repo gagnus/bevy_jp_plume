@@ -29,8 +29,10 @@ use bevy::ui::{AlignItems, InteractionDisabled, Node, PositionType, UiRect, UiSy
 use bevy::ui_widgets::{SelectAllOnFocus, TextInput, ValueChange};
 
 use crate::constants::size;
-use crate::controls::{ButtonVariant, DefaultWidth, SetValue};
+use crate::controls::ButtonVariant;
 use crate::cursor::EntityCursor;
+use crate::default_width::DefaultWidth;
+use crate::set_value::SetValue;
 use crate::theme::{ThemeBackgroundToken, ThemeBorderToken, ThemeId, ThemeTextToken, UiTheme};
 use crate::tokens;
 use crate::utils::hierarchy::nearest_with;

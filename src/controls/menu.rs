@@ -36,12 +36,12 @@ use bevy::ui_widgets::{
 };
 
 use crate::constants::{lucide, size, z_order};
-use crate::containers::{PopupSocket, PopupSurface, Separator, popup_socket};
-use crate::controls::SetValue;
+use crate::containers::{PopupSocket, PopupSurface, popup_socket};
 use crate::cursor::EntityCursor;
-use crate::display::{caption, icon};
+use crate::display::{Separator, caption, icon};
 use crate::focus::FocusIndicator;
 use crate::font_styles::InheritableFont;
+use crate::set_value::SetValue;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,
     set_optional_background,

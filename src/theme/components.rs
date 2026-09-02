@@ -12,7 +12,7 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query, Res};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::text::TextColor;
+use bevy::text::{TextColor, TextFont};
 use bevy::ui::{
     BackgroundColor, BackgroundGradient, BorderColor, BoxShadow, ColorStop, Gradient,
     InterpolationColorSpace, LinearGradient, percent,
@@ -172,6 +172,14 @@ pub(crate) struct ThemeTextToken(pub ThemeToken);
 #[reflect(Component, Clone)]
 #[require(PropagateOver::<TextColor>)]
 pub struct ThemeTextSlot(pub ThemeSlot);
+
+/// Marks text that styles itself, Plume will not interfere with it.
+#[derive(Component, Clone, Default)]
+#[component(immutable)]
+#[derive(Reflect)]
+#[reflect(Component, Clone)]
+#[require(PropagateOver::<TextFont>, PropagateOver::<TextColor>)]
+pub struct PlumeIgnore;
 
 // Everything that decides what a themed background paints: where the color comes
 // from, which theme resolves it, and how hard it is shaded.

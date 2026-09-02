@@ -40,9 +40,10 @@ use crate::constants::{lucide, size};
 use crate::containers::{
     PlumePopup, PopupDismiss, PopupPlacement, PopupSocket, close_popup, popup_socket,
 };
-use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter, SetValue};
+use crate::controls::{ButtonVariant, PlumeButton, PlumeScrollbar, ScrollbarGutter};
 use crate::cursor::EntityCursor;
 use crate::display::{caption, icon};
+use crate::set_value::SetValue;
 use crate::style::RoundedCorners;
 use crate::theme::{
     InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, set_optional_background,

@@ -5,14 +5,12 @@ mod checkbox;
 mod color_edit;
 mod color_picker;
 mod color_swatch;
-mod default_width;
 mod disclosure;
 mod menu;
 mod number_input;
 mod radio;
 mod scrollbar;
 mod select;
-mod set_value;
 mod slider;
 mod text_input;
 mod toggle_switch;
@@ -36,8 +34,6 @@ use color_swatch::ColorSwatchPlugin;
 pub use color_swatch::{
     CheckerUnderlay, ColorSwatchValue, PlumeColorSwatch, PlumeColorSwatchProps,
 };
-pub use default_width::DefaultWidth;
-use default_width::DefaultWidthPlugin;
 use disclosure::DisclosurePlugin;
 pub use disclosure::PlumeDisclosure;
 use menu::MenuPlugin;
@@ -56,8 +52,6 @@ pub use scrollbar::{PlumeScrollbar, PlumeScrollbarProps, ScrollbarGutter, Scroll
 use select::SelectPlugin;
 pub(crate) use select::set_select_max_visible;
 pub use select::{PlumeSelect, PlumeSelectProps, SelectedIndex, SetSelectOptions, select_options};
-pub use set_value::SetValue;
-pub(crate) use set_value::SetValuePlugin;
 use slider::SliderPlugin;
 pub use slider::{PlumeSlider, PlumeSliderProps};
 use text_input::TextInputPlugin;
@@ -87,7 +81,6 @@ impl Plugin for ControlsPlugin {
             ColorEditPlugin,
             ColorPickerPlugin,
             ColorSwatchPlugin,
-            DefaultWidthPlugin,
             DisclosurePlugin,
         ));
         app.add_plugins((
@@ -96,7 +89,6 @@ impl Plugin for ControlsPlugin {
             RadioPlugin,
             ScrollbarPlugin,
             SelectPlugin,
-            SetValuePlugin,
             SliderPlugin,
             TextInputPlugin,
             ToggleSwitchPlugin,

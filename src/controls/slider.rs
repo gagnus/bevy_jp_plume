@@ -32,8 +32,8 @@ use bevy::ui_widgets::{
 };
 
 use crate::constants::size;
-use crate::controls::DefaultWidth;
 use crate::cursor::{CursorLock, EntityCursor};
+use crate::default_width::DefaultWidth;
 use crate::focus::FocusIndicator;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeId, UiTheme, control_box_shadow};
 use crate::tokens;

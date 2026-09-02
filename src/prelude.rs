@@ -6,4 +6,4 @@ pub use crate::imm::{Corner, ImmDataAppExt, Numeric, PaneUi, PlumeImm, PlumeRoot
 pub use crate::style::{
     ButtonCheckableVariant, ButtonVariant, Icon, RoundedCorners, font_awesome, lucide, size,
 };
-pub use crate::theme::{ThemeId, ThemeSlot, UiTheme};
+pub use crate::theme::{PlumeIgnore, ThemeId, ThemeSlot, UiTheme};

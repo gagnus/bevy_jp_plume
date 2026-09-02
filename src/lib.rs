@@ -17,7 +17,9 @@ use bevy::text::TextFont;
 // piecemeal through `style`, `retained` and `theme`.
 pub(crate) use theme::tokens;
 pub use utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
-pub(crate) use utils::{constants, cursor, focus, font_styles, rounded_corners};
+pub(crate) use utils::{
+    body, constants, cursor, default_width, focus, font_styles, rounded_corners, set_value,
+};
 
 use crate::controls::ControlsPlugin;
 use crate::theme::ThemePlugin;
@@ -58,12 +60,14 @@ impl Plugin for PlumeCorePlugin {
             containers::ReorderablePlugin,
             containers::ScrollAreaPlugin,
             containers::SectionPlugin,
-            containers::SeparatorPlugin,
+            display::SeparatorPlugin,
             containers::SplitterPlugin,
             containers::TabsPlugin,
         ));
         app.add_plugins((
             CursorIconPlugin,
+            default_width::DefaultWidthPlugin,
+            set_value::SetValuePlugin,
             ThemePlugin,
             // Click-to-focus plus Tab/Shift-Tab traversal of every control; tabbable
             // entities need a `TabGroup` ancestor, which `PlumeDialog` provides.

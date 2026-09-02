@@ -19,13 +19,14 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{Activate, ControlOrientation, Dialog, DialogDragHandle, RequestClose};
 
+use crate::body::{BodyGap, BodyPadding, apply_body_style};
 use crate::constants::{lucide, size};
 use crate::containers::{
-    BodyGap, BodyPadding, ScrollAxis, ScrollContent, apply_body_style, flex_spacer, scroll_content,
-    scroll_content_of, scroll_frame, scroll_viewport, scrollbar_node,
+    ScrollAxis, ScrollContent, scroll_content, scroll_content_of, scroll_frame, scroll_viewport,
+    scrollbar_node,
 };
 use crate::controls::{ButtonVariant, PlumeScrollbar, PlumeToolButton};
-use crate::display::icon;
+use crate::display::{flex_spacer, icon};
 use crate::font_styles::InheritableFont;
 use crate::theme::{
     Flat, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken, dialog_box_shadow,

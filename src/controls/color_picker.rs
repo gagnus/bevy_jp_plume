@@ -27,12 +27,11 @@ use bevy::ui_widgets::{SliderValue, ValueChange};
 
 use super::color_swatch::CheckerUnderlay;
 use crate::constants::size;
-use crate::containers::space;
 use crate::controls::{
     ColorSwatchValue, PlumeColorSwatch, PlumeNumberInput, PlumeXyPad, XyPadLock, XyPadRing,
     XyPadValue,
 };
-use crate::display::caption;
+use crate::display::{caption, space};
 use crate::utils::hierarchy::nearest_with;
 
 // Wheel geometry in px-at-standard-font; the em constants and the ring's

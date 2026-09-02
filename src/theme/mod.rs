@@ -317,8 +317,8 @@ fn warn_unstyled_text(
     if no_color && *color_suspect_last_frame {
         warn_once!(
             "Text resolved no color and falls back to white. Text must sit under a surface \
-             that establishes the style, as `screen`, dialogs and popups do; text styled by \
-             hand opts out with `PropagateOver<TextColor>`."
+             that establishes the style, as `screen`, dialogs and popups do; opt out with \
+             `PlumeIgnore`."
         );
     }
     *color_suspect_last_frame = no_color;
@@ -327,8 +327,8 @@ fn warn_unstyled_text(
     if no_font && *font_suspect_last_frame {
         warn_once!(
             "Text resolved no font and falls back to the engine default. Text must sit under \
-             a surface that establishes the style, as `screen`, dialogs and popups do; text \
-             styled by hand opts out with `PropagateOver<TextFont>`."
+             a surface that establishes the style, as `screen`, dialogs and popups do; opt out \
+             with `PlumeIgnore`."
         );
     }
     *font_suspect_last_frame = no_font;
@@ -553,6 +553,7 @@ mod slots;
 
 pub(crate) mod tokens;
 
+pub use components::PlumeIgnore;
 pub(crate) use components::*;
 pub use editor::{theme_editor, theme_editor_tabs};
 pub use slots::ThemeSlot;

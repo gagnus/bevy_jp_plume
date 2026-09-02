@@ -22,9 +22,9 @@ use bevy::ui::{
 use bevy::ui_widgets::{RadioButton, RadioGroup, ValueChange};
 
 use crate::constants::size;
-use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
+use crate::set_value::SetValue;
 use crate::theme::{
     GradientAmount, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,

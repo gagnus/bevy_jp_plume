@@ -24,10 +24,10 @@ use bevy::ui::{
 use bevy::ui_widgets::{Activate, Button, ValueChange};
 
 use crate::constants::size;
-use crate::controls::SetValue;
 use crate::cursor::EntityCursor;
 use crate::focus::FocusIndicator;
 use crate::rounded_corners::RoundedCorners;
+use crate::set_value::SetValue;
 use crate::theme::{
     Flat, GradientAmount, Inert, InheritableThemeTextToken, ThemeBackgroundToken, ThemeBorderToken,
     control_box_shadow,

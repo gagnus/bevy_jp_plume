@@ -33,8 +33,8 @@ use bevy::ui_widgets::MenuPopup;
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 
 use super::dialog::CloseRequested;
+use crate::body::{BodyGap, BodyPadding, apply_body_style};
 use crate::constants::{size, z_order};
-use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::controls::MenuAnchorLink;
 use crate::font_styles::InheritableFont;
 use crate::theme::{

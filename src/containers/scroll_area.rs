@@ -24,8 +24,8 @@ use bevy::ui::{
 };
 use bevy::ui_widgets::{ControlOrientation, ScrollArea};
 
+use crate::body::{BodyGap, BodyPadding, apply_body_style};
 use crate::constants::size;
-use crate::containers::{BodyGap, BodyPadding, apply_body_style};
 use crate::controls::{PlumeScrollbar, ScrollbarGutter};
 
 /// The axis a scroll region scrolls along.

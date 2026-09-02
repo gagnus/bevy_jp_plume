@@ -25,10 +25,11 @@ use bevy_immediate::{ImmEntity, ImmId, imm_id};
 use super::caps::{ImmPlumeChecked, ImmPlumeFocus, ImmPlumeMenu, ImmPlumeTooltip};
 use super::widgets::{ImmMenu, imm_menu_popup_on};
 use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
+use crate::body::{BodyGap, BodyPadding};
 use crate::constants::{size, z_order};
 use crate::containers::{
-    BodyGap, BodyPadding, PopupAnchor, SectionCollapsed, SectionCollapsible, SeparatorBleed,
-    SplitCollapsible, SplitDividerAutoHide, SplitMin, SplitPane, SplitSized,
+    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitCollapsible, SplitDividerAutoHide,
+    SplitMin, SplitPane, SplitSized,
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuButtonRole, MenuShortcutText, NoDrag,
@@ -36,7 +37,7 @@ use crate::controls::{
     set_select_max_visible, text_input_placeholder, text_input_prefix_container, text_input_suffix,
     text_input_suffix_container,
 };
-use crate::display::{Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
+use crate::display::{SeparatorBleed, Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
