@@ -42,10 +42,6 @@ struct ExampleArgs {
     #[argh(option)]
     screenshot: Option<PathBuf>,
 
-    /// build the UI with the light theme instead of the default dark one
-    #[argh(switch)]
-    light: bool,
-
     /// show the gallery
     #[argh(switch)]
     gallery: bool,
@@ -61,6 +57,30 @@ struct ExampleArgs {
     /// default RemSize
     #[argh(option)]
     rem_size: Option<f32>,
+
+    /// build the UI with the light theme instead of the default dark one
+    #[argh(switch)]
+    light: bool,
+
+    /// set theme hue
+    #[argh(option)]
+    theme_hue: Option<f32>,
+
+    /// set theme to have a complementary neutral hue
+    #[argh(switch)]
+    theme_complementary_neutral: bool,
+
+    /// set theme to NOT have a complementary neutral hue
+    #[argh(switch)]
+    no_theme_complementary_neutral: bool,
+
+    /// set theme to have a boosted neutral chroma
+    #[argh(switch)]
+    theme_boosted_neutral_chroma: bool,
+
+    /// set theme to NOT have a boosted neutral chroma
+    #[argh(switch)]
+    no_theme_boosted_neutral_chroma: bool,
 }
 
 /// Print the backing resource whenever it changes, to confirm every control
@@ -104,14 +124,44 @@ pub trait Options: Copy + PartialEq + Sized + 'static {
 /// Apply the example command line. `--light` overwrites the [`UiTheme`] that
 /// `PlumePlugins` installed, so this has to run after the plugins are added.
 pub fn apply_args(app: &mut App, default_gallery: bool) {
+    fn reconcile(yes: bool, no: bool, default: bool) -> bool {
+        (default && !no) || yes
+    }
+
     let args: ExampleArgs = argh::from_env();
 
-    if (default_gallery && !args.no_gallery) || args.gallery {
+    if reconcile(args.gallery, args.no_gallery, default_gallery) {
         app.add_plugins(GalleryPlugin);
     }
 
     if args.light {
-        app.insert_resource(UiTheme::from(palettes::default_light_palette()));
+        app.insert_resource(UiTheme::from(palettes::light_palette(
+            args.theme_hue.unwrap_or(palettes::DEFAULT_LIGHT_HUE),
+            reconcile(
+                args.theme_complementary_neutral,
+                args.no_theme_complementary_neutral,
+                palettes::DEFAULT_LIGHT_COMPLEMENTARY_NEUTRAL,
+            ),
+            reconcile(
+                args.theme_boosted_neutral_chroma,
+                args.no_theme_boosted_neutral_chroma,
+                false,
+            ),
+        )));
+    } else {
+        app.insert_resource(UiTheme::from(palettes::dark_palette(
+            args.theme_hue.unwrap_or(palettes::DEFAULT_DARK_HUE),
+            reconcile(
+                args.theme_complementary_neutral,
+                args.no_theme_complementary_neutral,
+                palettes::DEFAULT_DARK_COMPLEMENTARY_NEUTRAL,
+            ),
+            reconcile(
+                args.theme_boosted_neutral_chroma,
+                args.no_theme_boosted_neutral_chroma,
+                false,
+            ),
+        )));
     }
 
     if let Some(path) = args.screenshot {

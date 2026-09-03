@@ -3,9 +3,15 @@ use bevy::color::Oklcha;
 
 use crate::theme::{OklchaArray, ThemeEditablePalette, default_axis_colors};
 
+/// Default dark hue, see `default_dark_palette`
+pub const DEFAULT_DARK_HUE: f32 = 120.0;
+
+/// Default dark palette has a complementary (ie 180 degrees hue shifted) neutral color.
+pub const DEFAULT_DARK_COMPLEMENTARY_NEUTRAL: bool = true;
+
 /// Default plume dark palette editable inputs.
 pub fn default_dark_palette() -> ThemeEditablePalette {
-    dark_palette(120.0, true, false)
+    dark_palette(DEFAULT_DARK_HUE, DEFAULT_DARK_COMPLEMENTARY_NEUTRAL, false)
 }
 
 /// Plume dark palette editable inputs with given hue.

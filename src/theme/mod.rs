@@ -560,6 +560,11 @@ pub use slots::ThemeSlot;
 
 /// The built-in parametric palettes, ready to hand to [`UiTheme::from`].
 pub mod palettes {
-    pub use super::dark_theme::{dark_palette, default_dark_palette};
-    pub use super::light_theme::{default_light_palette, light_palette};
+    pub use super::dark_theme::{
+        DEFAULT_DARK_COMPLEMENTARY_NEUTRAL, DEFAULT_DARK_HUE, dark_palette, default_dark_palette,
+    };
+    pub use super::light_theme::{
+        DEFAULT_LIGHT_COMPLEMENTARY_NEUTRAL, DEFAULT_LIGHT_HUE, default_light_palette,
+        light_palette,
+    };
 }
