@@ -9,12 +9,12 @@ use common::player_profile::PlayerProfilePlugin;
 use common::theme_editor::ThemeEditorPlugin;
 
 fn main() {
-    let mut app = common::demo_app(true);
+    let mut app = common::demo_app(false);
     app.add_plugins((
-        AudioSettingsPlugin(false),
-        DebugSettingsPlugin(false),
-        PlayerProfilePlugin(false),
-        ThemeEditorPlugin(false),
+        AudioSettingsPlugin(true),
+        DebugSettingsPlugin(true),
+        PlayerProfilePlugin(true),
+        ThemeEditorPlugin(true),
     ));
     app.run();
 }

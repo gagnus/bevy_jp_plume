@@ -169,7 +169,7 @@ fn debug_settings_dialog(
 
     root.dialog(TITLE, &mut open)
         .width(em(600.0 / BASE_FONT_PX))
-        .at_corner(Corner::BottomLeft, px(20), px(20))
+        .at_corner(Corner::BottomLeft, em(1), em(1))
         .show(|ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {

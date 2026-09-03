@@ -50,7 +50,7 @@ fn audio_settings_dialog(
 ) {
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
-    root.dialog(TITLE, &mut open).at(px(60), px(80)).show(|ui| {
+    root.dialog(TITLE, &mut open).at_corner(Corner::TopLeft, em(10), em(5)).show(|ui| {
         ui.horizontal(|ui| {
             ui.caption("Volume");
             ui.slider(&mut s.volume, 0.0..=1.0).enabled(!s.muted);

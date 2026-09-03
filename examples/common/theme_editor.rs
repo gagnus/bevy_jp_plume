@@ -27,7 +27,7 @@ fn theme_editor_dialog(
     root.dialog(TITLE, &mut open)
         .width(em(23))
         .max_height(px(500))
-        .at_corner(Corner::BottomRight, px(50), px(50))
+        .at_corner(Corner::BottomRight, em(1), em(1))
         .show(|ui| theme_editor_tabs(ui, &mut theme, &mut selected));
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);

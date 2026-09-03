@@ -92,7 +92,7 @@ fn player_profile_dialog(
     let mut done = false;
     root.dialog(TITLE, &mut open)
         .width(em(27))
-        .at(px(450), px(60))
+        .at_corner(Corner::TopRight, em(26), em(1))
         .show(|ui| {
             ui.section("Profile", |ui| {
                 field(ui, "Name", |ui| {

@@ -35,9 +35,10 @@ conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 
 The target is debug overlays over a running game (imgui/egui's emphasis),
 not a full Unity-style editor. `PlumeDialog` is the movable/floating
-dialog and the primary container; there is no modal dialog. Full-screen
-roots (menu bar, root panels) are in scope; `group`/`section` for
-structure within a surface.
+dialog and the primary container; `PlumeModal` centres over a barrier
+that blocks the app behind it, for the rare prompt that must be answered.
+Full-screen roots (menu bar, root panels) are in scope; `group`/`section`
+for structure within a surface.
 
 ### Full keyboard reach
 
