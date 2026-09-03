@@ -1,7 +1,7 @@
 # bevy_jp_plume ("Plume")
 
-A bevy_ui control framework for game debug UI. Forked from `bevy_feathers`
-and diverging deliberately.
+A bevy_ui control framework with an immediate mode front-end for game debug UI. 
+Forked from `bevy_feathers` and diverging deliberately.
 
 - Code style + Bevy naming: [docs/code_rules.md](docs/code_rules.md)
 - Scene composition + imm/retained rules: [docs/plume_rules.md](docs/plume_rules.md)

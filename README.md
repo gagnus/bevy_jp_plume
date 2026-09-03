@@ -1,7 +1,7 @@
 # bevy_jp_plume ("Plume")
 
-A bevy_ui control framework for game debug UI. Forked from `bevy_feathers`
-and diverging deliberately.
+A bevy_ui control framework with an immediate mode front-end for game debug UI. 
+Forked from `bevy_feathers` and diverging deliberately.
 
 Original code MIT OR Apache-2.0 (see LICENSE-MIT / LICENSE-APACHE).
 
@@ -22,6 +22,10 @@ The inspector_panel example — a docked editor panel built from tabs, splitter,
 sections and the color widgets:
 
 ![The inspector_panel example: a docked editor panel](docs/inspector_panel.png)
+
+Simple theme editor:
+
+![Five theme palettes applied to the same UI, split diagonally](docs/theme_medley.png)
 
 ## Widgets
 
