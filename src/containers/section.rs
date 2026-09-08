@@ -16,7 +16,7 @@ use bevy::picking::PickingSystems;
 use bevy::picking::events::PointerClick;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::ui::{
     AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
 };
@@ -85,8 +85,8 @@ pub struct PlumeSectionProps {
 impl Default for PlumeSectionProps {
     fn default() -> Self {
         Self {
-            header: Box::new(bsn_list![]),
-            contents: Box::new(bsn_list![]),
+            header: Box::new(()),
+            contents: Box::new(()),
             collapsible: true,
         }
     }
@@ -105,14 +105,12 @@ impl PlumeSection {
                 header,
                 collapsible,
                 // Empty for the imm layer, which reconciles the body itself.
-                bsn_list![
-                    (
-                        @section_body()
-                        Children [
-                            {contents},
-                        ]
-                    ),
-                ],
+                bsn! {
+                    @section_body()
+                    Children [
+                        {contents}
+                    ]
+                },
             )
         }
     }
@@ -137,35 +135,35 @@ pub(crate) fn section_frame(
         SectionCollapsible(collapsible)
         ThemeBackgroundToken(tokens::SECTION_BODY_BG)
         Children [
-            (
-                Node {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Start,
-                    padding: UiRect::horizontal(size::SPACE),
-                    min_height: size::HEADER_HEIGHT,
-                    column_gap: size::SPACE,
-                    border_radius: size::CORNER_RADIUS,
-                }
-                SectionHeader
-                ThemeBackgroundToken(tokens::SECTION_HEADER_BG)
-                ThemeBorderToken(tokens::SEPARATOR)
-                EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-                InheritableThemeTextToken(tokens::SECTION_HEADER_TEXT)
-                on(toggle_section_collapse)
-                Children [
-                    {collapsible.then(|| bsn! {
-                        @icon(lucide::CHEVRON_DOWN)
-                        Node { width: size::ICON_WIDTH }
-                        SectionChevron
-                        AnimState::rotation(0.0, -FRAC_PI_2)
-                        UiTransform::default()
-                    })},
-                    {header},
-                ]
-            ),
-            {body},
+            Node {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Start,
+                padding: UiRect::horizontal(size::SPACE),
+                min_height: size::HEADER_HEIGHT,
+                column_gap: size::SPACE,
+                border_radius: size::CORNER_RADIUS,
+            }
+            SectionHeader
+            ThemeBackgroundToken(tokens::SECTION_HEADER_BG)
+            ThemeBorderToken(tokens::SEPARATOR)
+            EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
+            InheritableThemeTextToken(tokens::SECTION_HEADER_TEXT)
+            on(toggle_section_collapse)
+            Children [
+                {collapsible.then(|| bsn! {
+                    @icon(lucide::CHEVRON_DOWN)
+                    Node { width: size::ICON_WIDTH }
+                    SectionChevron
+                    AnimState::rotation(0.0, -FRAC_PI_2)
+                    UiTransform::default()
+                })}
+                --
+                {header}
+            ]
+            --
+            {body}
         ]
     }
 }

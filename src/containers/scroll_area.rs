@@ -307,7 +307,7 @@ pub struct PlumeScrollAreaProps {
 impl Default for PlumeScrollAreaProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list![]),
+            contents: Box::new(()),
             axis: ScrollAxis::default(),
         }
     }
@@ -319,25 +319,20 @@ impl PlumeScrollArea {
         bsn! {
             @scroll_frame(axis)
             Children [
-                (
-                    #viewport
-                    @scroll_viewport(axis)
+                #viewport
+                @scroll_viewport(axis)
+                Children [
+                    @scroll_content(axis)
                     Children [
-                        (
-                            @scroll_content(axis)
-                            Children [
-                                {contents},
-                            ]
-                        ),
+                        {contents}
                     ]
-                ),
-                (
-                    @PlumeScrollbar {
-                        @target: #viewport,
-                        @orientation: {axis.orientation()},
-                    }
-                    @scrollbar_node(axis)
-                ),
+                ]
+                --
+                @PlumeScrollbar {
+                    @target: #viewport,
+                    @orientation: {axis.orientation()},
+                }
+                @scrollbar_node(axis)
             ]
         }
     }

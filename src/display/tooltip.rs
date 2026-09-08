@@ -51,7 +51,7 @@ impl Default for TooltipContent {
     fn default() -> Self {
         Self(Arc::new(|| {
             warn!("TooltipContent contents not specified");
-            Box::new(bsn_list![])
+            Box::new(())
         }))
     }
 }
@@ -350,15 +350,11 @@ fn tooltip_panel(text: String) -> impl Scene {
     bsn! {
         @tooltip_box()
         Children [
-            (
-                @tooltip_chrome()
-                Children [
-                    (
-                        @caption(text)
-                        Pickable::IGNORE
-                    ),
-                ]
-            ),
+            @tooltip_chrome()
+            Children [
+                @caption(text)
+                Pickable::IGNORE
+            ]
         ]
     }
 }
@@ -367,12 +363,10 @@ fn rich_tooltip_panel(contents: Box<dyn SceneList>) -> impl Scene {
     bsn! {
         @tooltip_box()
         Children [
-            (
-                @tooltip_chrome()
-                Children [
-                    {contents},
-                ]
-            ),
+            @tooltip_chrome()
+            Children [
+                {contents}
+            ]
         ]
     }
 }

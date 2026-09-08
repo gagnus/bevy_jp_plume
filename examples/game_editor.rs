@@ -289,16 +289,6 @@ fn toolbar(ui: &mut Ui, state: &mut Editor, bg: Color, theme_editor_open: &mut b
             state.playing = false;
         }
 
-        // just to put the icons from windows chrome into the window...
-        ui.separator();
-        ui.tool_button(lucide::MINUS).variant(ButtonVariant::Plain);
-        ui.tool_button(lucide::COPY).variant(ButtonVariant::Plain);
-        ui.tool_button(lucide::MAXIMIZE)
-            .variant(ButtonVariant::Plain);
-        ui.tool_button(lucide::X)
-            .flat()
-            .variant(ButtonVariant::Plain);
-
         ui.separator();
         ui.tool_button(lucide::PALETTE).checkable(theme_editor_open);
     })

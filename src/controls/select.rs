@@ -149,56 +149,55 @@ impl PlumeSelect {
             SelectMaxVisible(max_visible)
             on(on_menu_event)
             Children [
-                (
-                    @PlumeButton {
-                        // The caption is pinned to the measured widest label, so a
-                        // label with a space in it would wrap on a sub-pixel shortfall.
-                        @caption: bsn! {
-                            @caption(initial_caption)
-                            SelectCaption
-                            TextLayout {
-                                linebreak: LineBreak::NoWrap,
-                            }
-                        },
-                        @variant: ButtonVariant::Normal,
-                        @border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS_SMALL)},
-                    }
-                    ActivateOnPress
-                    MenuButton
-                    SelectButton
+                @PlumeButton {
+                    // The caption is pinned to the measured widest label, so a
+                    // label with a space in it would wrap on a sub-pixel shortfall.
+                    @caption: bsn! {
+                        @caption(initial_caption)
+                        SelectCaption
+                        TextLayout {
+                            linebreak: LineBreak::NoWrap,
+                        }
+                    },
+                    @variant: ButtonVariant::Normal,
+                    @border_radius: {RoundedCorners::All.to_border_radius(size::CORNER_RADIUS_SMALL)},
+                }
+                ActivateOnPress
+                MenuButton
+                SelectButton
+                Node {
+                    flex_grow: 1.0,
+                }
+                Children [
                     Node {
                         flex_grow: 1.0,
                     }
-                    Children [
-                        Node {
-                            flex_grow: 1.0,
-                        },
-                        @icon(lucide::CHEVRON_DOWN),
-                    ]
-                ),
-                @popup_socket(),
+                    --
+                    @icon(lucide::CHEVRON_DOWN)
+                ]
+                --
+                @popup_socket()
+                --
                 // Ghost rows in a zero-size clipped overlay: laid out (so the labels
                 // get real text measurement) without occupying space or taking picks;
                 // despawned once `measure_select_width` has sized the button.
-                (
-                    Node {
-                        position_type: PositionType::Absolute,
-                        // Effectively unbounded, so rows shrink-wrap their label
-                        // instead of collapsing to min_width and wrapping it.
-                        width: px(1.0e5),
-                        height: Val::ZERO,
-                        overflow: Overflow::clip(),
-                        align_items: AlignItems::FlexStart,
-                    }
-                    Pickable::IGNORE
-                    Visibility::Hidden
-                    SelectMeasure
-                    // The ghost labels must inherit the real row font, or the
-                    // measured widths bake in the engine default.
-                    Children [
-                        {ghost_rows},
-                    ]
-                ),
+                Node {
+                    position_type: PositionType::Absolute,
+                    // Effectively unbounded, so rows shrink-wrap their label
+                    // instead of collapsing to min_width and wrapping it.
+                    width: px(1.0e5),
+                    height: Val::ZERO,
+                    overflow: Overflow::clip(),
+                    align_items: AlignItems::FlexStart,
+                }
+                Pickable::IGNORE
+                Visibility::Hidden
+                SelectMeasure
+                // The ghost labels must inherit the real row font, or the
+                // measured widths bake in the engine default.
+                Children [
+                    {ghost_rows}
+                ]
             ]
         }
     }
@@ -210,7 +209,7 @@ fn option_row(label: String) -> impl Scene {
     bsn! {
         @PlumeSelectOption
         Children [
-            @caption(label),
+            @caption(label)
         ]
     }
 }
@@ -250,7 +249,7 @@ struct PlumeSelectOptionsProps {
 impl Default for PlumeSelectOptionsProps {
     fn default() -> Self {
         Self {
-            options: Box::new(bsn_list![]),
+            options: Box::new(()),
         }
     }
 }
@@ -270,33 +269,30 @@ impl PlumeSelectOptions {
             TabIndex(0)
             AccessibilityNode(accesskit::Node::new(Role::ListBox))
             Children [
-                (
-                    #inner
-                    Node {
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Stretch,
-                        justify_content: JustifyContent::Start,
-                        overflow: Overflow::scroll_y(),
-                    }
-                    ScrollArea
-                    Children [
-                        {props.options},
-                    ]
-                ),
-                (
-                    @PlumeScrollbar {
-                        @target: #inner,
-                        @orientation: ControlOrientation::Vertical,
-                    }
-                    Node {
-                        position_type: PositionType::Absolute,
-                        right: size::SPACE,
-                        top: {size::SPACE_TIGHT / 2.0},
-                        bottom: {size::SPACE_TIGHT / 2.0},
-                        width: size::SCROLLBAR_WIDTH,
-                    }
-                ),
+                #inner
+                Node {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Stretch,
+                    justify_content: JustifyContent::Start,
+                    overflow: Overflow::scroll_y(),
+                }
+                ScrollArea
+                Children [
+                    {props.options}
+                ]
+                --
+                @PlumeScrollbar {
+                    @target: #inner,
+                    @orientation: ControlOrientation::Vertical,
+                }
+                Node {
+                    position_type: PositionType::Absolute,
+                    right: size::SPACE,
+                    top: {size::SPACE_TIGHT / 2.0},
+                    bottom: {size::SPACE_TIGHT / 2.0},
+                    width: size::SCROLLBAR_WIDTH,
+                }
             ]
         }
     }
@@ -326,15 +322,13 @@ impl PlumeSelectOption {
             Hovered
             ListItem
             Children [
-                (
-                    // Hidden ticks still occupy layout, so every label shares the gutter.
-                    @icon(lucide::CHECK)
-                    Node {
-                        width: size::ICON_WIDTH,
-                    }
-                    SelectOptionCheck
-                    Visibility::Hidden
-                ),
+                // Hidden ticks still occupy layout, so every label shares the gutter.
+                @icon(lucide::CHECK)
+                Node {
+                    width: size::ICON_WIDTH,
+                }
+                SelectOptionCheck
+                Visibility::Hidden
             ]
         }
     }
@@ -412,19 +406,17 @@ fn open_select_popup(
                 @placement: PopupPlacement::Below,
                 @place_very_close: true,
                 @dismiss: PopupDismiss::FocusOut,
-                @contents: bsn_list![
-                    (
-                        @PlumeSelectOptions {
-                            @options: rows,
-                        }
-                        on(listbox_update_selection)
-                        on(re_emit_listbox_value)
-                        on(close_popup_on_reselect)
-                        Node {
-                            max_height: max_height,
-                        }
-                    ),
-                ],
+                @contents: bsn! {
+                    @PlumeSelectOptions {
+                        @options: rows,
+                    }
+                    on(listbox_update_selection)
+                    on(re_emit_listbox_value)
+                    on(close_popup_on_reselect)
+                    Node {
+                        max_height: max_height,
+                    }
+                },
             }
             SelectPopup
             MenuFocusState::Opening(nav)

@@ -102,7 +102,7 @@ pub struct PlumeButtonProps {
 impl Default for PlumeButtonProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list![]),
+            caption: Box::new(()),
             variant: ButtonVariant::default(),
             border_radius: RoundedCorners::All.to_border_radius(size::CORNER_RADIUS),
             checkable: false,
@@ -145,23 +145,22 @@ impl PlumeButton {
             GradientAmount::STANDARD
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
             Children [
-                (
-                    // The border lives on an overlay child rather than the button node:
-                    // drawn over the fill, it leaves no seam the way an inset border does.
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::ZERO,
-                        right: Val::ZERO,
-                        top: Val::ZERO,
-                        bottom: Val::ZERO,
-                        border: size::HAIRLINE,
-                        border_radius: {props.border_radius},
-                    }
-                    ButtonOutline
-                    Pickable::IGNORE
-                    ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
-                ),
-                {props.caption},
+                // The border lives on an overlay child rather than the button node:
+                // drawn over the fill, it leaves no seam the way an inset border does.
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    right: Val::ZERO,
+                    top: Val::ZERO,
+                    bottom: Val::ZERO,
+                    border: size::HAIRLINE,
+                    border_radius: {props.border_radius},
+                }
+                ButtonOutline
+                Pickable::IGNORE
+                ThemeBorderToken(tokens::BUTTON_BORDER_NONE)
+                --
+                {props.caption}
             ]
         }
     }

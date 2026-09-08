@@ -156,21 +156,19 @@ fn channel_row(label: &'static str, channel: Channel, precision: usize, max: f32
             column_gap: Val::ZERO,
         }
         Children [
-            @space(em(0.25)),
-            (
-                @caption(label)
-                Node { width: em(1), flex_shrink: 0.0 }
-            ),
-            (
-                @PlumeNumberInput {
-                    @precision: precision,
-                    @min: 0.0_f32,
-                    @max: max,
-                    @suffix: suffix,
-                }
-                Node { width: em(6) }
-                ColorPickerChannel(channel)
-            ),
+            @space(em(0.25))
+            --
+            @caption(label)
+            Node { width: em(1), flex_shrink: 0.0 }
+            --
+            @PlumeNumberInput {
+                @precision: precision,
+                @min: 0.0_f32,
+                @max: max,
+                @suffix: suffix,
+            }
+            Node { width: em(6) }
+            ColorPickerChannel(channel)
         ]
     }
 }
@@ -189,38 +187,34 @@ impl PlumeColorPicker {
                         padding: UiRect::horizontal(size::SPACE),
                     }
                     Children [
-                        (
-                            Node {
-                                position_type: PositionType::Absolute,
-                                left: size::SPACE,
-                                top: Val::ZERO,
-                                right: size::SPACE,
-                                bottom: Val::ZERO,
-                            }
-                            CheckerUnderlay
-                        ),
-                        (
-                            Node {
-                                position_type: PositionType::Absolute,
-                                left: size::SPACE,
-                                top: Val::ZERO,
-                                right: size::SPACE,
-                                bottom: Val::ZERO,
-                            }
-                            ColorPickerAlphaRamp
-                        ),
-                        (
-                            @PlumeXyPad {
-                                @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
-                            }
-                            Node {
-                                width: percent(100),
-                                height: percent(100),
-                                border: size::HAIRLINE,
-                            }
-                            XyPadLock { x: None, y: {Some(0.5)} }
-                            ColorPickerAlpha
-                        ),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: size::SPACE,
+                            top: Val::ZERO,
+                            right: size::SPACE,
+                            bottom: Val::ZERO,
+                        }
+                        CheckerUnderlay
+                        --
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: size::SPACE,
+                            top: Val::ZERO,
+                            right: size::SPACE,
+                            bottom: Val::ZERO,
+                        }
+                        ColorPickerAlphaRamp
+                        --
+                        @PlumeXyPad {
+                            @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
+                        }
+                        Node {
+                            width: percent(100),
+                            height: percent(100),
+                            border: size::HAIRLINE,
+                        }
+                        XyPadLock { x: None, y: {Some(0.5)} }
+                        ColorPickerAlpha
                     ]
                 })
             })
@@ -243,98 +237,97 @@ impl PlumeColorPicker {
             ColorPickerValue({props.initial_color})
             Children [
                 // The wheel over the alpha bar, which spans the wheel's width.
-                (
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: size::em_from_px(8.0),
+                }
+                Children [
+                    // The hue ring (a border-only circle), the wheel pad over
+                    // it, and the SV pad on top keeping the picks over its square.
                     Node {
-                        flex_direction: FlexDirection::Column,
-                        row_gap: size::em_from_px(8.0),
+                        width: WHEEL_SIZE,
+                        height: WHEEL_SIZE,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
                     }
                     Children [
-                        // The hue ring (a border-only circle), the wheel pad over
-                        // it, and the SV pad on top keeping the picks over its square.
-                        (
-                            Node {
-                                width: WHEEL_SIZE,
-                                height: WHEEL_SIZE,
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                            }
-                            Children [
-                                (
-                                    Node {
-                                        position_type: PositionType::Absolute,
-                                        left: Val::ZERO,
-                                        top: Val::ZERO,
-                                        right: Val::ZERO,
-                                        bottom: Val::ZERO,
-                                        border: RING_THICKNESS,
-                                        border_radius: BorderRadius::MAX,
-                                    }
-                                    BorderGradient(hue_wheel_gradient())
-                                    Pickable::IGNORE
-                                ),
-                                (
-                                    @PlumeXyPad {
-                                        @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
-                                    }
-                                    Node {
-                                        position_type: PositionType::Absolute,
-                                        left: Val::ZERO,
-                                        top: Val::ZERO,
-                                        right: Val::ZERO,
-                                        bottom: Val::ZERO,
-                                    }
-                                    XyPadRing {
-                                        radius: RING_RADIUS,
-                                        hit_width: {Some(RING_HIT_WIDTH)},
-                                    }
-                                    ColorPickerHue
-                                ),
-                                // Saturation (x) / value (y). The plane's hue-tinted
-                                // gradient is driven by the sync system, since it
-                                // tracks the wheel.
-                                (
-                                    @PlumeXyPad {
-                                        @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
-                                    }
-                                    Node { width: PLANE_SIZE, height: PLANE_SIZE }
-                                    ColorPickerSv
-                                ),
-                            ]
-                        ),
-                        {alpha_bar},
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            top: Val::ZERO,
+                            right: Val::ZERO,
+                            bottom: Val::ZERO,
+                            border: RING_THICKNESS,
+                            border_radius: BorderRadius::MAX,
+                        }
+                        BorderGradient(hue_wheel_gradient())
+                        Pickable::IGNORE
+                        --
+                        @PlumeXyPad {
+                            @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
+                        }
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            top: Val::ZERO,
+                            right: Val::ZERO,
+                            bottom: Val::ZERO,
+                        }
+                        XyPadRing {
+                            radius: RING_RADIUS,
+                            hit_width: {Some(RING_HIT_WIDTH)},
+                        }
+                        ColorPickerHue
+                        --
+                        // Saturation (x) / value (y). The plane's hue-tinted
+                        // gradient is driven by the sync system, since it
+                        // tracks the wheel.
+                        @PlumeXyPad {
+                            @reticle_border_radius: BorderRadius::MAX_ELLIPTICAL,
+                        }
+                        Node { width: PLANE_SIZE, height: PLANE_SIZE }
+                        ColorPickerSv
                     ]
-                ),
+                    --
+                    {alpha_bar}
+                ]
+                --
                 // Preview swatch over the numeric fields; the swatch grows to fill
                 // the spare height so the R/G/B/H/S/V rows sit at the bottom.
-                (
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_self: AlignSelf::Stretch,
+                    row_gap: size::SPACE_TIGHT,
+                    flex_grow: 1.0,
+                }
+                Children [
+                    @PlumeColorSwatch { @alpha: alpha }
                     Node {
-                        flex_direction: FlexDirection::Column,
-                        align_self: AlignSelf::Stretch,
-                        row_gap: size::SPACE_TIGHT,
+                        width: em(6),
                         flex_grow: 1.0,
+                        margin: UiRect::left(em(1.25)),
                     }
-                    Children [
-                        (
-                            @PlumeColorSwatch { @alpha: alpha }
-                            Node {
-                                width: em(6),
-                                flex_grow: 1.0,
-                                margin: UiRect::left(em(1.25)),
-                            }
-                            ColorPickerSwatch
-                        ),
-                        @space(size::SPACE_TIGHT),
-                        // sRGB channels and alpha, then a gap, then the HSV channels.
-                        @channel_row("R", Channel::R, 3, 1.0),
-                        @channel_row("G", Channel::G, 3, 1.0),
-                        @channel_row("B", Channel::B, 3, 1.0),
-                        {alpha_row},
-                        @space(size::SPACE_TIGHT),
-                        @channel_row("H", Channel::H, 0, 360.0),
-                        @channel_row("S", Channel::S, 3, 1.0),
-                        @channel_row("V", Channel::V, 3, 1.0),
-                    ]
-                ),
+                    ColorPickerSwatch
+                    --
+                    @space(size::SPACE_TIGHT)
+                    --
+                    // sRGB channels and alpha, then a gap, then the HSV channels.
+                    @channel_row("R", Channel::R, 3, 1.0)
+                    --
+                    @channel_row("G", Channel::G, 3, 1.0)
+                    --
+                    @channel_row("B", Channel::B, 3, 1.0)
+                    --
+                    {alpha_row}
+                    --
+                    @space(size::SPACE_TIGHT)
+                    --
+                    @channel_row("H", Channel::H, 0, 360.0)
+                    --
+                    @channel_row("S", Channel::S, 3, 1.0)
+                    --
+                    @channel_row("V", Channel::V, 3, 1.0)
+                ]
             ]
         }
     }

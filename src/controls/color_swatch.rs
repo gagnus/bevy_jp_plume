@@ -96,29 +96,27 @@ impl PlumeColorSwatch {
             ColorSwatchValue({props.initial_color})
             SwatchAlpha({props.alpha})
             Children [
-                {checker},
-                (
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::ZERO,
-                        top: Val::ZERO,
-                        width: percent(100),
-                        height: percent(100),
-                    }
-                    ColorSwatchFill
-                ),
+                {checker}
+                --
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    top: Val::ZERO,
+                    width: percent(100),
+                    height: percent(100),
+                }
+                ColorSwatchFill
+                --
                 // Border overlay: sits over the fill so the color reaches every edge.
-                (
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::ZERO,
-                        top: Val::ZERO,
-                        width: percent(100),
-                        height: percent(100),
-                        border: size::HAIRLINE,
-                    }
-                    ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
-                ),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    top: Val::ZERO,
+                    width: percent(100),
+                    height: percent(100),
+                    border: size::HAIRLINE,
+                }
+                ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             ]
         }
     }

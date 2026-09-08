@@ -80,15 +80,13 @@ impl PlumeScrollbar {
             }
             ThemeBackgroundToken(tokens::SCROLLBAR_BG)
             Children [
-                (
-                    Hovered
-                    ThemeBackgroundToken(tokens::SCROLLBAR_THUMB)
-                    ScrollbarThumb {
-                        border_radius: {size::SCROLLBAR_WIDTH / 2.0},
-                    }
-                    ThemedThumb
-                    EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-                ),
+                Hovered
+                ThemeBackgroundToken(tokens::SCROLLBAR_THUMB)
+                ScrollbarThumb {
+                    border_radius: {size::SCROLLBAR_WIDTH / 2.0},
+                }
+                ThemedThumb
+                EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             ]
         }
     }

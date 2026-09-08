@@ -53,14 +53,12 @@ impl PlumeDisclosure {
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextToken(tokens::BUTTON_TEXT)
             Children [
-                (
-                    @icon(lucide::CHEVRON_RIGHT)
-                    DisclosureChevron
-                    // The glyph is the pick target's decoration, not a target itself.
-                    Pickable::IGNORE
-                    AnimState::rotation(0.0, FRAC_PI_2)
-                    UiTransform::default()
-                ),
+                @icon(lucide::CHEVRON_RIGHT)
+                DisclosureChevron
+                // The glyph is the pick target's decoration, not a target itself.
+                Pickable::IGNORE
+                AnimState::rotation(0.0, FRAC_PI_2)
+                UiTransform::default()
             ]
         }
     }

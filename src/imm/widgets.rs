@@ -10,7 +10,7 @@ use bevy::ecs::event::EntityEvent;
 use bevy::ecs::observer::On;
 use bevy::ecs::system::Commands;
 use bevy::ecs::world::EntityWorldMut;
-use bevy::scene::{Scene, bsn, bsn_list, on};
+use bevy::scene::{Scene, bsn, on};
 use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, JustifyContent, Node, UiRect, Val};
 use bevy::ui_widgets::{ModalDialog, RequestClose};
@@ -493,10 +493,11 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut entity = self.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
             bsn! {
                 @PlumeButton {
-                    @caption: bsn_list![
-                        @display::icon(icon),
-                        @caption(label_owned),
-                    ],
+                    @caption: bsn! {
+                        @display::icon(icon)
+                        --
+                        @caption(label_owned)
+                    },
                 }
             }
         });
@@ -792,14 +793,12 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
             .on_spawn_apply_scene(move || {
                 bsn! {
                     @section_frame(
-                        bsn_list![
-                            (
-                                @caption(header_owned)
-                                @small_caps()
-                            ),
-                        ],
+                        bsn! {
+                            @caption(header_owned)
+                            @small_caps()
+                        },
                         true,
-                        bsn_list![]
+                        ()
                     )
                 }
             })
@@ -1633,12 +1632,10 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
     let header = match chrome {
         SurfaceChrome::Panel => None,
         _ => Some(DialogHeader {
-            title: Box::new(bsn_list![
-                (
-                    @caption(title)
-                    InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
-                ),
-            ]),
+            title: Box::new(bsn! {
+                @caption(title)
+                InheritableFont { font_size: size::DIALOG_HEADER_TEXT_SIZE }
+            }),
             closable,
             movable,
         }),
@@ -1647,7 +1644,7 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
         // Empty body: the imm layer reconciles the body itself.
         @dialog_frame(DialogChrome {
             name: name.into(),
-            body: Box::new(bsn_list![]),
+            body: Box::new(()),
             header,
             width,
             height,

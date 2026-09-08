@@ -12,7 +12,7 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::ui::{
     AlignItems, BackgroundColor, Display, FixedNode, GlobalZIndex, JustifyContent, Node,
     OverrideClip, PositionType, UiRect, Val, px,
@@ -48,8 +48,8 @@ pub struct PlumeModalProps {
 impl Default for PlumeModalProps {
     fn default() -> Self {
         Self {
-            title: Box::new(bsn_list![]),
-            contents: Box::new(bsn_list![]),
+            title: Box::new(()),
+            contents: Box::new(()),
             width: Val::Auto,
             closable: true,
         }
@@ -82,28 +82,24 @@ impl PlumeModal {
                 })
             })}
             Children [
-                (
-                    @modal_frame(DialogChrome {
-                        name: "PlumeModal".into(),
-                        body: Box::new(bsn_list![
-                            (
-                                @dialog_body()
-                                Children [
-                                    {contents},
-                                ]
-                            ),
-                        ]),
-                        header: Some(DialogHeader {
-                            title,
-                            closable,
-                            movable: false,
-                        }),
-                        width,
-                        height: Val::Auto,
-                        max_height: Val::Percent(100.0),
-                        inset: UiRect::AUTO,
-                    })
-                ),
+                @modal_frame(DialogChrome {
+                    name: "PlumeModal".into(),
+                    body: Box::new(bsn! {
+                        @dialog_body()
+                        Children [
+                            {contents}
+                        ]
+                    }),
+                    header: Some(DialogHeader {
+                        title,
+                        closable,
+                        movable: false,
+                    }),
+                    width,
+                    height: Val::Auto,
+                    max_height: Val::Percent(100.0),
+                    inset: UiRect::AUTO,
+                })
             ]
         }
     }

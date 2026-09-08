@@ -441,7 +441,7 @@ fn push_documents(
 struct InspectorPanel;
 
 fn scene() -> impl SceneList {
-    bsn_list![@root()]
+    bsn! { @root() }
 }
 
 fn root() -> impl Scene {
@@ -449,26 +449,25 @@ fn root() -> impl Scene {
         @screen()
         ThemeBackgroundSlot(ThemeSlot::Neutral0)
         Children [
-            @top_bar(),
-            (
-                // The viewport and the panel, with a divider to re-proportion
-                // them. The panel is the sized pane, anchored in em so it holds
-                // its width (and tracks the font size) while the viewport
-                // absorbs window resizes; `min_second` is its floor, so the
-                // drag stops where the layout would have anyway. The viewport
-                // has no floor of its own and gives all the way down.
-                @PlumeSplitter {
-                    @size: em(30),
-                    @sized_pane: SplitPane::Second,
-                    @min_first: Val::ZERO,
-                    @min_second: em(28),
-                    @collapsible_second: true,
-                    @first: bsn_list![@documents()],
-                    @second: bsn_list![@panel()],
-                    @auto_hide: true,
-                }
-                Node { flex_grow: 1.0 }
-            ),
+            @top_bar()
+            --
+            // The viewport and the panel, with a divider to re-proportion
+            // them. The panel is the sized pane, anchored in em so it holds
+            // its width (and tracks the font size) while the viewport
+            // absorbs window resizes; `min_second` is its floor, so the
+            // drag stops where the layout would have anyway. The viewport
+            // has no floor of its own and gives all the way down.
+            @PlumeSplitter {
+                @size: em(30),
+                @sized_pane: SplitPane::Second,
+                @min_first: Val::ZERO,
+                @min_second: em(28),
+                @collapsible_second: true,
+                @first: bsn! { @documents() },
+                @second: bsn! { @panel() },
+                @auto_hide: true,
+            }
+            Node { flex_grow: 1.0 }
         ]
     }
 }
@@ -479,59 +478,53 @@ fn root() -> impl Scene {
 fn export_modal() -> impl Scene {
     bsn! {
         @PlumeModal {
-            @title: bsn_list![@modal_title("Export Scene")],
+            @title: bsn! { @modal_title("Export Scene") },
             @width: em(26.0),
-            @contents: bsn_list![
-                @caption("Nothing behind this takes a click until it is answered."),
-                (
-                    @row()
-                    Children [
-                        (@caption("Culling") Node { width: em(6.0) }),
-                        (
-                            @PlumeSelect {
-                                @options: {Cull::select_options()},
-                                @selected: 0,
-                            }
-                            Node { width: Val::ZERO, flex_grow: 1.0 }
-                        ),
-                    ]
-                ),
-                @separator(),
-                (
-                    @row()
-                    Children [
-                        (
-                            @PlumeToolButton {
-                                @caption: bsn! { @icon(lucide::FOLDER_OPEN) },
-                            }
-                            Tooltip("Pick the output directory")
-                        ),
-                        (
-                            @PlumeToolButton {
-                                @caption: bsn! { @icon(lucide::UNDO_2) },
-                            }
-                            Tooltip("Reset these settings to their defaults")
-                        ),
-                        @flex_spacer(),
-                        (
-                            @PlumeButton {
-                                @caption: bsn! { @caption("Cancel") },
-                                @variant: ButtonVariant::Outline,
-                            }
-                            Tooltip("Close without writing anything")
-                            on(close_export_modal)
-                        ),
-                        (
-                            @PlumeButton {
-                                @caption: bsn! { @caption("Export") },
-                                @variant: ButtonVariant::Primary,
-                            }
-                            Tooltip("Write the scene with the settings above")
-                            on(close_export_modal)
-                        ),
-                    ]
-                ),
-            ],
+            @contents: bsn! {
+                @caption("Nothing behind this takes a click until it is answered.")
+                --
+                @row()
+                Children [
+                    @caption("Culling") Node { width: em(6.0) }
+                    --
+                    @PlumeSelect {
+                        @options: {Cull::select_options()},
+                        @selected: 0,
+                    }
+                    Node { width: Val::ZERO, flex_grow: 1.0 }
+                ]
+                --
+                @separator()
+                --
+                @row()
+                Children [
+                    @PlumeToolButton {
+                        @caption: bsn! { @icon(lucide::FOLDER_OPEN) },
+                    }
+                    Tooltip("Pick the output directory")
+                    --
+                    @PlumeToolButton {
+                        @caption: bsn! { @icon(lucide::UNDO_2) },
+                    }
+                    Tooltip("Reset these settings to their defaults")
+                    --
+                    @flex_spacer()
+                    --
+                    @PlumeButton {
+                        @caption: bsn! { @caption("Cancel") },
+                        @variant: ButtonVariant::Outline,
+                    }
+                    Tooltip("Close without writing anything")
+                    on(close_export_modal)
+                    --
+                    @PlumeButton {
+                        @caption: bsn! { @caption("Export") },
+                        @variant: ButtonVariant::Primary,
+                    }
+                    Tooltip("Write the scene with the settings above")
+                    on(close_export_modal)
+                ]
+            },
         }
     }
 }
@@ -550,32 +543,29 @@ fn top_bar() -> impl Scene {
     bsn! {
         @row()
         Children [
-            @menu_bar(),
-            @separator(),
-            (
-                @row()
-                Children [
-                    (
-                        // No `@body`, and no tab names one: a strip that only
-                        // reports which document is showing.
-                        @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
-                        DocTabs
-                        Node { flex_basis: Val::ZERO, flex_grow: 1.0 }
-                        on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
-                            s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
-                        })
-                    ),
-                    (
-                        @PlumeToolButton {
-                            @caption: bsn! { @icon(lucide::PLUS) },
-                            @variant: ButtonVariant::Plain,
-                        }
-                        Flat
-                        Tooltip("Open a new document")
-                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
-                    ),
-                ]
-            ),
+            @menu_bar()
+            --
+            @separator()
+            --
+            @row()
+            Children [
+                // No `@body`, and no tab names one: a strip that only
+                // reports which document is showing.
+                @PlumeTabs { @header: {Box::new(tabs) as Box<dyn SceneList>} }
+                DocTabs
+                Node { flex_basis: Val::ZERO, flex_grow: 1.0 }
+                on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
+                    s.documents.active = s.documents.open.get(ev.value).map(|doc| doc.id);
+                })
+                --
+                @PlumeToolButton {
+                    @caption: bsn! { @icon(lucide::PLUS) },
+                    @variant: ButtonVariant::Plain,
+                }
+                Flat
+                Tooltip("Open a new document")
+                on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
+            ]
         ]
     }
 }
@@ -584,72 +574,65 @@ fn menu_bar() -> impl Scene {
     bsn! {
         @PlumeMenuBar
         Children [
-            (
-                @PlumeMenuButton { @label: "File" }
+            @PlumeMenuButton { @label: "File" }
+            Children [
+                @PlumeMenuButton {
+                    @label: "New Document",
+                    @shortcut: {Some("Ctrl+N".to_string())},
+                }
+                on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
+                --
+                @PlumeMenuButton {
+                    @label: "Save",
+                    @shortcut: {Some("Ctrl+S".to_string())},
+                }
+                on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.save_active())
+                --
+                @separator()
+                --
+                @PlumeMenuButton { @label: "Recent" }
                 Children [
-                    (
-                        @PlumeMenuButton {
-                            @label: "New Document",
-                            @shortcut: {Some("Ctrl+N".to_string())},
-                        }
-                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.add())
-                    ),
-                    (
-                        @PlumeMenuButton {
-                            @label: "Save",
-                            @shortcut: {Some("Ctrl+S".to_string())},
-                        }
-                        on(|_: On<Activate>, mut s: ResMut<Inspector>| s.documents.save_active())
-                    ),
-                    @separator(),
-                    (
-                        @PlumeMenuButton { @label: "Recent" }
-                        Children [
-                            @recent_item("corridor_00.rs"),
-                            @recent_item("vault_01.wgsl"),
-                            @recent_item("torch_02.ron"),
-                        ]
-                    ),
-                    @separator(),
-                    (
-                        @PlumeMenuButton { @label: "Export…" }
-                        // Parentless: the barrier is a fixed, full-viewport layout
-                        // root, so it needs no place in the tree.
-                        on(|_: On<Activate>,
-                            q_open: Query<(), With<PlumeModal>>,
-                            mut commands: Commands| {
-                            if q_open.iter().next().is_none() {
-                                commands.spawn_scene(export_modal());
-                            }
-                        })
-                    ),
-                    @separator(),
-                    (
-                        @PlumeMenuButton { @label: "Exit" }
-                        InteractionDisabled
-                    ),
+                    @recent_item("corridor_00.rs")
+                    --
+                    @recent_item("vault_01.wgsl")
+                    --
+                    @recent_item("torch_02.ron")
                 ]
-            ),
-            (
-                @PlumeMenuButton { @label: "View" }
-                Children [
-                    (
-                        @PlumeMenuButton { @label: "Show HUD" }
-                        Checkable
-                        Checked
-                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                            s.show_hud = ev.value;
-                        })
-                    ),
-                    (
-                        @PlumeMenuButton { @label: "Autosave" }
-                        Checkable
-                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                            s.autosave = ev.value;
-                        })
-                    ),
-                ]
-            ),
+                --
+                @separator()
+                --
+                @PlumeMenuButton { @label: "Export…" }
+                // Parentless: the barrier is a fixed, full-viewport layout
+                // root, so it needs no place in the tree.
+                on(|_: On<Activate>,
+                    q_open: Query<(), With<PlumeModal>>,
+                    mut commands: Commands| {
+                    if q_open.iter().next().is_none() {
+                        commands.spawn_scene(export_modal());
+                    }
+                })
+                --
+                @separator()
+                --
+                @PlumeMenuButton { @label: "Exit" }
+                InteractionDisabled
+            ]
+            --
+            @PlumeMenuButton { @label: "View" }
+            Children [
+                @PlumeMenuButton { @label: "Show HUD" }
+                Checkable
+                Checked
+                on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                    s.show_hud = ev.value;
+                })
+                --
+                @PlumeMenuButton { @label: "Autosave" }
+                Checkable
+                on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                    s.autosave = ev.value;
+                })
+            ]
         ]
     }
 }
@@ -693,8 +676,9 @@ fn documents() -> impl Scene {
             row_gap: Val::ZERO,
         }
         Children [
-            @viewport(),
-            @viewport_hud(),
+            @viewport()
+            --
+            @viewport_hud()
         ]
     }
 }
@@ -702,48 +686,43 @@ fn documents() -> impl Scene {
 fn document_tab(slot: usize) -> impl Scene {
     bsn! {
         @PlumeTab {
-            @caption: bsn_list![
-                @icon(lucide::FILE_CODE),
-                (
-                    // `tab_label`'s box, hand-built because the caption inside it
-                    // has to carry the marker `push_documents` writes through.
-                    @row()
-                    Node { min_width: Val::ZERO, overflow: Overflow::clip() }
-                    Children [
-                        (
-                            @caption("")
-                            DocName(slot)
-                            Node { min_width: Val::ZERO }
-                            TextLayout { linebreak: LineBreak::NoWrap }
-                        ),
-                    ]
-                ),
-                (
-                    // Unsaved marker. A plain node rather than a glyph, so its size
-                    // is the dot's own and not the header font's.
-                    Node {
-                        width: em(0.5),
-                        height: em(0.5),
-                        border_radius: BorderRadius::MAX_ELLIPTICAL,
-                        flex_shrink: 0.0,
-                        display: Display::None,
+            @caption: bsn! {
+                @icon(lucide::FILE_CODE)
+                --
+                // `tab_label`'s box, hand-built because the caption inside it
+                // has to carry the marker `push_documents` writes through.
+                @row()
+                Node { min_width: Val::ZERO, overflow: Overflow::clip() }
+                Children [
+                    @caption("")
+                    DocName(slot)
+                    Node { min_width: Val::ZERO }
+                    TextLayout { linebreak: LineBreak::NoWrap }
+                ]
+                --
+                // Unsaved marker. A plain node rather than a glyph, so its size
+                // is the dot's own and not the header font's.
+                Node {
+                    width: em(0.5),
+                    height: em(0.5),
+                    border_radius: BorderRadius::MAX_ELLIPTICAL,
+                    flex_shrink: 0.0,
+                    display: Display::None,
+                }
+                DocDirty(slot)
+                BackgroundColor(Color::WHITE)
+                --
+                @PlumeToolButton {
+                    @caption: bsn! { @icon(lucide::X) },
+                    @variant: ButtonVariant::Plain,
+                }
+                Flat
+                on(move |_: On<Activate>, mut s: ResMut<Inspector>| {
+                    if let Some(id) = s.documents.open.get(slot).map(|doc| doc.id) {
+                        s.documents.close(id);
                     }
-                    DocDirty(slot)
-                    BackgroundColor(Color::WHITE)
-                ),
-                (
-                    @PlumeToolButton {
-                        @caption: bsn! { @icon(lucide::X) },
-                        @variant: ButtonVariant::Plain,
-                    }
-                    Flat
-                    on(move |_: On<Activate>, mut s: ResMut<Inspector>| {
-                        if let Some(id) = s.documents.open.get(slot).map(|doc| doc.id) {
-                            s.documents.close(id);
-                        }
-                    })
-                ),
-            ],
+                })
+            },
         }
         DocSlot(slot)
         Node { display: Display::None, min_width: em(6) }
@@ -760,30 +739,27 @@ fn viewport_hud() -> impl Scene {
         @PlumeDialog {
             @header: false,
             @inset: {Corner::BottomRight.inset(em(1), em(1))},
-            @contents: bsn_list![
-                (
-                    @row()
-                    Children [
-                        @icon(lucide::BOXES),
-                        (
-                            @caption("")
-                            HudCount
-                        ),
-                        @separator(),
-                        (
-                            @PlumeToolButton {
-                                @caption: bsn! { @icon(lucide::SAVE) },
-                                @variant: ButtonVariant::Plain,
-                            }
-                            Flat
-                            Tooltip("Save the active document")
-                            on(|_: On<Activate>, mut s: ResMut<Inspector>| {
-                                s.documents.save_active();
-                            })
-                        ),
-                    ]
-                ),
-            ],
+            @contents: bsn! {
+                @row()
+                Children [
+                    @icon(lucide::BOXES)
+                    --
+                    @caption("")
+                    HudCount
+                    --
+                    @separator()
+                    --
+                    @PlumeToolButton {
+                        @caption: bsn! { @icon(lucide::SAVE) },
+                        @variant: ButtonVariant::Plain,
+                    }
+                    Flat
+                    Tooltip("Save the active document")
+                    on(|_: On<Activate>, mut s: ResMut<Inspector>| {
+                        s.documents.save_active();
+                    })
+                ]
+            },
         }
         HudRoot
     }
@@ -795,20 +771,21 @@ fn viewport() -> impl Scene {
         ViewportPane
         Node { flex_grow: 1.0, min_height: Val::ZERO }
         Children [
-            @flex_spacer(),
-            (
-                @row()
-                Children [
-                    @flex_spacer(),
-                    @icon(lucide::BOXES),
-                    (
-                        @caption("")
-                        ViewportLabel
-                    ),
-                    @flex_spacer(),
-                ]
-            ),
-            @flex_spacer(),
+            @flex_spacer()
+            --
+            @row()
+            Children [
+                @flex_spacer()
+                --
+                @icon(lucide::BOXES)
+                --
+                @caption("")
+                ViewportLabel
+                --
+                @flex_spacer()
+            ]
+            --
+            @flex_spacer()
         ]
     }
 }
@@ -832,22 +809,24 @@ fn panel() -> impl Scene {
             row_gap: Val::ZERO,
         }
         Children [
-            @tab_row(),
-            (
-                @column()
-                Node {
-                    flex_grow: 1.0,
-                    min_height: Val::ZERO,
-                    padding: size::SPACE,
-                }
-                ThemeBackgroundSlot(ThemeSlot::Neutral1)
-                Children [
-                    @tab_pane(Tab::Material, bsn_list![@material_tab(material)]),
-                    @tab_pane(Tab::Hierarchy, bsn_list![@hierarchy_tab(hierarchy.nodes)]),
-                    @separator(),
-                    @footer(),
-                ]
-            ),
+            @tab_row()
+            --
+            @column()
+            Node {
+                flex_grow: 1.0,
+                min_height: Val::ZERO,
+                padding: size::SPACE,
+            }
+            ThemeBackgroundSlot(ThemeSlot::Neutral1)
+            Children [
+                @tab_pane(Tab::Material, bsn! { @material_tab(material) })
+                --
+                @tab_pane(Tab::Hierarchy, bsn! { @hierarchy_tab(hierarchy.nodes) })
+                --
+                @separator()
+                --
+                @footer()
+            ]
         ]
     }
 }
@@ -860,78 +839,72 @@ fn tab_row() -> impl Scene {
         @row()
         Node { padding: UiRect::right(size::SPACE) }
         Children [
-            (
-                @PlumeTabs {
-                    @header: bsn_list![
-                        (
-                            @PlumeTab {
-                                @caption: bsn_list![
-                                    @icon(lucide::PALETTE),
-                                    @caption("Material"),
-                                ],
-                            }
-                            Selected
-                        ),
-                        @PlumeTab {
-                            @caption: bsn_list![
-                                @icon(lucide::FOLDER_TREE),
-                                @caption("Hierarchy"),
-                            ],
+            @PlumeTabs {
+                @header: bsn! {
+                    @PlumeTab {
+                        @caption: bsn! {
+                            @icon(lucide::PALETTE)
+                            --
+                            @caption("Material")
                         },
-                    ],
-                }
-                on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
-                    s.tab = Tab::from_index(ev.value);
-                })
-            ),
-            @flex_spacer(),
-            (
-                @PlumeToolButton {
-                    @caption: bsn! { @icon(lucide::SAVE) },
-                }
-                Flat
-                Tooltip("Save material")
-            ),
-            (
-                @PlumeToolButton {
-                    @caption: bsn! { @icon(lucide::UNDO_2) },
-                }
-                Flat
-                Tooltip("Revert to the last saved values")
-                on(|_: On<Activate>, mut s: ResMut<Inspector>| {
-                    (s.material, s.hierarchy) = Default::default();
-                })
-            ),
+                    }
+                    Selected
+                    --
+                    @PlumeTab {
+                        @caption: bsn! {
+                            @icon(lucide::FOLDER_TREE)
+                            --
+                            @caption("Hierarchy")
+                        },
+                    }
+                },
+            }
+            on(|ev: On<ValueChange<usize>>, mut s: ResMut<Inspector>| {
+                s.tab = Tab::from_index(ev.value);
+            })
+            --
+            @flex_spacer()
+            --
+            @PlumeToolButton {
+                @caption: bsn! { @icon(lucide::SAVE) },
+            }
+            Flat
+            Tooltip("Save material")
+            --
+            @PlumeToolButton {
+                @caption: bsn! { @icon(lucide::UNDO_2) },
+            }
+            Flat
+            Tooltip("Revert to the last saved values")
+            on(|_: On<Activate>, mut s: ResMut<Inspector>| {
+                (s.material, s.hierarchy) = Default::default();
+            })
+            --
             // The imm twin's `.menu()`: a menu hung off the app's own button,
             // which keeps its tool-button look. Rows are the menu bar's.
-            (
-                @PlumeToolButton {
-                    @caption: bsn! { @icon(lucide::ELLIPSIS_VERTICAL) },
+            @PlumeToolButton {
+                @caption: bsn! { @icon(lucide::ELLIPSIS_VERTICAL) },
+            }
+            Flat
+            Tooltip("More material actions")
+            @menu_anchor(bsn! {
+                @PlumeMenuButton {
+                    @label: "Copy Values",
+                    @shortcut: {Some("Ctrl+C".to_string())},
                 }
-                Flat
-                Tooltip("More material actions")
-                @menu_anchor(bsn_list![
-                    (
-                        @PlumeMenuButton {
-                            @label: "Copy Values",
-                            @shortcut: {Some("Ctrl+C".to_string())},
-                        }
-                        on(|_: On<Activate>| info!("copy material values"))
-                    ),
-                    (
-                        @PlumeMenuButton { @label: "Paste Values" }
-                        InteractionDisabled
-                    ),
-                    @separator(),
-                    (
-                        @PlumeMenuButton { @label: "Autosave" }
-                        Checkable
-                        on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                            s.autosave = ev.value;
-                        })
-                    ),
-                ])
-            ),
+                on(|_: On<Activate>| info!("copy material values"))
+                --
+                @PlumeMenuButton { @label: "Paste Values" }
+                InteractionDisabled
+                --
+                @separator()
+                --
+                @PlumeMenuButton { @label: "Autosave" }
+                Checkable
+                on(|ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                    s.autosave = ev.value;
+                })
+            })
         ]
     }
 }
@@ -952,7 +925,7 @@ fn tab_pane(tab: Tab, contents: impl SceneList) -> impl Scene {
             display: display,
         }
         Children [
-            {contents},
+            {contents}
         ]
     }
 }
@@ -964,61 +937,63 @@ fn material_tab(m: Material) -> impl Scene {
     let layers = m.layers;
     bsn! {
         @PlumeScrollArea {
-            @contents: bsn_list![
+            @contents: bsn! {
                 @PlumeSection {
                     @header: bsn! {
                         @caption("Surface")
                         @small_caps()
                     },
-                    @contents: bsn_list![
-                        (
-                            @row()
-                            Children [
-                                @field_label("Name"),
-                                @PlumeColorSwatch { @initial_color: base },
-                                (
-                                    @PlumeTextInput {
-                                        @value: name,
-                                        @placeholder: {Some("Material name".to_string())},
-                                    }
-                                    Node { width: Val::ZERO, flex_grow: 1.0 }
-                                    @on_text(Bound::Name)
-                                ),
-                            ]
-                        ),
-                        @color_row("Base color", base, Bound::BaseColor),
-                        @color_row("Emissive", emissive, Bound::Emissive),
-                    ],
-                },
+                    @contents: bsn! {
+                        @row()
+                        Children [
+                            @field_label("Name")
+                            --
+                            @PlumeColorSwatch { @initial_color: base }
+                            --
+                            @PlumeTextInput {
+                                @value: name,
+                                @placeholder: {Some("Material name".to_string())},
+                            }
+                            Node { width: Val::ZERO, flex_grow: 1.0 }
+                            @on_text(Bound::Name)
+                        ]
+                        --
+                        @color_row("Base color", base, Bound::BaseColor)
+                        --
+                        @color_row("Emissive", emissive, Bound::Emissive)
+                    },
+                }
+                --
                 @PlumeSection {
                     @header: bsn! {
                         @caption("Shading")
                         @small_caps()
                     },
-                    @contents: bsn_list![
-                        @radio_row("Blend", blend, Bound::Blend),
-                        @radio_row("Cull", cull, Bound::Cull),
-                        @slider_row("Metallic", metallic, Bound::Metallic),
-                        @slider_row("Roughness", roughness, Bound::Roughness),
-                    ],
-                },
-                @layers_section(layers),
-                (
-                    @PlumeSection {
-                        @header: bsn! {
-                            @caption("Color picker")
-                            @small_caps()
-                        },
-                        @contents: bsn_list![
-                            (
-                                @PlumeColorPicker { @initial_color: base }
-                                @on_color(Bound::Picker)
-                            ),
-                        ],
-                    }
-                    SectionCollapsed
-                ),
-            ],
+                    @contents: bsn! {
+                        @radio_row("Blend", blend, Bound::Blend)
+                        --
+                        @radio_row("Cull", cull, Bound::Cull)
+                        --
+                        @slider_row("Metallic", metallic, Bound::Metallic)
+                        --
+                        @slider_row("Roughness", roughness, Bound::Roughness)
+                    },
+                }
+                --
+                @layers_section(layers)
+                --
+                @PlumeSection {
+                    @header: bsn! {
+                        @caption("Color picker")
+                        @small_caps()
+                    },
+                    @contents: bsn! {
+                        @PlumeColorPicker { @initial_color: base }
+                        @on_color(Bound::Picker)
+                    },
+                }
+                SectionCollapsed
+            },
         }
     }
 }
@@ -1033,15 +1008,13 @@ fn layers_section(layers: Vec<Layer>) -> impl Scene {
                 @caption("Layers")
                 @small_caps()
             },
-            @contents: bsn_list![
-                (
-                    @PlumeReorderable { @contents: {Box::new(rows) as Box<dyn SceneList>} }
-                    LayerList
-                    on(|ev: On<ValueChange<ReorderMove>>, mut s: ResMut<Inspector>| {
-                        ev.value.apply(&mut s.material.layers);
-                    })
-                ),
-            ],
+            @contents: bsn! {
+                @PlumeReorderable { @contents: {Box::new(rows) as Box<dyn SceneList>} }
+                LayerList
+                on(|ev: On<ValueChange<ReorderMove>>, mut s: ResMut<Inspector>| {
+                    ev.value.apply(&mut s.material.layers);
+                })
+            },
         }
     }
 }
@@ -1057,33 +1030,30 @@ fn layer_row(layer: Layer) -> impl Scene {
     let label_width = GUTTER * 0.6;
     bsn! {
         @PlumeReorderableItem {
-            @contents: bsn_list![
-                @icon(glyph),
-                (
-                    @caption(name)
-                    Node { width: label_width }
-                ),
-                (
-                    @PlumeSlider {
-                        @min: 0.0,
-                        @max: 1.0,
-                        @precision: {Some(2)},
+            @contents: bsn! {
+                @icon(glyph)
+                --
+                @caption(name)
+                Node { width: label_width }
+                --
+                @PlumeSlider {
+                    @min: 0.0,
+                    @max: 1.0,
+                    @precision: {Some(2)},
+                }
+                SliderValue(opacity)
+                Node { width: Val::ZERO, flex_grow: 1.0 }
+                @on_number(Bound::Opacity(id))
+                --
+                @PlumeToggleSwitch
+                LayerEnabled(id)
+                @{enabled.then(|| bsn! { Checked })}
+                on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                    if let Some(layer) = layer_mut(&mut s, id) {
+                        layer.enabled = ev.value;
                     }
-                    SliderValue(opacity)
-                    Node { width: Val::ZERO, flex_grow: 1.0 }
-                    @on_number(Bound::Opacity(id))
-                ),
-                (
-                    @PlumeToggleSwitch
-                    LayerEnabled(id)
-                    @{enabled.then(|| bsn! { Checked })}
-                    on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                        if let Some(layer) = layer_mut(&mut s, id) {
-                            layer.enabled = ev.value;
-                        }
-                    })
-                ),
-            ],
+                })
+            },
         }
         LayerRow(id)
     }
@@ -1099,18 +1069,16 @@ fn hierarchy_tab(nodes: Vec<SceneNode>) -> impl Scene {
         @column()
         Node { flex_grow: 1.0, min_height: Val::ZERO }
         Children [
-            (
-                @row()
-                Children [
-                    @icon(lucide::SEARCH),
-                    (
-                        @PlumeTextInput { @placeholder: {Some("Filter…".to_string())} }
-                        Node { width: Val::ZERO, flex_grow: 1.0 }
-                        @on_text(Bound::Filter)
-                    ),
-                ]
-            ),
-            @PlumeScrollArea { @contents: {Box::new(rows) as Box<dyn SceneList>} },
+            @row()
+            Children [
+                @icon(lucide::SEARCH)
+                --
+                @PlumeTextInput { @placeholder: {Some("Filter…".to_string())} }
+                Node { width: Val::ZERO, flex_grow: 1.0 }
+                @on_text(Bound::Filter)
+            ]
+            --
+            @PlumeScrollArea { @contents: {Box::new(rows) as Box<dyn SceneList>} }
         ]
     }
 }
@@ -1122,26 +1090,27 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
         @row()
         TreeRow(index)
         Children [
-            @space(em(depth)),
-            (
-                @PlumeDisclosure
-                NodeBound::Expanded(index)
-                @{parent_of_next.then(|| bsn! { Checked })}
-                on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                    s.hierarchy.nodes[index].expanded = ev.value;
-                })
-            ),
-            @icon(glyph),
-            @caption(name),
-            @flex_spacer(),
-            (
-                @PlumeToggleSwitch
-                NodeBound::Visible(index)
-                Checked
-                on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
-                    s.hierarchy.nodes[index].visible = ev.value;
-                })
-            ),
+            @space(em(depth))
+            --
+            @PlumeDisclosure
+            NodeBound::Expanded(index)
+            @{parent_of_next.then(|| bsn! { Checked })}
+            on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                s.hierarchy.nodes[index].expanded = ev.value;
+            })
+            --
+            @icon(glyph)
+            --
+            @caption(name)
+            --
+            @flex_spacer()
+            --
+            @PlumeToggleSwitch
+            NodeBound::Visible(index)
+            Checked
+            on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
+                s.hierarchy.nodes[index].visible = ev.value;
+            })
         ]
     }
 }
@@ -1150,25 +1119,23 @@ fn footer() -> impl Scene {
     bsn! {
         @row()
         Children [
-            @field_label("Rem"),
-            (
-                @PlumeSlider {
-                    @min: 10.,
-                    @max: 20.,
-                    @step: {Some(1.)},
-                    @precision: {Some(0)},
-                }
-                SliderValue(size::MEDIUM_FONT_PX)
-                Node { width: Val::ZERO, flex_grow: 1.0 }
-                on(move |ev: On<ValueChange<f32>>, mut r: ResMut<RemSize>| {
-                    r.0 = ev.value;
-                })
-            ),
-            (
-                @caption(format!("{}", size::MEDIUM_FONT_PX))
-                RemValue
-                Node { width: em(2) }
-            ),
+            @field_label("Rem")
+            --
+            @PlumeSlider {
+                @min: 10.,
+                @max: 20.,
+                @step: {Some(1.)},
+                @precision: {Some(0)},
+            }
+            SliderValue(size::MEDIUM_FONT_PX)
+            Node { width: Val::ZERO, flex_grow: 1.0 }
+            on(move |ev: On<ValueChange<f32>>, mut r: ResMut<RemSize>| {
+                r.0 = ev.value;
+            })
+            --
+            @caption(format!("{}", size::MEDIUM_FONT_PX))
+            RemValue
+            Node { width: em(2) }
         ]
     }
 }
@@ -1185,11 +1152,10 @@ fn color_row(label: &str, color: Color, bound: Bound) -> impl Scene {
     bsn! {
         @row()
         Children [
-            @field_label(label),
-            (
-                @PlumeColorEdit { @initial_color: color }
-                @on_color(bound)
-            ),
+            @field_label(label)
+            --
+            @PlumeColorEdit { @initial_color: color }
+            @on_color(bound)
         ]
     }
 }
@@ -1198,17 +1164,16 @@ fn slider_row(label: &str, value: f32, bound: Bound) -> impl Scene {
     bsn! {
         @row()
         Children [
-            @field_label(label),
-            (
-                @PlumeSlider {
-                    @min: 0.0,
-                    @max: 1.0,
-                    @precision: {Some(2)},
-                }
-                SliderValue(value)
-                Node { width: Val::ZERO, flex_grow: 1.0 }
-                @on_number(bound)
-            ),
+            @field_label(label)
+            --
+            @PlumeSlider {
+                @min: 0.0,
+                @max: 1.0,
+                @precision: {Some(2)},
+            }
+            SliderValue(value)
+            Node { width: Val::ZERO, flex_grow: 1.0 }
+            @on_number(bound)
         ]
     }
 }
@@ -1227,19 +1192,18 @@ fn radio_row<T: Options>(label: &str, selected: T, bound: Bound) -> impl Scene {
     bsn! {
         @row()
         Children [
-            @field_label(label),
-            (
-                @PlumeRadioGroup
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: size::SPACE,
-                }
-                bound
-                Children [
-                    {radios},
-                ]
-                @on_choice(bound)
-            ),
+            @field_label(label)
+            --
+            @PlumeRadioGroup
+            Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: size::SPACE,
+            }
+            bound
+            Children [
+                {radios}
+            ]
+            @on_choice(bound)
         ]
     }
 }

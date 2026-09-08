@@ -18,7 +18,7 @@ use bevy::picking::events::{
 use bevy::picking::hover::Hovered;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::text::{EmSize, RemSize};
 use bevy::ui::{
     AlignItems, ComputedNode, ComputedUiRenderTargetInfo, Display, FlexDirection,
@@ -56,7 +56,7 @@ pub struct PlumeReorderableProps {
 impl Default for PlumeReorderableProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list![]),
+            contents: Box::new(()),
         }
     }
 }
@@ -68,7 +68,7 @@ impl PlumeReorderable {
         bsn! {
             @reorderable_frame()
             Children [
-                {contents},
+                {contents}
             ]
         }
     }
@@ -83,14 +83,14 @@ pub struct PlumeReorderableItem;
 
 /// Props used to construct a [`PlumeReorderableItem`] scene.
 pub struct PlumeReorderableItemProps {
-    /// Row content after the grip (e.g. `bsn_list![caption("…")]`).
+    /// Row content after the grip (e.g. `bsn! { @caption("…") }`).
     pub contents: Box<dyn SceneList>,
 }
 
 impl Default for PlumeReorderableItemProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list![]),
+            contents: Box::new(()),
         }
     }
 }
@@ -102,8 +102,9 @@ impl PlumeReorderableItem {
         bsn! {
             @reorderable_item()
             Children [
-                @reorderable_grip(),
-                {contents},
+                @reorderable_grip()
+                --
+                {contents}
             ]
         }
     }

@@ -222,8 +222,8 @@ impl Default for PlumeSplitterProps {
             auto_hide: false,
             collapsible_first: false,
             collapsible_second: false,
-            first: Box::new(bsn_list![]),
-            second: Box::new(bsn_list![]),
+            first: Box::new(()),
+            second: Box::new(()),
         }
     }
 }
@@ -248,19 +248,17 @@ impl PlumeSplitter {
             SplitDividerAutoHide(auto_hide)
             SplitCollapsible { first: collapsible_first, second: collapsible_second }
             Children [
-                (
-                    @splitter_pane(SplitPane::First)
-                    Children [
-                        {first},
-                    ]
-                ),
-                @splitter_divider(axis),
-                (
-                    @splitter_pane(SplitPane::Second)
-                    Children [
-                        {second},
-                    ]
-                ),
+                @splitter_pane(SplitPane::First)
+                Children [
+                    {first}
+                ]
+                --
+                @splitter_divider(axis)
+                --
+                @splitter_pane(SplitPane::Second)
+                Children [
+                    {second}
+                ]
             ]
         }
     }
@@ -381,15 +379,13 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         on(drag_end_divider)
         on(cancel_divider)
         Children [
-            (
-                Node {
-                    width: line_width,
-                    height: line_height,
-                    align_self: AlignSelf::Stretch,
-                }
-                Pickable::IGNORE
-                ThemeBackgroundToken(tokens::SEPARATOR)
-            ),
+            Node {
+                width: line_width,
+                height: line_height,
+                align_self: AlignSelf::Stretch,
+            }
+            Pickable::IGNORE
+            ThemeBackgroundToken(tokens::SEPARATOR)
         ]
     }
 }

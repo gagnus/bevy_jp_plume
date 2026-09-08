@@ -93,25 +93,27 @@ impl PlumeTextInput {
             @text_input_frame()
             TextInputValue({props.value})
             Children [
-                @text_input_outline(),
-                {props.prefix_container.map(|content| bsn_list![
-                    @text_input_prefix_container(content),
-                ])},
-                (
-                    @text_input_field(props.visible_width, props.max_characters)
-                    @{props.filter.map(|filter| bsn! { filter })}
-                    on(text_input_on_enter)
-                    on(text_input_on_vertical_arrow)
-                    Children [
-                        {props.placeholder.map(|placeholder| bsn_list![
-                            @text_input_placeholder(placeholder),
-                        ])},
-                    ]
-                ),
-                {props.suffix.map(|suffix| bsn_list![@text_input_suffix(suffix)])},
-                {props.suffix_container.map(|content| bsn_list![
-                    @text_input_suffix_container(content),
-                ])},
+                @text_input_outline()
+                --
+                {props.prefix_container.map(|content| bsn! {
+                    @text_input_prefix_container(content)
+                })}
+                --
+                @text_input_field(props.visible_width, props.max_characters)
+                @{props.filter.map(|filter| bsn! { filter })}
+                on(text_input_on_enter)
+                on(text_input_on_vertical_arrow)
+                Children [
+                    {props.placeholder.map(|placeholder| bsn! {
+                        @text_input_placeholder(placeholder)
+                    })}
+                ]
+                --
+                {props.suffix.map(|suffix| bsn! { @text_input_suffix(suffix) })}
+                --
+                {props.suffix_container.map(|content| bsn! {
+                    @text_input_suffix_container(content)
+                })}
             ]
         }
     }
@@ -478,7 +480,7 @@ pub(crate) fn text_input_prefix_container(content: Box<dyn SceneList>) -> impl S
         }
         TextInputPrefix
         Children [
-            {content},
+            {content}
         ]
     }
 }
@@ -499,7 +501,7 @@ pub(crate) fn text_input_suffix_container(content: Box<dyn SceneList>) -> impl S
         }
         TextInputSuffixContainer
         Children [
-            {content},
+            {content}
         ]
     }
 }

@@ -65,39 +65,36 @@ impl PlumeToggleSwitch {
             AccessibilityNode(accesskit::Node::new(Role::Switch))
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             Children [
-                (
-                    // Border ring overlaying the pill; only its color is themed.
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::ZERO,
-                        top: Val::ZERO,
-                        width: percent(100),
-                        height: percent(100),
-                        border: size::HAIRLINE,
-                        border_radius: {size::TOGGLE_SIZE.y / 2.0},
-                    }
-                    ToggleSwitchOutline
-                    ThemeBorderToken(tokens::SWITCH_BORDER)
-                ),
-                (
-                    // The 2px inset nests the 16px knob (radius 8) concentrically inside
-                    // the pill's outer radius (9) minus the ring's border. The on/off
-                    // slide is a post-layout `UiTransform`, so it never relayouts.
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: size::em_from_px(1.0),
-                        top: size::em_from_px(1.0),
-                        width: size::KNOB_SIZE,
-                        height: size::KNOB_SIZE,
-                        border_radius: BorderRadius::MAX,
-                    }
-                    ToggleSwitchSlide
-                    AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL)
-                    UiTransform::default()
-                    ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)
-                    GradientAmount(SLIDE_GRADIENT_AMOUNT)
-                    control_box_shadow()
-                ),
+                // Border ring overlaying the pill; only its color is themed.
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    top: Val::ZERO,
+                    width: percent(100),
+                    height: percent(100),
+                    border: size::HAIRLINE,
+                    border_radius: {size::TOGGLE_SIZE.y / 2.0},
+                }
+                ToggleSwitchOutline
+                ThemeBorderToken(tokens::SWITCH_BORDER)
+                --
+                // The 2px inset nests the 16px knob (radius 8) concentrically inside
+                // the pill's outer radius (9) minus the ring's border. The on/off
+                // slide is a post-layout `UiTransform`, so it never relayouts.
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: size::em_from_px(1.0),
+                    top: size::em_from_px(1.0),
+                    width: size::KNOB_SIZE,
+                    height: size::KNOB_SIZE,
+                    border_radius: BorderRadius::MAX,
+                }
+                ToggleSwitchSlide
+                AnimState::translate_x(size::em_from_px(0.0), KNOB_TRAVEL)
+                UiTransform::default()
+                ThemeBackgroundToken(tokens::SWITCH_SLIDE_BG)
+                GradientAmount(SLIDE_GRADIENT_AMOUNT)
+                control_box_shadow()
             ]
         }
     }

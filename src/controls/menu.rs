@@ -101,20 +101,16 @@ impl PlumeMenuButton {
         bsn! {
             @menu_button_row(props.label, props.shortcut)
             Children [
-                (
-                    @popup_socket()
+                @popup_socket()
+                MenuChrome
+                Children [
+                    // Pre-rendered popup: hidden while closed, so items keep
+                    // their observers and state across open/close.
+                    @menu_frame_chrome()
                     MenuChrome
-                    Children [
-                        (
-                            // Pre-rendered popup: hidden while closed, so items keep
-                            // their observers and state across open/close.
-                            @menu_frame_chrome()
-                            MenuChrome
-                            Node { display: Display::None }
-                            Visibility::Hidden
-                        ),
-                    ]
-                ),
+                    Node { display: Display::None }
+                    Visibility::Hidden
+                ]
             ]
         }
     }
@@ -146,42 +142,36 @@ pub(crate) fn menu_button_row(label: String, shortcut: Option<String>) -> impl S
         InheritableThemeTextToken(tokens::MENU_ITEM_TEXT)
         on(menu_root_on_menu_event)
         Children [
-            (
-                // Check gutter: reserved on every item so labels align.
-                @icon(lucide::CHECK)
-                Node { width: size::ICON_WIDTH }
-                MenuChrome
-                MenuCheckIcon
-                Visibility::Hidden
-            ),
-            (
-                // The popup's height is first measured inside the narrow anchor
-                // socket; a wrapping label bakes that taller estimate into the
-                // frame. Menu labels never wrap.
-                @caption(label)
-                TextLayout { linebreak: LineBreak::NoWrap }
-                MenuChrome
-            ),
-            (
-                Node { flex_grow: 1.0 }
-                MenuChrome
-            ),
-            (
-                @caption(shortcut)
-                Node { display: shortcut_display }
-                TextLayout { linebreak: LineBreak::NoWrap }
-                MenuChrome
-                MenuShortcutText
-                InheritableThemeTextToken(tokens::TEXT_DIM)
-            ),
-            (
-                // Submenu caret gutter; only submenus show the glyph.
-                @icon(lucide::CHEVRON_RIGHT)
-                Node { width: size::ICON_WIDTH }
-                MenuChrome
-                MenuCaretIcon
-                Visibility::Hidden
-            ),
+            // Check gutter: reserved on every item so labels align.
+            @icon(lucide::CHECK)
+            Node { width: size::ICON_WIDTH }
+            MenuChrome
+            MenuCheckIcon
+            Visibility::Hidden
+            --
+            // The popup's height is first measured inside the narrow anchor
+            // socket; a wrapping label bakes that taller estimate into the
+            // frame. Menu labels never wrap.
+            @caption(label)
+            TextLayout { linebreak: LineBreak::NoWrap }
+            MenuChrome
+            --
+            Node { flex_grow: 1.0 }
+            MenuChrome
+            --
+            @caption(shortcut)
+            Node { display: shortcut_display }
+            TextLayout { linebreak: LineBreak::NoWrap }
+            MenuChrome
+            MenuShortcutText
+            InheritableThemeTextToken(tokens::TEXT_DIM)
+            --
+            // Submenu caret gutter; only submenus show the glyph.
+            @icon(lucide::CHEVRON_RIGHT)
+            Node { width: size::ICON_WIDTH }
+            MenuChrome
+            MenuCaretIcon
+            Visibility::Hidden
         ]
     }
 }
@@ -255,26 +245,22 @@ pub fn menu_anchor(items: impl SceneList) -> impl Scene {
     bsn! {
         @menu_anchor_base()
         Children [
-            (
-                @popup_socket()
+            @popup_socket()
+            MenuChrome
+            Children [
+                // Wired here rather than by the classifier, which this anchor
+                // opts out of along with the child adoption that would
+                // swallow the control's own children.
+                @menu_frame_chrome()
                 MenuChrome
+                MenuPopup
+                popover_for(MenuButtonRole::Bar)
+                Node { display: Display::None }
+                Visibility::Hidden
                 Children [
-                    (
-                        // Wired here rather than by the classifier, which this anchor
-                        // opts out of along with the child adoption that would
-                        // swallow the control's own children.
-                        @menu_frame_chrome()
-                        MenuChrome
-                        MenuPopup
-                        popover_for(MenuButtonRole::Bar)
-                        Node { display: Display::None }
-                        Visibility::Hidden
-                        Children [
-                            {items},
-                        ]
-                    ),
+                    {items}
                 ]
-            ),
+            ]
         ]
     }
 }

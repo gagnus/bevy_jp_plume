@@ -104,66 +104,62 @@ impl PlumeSlider {
             SliderStep({props.step.unwrap_or((props.max - props.min) / 100.0)})
             @{props.precision.map(|precision| bsn! { SliderPrecision(precision) })}
             Children [
-                (
-                    // Inset half a knob each end so the thumb's sweep, not the bare
-                    // track, spans the full width; grown so the inset is subtracted.
+                // Inset half a knob each end so the thumb's sweep, not the bare
+                // track, spans the full width; grown so the inset is subtracted.
+                Node {
+                    height: size::SLIDER_TRACK_HEIGHT,
+                    width: Val::ZERO,
+                    flex_grow: 1.0,
+                    margin: UiRect::horizontal(size::KNOB_SIZE / 2.0),
+                    border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
+                }
+                SliderTrack
+                // Bar/track drawn as a gradient, seeded from the default theme so
+                // the slider is styled on its first frame regardless of
+                // scene-application order; a subtree `ThemeId` repaints it the
+                // same frame via `update_slider_styles_theme`.
+                template(|ctx| {
+                    let theme = ctx.resource::<UiTheme>();
+                    let bar = theme.token_color(None, &tokens::SLIDER_BAR);
+                    let bg = theme.token_color(None, &tokens::SLIDER_BG);
+                    Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
+                        angle: PI * 0.5,
+                        stops: vec![
+                            ColorStop::new(bar, percent(0)),
+                            ColorStop::new(bar, percent(50)),
+                            ColorStop::new(bg, percent(50)),
+                            ColorStop::new(bg, percent(100)),
+                        ],
+                        color_space: InterpolationColorSpace::LinearRgba,
+                    })]))
+                })
+                Children [
+                    // A child of the track, sharing its inset span — which is
+                    // the (width - thumb) span bevy's drag math assumes.
                     Node {
-                        height: size::SLIDER_TRACK_HEIGHT,
-                        width: Val::ZERO,
-                        flex_grow: 1.0,
-                        margin: UiRect::horizontal(size::KNOB_SIZE / 2.0),
-                        border_radius: {size::SLIDER_TRACK_HEIGHT / 2.0},
+                        position_type: PositionType::Absolute,
+                        left: percent(0),
+                        top: percent(50),
+                        width: size::KNOB_SIZE,
+                        height: size::KNOB_SIZE,
+                        // Half-knob offsets center the thumb on the value position.
+                        margin: UiRect {
+                            left: {-(size::KNOB_SIZE / 2.0)},
+                            top: {-(size::KNOB_SIZE / 2.0)},
+                        },
+                        border_radius: BorderRadius::MAX,
                     }
-                    SliderTrack
-                    // Bar/track drawn as a gradient, seeded from the default theme so
-                    // the slider is styled on its first frame regardless of
-                    // scene-application order; a subtree `ThemeId` repaints it the
-                    // same frame via `update_slider_styles_theme`.
-                    template(|ctx| {
-                        let theme = ctx.resource::<UiTheme>();
-                        let bar = theme.token_color(None, &tokens::SLIDER_BAR);
-                        let bg = theme.token_color(None, &tokens::SLIDER_BG);
-                        Ok(BackgroundGradient(vec![Gradient::Linear(LinearGradient {
-                            angle: PI * 0.5,
-                            stops: vec![
-                                ColorStop::new(bar, percent(0)),
-                                ColorStop::new(bar, percent(50)),
-                                ColorStop::new(bg, percent(50)),
-                                ColorStop::new(bg, percent(100)),
-                            ],
-                            color_space: InterpolationColorSpace::LinearRgba,
-                        })]))
-                    })
-                    Children [
-                        (
-                            // A child of the track, sharing its inset span — which is
-                            // the (width - thumb) span bevy's drag math assumes.
-                            Node {
-                                position_type: PositionType::Absolute,
-                                left: percent(0),
-                                top: percent(50),
-                                width: size::KNOB_SIZE,
-                                height: size::KNOB_SIZE,
-                                // Half-knob offsets center the thumb on the value position.
-                                margin: UiRect {
-                                    left: {-(size::KNOB_SIZE / 2.0)},
-                                    top: {-(size::KNOB_SIZE / 2.0)},
-                                },
-                                border_radius: BorderRadius::MAX,
-                            }
-                            control_box_shadow()
-                            SliderThumb
-                            // Focus rings follow the node's rounding, so the ring
-                            // belongs on the round thumb, not the square frame.
-                            FocusIndicator
-                            AnimState::scale(1.0, THUMB_GRABBED_SCALE)
-                            UiTransform::default()
-                            on(grab_thumb_on_press)
-                            ThemeBackgroundToken(tokens::SLIDER_THUMB)
-                            GradientAmount::STANDARD
-                        ),
-                    ]
-                ),
+                    control_box_shadow()
+                    SliderThumb
+                    // Focus rings follow the node's rounding, so the ring
+                    // belongs on the round thumb, not the square frame.
+                    FocusIndicator
+                    AnimState::scale(1.0, THUMB_GRABBED_SCALE)
+                    UiTransform::default()
+                    on(grab_thumb_on_press)
+                    ThemeBackgroundToken(tokens::SLIDER_THUMB)
+                    GradientAmount::STANDARD
+                ]
             ]
         }
     }

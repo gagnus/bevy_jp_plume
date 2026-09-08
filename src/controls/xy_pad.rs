@@ -154,42 +154,38 @@ impl PlumeXyPad {
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
             CursorLock
             Children [
-                (
+                Node {
+                    align_self: AlignSelf::Stretch,
+                    flex_grow: 1.0,
+                }
+                XyPadInner
+                Children [
                     Node {
-                        align_self: AlignSelf::Stretch,
-                        flex_grow: 1.0,
+                        position_type: PositionType::Absolute,
+                        left: percent(50),
+                        top: percent(50),
+                        width: {props.reticle_size.x},
+                        height: {props.reticle_size.y},
+                        border: RETICLE_BORDER,
+                        border_radius: {props.reticle_border_radius},
+                        // Half-reticle offsets center the ring on the value position.
+                        margin: UiRect {
+                            left: {-props.reticle_size.x / 2.0},
+                            top: {-props.reticle_size.y / 2.0},
+                        },
                     }
-                    XyPadInner
-                    Children [
-                        (
-                            Node {
-                                position_type: PositionType::Absolute,
-                                left: percent(50),
-                                top: percent(50),
-                                width: {props.reticle_size.x},
-                                height: {props.reticle_size.y},
-                                border: RETICLE_BORDER,
-                                border_radius: {props.reticle_border_radius},
-                                // Half-reticle offsets center the ring on the value position.
-                                margin: UiRect {
-                                    left: {-props.reticle_size.x / 2.0},
-                                    top: {-props.reticle_size.y / 2.0},
-                                },
-                            }
-                            XyPadThumb
-                            // A white ring with a dark outline reads on any background.
-                            bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
-                            bevy::ui::Outline {
-                                width: size::HAIRLINE,
-                                offset: Val::ZERO,
-                                color: bevy::color::Color::BLACK,
-                            }
-                            // Let picks fall through to the inner pad so the reticle never
-                            // eats a drag that starts on top of it.
-                            Pickable::IGNORE
-                        ),
-                    ]
-                ),
+                    XyPadThumb
+                    // A white ring with a dark outline reads on any background.
+                    bevy::ui::BorderColor::all(bevy::color::Color::WHITE)
+                    bevy::ui::Outline {
+                        width: size::HAIRLINE,
+                        offset: Val::ZERO,
+                        color: bevy::color::Color::BLACK,
+                    }
+                    // Let picks fall through to the inner pad so the reticle never
+                    // eats a drag that starts on top of it.
+                    Pickable::IGNORE
+                ]
             ]
         }
     }

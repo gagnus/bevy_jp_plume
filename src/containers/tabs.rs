@@ -16,7 +16,7 @@ use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
@@ -69,8 +69,8 @@ pub struct PlumeTabsProps {
 impl Default for PlumeTabsProps {
     fn default() -> Self {
         Self {
-            header: Box::new(bsn_list![]),
-            body: Box::new(bsn_list![]),
+            header: Box::new(()),
+            body: Box::new(()),
         }
     }
 }
@@ -82,31 +82,25 @@ impl PlumeTabs {
             @tabs_frame()
             SelectedIndex
             Children [
-                (
-                    @tab_strip_frame()
+                @tab_strip_frame()
+                Children [
+                    #strip_viewport
+                    @scroll_viewport(ScrollAxis::Horizontal)
                     Children [
-                        (
-                            #strip_viewport
-                            @scroll_viewport(ScrollAxis::Horizontal)
-                            Children [
-                                (
-                                    @tab_strip()
-                                    Children [
-                                        {props.header},
-                                    ]
-                                ),
-                            ]
-                        ),
-                        (
-                            @PlumeScrollbar {
-                                @target: #strip_viewport,
-                                @orientation: ControlOrientation::Horizontal,
-                            }
-                            @scrollbar_node(ScrollAxis::Horizontal)
-                        ),
+                        @tab_strip()
+                        Children [
+                            {props.header}
+                        ]
                     ]
-                ),
-                {props.body},
+                    --
+                    @PlumeScrollbar {
+                        @target: #strip_viewport,
+                        @orientation: ControlOrientation::Horizontal,
+                    }
+                    @scrollbar_node(ScrollAxis::Horizontal)
+                ]
+                --
+                {props.body}
             ]
         }
     }
@@ -131,7 +125,7 @@ pub struct PlumeTabProps {
 impl Default for PlumeTabProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list![]),
+            caption: Box::new(()),
             target: EntityTemplate::default(),
         }
     }
@@ -148,7 +142,7 @@ impl PlumeTab {
             @tab_chrome()
             @{has_target.then(|| bsn! { TabTarget(target) })}
             Children [
-                {props.caption},
+                {props.caption}
             ]
         }
     }
@@ -243,20 +237,18 @@ pub(crate) fn tab_strip() -> impl Scene {
         }
         TabStrip
         Children [
-            (
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::ZERO,
-                    top: Val::ZERO,
-                    width: px(INDICATOR_BASE_WIDTH),
-                    height: size::TAB_INDICATOR_HEIGHT,
-                }
-                TabIndicator
-                ZIndex(1)
-                UiTransform::default()
-                Pickable::IGNORE
-                ThemeBackgroundToken(tokens::TAB_INDICATOR)
-            ),
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::ZERO,
+                top: Val::ZERO,
+                width: px(INDICATOR_BASE_WIDTH),
+                height: size::TAB_INDICATOR_HEIGHT,
+            }
+            TabIndicator
+            ZIndex(1)
+            UiTransform::default()
+            Pickable::IGNORE
+            ThemeBackgroundToken(tokens::TAB_INDICATOR)
         ]
     }
 }
@@ -300,8 +292,9 @@ pub(crate) fn tab_button(label: String, icon: Option<Icon>) -> impl Scene {
             {icon.map(|glyph| bsn! {
                 @display::icon(glyph)
                 Node { flex_shrink: 0.0 }
-            })},
-            @tab_label(label),
+            })}
+            --
+            @tab_label(label)
         ]
     }
 }
@@ -318,11 +311,9 @@ pub fn tab_label(label: impl Into<String>) -> impl Scene {
             overflow: Overflow::clip(),
         }
         Children [
-            (
-                @caption(label)
-                Node { min_width: Val::ZERO }
-                TextLayout { linebreak: LineBreak::NoWrap }
-            ),
+            @caption(label)
+            Node { min_width: Val::ZERO }
+            TextLayout { linebreak: LineBreak::NoWrap }
         ]
     }
 }

@@ -188,7 +188,7 @@ pub struct PlumePopupProps {
 impl Default for PlumePopupProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(bsn_list![]),
+            contents: Box::new(()),
             placement: Default::default(),
             dismiss: Default::default(),
             movable: false,
@@ -282,7 +282,7 @@ impl PlumePopup {
             on(stop_pointer::<PointerDragEnd>)
             on(stop_pointer::<PointerScroll>)
             Children [
-                {props.contents},
+                {props.contents}
             ]
         }
     }

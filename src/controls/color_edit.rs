@@ -118,32 +118,30 @@ impl PlumeColorEdit {
             @rgb_only
             Children [
                 // The button is the click target that toggles the popup.
-                (
-                    @PlumeButton {
-                        @caption: bsn_list![
-                            (
-                                @PlumeColorSwatch {
-                                    @initial_color: initial_color,
-                                    @alpha: alpha,
-                                }
-                                ColorEditSwatch
-                                Node {
-                                    width: SWATCH_SIZE,
-                                    height: SWATCH_SIZE,
-                                    flex_grow: 1.0,
-                                }
-                            ),
-                            @icon(lucide::CHEVRON_DOWN),
-                        ],
-                    }
-                    ActivateOnPress
-                    ColorEditButton
-                    Node {
-                        flex_grow: 1.0,
-                    }
-                ),
+                @PlumeButton {
+                    @caption: bsn! {
+                        @PlumeColorSwatch {
+                            @initial_color: initial_color,
+                            @alpha: alpha,
+                        }
+                        ColorEditSwatch
+                        Node {
+                            width: SWATCH_SIZE,
+                            height: SWATCH_SIZE,
+                            flex_grow: 1.0,
+                        }
+                        --
+                        @icon(lucide::CHEVRON_DOWN)
+                    },
+                }
+                ActivateOnPress
+                ColorEditButton
+                Node {
+                    flex_grow: 1.0,
+                }
+                --
                 // The picker popup spawns into this socket while open.
-                @popup_socket(),
+                @popup_socket()
             ]
         }
     }
@@ -258,15 +256,13 @@ fn toggle_popup(
                 @placement: PopupPlacement::Below,
                 @dismiss: PopupDismiss::OutsideClick,
                 @movable: true,
-                @contents: bsn_list![
-                    (
-                        @PlumeColorPicker {
-                            @initial_color: color,
-                            @alpha: alpha,
-                        }
-                        ColorEditPicker
-                    ),
-                ],
+                @contents: bsn! {
+                    @PlumeColorPicker {
+                        @initial_color: color,
+                        @alpha: alpha,
+                    }
+                    ColorEditPicker
+                },
             }
             ColorEditPopup
             Node {

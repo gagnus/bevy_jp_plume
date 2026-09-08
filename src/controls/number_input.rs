@@ -140,46 +140,45 @@ impl PlumeNumberInput {
             SliderRange::new(props.min, props.max)
             SliderStep({props.step})
             Children [
-                @text_input_outline(),
-                (
-                    @text_input_field(None, None)
-                    EditableTextFilter::new(|c| {
-                        c.is_ascii_digit() || matches!(c, '.' | '-' | '+' | 'e' | 'E')
-                    })
-                    // Right-align digits against the field's trailing edge (caret sits at the
-                    // right, value grows leftward as you type).
-                    TextLayout {
-                        justify: Justify::Right,
-                        linebreak: LineBreak::NoWrap,
-                    }
-                    // Monospace face pinned; size inherits.
-                    InheritableFont {
-                        font: FontSourceTemplate::Handle(fonts::MONOSPACE),
-                    }
-                    on(number_input_on_key)
-                    on(number_input_on_focus_lost)
-                ),
-                {props.suffix.map(|suffix| bsn_list![@text_input_suffix(suffix)])},
-                (
-                    // Scrub/click catcher covering the whole frame, field and suffix alike.
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::ZERO,
-                        right: Val::ZERO,
-                        top: Val::ZERO,
-                        bottom: Val::ZERO,
-                    }
-                    NumberInputScrubber
-                    Pickable::default()
-                    EntityCursor::System(SystemCursorIcon::Pointer)
-                    CursorLock
-                    on(scrubber_on_press)
-                    on(scrubber_on_release)
-                    on(scrubber_on_drag_start)
-                    on(scrubber_on_drag)
-                    on(scrubber_on_drag_end)
-                    on(scrubber_on_cancel)
-                ),
+                @text_input_outline()
+                --
+                @text_input_field(None, None)
+                EditableTextFilter::new(|c| {
+                    c.is_ascii_digit() || matches!(c, '.' | '-' | '+' | 'e' | 'E')
+                })
+                // Right-align digits against the field's trailing edge (caret sits at the
+                // right, value grows leftward as you type).
+                TextLayout {
+                    justify: Justify::Right,
+                    linebreak: LineBreak::NoWrap,
+                }
+                // Monospace face pinned; size inherits.
+                InheritableFont {
+                    font: FontSourceTemplate::Handle(fonts::MONOSPACE),
+                }
+                on(number_input_on_key)
+                on(number_input_on_focus_lost)
+                --
+                {props.suffix.map(|suffix| bsn! { @text_input_suffix(suffix) })}
+                --
+                // Scrub/click catcher covering the whole frame, field and suffix alike.
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    right: Val::ZERO,
+                    top: Val::ZERO,
+                    bottom: Val::ZERO,
+                }
+                NumberInputScrubber
+                Pickable::default()
+                EntityCursor::System(SystemCursorIcon::Pointer)
+                CursorLock
+                on(scrubber_on_press)
+                on(scrubber_on_release)
+                on(scrubber_on_drag_start)
+                on(scrubber_on_drag)
+                on(scrubber_on_drag_end)
+                on(scrubber_on_cancel)
             ]
         }
     }

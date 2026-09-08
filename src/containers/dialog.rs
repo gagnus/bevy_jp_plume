@@ -12,7 +12,7 @@ use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::ui::{
     AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, LayoutConfig, Node,
     PositionType, UiRect, UiSystems, Val,
@@ -63,8 +63,8 @@ pub struct PlumeDialogProps {
 impl Default for PlumeDialogProps {
     fn default() -> Self {
         Self {
-            title: Box::new(bsn_list![]),
-            contents: Box::new(bsn_list![]),
+            title: Box::new(()),
+            contents: Box::new(()),
             width: Val::Auto,
             height: Val::Auto,
             max_height: Val::Auto,
@@ -103,32 +103,25 @@ impl PlumeDialog {
         // A bounded dialog scrolls its body; an unbounded one holds the contents
         // directly and spawns no scroll machinery.
         let body: Box<dyn SceneList> = if height != Val::Auto || max_height != Val::Auto {
-            Box::new(bsn_list![
-                (
-                    @scroll_frame(ScrollAxis::Vertical)
+            Box::new(bsn! {
+                @scroll_frame(ScrollAxis::Vertical)
+                Children [
+                    #inner
+                    @scroll_viewport(ScrollAxis::Vertical)
                     Children [
-                        (
-                            #inner
-                            @scroll_viewport(ScrollAxis::Vertical)
-                            Children [
-                                (
-                                    @scroll_content(ScrollAxis::Vertical)
-                                    Children [
-                                        {contents},
-                                    ]
-                                ),
-                            ]
-                        ),
-                        (
-                            @PlumeScrollbar {
-                                @target: #inner,
-                                @orientation: ControlOrientation::Vertical,
-                            }
-                            @scrollbar_node(ScrollAxis::Vertical)
-                        ),
+                        @scroll_content(ScrollAxis::Vertical)
+                        Children [
+                            {contents}
+                        ]
                     ]
-                ),
-            ])
+                    --
+                    @PlumeScrollbar {
+                        @target: #inner,
+                        @orientation: ControlOrientation::Vertical,
+                    }
+                    @scrollbar_node(ScrollAxis::Vertical)
+                ]
+            })
         } else {
             contents
         };
@@ -137,14 +130,12 @@ impl PlumeDialog {
                 name: "PlumeDialog".into(),
                 // The public dialog builds its whole body eagerly and hands the
                 // frame a padded `dialog_body` wrapping it.
-                body: Box::new(bsn_list![
-                    (
-                        @dialog_body()
-                        Children [
-                            {body},
-                        ]
-                    ),
-                ]),
+                body: Box::new(bsn! {
+                    @dialog_body()
+                    Children [
+                        {body}
+                    ]
+                }),
                 header: header.then(|| DialogHeader {
                     title,
                     closable,
@@ -250,10 +241,12 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                 ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
                 ThemeBorderToken(tokens::DIALOG_BORDER)
                 Children [
-                    {title},
+                    {title}
+                    --
                     // Spacer, not SpaceBetween: a multi-entity title stays grouped at the start.
-                    @flex_spacer(),
-                    {closable.then(|| bsn_list![@dialog_close()])},
+                    @flex_spacer()
+                    --
+                    {closable.then(|| bsn! { @dialog_close() })}
                 ]
             }
         },
@@ -292,8 +285,9 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
             use_rounding: true,
         }
         Children [
-            {title_bar},
-            {body},
+            {title_bar}
+            --
+            {body}
         ]
     }
 }

@@ -51,7 +51,7 @@ pub struct PlumeCheckboxProps {
 impl Default for PlumeCheckboxProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(bsn_list![]),
+            caption: Box::new(()),
         }
     }
 }
@@ -77,52 +77,48 @@ impl PlumeCheckbox {
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
             InheritableThemeTextToken(tokens::CHECKBOX_TEXT)
             Children [
-                (
+                Node {
+                    width: size::CHECKBOX_SIZE,
+                    height: size::CHECKBOX_SIZE,
+                    border_radius: size::CORNER_RADIUS_SMALL,
+                }
+                CheckboxBg
+                // Ring hugs the box, not the label row.
+                FocusIndicator
+                ThemeBackgroundToken(tokens::CHECKBOX_BG)
+                GradientAmount(0.0)
+                Children [
                     Node {
                         width: size::CHECKBOX_SIZE,
                         height: size::CHECKBOX_SIZE,
+                        border: size::HAIRLINE,
                         border_radius: size::CORNER_RADIUS_SMALL,
                     }
-                    CheckboxBg
-                    // Ring hugs the box, not the label row.
-                    FocusIndicator
-                    ThemeBackgroundToken(tokens::CHECKBOX_BG)
-                    GradientAmount(0.0)
-                    Children [
-                        (
-                            Node {
-                                width: size::CHECKBOX_SIZE,
-                                height: size::CHECKBOX_SIZE,
-                                border: size::HAIRLINE,
-                                border_radius: size::CORNER_RADIUS_SMALL,
-                            }
-                            CheckboxOutline
-                            ThemeBorderToken(tokens::CHECKBOX_BORDER)
-                        ),
-                        (
-                            // Cheesy checkmark: rotated node with L-shaped border,
-                            // proportioned to the box so it scales with it.
-                            Node {
-                                position_type: PositionType::Absolute,
-                                left: size::em_from_px(6.0),
-                                top: size::em_from_px(2.0),
-                                width: size::em_from_px(6.0),
-                                height: size::em_from_px(11.0),
-                                border: {UiRect {
-                                    bottom: size::em_from_px(2.0),
-                                    right: size::em_from_px(2.0),
-                                    ..UiRect::ZERO
-                                }},
-                            }
-                            UiTransform::from_rotation(Rot2::FRAC_PI_4)
-                            CheckboxMark
-                            AnimState::scale(0.0, 1.0).hide_at_zero()
-                            Visibility::Hidden
-                            ThemeBorderToken(tokens::CHECKBOX_MARK)
-                        ),
-                    ]
-                ),
-                {props.caption},
+                    CheckboxOutline
+                    ThemeBorderToken(tokens::CHECKBOX_BORDER)
+                    --
+                    // Cheesy checkmark: rotated node with L-shaped border,
+                    // proportioned to the box so it scales with it.
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: size::em_from_px(6.0),
+                        top: size::em_from_px(2.0),
+                        width: size::em_from_px(6.0),
+                        height: size::em_from_px(11.0),
+                        border: {UiRect {
+                            bottom: size::em_from_px(2.0),
+                            right: size::em_from_px(2.0),
+                            ..UiRect::ZERO
+                        }},
+                    }
+                    UiTransform::from_rotation(Rot2::FRAC_PI_4)
+                    CheckboxMark
+                    AnimState::scale(0.0, 1.0).hide_at_zero()
+                    Visibility::Hidden
+                    ThemeBorderToken(tokens::CHECKBOX_MARK)
+                ]
+                --
+                {props.caption}
             ]
         }
     }
