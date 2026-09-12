@@ -136,7 +136,7 @@ impl PlumeTab {
     pub fn scene(props: PlumeTabProps) -> impl Scene {
         let target = props.target;
         // `EntityTemplate::None` is what an omitted `@target` leaves behind, and
-        // building one is an error — a bodyless tab simply carries no `TabTarget`.
+        // building one is an error - a bodyless tab simply carries no `TabTarget`.
         let has_target = !matches!(target, EntityTemplate::None);
         bsn! {
             @tab_chrome()
@@ -339,7 +339,7 @@ pub fn tab_body() -> impl Scene {
     }
 }
 
-// The strip's tabs in left-to-right order — the order every tab index counts in.
+// The strip's tabs in left-to-right order - the order every tab index counts in.
 fn strip_tabs(
     root: Entity,
     q_children: &Query<&Children>,
@@ -582,7 +582,7 @@ fn set_tab_styles(
     }
 
     // The accent underline mutes with the tab it points at, so only the selected
-    // one speaks for it — the tab losing `Selected` leaves it to its replacement.
+    // one speaks for it - the tab losing `Selected` leaves it to its replacement.
     if !selected {
         return;
     }

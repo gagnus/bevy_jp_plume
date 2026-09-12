@@ -30,7 +30,7 @@ use crate::tokens;
 use crate::utils::anim::AnimState;
 use crate::utils::hierarchy::descendant_get_mut;
 
-/// A section: a header bar over a body. Collapsible by default — clicking the
+/// A section: a header bar over a body. Collapsible by default - clicking the
 /// header folds the body away.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeSectionProps)]

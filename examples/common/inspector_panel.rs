@@ -775,7 +775,7 @@ fn footer(ui: &mut Ui, rem: &mut RemSize) {
 
 // The modal the File menu opens. It carries a select and tooltipped buttons on
 // purpose: both open surfaces of their own, and a modal is the one place their
-// layering has to be checked — the popup sits over the barrier, the tooltip over
+// layering has to be checked - the popup sits over the barrier, the tooltip over
 // everything.
 fn export_modal(root: &mut PlumeRoot, open: &mut bool, cull: &mut Cull) {
     let mut answered = false;

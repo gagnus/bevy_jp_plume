@@ -194,7 +194,7 @@ pub struct ImmResponse<'r, 'w, 's, K = kind::Any> {
     pub changed: bool,
     /// The pointer is over the widget.
     pub hovered: bool,
-    /// The widget's root entity — the escape hatch to the retained layer.
+    /// The widget's root entity - the escape hatch to the retained layer.
     pub entity: Entity,
     pub(crate) will_be_spawned: bool,
     // Set by the numeric widgets from their bound `T`. Carried on the response
@@ -238,7 +238,7 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
         }
     }
 
-    /// Drop-down menu anchored to this widget, filled by `f` — the standalone form of
+    /// Drop-down menu anchored to this widget, filled by `f` - the standalone form of
     /// the menus [`menu_bar`](super::PlumeImm::menu_bar) holds, on the same
     /// [`ImmMenu`] rows. It owns its open state, so there is no `&mut bool` to keep.
     ///
@@ -260,7 +260,7 @@ impl<'r, 'w, 's, K> ImmResponse<'r, 'w, 's, K> {
         self.e.menu_open().is_some()
     }
 
-    /// Whether keyboard focus is in this widget — itself or a direct child.
+    /// Whether keyboard focus is in this widget - itself or a direct child.
     pub fn focused(&self) -> bool {
         self.e.focused()
     }
@@ -344,7 +344,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Move, scale or rotate the widget without touching layout — the geometry
+    /// Move, scale or rotate the widget without touching layout - the geometry
     /// pass applies a [`UiTransform`], so this is how chrome animates per frame.
     /// Skipped while the transform is unchanged, so a resting widget costs nothing.
     pub fn transform(mut self, transform: UiTransform) -> Self {
@@ -415,7 +415,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     }
 
     /// Fill the remaining space like [`Self::grow`], but from the content size
-    /// rather than zero — so a container that hugs its children still reserves
+    /// rather than zero - so a container that hugs its children still reserves
     /// room for this one.
     pub fn grow_from_content(self) -> Self {
         struct GrowFromContentKey;
@@ -423,7 +423,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     }
 
     /// Keep this widget's size however tight the container gets, so the squeeze falls
-    /// on a sibling. A [`grow`](Self::grow) sibling can't take it — growing zeroes
+    /// on a sibling. A [`grow`](Self::grow) sibling can't take it - growing zeroes
     /// `flex_basis`, which flex shrinks in proportion to; use
     /// [`grow_from_content`](Self::grow_from_content) + [`min_width`](Self::min_width).
     pub fn no_shrink(self) -> Self {
@@ -432,7 +432,7 @@ impl<K> ImmResponse<'_, '_, '_, K> {
     }
 
     /// Override the control's minimum width. `Val::ZERO` lets a container shrink
-    /// below its content — what makes [`clip`](Self::clip) actually clip.
+    /// below its content - what makes [`clip`](Self::clip) actually clip.
     pub fn min_width(self, min_width: Val) -> Self {
         struct MinWidthKey;
         self.set_node::<MinWidthKey, _>(min_width, |node, min_width| node.min_width = min_width)
@@ -466,14 +466,14 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         self
     }
 
-    /// Establish the font size as a multiple of the inherited size — CSS's `em`.
+    /// Establish the font size as a multiple of the inherited size - CSS's `em`.
     /// `1.25` on a header caption tracks whatever scale its dialog is at.
     pub fn font_scale(self, factor: f32) -> Self {
         self.font_size(PlumeFontSize::Em(factor))
     }
 
     /// Establish a one-off text color for this widget and everything below it.
-    /// State-styled controls re-assert their own — color containers/captions.
+    /// State-styled controls re-assert their own - color containers/captions.
     pub fn text_color(mut self, color: Color) -> Self {
         struct TextColorKey;
         if self.key_changed::<TextColorKey>(format!("{color:?}")) {
@@ -564,7 +564,7 @@ impl ImmResponse<'_, '_, '_, kind::Caption> {
             });
         }
         // Flex resolves `min_width: auto` to the content size, which for unwrapped
-        // text is the whole string — the row would grow rather than clip.
+        // text is the whole string - the row would grow rather than clip.
         struct NoWrapMinKey;
         self.set_node::<NoWrapMinKey, _>((), |node, ()| node.min_width = Val::ZERO)
     }
@@ -680,12 +680,12 @@ impl<'r, 'w, 's, C> ImmResponse<'r, 'w, 's, kind::Button<C>> {
         self.into_kind()
     }
 
-    /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` — the confirm button.
+    /// Sugar for [`Self::variant`]`(ButtonVariant::Primary)` - the confirm button.
     pub fn primary(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton<C>> {
         self.variant(ButtonVariant::Primary)
     }
 
-    /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` — the confirm button for a
+    /// Sugar for [`Self::variant`]`(ButtonVariant::Danger)` - the confirm button for a
     /// destructive action.
     pub fn danger(self) -> ImmResponse<'r, 'w, 's, kind::StyledButton<C>> {
         self.variant(ButtonVariant::Danger)
@@ -754,7 +754,7 @@ impl<K: kind::Numeric> ImmResponse<'_, '_, '_, K> {
 
 impl ImmResponse<'_, '_, '_, kind::Slider> {
     /// Decimal places drag values are rounded to (`0` = integer). Ignored when the
-    /// bound value is an integer type — with a warning if a non-zero was asked for.
+    /// bound value is an integer type - with a warning if a non-zero was asked for.
     #[track_caller]
     pub fn precision(mut self, precision: usize) -> Self {
         struct PrecisionKey;
@@ -796,7 +796,7 @@ impl ImmResponse<'_, '_, '_, kind::Number> {
     }
 
     /// Set the displayed/committed decimal precision (`0` = integer). Reprints the
-    /// value. Ignored when the bound value is an integer type — with a warning if a
+    /// value. Ignored when the bound value is an integer type - with a warning if a
     /// non-zero was asked for.
     #[track_caller]
     pub fn precision(mut self, precision: usize) -> Self {
@@ -835,7 +835,7 @@ fn warn_integral_precision(precision: usize, caller: &Location<'static>) {
 /// Builders shared by the text-input-frame kinds (number input, text edit).
 impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
     /// Append a dim, non-editable unit suffix to the input (e.g. `m/s`).
-    /// Seeded on first spawn only — units don't change, and the id doesn't track it.
+    /// Seeded on first spawn only - units don't change, and the id doesn't track it.
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
         if self.will_be_spawned {
             let parent = self.entity;
@@ -864,7 +864,7 @@ impl<K: kind::Field> ImmResponse<'_, '_, '_, K> {
 
 impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
     /// Dim hint shown while the field is empty and unfocused.
-    /// Seeded on first spawn only — hints don't change, and the id doesn't track it.
+    /// Seeded on first spawn only - hints don't change, and the id doesn't track it.
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
         if self.will_be_spawned {
             let parent = self.entity;
@@ -897,7 +897,7 @@ impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
         self
     }
 
-    /// Content ahead of the text, inside the frame — a clear button, an icon.
+    /// Content ahead of the text, inside the frame - a clear button, an icon.
     /// `f` builds it each frame, like any imm container body.
     #[track_caller]
     pub fn prefix_container(mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
@@ -963,7 +963,7 @@ impl ImmResponse<'_, '_, '_, kind::Select> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::MenuItem> {
-    /// Right-aligned shortcut hint on the item row. Display only — handling the
+    /// Right-aligned shortcut hint on the item row. Display only - handling the
     /// key is the app's business.
     pub fn shortcut(mut self, text: impl Into<String>) -> Self {
         struct ShortcutKey;
@@ -1066,7 +1066,7 @@ impl ImmResponse<'_, '_, '_, kind::Tabs> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Split> {
-    /// How small each pane may get. [`Val::Auto`] — the default — is the pane's own
+    /// How small each pane may get. [`Val::Auto`] - the default - is the pane's own
     /// content minimum; any other `Val` also stops the drag. A splitter too small for
     /// both floors gives the first pane its own and lets the second give.
     pub fn min_panes(mut self, first: Val, second: Val) -> Self {
@@ -1122,7 +1122,7 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
         })
     }
 
-    /// [`max_height`](Self::max_height) on the other axis — the bound a
+    /// [`max_height`](Self::max_height) on the other axis - the bound a
     /// `scroll_area_horizontal` needs in an auto-width surface.
     pub fn max_width(self, max_width: Val) -> Self {
         struct MaxWidthKey;
@@ -1139,7 +1139,7 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
     }
 
     /// Set the content's padding, which scrolls with it rather than framing the
-    /// region — so it also spaces the two ends of the scroll.
+    /// region - so it also spaces the two ends of the scroll.
     pub fn padding(mut self, padding: impl Into<UiRect>) -> Self {
         struct ScrollContentPadKey;
         let padding = padding.into();
@@ -1162,7 +1162,7 @@ impl ImmResponse<'_, '_, '_, kind::ScrollArea> {
 
 /// Builders shared by the container kinds (row, column, screen).
 impl<K: kind::Container> ImmResponse<'_, '_, '_, K> {
-    /// Place every child on the container's cross axis — `Start` means top on a
+    /// Place every child on the container's cross axis - `Start` means top on a
     /// [`Row`](kind::Row), left on a [`Column`](kind::Column).
     ///
     /// Columns default to `Stretch` (what `.grow()` in nested rows resolves

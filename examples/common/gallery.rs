@@ -94,9 +94,9 @@ impl Plugin for GalleryPlugin {
 fn gallery_ui(mut root: PlumeRoot, mut state: ResMut<GalleryState>) {
     let mut s = state.clone();
     let surfaces = [
-        (ThemeSlot::Neutral0, "Neutral0 — Window"),
-        (ThemeSlot::Neutral1, "Neutral1 — Dialog"),
-        (ThemeSlot::Neutral2, "Neutral2 — Section Header"),
+        (ThemeSlot::Neutral0, "Neutral0 - Window"),
+        (ThemeSlot::Neutral1, "Neutral1 - Dialog"),
+        (ThemeSlot::Neutral2, "Neutral2 - Section Header"),
     ];
     root.screen(|ui| {
         ui.flex_spacer();

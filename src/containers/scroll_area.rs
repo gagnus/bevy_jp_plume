@@ -91,7 +91,7 @@ pub(crate) fn scroll_frame(axis: ScrollAxis) -> impl Scene {
     }
 }
 
-// The scrolling viewport itself. Single-axis — a scroll area never scrolls both
+// The scrolling viewport itself. Single-axis - a scroll area never scrolls both
 // ways. Content goes in the [`scroll_content`] child, not here.
 pub(crate) fn scroll_viewport(axis: ScrollAxis) -> impl Scene {
     let (min_width, min_height) = axis.min_size();
@@ -217,7 +217,7 @@ impl Plugin for ScrollAreaPlugin {
 const CLIP_EPSILON: f32 = 0.5;
 
 // An unbounded scroll region is as tall as its content, so it never scrolls and an
-// ancestor cuts it off instead — which looks correct from inside the region.
+// ancestor cuts it off instead - which looks correct from inside the region.
 fn warn_unbounded_scroll_area(
     query_areas: Query<
         (&ComputedNode, &UiGlobalTransform, Option<&CalculatedClip>),
@@ -258,7 +258,7 @@ fn warn_unbounded_scroll_area(
     *suspect_last_frame = clipped_without_scrolling;
     if confirmed {
         warn_once!(
-            "A scroll area is clipped but not scrolling — its content is cut off and no \
+            "A scroll area is clipped but not scrolling - its content is cut off and no \
              scrollbar reaches it. Every container between it and a fixed height needs \
              `min_height: Val::ZERO` to shrink."
         );
@@ -290,7 +290,7 @@ pub(crate) fn scrollbar_node(axis: ScrollAxis) -> impl Scene {
 /// self-hiding scrollbar, once they outgrow the size the area is given.
 ///
 /// Give it a bounded main axis (a `max_height`, or a `flex_grow` inside a bounded
-/// parent) — an unbounded one just grows and never scrolls.
+/// parent) - an unbounded one just grows and never scrolls.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumeScrollAreaProps)]
 #[reflect(Component, Default, Clone)]
@@ -339,7 +339,7 @@ impl PlumeScrollArea {
 }
 
 // Scrollbar driving the viewport at `target`. Hidden, and its gutter reclaimed,
-// whenever the content fits — see `update_scrollbar_visibility`.
+// whenever the content fits - see `update_scrollbar_visibility`.
 pub(crate) fn scrollbar(target: Entity, axis: ScrollAxis) -> impl Scene {
     bsn! {
         @PlumeScrollbar {

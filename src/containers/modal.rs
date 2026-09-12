@@ -28,7 +28,7 @@ use crate::font_styles::InheritableFont;
 
 // Dims whatever is behind rather than painting a surface, so it is a fixed
 // wash rather than a theme slot: every palette wants the same darkening. The
-// alpha is high because blending is linear — 0.5 here reads as a quarter.
+// alpha is high because blending is linear - 0.5 here reads as a quarter.
 const SCRIM: Color = Color::srgba(0.0, 0.0, 0.0, 0.75);
 
 /// Props used to construct a [`PlumeModal`] scene.
@@ -39,7 +39,7 @@ pub struct PlumeModalProps {
     pub contents: Box<dyn SceneList>,
     /// How wide the modal should be.
     pub width: Val,
-    /// `false` omits the ✕ **and** the dismissals that go with it — a barrier
+    /// `false` omits the ✕ **and** the dismissals that go with it - a barrier
     /// click and Escape stop closing it, leaving the body's buttons as the only
     /// answer. What a destructive confirmation wants.
     pub closable: bool,
@@ -73,7 +73,7 @@ impl PlumeModal {
         } = props;
         bsn! {
             @modal_barrier()
-            // Every dismissal — the ✕, a barrier click, Escape — arrives here,
+            // Every dismissal - the ✕, a barrier click, Escape - arrives here,
             // since `RequestClose` propagates up out of the frame. Closing
             // despawns the modal, as it does for [`PlumeDialog`].
             @{closable.then(|| bsn! {

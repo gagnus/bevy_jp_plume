@@ -26,7 +26,7 @@ pub struct FontStyleSystems;
 pub enum PlumeFontSize {
     /// This size in logical pixels, replacing the inherited one.
     Px(f32),
-    /// A multiple of the inherited size — CSS's `em`.
+    /// A multiple of the inherited size - CSS's `em`.
     Em(f32),
     /// A multiple of the `RemSize` global resource.
     Rem(f32),
@@ -82,7 +82,7 @@ pub fn small_caps() -> impl Scene {
 // fields fill in from the nearest ancestor holder, or the standard font at a root.
 //
 // Ancestor values come from the holders themselves, not `Inherited<TextFont>`,
-// which is stale on the frame a subtree spawns — new text would render one
+// which is stale on the frame a subtree spawns - new text would render one
 // frame at the wrong size, and the layout around it would visibly pop.
 pub(crate) fn resolve_inheritable_font(
     holders: Query<(Entity, &InheritableFont)>,
@@ -223,7 +223,7 @@ mod tests {
     }
 
     // A relative size multiplies whatever the chain resolves above it, and
-    // nested relatives compound — in the frame they spawn, like the test above.
+    // nested relatives compound - in the frame they spawn, like the test above.
     #[test]
     fn relative_size_multiplies_inherited() {
         let mut app = font_app();

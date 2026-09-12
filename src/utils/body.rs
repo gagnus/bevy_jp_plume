@@ -13,7 +13,7 @@ use bevy::ui::{Node, UiRect, Val};
 #[reflect(Component, Clone, Default)]
 pub struct BodyGap(pub Val);
 
-/// Set on a container to override its body's padding — the same containers
+/// Set on a container to override its body's padding - the same containers
 /// [`BodyGap`] lists, and silent on any other in the same way.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -23,7 +23,7 @@ pub struct BodyPadding(pub UiRect);
 // scene gave it. Both gap axes, since the non-stacking one is inert without wrapping.
 //
 // Takes the `Mut` itself: the relays call this every frame, and a bare `&mut Node`
-// at the boundary would tick change detection — relayouting the whole tree — even
+// at the boundary would tick change detection - relayouting the whole tree - even
 // when the guards below then write nothing.
 pub(crate) fn apply_body_style(
     node: &mut Mut<Node>,

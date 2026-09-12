@@ -70,7 +70,7 @@ impl Default for PlumeColorEditProps {
 pub struct PlumeColorEdit;
 
 // Plain root marker, inserted on both the retained and imm paths. The systems key on
-// this — and it carries the control's requirements — rather than the
+// this - and it carries the control's requirements - rather than the
 // [`PlumeColorEdit`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -358,7 +358,7 @@ fn colors_close(a: Color, b: Color) -> bool {
 }
 
 // The headless button reads `InteractionDisabled` on itself, so the marker on the
-// root has to be mirrored onto the inner button — which also grays it. Compared
+// root has to be mirrored onto the inner button - which also grays it. Compared
 // each frame rather than driven by `Added`, since the marker can land on the root
 // before the scene has spawned the button.
 fn sync_disabled(

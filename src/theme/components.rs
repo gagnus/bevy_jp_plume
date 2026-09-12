@@ -23,7 +23,7 @@ use crate::constants::size;
 use crate::theme::slots::ThemeSlot;
 use crate::theme::tokens::ThemeToken;
 
-// Background color by theme token — plume-internal; apps use [`ThemeBackgroundSlot`].
+// Background color by theme token - plume-internal; apps use [`ThemeBackgroundSlot`].
 #[derive(Component, Clone, Default)]
 #[require(BackgroundColor)]
 #[component(immutable)]
@@ -44,8 +44,8 @@ pub struct ThemeBackgroundSlot(pub ThemeSlot);
 pub(crate) const GRADIENT_AMOUNT: f32 = 0.05;
 
 /// Shades an entity's themed background into a vertical gradient: the fill is
-/// lightened by this much at the top and darkened by it at the bottom. Zero — or
-/// no component at all — paints a flat fill instead.
+/// lightened by this much at the top and darkened by it at the bottom. Zero - or
+/// no component at all - paints a flat fill instead.
 ///
 /// Orthogonal to the source of the color, so it shades a [`ThemeBackgroundSlot`]
 /// as readily as one of plume's internal tokens. [`Flat`] overrides it to zero.
@@ -107,7 +107,7 @@ pub fn dialog_box_shadow() -> BoxShadow {
     )
 }
 
-// Border color by theme token — plume-internal; apps use [`ThemeBorderSlot`].
+// Border color by theme token - plume-internal; apps use [`ThemeBorderSlot`].
 // Only supports setting all borders to the same color.
 #[derive(Component, Clone, Default)]
 #[require(BorderColor)]
@@ -126,7 +126,7 @@ pub(crate) struct ThemeBorderToken(pub ThemeToken);
 #[reflect(Component, Clone)]
 pub struct ThemeBorderSlot(pub ThemeSlot);
 
-// Inherited text color by theme token — plume-internal; apps use
+// Inherited text color by theme token - plume-internal; apps use
 // [`InheritableThemeTextSlot`].
 #[derive(Component, Clone, Default)]
 #[component(immutable)]
@@ -153,7 +153,7 @@ pub struct InheritableThemeTextSlot(pub ThemeSlot);
 #[require(PropagateOver::<TextColor>)]
 pub struct InheritableTextColor(pub Color);
 
-// Text color of the span itself by theme token — plume-internal; apps use
+// Text color of the span itself by theme token - plume-internal; apps use
 // [`ThemeTextSlot`]. Unlike the inheritable forms this works set directly on the
 // text entity, and is not inherited.
 #[derive(Component, Clone, Default)]
@@ -192,7 +192,7 @@ type BackgroundSource<'w> = (
     Has<Flat>,
 );
 
-// Carries a themed background at all — the slot form wins where both are present,
+// Carries a themed background at all - the slot form wins where both are present,
 // which is how an app overrides a plume control's internal token.
 type HasBackground = Or<(With<ThemeBackgroundToken>, With<ThemeBackgroundSlot>)>;
 
@@ -269,7 +269,7 @@ fn resolve_background(
 // every one of them when the palette itself changes.
 //
 // A system rather than insert observers, because the inputs arrive on an entity
-// separately and in no fixed order — a scene supplies the token and `Flat` from
+// separately and in no fixed order - a scene supplies the token and `Flat` from
 // two different layers, and the control style systems write the token and the
 // amount as independent commands. Running once, late, after all of them have
 // landed is what makes the result order-independent.
@@ -294,7 +294,7 @@ pub(crate) fn resolve_backgrounds(
     mut commands: Commands,
 ) {
     if theme.is_changed() {
-        // A palette swap repaints everything, so the dirty lists are moot — but
+        // A palette swap repaints everything, so the dirty lists are moot - but
         // they still have to be drained or they fire again next frame.
         removed_flat.clear();
         removed_amount.clear();

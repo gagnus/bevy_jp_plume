@@ -1,4 +1,4 @@
-//! The audio-settings dialog on its own — a thin mount of `common::audio`. The same
+//! The audio-settings dialog on its own - a thin mount of `common::audio`. The same
 //! plugin is one of several the combined `showcase` example brings together.
 #[path = "common/mod.rs"]
 mod common;

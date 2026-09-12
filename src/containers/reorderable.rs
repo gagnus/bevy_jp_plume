@@ -612,8 +612,8 @@ fn update_grip_styles_remove(
     }
 }
 
-// The list's disabled state changed: its text goes to the disabled color — the
-// app's captions inherit it, controls keep their own — and every grip follows.
+// The list's disabled state changed: its text goes to the disabled color - the
+// app's captions inherit it, controls keep their own - and every grip follows.
 fn update_reorderable_disabled(
     q_added: Query<
         (Entity, Has<InteractionDisabled>),

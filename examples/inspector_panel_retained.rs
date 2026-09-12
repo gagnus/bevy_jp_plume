@@ -473,7 +473,7 @@ fn root() -> impl Scene {
 }
 
 // The imm twin's `export_modal`: a select and tooltipped buttons inside a modal,
-// which is where their layering has to be checked — the select's popup over the
+// which is where their layering has to be checked - the select's popup over the
 // barrier, the tooltips over everything.
 fn export_modal() -> impl Scene {
     bsn! {

@@ -60,7 +60,7 @@ const DRAG_FINE_FACTOR: f32 = 0.1;
 pub struct PlumeNumberInput;
 
 // Plain root marker, inserted on both the retained and imm paths. The systems key on
-// this — and it carries the precision — rather than the [`PlumeNumberInput`] scene
+// this - and it carries the precision - rather than the [`PlumeNumberInput`] scene
 // component, which only the retained path inserts.
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component, Default, Clone)]
@@ -188,7 +188,7 @@ fn format_value(value: f32, precision: usize) -> String {
     format!("{value:.precision$}")
 }
 
-// Clamp to the range and round to `precision` — the canonical committed form.
+// Clamp to the range and round to `precision` - the canonical committed form.
 fn clamp_round(candidate: f32, precision: usize, range: &SliderRange) -> f32 {
     let factor = 10f32.powi(precision as i32);
     (range.clamp(candidate) * factor).round() / factor
@@ -336,7 +336,7 @@ fn number_input_on_focus_lost(
 }
 
 // Begin a potential scrub: reset the gesture state and stop the press so nothing
-// upstream reacts. Focus is deliberately not taken — a clean click grants it on
+// upstream reacts. Focus is deliberately not taken - a clean click grants it on
 // release, a drag never does.
 fn scrubber_on_press(
     mut press: On<PointerPress>,

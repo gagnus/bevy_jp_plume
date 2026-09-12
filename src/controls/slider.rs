@@ -134,7 +134,7 @@ impl PlumeSlider {
                     })]))
                 })
                 Children [
-                    // A child of the track, sharing its inset span — which is
+                    // A child of the track, sharing its inset span - which is
                     // the (width - thumb) span bevy's drag math assumes.
                     Node {
                         position_type: PositionType::Absolute,

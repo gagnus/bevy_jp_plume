@@ -82,7 +82,7 @@ pub(crate) struct TooltipShowing;
 pub struct TooltipSettings {
     /// Hover time before the first tooltip shows.
     pub delay: f32,
-    /// Hover time while warm — a tooltip showed moments ago.
+    /// Hover time while warm - a tooltip showed moments ago.
     pub warm_delay: f32,
     /// Hover-free time after which warmth is lost.
     pub reset_delay: f32,

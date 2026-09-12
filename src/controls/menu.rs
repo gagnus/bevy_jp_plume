@@ -203,7 +203,7 @@ pub(crate) fn menu_frame_chrome() -> impl Scene {
 }
 
 // An imm-built menu button: the row plus the role and behavior markers the
-// classifier would otherwise derive — the imm layer knows the role statically.
+// classifier would otherwise derive - the imm layer knows the role statically.
 pub(crate) fn imm_menu_anchor(
     role: MenuButtonRole,
     label: String,
@@ -238,7 +238,7 @@ pub(crate) fn menu_anchor_base() -> impl Scene {
     }
 }
 
-/// Drops `items` into a menu the app's own control opens — a `⋯` overflow button
+/// Drops `items` into a menu the app's own control opens - a `⋯` overflow button
 /// or any other, which keeps its own look.
 /// Imm twin: [`ImmResponse::menu`](crate::imm::ImmResponse::menu).
 pub fn menu_anchor(items: impl SceneList) -> impl Scene {
@@ -321,7 +321,7 @@ struct MenuBarRoot;
 
 // Marker every menu button row carries, retained or imm-built. The systems key on
 // this, not [`PlumeMenuButton`], which only appears on entities spawned through its
-// own `@` template — the imm anchors are not.
+// own `@` template - the imm anchors are not.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Default)]
 pub(crate) struct MenuButtonRow;
@@ -371,7 +371,7 @@ pub(crate) struct MenuOpen {
     pub(crate) focus: Option<NavAction>,
 }
 
-// Marks menu buttons whose popups are wired by whoever built them — the imm
+// Marks menu buttons whose popups are wired by whoever built them - the imm
 // layer frame by frame, [`menu_anchor`] in its own scene: the classifier and the
 // child-adoption step leave them alone.
 #[derive(Component, Default, Clone, Reflect)]
@@ -447,7 +447,7 @@ fn adopt_menu_children(
 // Popover placements: a bar menu drops below its button, a submenu opens beside its
 // row, both edge-flush. The solver takes the least-occluded candidate and ties go to
 // the first, so each side offers the flush alignment first and the opposite one after
-// — an anchor at the far edge of the window has nothing to flush against otherwise.
+// - an anchor at the far edge of the window has nothing to flush against otherwise.
 fn popover_for(role: MenuButtonRole) -> Popover {
     let sides: &[PopoverSide] = match role {
         MenuButtonRole::Submenu => &[PopoverSide::Right, PopoverSide::Left],
@@ -470,7 +470,7 @@ fn popover_for(role: MenuButtonRole) -> Popover {
 
 // Assign roles from position and keep the headless behavior markers in step:
 // bar buttons are `MenuButton`s over a focus-tracked `MenuPopup`; items are
-// `MenuItem`s; submenus are neither — plume drives their popups itself.
+// `MenuItem`s; submenus are neither - plume drives their popups itself.
 fn classify_menu_buttons(
     q_buttons: Query<
         (Entity, Option<&MenuButtonRole>, Option<&ChildOf>),

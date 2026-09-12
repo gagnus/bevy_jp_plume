@@ -56,7 +56,7 @@ pub struct PlumeDialogProps {
     /// `false` omits the drag handle, pinning the dialog in place.
     pub movable: bool,
     /// `false` omits the whole title bar (with it, the title, ✕ and drag), leaving a
-    /// bare floating panel — see the imm `panel`. Also drops the header-height floor.
+    /// bare floating panel - see the imm `panel`. Also drops the header-height floor.
     pub header: bool,
 }
 
@@ -172,7 +172,7 @@ pub(crate) struct DialogChrome {
     /// over a padded [`dialog_body`]; the imm layer hands over an empty slot and
     /// reconciles the body itself.
     pub body: Box<dyn SceneList>,
-    /// The title bar, or `None` for a bare floating panel — no ✕, no drag, and no
+    /// The title bar, or `None` for a bare floating panel - no ✕, no drag, and no
     /// header-height floor.
     pub header: Option<DialogHeader>,
     /// How wide the frame should be.
@@ -197,7 +197,7 @@ pub(crate) struct DialogHeader {
 }
 
 // Dialog chrome (frame, optional title bar, ✕) shared by the public [`PlumeDialog`]
-// and the imm layer, with no close behavior — callers attach their own
+// and the imm layer, with no close behavior - callers attach their own
 // `RequestClose` observer.
 pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
     let DialogChrome {
@@ -224,7 +224,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
          }| {
             bsn! {
                 // Title bar; dragging it moves the window. Same chrome as the section
-                // header — a dialog is distinguished by its drop shadow.
+                // header - a dialog is distinguished by its drop shadow.
                 Node {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
@@ -344,7 +344,7 @@ impl Plugin for DialogPlugin {
     }
 }
 
-// The header's ✕. A flat tool button plus a close trigger — no chrome of its
+// The header's ✕. A flat tool button plus a close trigger - no chrome of its
 // own, so it is a scene function rather than a scene component.
 pub(crate) fn dialog_close() -> impl Scene {
     bsn! {

@@ -135,7 +135,7 @@ where
 
         // No interaction guard, unlike `plume_value`: the splitter writes its own
         // `SplitSize` as it drags, so the app value is already in step. The guard
-        // would suppress what must get through — a drag clamped by a pane's minimum.
+        // would suppress what must get through - a drag clamped by a pane's minimum.
         if let Some(new_value) = pending
             && new_value != *split
         {
@@ -151,7 +151,7 @@ where
 /// Widget-side entry point for keyboard-focus state; the accesses ride on
 /// [`CapabilityPlumeText`], which already requests them.
 pub trait ImmPlumeFocus {
-    /// Whether keyboard focus is on this widget or a direct child — where a
+    /// Whether keyboard focus is on this widget or a direct child - where a
     /// text input keeps its editable field.
     fn focused(&self) -> bool;
 }
@@ -387,7 +387,7 @@ pub trait ImmPlumeColor {
 // Hash-memory key for the last widget color the imm layer synced against.
 struct ColorSyncKey;
 
-// `Color` isn't `Hash`, so key on linear-RGBA bits — a canonical space, so the
+// `Color` isn't `Hash`, so key on linear-RGBA bits - a canonical space, so the
 // widget's `Hsva` and an app's any-variant color don't compare unequal forever.
 fn color_bits(color: Color) -> (u32, u32, u32, u32) {
     let linear = color.to_linear();

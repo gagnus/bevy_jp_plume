@@ -1,4 +1,4 @@
-//! The inspector panel on its own — a thin mount of `common::inspector_panel`.
+//! The inspector panel on its own - a thin mount of `common::inspector_panel`.
 #[path = "common/mod.rs"]
 mod common;
 

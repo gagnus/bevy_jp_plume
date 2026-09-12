@@ -149,7 +149,7 @@ impl UiTheme {
 }
 
 // Recolors themed borders and text: everything on a palette change, per entity
-// on a `ThemeId` change. Backgrounds are `resolve_backgrounds`' job — it owns
+// on a `ThemeId` change. Backgrounds are `resolve_backgrounds`' job - it owns
 // the gradient-or-flat decision.
 fn update_theme(
     mut q_border: Query<
@@ -272,7 +272,7 @@ fn update_theme(
         return;
     }
 
-    // A `ThemeId` that landed or changed this frame re-resolves just its entity —
+    // A `ThemeId` that landed or changed this frame re-resolves just its entity -
     // including the frame a themed subtree spawns, before its first paint.
     for entity in &q_id_changed {
         if let Ok(row) = q_border.get_mut(entity) {
@@ -419,7 +419,7 @@ impl<const N: usize> OklchaArray<N> {
 }
 
 /// Hue of the danger ramp, pinned across every palette so a destructive action is
-/// always the same red — near the sRGB red primary's Oklch hue.
+/// always the same red - near the sRGB red primary's Oklch hue.
 pub const DANGER_HUE: f32 = 29.0;
 
 /// Chroma of the danger ramp.

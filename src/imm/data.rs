@@ -1,5 +1,5 @@
 //! App-registered data components: imm code stores per-widget state on the
-//! widget's own entity — `get` reads it, `insert` writes it back (deferred).
+//! widget's own entity - `get` reads it, `insert` writes it back (deferred).
 use alloc::sync::Arc;
 
 use bevy::app::App;
@@ -11,7 +11,7 @@ use bevy_immediate::ImmCapAccessRequestsResource;
 use super::{ImmResponse, PlumeCaps, Ui};
 
 /// Grants the imm layer read access to app components, for [`Ui::get`] and
-/// [`ImmResponse::get`]. Writes need no registration — they go through commands.
+/// [`ImmResponse::get`]. Writes need no registration - they go through commands.
 pub trait ImmDataAppExt {
     /// Register `T` as imm-readable data. Must run after [`crate::PlumePlugins`]
     /// and before the app runs: the access set freezes once imm systems start.
@@ -41,7 +41,7 @@ impl ImmDataAppExt for App {
 }
 
 // Read `T` off a capability entity, telling "absent" apart from "present but
-// never registered" — which would otherwise read as an eternal, silent `None`.
+// never registered" - which would otherwise read as an eternal, silent `None`.
 fn registered_get<'e, T: Component>(entity: &'e FilteredEntityRef) -> Option<&'e T> {
     if let Some(value) = entity.get::<T>() {
         return Some(value);
@@ -85,7 +85,7 @@ impl Ui<'_, '_> {
 /// Entity data, available on every kind.
 impl<K> ImmResponse<'_, '_, '_, K> {
     /// The data component `T` on this widget's entity. `None` until a frame after
-    /// [`insert`](Self::insert) — reads trail writes by one frame.
+    /// [`insert`](Self::insert) - reads trail writes by one frame.
     pub fn get<T: Component + Clone>(&self) -> Option<T> {
         let entity = self.e.cap_get_entity().ok()?;
         registered_get::<T>(&entity).cloned()

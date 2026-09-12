@@ -81,14 +81,14 @@ impl Default for PlumeColorPickerProps {
 pub struct PlumeColorPicker;
 
 // Plain root marker, inserted on both the retained and imm paths. The systems key on
-// this — and it carries the picker's requirements — rather than the
+// this - and it carries the picker's requirements - rather than the
 // [`PlumeColorPicker`] scene component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 #[require(ColorPickerValue)]
 struct ColorPickerFrame;
 
-/// The picker's current color — the public read/write surface. Setting it (from
+/// The picker's current color - the public read/write surface. Setting it (from
 /// an app or the imm layer) retargets the picker; the change is folded into the
 /// working HSV truth with the hue preserved.
 #[derive(Component, Clone, Copy, Reflect, Default)]
@@ -510,7 +510,7 @@ fn fold_pad_edits(
             continue;
         };
         if let Ok(mut color) = q_color.get_mut(root) {
-            // Alpha edits stay in whatever space the color is in — a conversion
+            // Alpha edits stay in whatever space the color is in - a conversion
             // here would lose the hue whenever the RGB form is degenerate.
             let alpha = value.0.x.clamp(0.0, 1.0);
             if color.0.alpha() != alpha {

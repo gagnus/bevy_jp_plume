@@ -70,7 +70,7 @@ pub fn theme_editor(ui: &mut Ui, palette: &mut ThemeEditablePalette) {
 /// theme labeled "Default", the rest by their id. Pass the `ResMut<UiTheme>`
 /// (or a `Mut` reborrow) straight in; edits bake into it and flag it changed.
 // Reads use the immutable deref and never flag the resource; the one write
-// deref-muts, which is what marks it changed — an open editor repaints nothing.
+// deref-muts, which is what marks it changed - an open editor repaints nothing.
 pub fn theme_editor_tabs(
     ui: &mut Ui,
     theme: &mut impl DerefMut<Target = UiTheme>,

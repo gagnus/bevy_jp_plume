@@ -60,7 +60,7 @@ pub(crate) struct PlacementAnchor;
 
 /// Mount point for a control's popup: spawn it as a child of the control the
 /// popup should anchor to, then spawn a [`PlumePopup`] into it to open.
-// `FixedNode` makes it a layout root — it neither inherits ancestor layout and
+// `FixedNode` makes it a layout root - it neither inherits ancestor layout and
 // clipping nor, as an absolute child would, inflate their scroll range.
 pub fn popup_socket() -> impl Scene {
     bsn! {
@@ -99,8 +99,8 @@ fn track_popup_anchors(
     }
 }
 
-// A parentless floating root — an imm popup socket, or either kind of tooltip
-// box — sits outside every propagation chain, so the ambient text style and
+// A parentless floating root - an imm popup socket, or either kind of tooltip
+// box - sits outside every propagation chain, so the ambient text style and
 // theme are bridged like the rect: the anchor's `Inherited` values are copied
 // onto it. Nothing else writes `Inherited` on a parentless entity, so the
 // copies stand, and the root's own propagation carries them into its panel.
@@ -164,7 +164,7 @@ pub enum PopupDismiss {
 }
 
 /// A floating popup panel: themed chrome, `Popover` auto-placement, and the
-/// configured dismiss behavior. Existing is open — spawn one into a
+/// configured dismiss behavior. Existing is open - spawn one into a
 /// [`popup_socket`] to open it, [`close_popup`] to close it.
 #[derive(SceneComponent, Default, Clone, Reflect)]
 #[scene(PlumePopupProps)]
@@ -204,7 +204,7 @@ struct DismissScope(pub Entity);
 
 // The imm layer's popup: the same chrome the retained path spawns, scoped to the
 // anchor it opens from. Lives here rather than in `imm` so `DismissScope` stays
-// private to this module — as `imm_menu_frame` does for the menu.
+// private to this module - as `imm_menu_frame` does for the menu.
 pub(crate) fn imm_popup_scene(
     anchor: Entity,
     placement: PopupPlacement,
@@ -289,7 +289,7 @@ impl PlumePopup {
 }
 
 // Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
-// measures them against the popup's parent — the socket, i.e. the anchor rect —
+// measures them against the popup's parent - the socket, i.e. the anchor rect -
 // and takes the first that fits, never sliding one that does not: so each side
 // is offered centred, then aligned to either end, before the next side.
 fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
@@ -368,7 +368,7 @@ fn on_popup_drag(
 struct ClosingPopup;
 
 /// Close `popup`: hidden immediately, despawned at end of frame.
-// The deferral matters — closing usually happens mid-cascade (a row click, a
+// The deferral matters - closing usually happens mid-cascade (a row click, a
 // dismiss press), and later commands in that cascade still target its entities.
 pub fn close_popup(commands: &mut Commands, popup: Entity) {
     commands
@@ -394,14 +394,14 @@ fn on_dismiss_outside_press(
     mut commands: Commands,
 ) {
     // Bubbling re-triggers this observer at every ancestor hop; evaluate the
-    // press once, against its original target — a press inside the popup must
+    // press once, against its original target - a press inside the popup must
     // not read as "outside" when its bubble climbs above the popup.
     if click.entity != click.original_event_target() {
         return;
     }
     // The press target and everything it sits inside, openers included: a menu
     // opened from a row of a popup is unrooted, but a press on its items must
-    // not dismiss the popup it came from — that would despawn the row, the menu
+    // not dismiss the popup it came from - that would despawn the row, the menu
     // and the activation together.
     let mut lineage = vec![click.entity];
     while lineage.len() < MAX_LINEAGE
@@ -429,7 +429,7 @@ fn on_dismiss_outside_press(
             commands
                 .entity(popup)
                 .insert((Visibility::Hidden, CloseRequested));
-            // Only the dismissing press is swallowed — a press inside the popup
+            // Only the dismissing press is swallowed - a press inside the popup
             // must keep bubbling (a button's caption bubbles up to the button).
             click.propagate(false);
         }
@@ -492,7 +492,7 @@ fn step_to_opener(
 
 // Popups stack by nesting: one opened from inside another has to draw over it.
 // A flat z leaves that to bevy's tie-break, which sorts equal layers by ECS
-// storage order — so whichever kind of popup a session opened first won every
+// storage order - so whichever kind of popup a session opened first won every
 // time, for the life of the process.
 fn stack_popups(
     q_surfaces: Query<Entity, With<PopupSurface>>,

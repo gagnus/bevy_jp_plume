@@ -1,4 +1,4 @@
-//! The player-profile dialog on its own — a thin mount of `common::player_profile`. The
+//! The player-profile dialog on its own - a thin mount of `common::player_profile`. The
 //! same plugin is one of several the combined `showcase` example brings together.
 #[path = "common/mod.rs"]
 mod common;

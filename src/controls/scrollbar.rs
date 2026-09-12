@@ -45,7 +45,7 @@ pub struct PlumeScrollbarProps {
 #[reflect(Component, Clone, Default)]
 struct ScrollbarFrame;
 
-// The themed fill inside the bar. Not named `ScrollbarThumb` — that is
+// The themed fill inside the bar. Not named `ScrollbarThumb` - that is
 // `bevy_ui_widgets`' own component, which sits on the same entity.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -71,7 +71,7 @@ impl PlumeScrollbar {
             Scrollbar {
                 target: {props.target},
                 orientation: {props.orientation},
-                // Logical px in the headless widget — not a `Val`, so it can't
+                // Logical px in the headless widget - not a `Val`, so it can't
                 // be em; it only bites on very long scroll extents.
                 min_thumb_length: 8.0,
             }

@@ -334,7 +334,7 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
 }
 
 // A path-style field: clear tucked inside the leading edge, a warning inside
-// the trailing one — the props twins of `prefix_container` / `suffix_container`.
+// the trailing one - the props twins of `prefix_container` / `suffix_container`.
 fn capture_row(s: &DebugSettings) -> impl Scene {
     let value = s.capture_dir.clone();
     let warning_display = capture_warning_display(s);

@@ -43,7 +43,7 @@ const DIVIDER_GRAB: Val = size::em_from_px(7.0);
 const DIVIDER_LINE_ACTIVE: Val = size::em_from_px(3.0);
 
 // A seam this far (physical px) from where the stored size puts it is taken as
-// the layout having stopped a pane — see `snap_split_to_layout`. Half a pixel
+// the layout having stopped a pane - see `snap_split_to_layout`. Half a pixel
 // is below anything the eye or the next drag can tell apart.
 const SNAP_EPSILON_PX: f32 = 0.5;
 
@@ -139,7 +139,7 @@ pub struct SplitSized(pub SplitPane);
 
 /// How small each pane may get.
 ///
-/// [`Val::Auto`] means the pane's own content minimum — flexbox enforces it, and
+/// [`Val::Auto`] means the pane's own content minimum - flexbox enforces it, and
 /// the divider discovers it by being stopped (see [`PlumeSplitter`]). Any other
 /// `Val` is resolved against the splitter, so `Px`, `Percent` and `Em` all say
 /// what you would expect.
@@ -205,9 +205,9 @@ pub struct PlumeSplitterProps {
     pub collapsible_first: bool,
     /// Let a drag snap the second pane fully closed (see [`SplitCollapsible`]).
     pub collapsible_second: bool,
-    /// Contents of the first pane — left, or top.
+    /// Contents of the first pane - left, or top.
     pub first: Box<dyn SceneList>,
-    /// Contents of the second pane — right, or bottom.
+    /// Contents of the second pane - right, or bottom.
     pub second: Box<dyn SceneList>,
 }
 
@@ -265,14 +265,14 @@ impl PlumeSplitter {
 }
 
 // The splitter's root, as a plain component. `PlumeSplitter` is a scene
-// component — spawning it bare is an error, and the scene machinery adds it —
+// component - spawning it bare is an error, and the scene machinery adds it -
 // so the systems below key off this instead.
 #[derive(Component, Clone, Copy, Default, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SplitterRoot;
 
 // The splitter's own node, with no panes in it. Split out from the scene above
-// so the immediate layer can build the same structure a piece at a time — its
+// so the immediate layer can build the same structure a piece at a time - its
 // panes hold imm children, which a prop taking a finished `SceneList` cannot.
 pub(crate) fn splitter_frame(
     axis: SplitAxis,
@@ -315,7 +315,7 @@ pub(crate) fn splitter_pane(pane: SplitPane) -> impl Scene {
         }
         pane
         // A pane is pure layout, like `screen`, so it lets picks fall through its empty
-        // parts — content over a 3d viewport is the case that needs it.
+        // parts - content over a 3d viewport is the case that needs it.
         Pickable::IGNORE
     }
 }
@@ -429,7 +429,7 @@ fn px_as_unit(
 }
 
 // The seam's distance from the start edge in physical px, as the stored state
-// asks for it — `None` when the size is `Val::Auto`, which only layout can place.
+// asks for it - `None` when the size is `Val::Auto`, which only layout can place.
 fn stored_seam_px(
     size: &SplitSize,
     sized: SplitPane,
@@ -500,8 +500,8 @@ fn apply_split(
                     1.0
                 };
                 // The sized pane may shrink: when the splitter is too small for
-                // its length plus the other pane's floor, it gives — down to its
-                // own floor — and takes its stored length back when room returns.
+                // its length plus the other pane's floor, it gives - down to its
+                // own floor - and takes its stored length back when room returns.
                 let shrink = if closed_here { 0.0 } else { 1.0 };
                 let basis = if is_sized { Val::Auto } else { Val::ZERO };
                 let floor = match (closed_here, pane) {
@@ -598,7 +598,7 @@ fn apply_split(
 
 // Keeps the divider on the seam the layout actually produced, which the seeded
 // `Val` cannot know once flexbox has squeezed the sized pane below its stored
-// length — a floor met, or a splitter too small for both panes.
+// length - a floor met, or a splitter too small for both panes.
 fn position_divider(
     q_splitters: Query<
         (
@@ -727,7 +727,7 @@ fn drag_start_divider(
 // Drag the divider: pointer travel along the axis moves the seam, clamped to
 // what the two floors leave, and written back in the stored size's own unit.
 // Past a collapsible pane's floor, `COLLAPSE_POINT` of that floor is the
-// hysteresis point — inward it snaps closed, outward it reopens.
+// hysteresis point - inward it snaps closed, outward it reopens.
 fn drag_divider(
     mut drag: On<PointerDrag>,
     mut q_dividers: Query<&mut SplitDivider>,
@@ -772,7 +772,7 @@ fn drag_divider(
     // arrives logical.
     let travel = axis.of(drag.delta) / node.inverse_scale_factor();
 
-    // Floors resolve to physical px; `Val::Auto` does not resolve — that floor
+    // Floors resolve to physical px; `Val::Auto` does not resolve - that floor
     // is the pane's content minimum, which only the layout knows, and
     // `snap_split_to_layout` adopts it once it has stopped the pane.
     let floor_px = |floor: Val| {
@@ -785,7 +785,7 @@ fn drag_divider(
     let collapse = collapsible.copied().unwrap_or_default();
 
     // Within the floors the gesture is based on the stored seam, which
-    // `snap_split_to_layout` keeps in step with the layout mid-drag — that is
+    // `snap_split_to_layout` keeps in step with the layout mid-drag - that is
     // what keeps the drag free of dead travel. Past a collapsible floor it is
     // based on the pointer's own accumulated position, which the hysteresis needs.
     let base = if (collapse.first && divider.drag_px < low)
@@ -852,7 +852,7 @@ fn drag_divider(
 }
 
 // Adopts what the layout actually did whenever a floor the drag could not resolve
-// stopped a pane — a `Val::Auto` minimum, or content that refuses to shrink.
+// stopped a pane - a `Val::Auto` minimum, or content that refuses to shrink.
 // Without it the stored size keeps moving while the pane cannot, and dragging
 // back does nothing until that dead travel unwinds. Gated on the gesture: at
 // rest a squeezed pane keeps its stored size, so a too-small window does not
@@ -935,7 +935,7 @@ fn snap_split_to_layout(
 }
 
 // The hairline brightens and thickens under the pointer and while dragging, on the
-// scrollbar thumb's tokens — the theme's voice for a draggable neutral strip.
+// scrollbar thumb's tokens - the theme's voice for a draggable neutral strip.
 fn style_divider(
     children: &Children,
     axis: SplitAxis,

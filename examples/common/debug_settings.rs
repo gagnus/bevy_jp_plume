@@ -281,7 +281,7 @@ fn diagnostics_pane(ui: &mut Ui, s: &mut DebugSettings) {
                 .max_visible(3);
         });
         // A path-style field: clear tucked inside the leading edge, a warning
-        // inside the trailing one — `prefix_container` / `suffix_container` at work.
+        // inside the trailing one - `prefix_container` / `suffix_container` at work.
         ui.horizontal(|ui| {
             ui.caption("Capture to").width(em(84.0 / BASE_FONT_PX));
             let mut clear = false;

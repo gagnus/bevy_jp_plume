@@ -267,7 +267,7 @@ impl ThemeSlot {
         ThemeSlot::Transparent,
     ];
 
-    /// Number of slots — the backing size of the resolved palette.
+    /// Number of slots - the backing size of the resolved palette.
     pub const COUNT: usize = Self::ALL.len();
 
     /// Human-readable name, for editor UI / pickers.

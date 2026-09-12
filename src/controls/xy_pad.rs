@@ -1,7 +1,7 @@
 //! 2D value pad: a rectangular field with a draggable reticle, reporting a
 //! [`Vec2`] in `0..=1` per axis (`x` left→right, `y` top→bottom). Background is
-//! caller-owned — drop a [`BackgroundColor`](bevy::ui::BackgroundColor) or
-//! [`BackgroundGradient`](bevy::ui::BackgroundGradient) on it — so the same pad
+//! caller-owned - drop a [`BackgroundColor`](bevy::ui::BackgroundColor) or
+//! [`BackgroundGradient`](bevy::ui::BackgroundGradient) on it - so the same pad
 //! backs a saturation/value color plane or any other two-axis picker.
 use bevy::app::{Plugin, PostUpdate};
 use bevy::ecs::component::Component;
@@ -30,7 +30,7 @@ use crate::theme::ThemeBorderToken;
 use crate::tokens;
 
 // Ring thickness, proportioned to the reticle so it keeps its weight at any font
-// size — deliberately not a [`size::HAIRLINE`], which is its own rule.
+// size - deliberately not a [`size::HAIRLINE`], which is its own rule.
 const RETICLE_BORDER: Val = size::em_from_px(2.0);
 
 /// Props used to construct a [`PlumeXyPad`] scene.
@@ -132,7 +132,7 @@ struct XyPadInner;
 struct XyPadThumb;
 
 // Plain root marker, inserted on both the retained and imm paths. The systems key on
-// this — and it carries the pad's requirements — rather than the [`PlumeXyPad`] scene
+// this - and it carries the pad's requirements - rather than the [`PlumeXyPad`] scene
 // component, which only the retained path inserts.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
@@ -227,7 +227,7 @@ fn value_from_pointer(
         *transform,
         pointer_position * node_target.scale_factor() / ui_scale,
     )?;
-    // `normalize_point` is center-origin (-0.5..0.5); shift to 0..1. Unclamped —
+    // `normalize_point` is center-origin (-0.5..0.5); shift to 0..1. Unclamped -
     // the caller clamps or ring-projects, keeping an outside drag directional.
     Some(pos + Vec2::splat(0.5))
 }
@@ -369,7 +369,7 @@ fn on_drag_start(
     if let Ok(parent) = q_inner.get(drag_start.entity)
         && let Ok((mut dragging, disabled)) = q_dragging.get_mut(parent.parent())
     {
-        // The initiating press decides engagement — the pointer may already have
+        // The initiating press decides engagement - the pointer may already have
         // left a ring's annulus by the time DragStart is delivered.
         if !q_engaged
             .get(parent.parent())

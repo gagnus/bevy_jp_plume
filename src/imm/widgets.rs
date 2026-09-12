@@ -82,7 +82,7 @@ pub trait PlumeImm<'w, 's> {
     /// only; the alpha the color arrived with passes through.
     fn color_edit_rgb(&mut self, color: &mut Color) -> ImmResponse<'_, 'w, 's>;
 
-    /// Fixed gap along the container's main axis — `length` of width in a
+    /// Fixed gap along the container's main axis - `length` of width in a
     /// [`Self::horizontal`], of height in a [`Self::vertical`]. For a gap that
     /// absorbs whatever is left over instead, use [`Self::flex_spacer`].
     fn space(&mut self, length: Val);
@@ -96,7 +96,7 @@ pub trait PlumeImm<'w, 's> {
     /// Compact icon-only button (tighter padding, square min-width) for headers/toolbars.
     fn tool_button(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Button>;
 
-    /// A non-interactive icon glyph in the current text color — the icon
+    /// A non-interactive icon glyph in the current text color - the icon
     /// counterpart to [`Self::caption`].
     fn icon(&mut self, icon: Icon) -> ImmResponse<'_, 'w, 's, kind::Icon>;
 
@@ -116,7 +116,7 @@ pub trait PlumeImm<'w, 's> {
 
     /// Labeled radio button: checked while `*value == variant`; clicking it (or
     /// Space on focus) writes `variant` into `value`. A group is just several
-    /// radios bound to the same `value` — no container needed.
+    /// radios bound to the same `value` - no container needed.
     fn radio<T: PartialEq>(
         &mut self,
         value: &mut T,
@@ -124,7 +124,7 @@ pub trait PlumeImm<'w, 's> {
         label: &str,
     ) -> ImmResponse<'_, 'w, 's>;
 
-    /// Bare toggle switch bound to `value` (no label — the surrounding row owns it).
+    /// Bare toggle switch bound to `value` (no label - the surrounding row owns it).
     fn toggle(&mut self, value: &mut bool) -> ImmResponse<'_, 'w, 's>;
 
     /// Slider bound to `value` over `range`.
@@ -233,7 +233,7 @@ pub trait PlumeImm<'w, 's> {
     /// Hosts a retained scene inside an immediate pass: `f` builds it the frame its
     /// entity is first spawned and never again.
     ///
-    /// The scene is never reconciled against — it persists untouched while the call
+    /// The scene is never reconciled against - it persists untouched while the call
     /// site keeps running, and is despawned with its host when that stops. Keep the
     /// entity from the response if it has to be found again.
     ///
@@ -245,12 +245,12 @@ pub trait PlumeImm<'w, 's> {
     fn flex_spacer(&mut self);
 
     /// Scope child ids by `id`, making widget identity follow the key instead of call
-    /// order — for entries that reorder, where occurrence indices are positional.
+    /// order - for entries that reorder, where occurrence indices are positional.
     fn push_id<R>(&mut self, id: impl core::hash::Hash, f: impl FnOnce(&mut Ui<'w, 's>) -> R) -> R;
 
     /// Vertical list the user drags to reorder by the grip plume draws at each
     /// item's left; `f` fills the rest of the item's row. `key` must be stable
-    /// and unique across items — identity follows it, not position, so a step
+    /// and unique across items - identity follows it, not position, so a step
     /// moves entities rather than respawning them (hash an id, never the item
     /// itself). A move is written into `items` before `f` runs; `.changed`
     /// reports it.
@@ -1132,7 +1132,7 @@ impl<'w, 's> ImmMenu<'_, 'w, 's> {
     }
 
     /// A row that opens a nested menu beside itself (marked with a ▸); `f`
-    /// builds it while open — on hover, click, or ArrowRight.
+    /// builds it while open - on hover, click, or ArrowRight.
     #[track_caller]
     pub fn submenu(
         &mut self,
@@ -1170,7 +1170,7 @@ fn imm_menu_popup<'r, 'w, 's, K>(
 // A bar menu's popup is unrooted (see `ImmPopup`) and reaches its anchor through
 // the frame's `MenuAnchorLink`. A submenu's cannot be: bevy closes a `MenuPopup`
 // whose focused entity is not in its `ChildOf` subtree, and pressing an item in
-// an unrooted submenu takes the focus out of the bar menu that owns it — closing
+// an unrooted submenu takes the focus out of the bar menu that owns it - closing
 // the stack on the press, before the release that would have activated the item.
 // So a submenu hangs under its own row, which is where the retained path puts it.
 pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
@@ -1212,9 +1212,9 @@ pub(crate) fn imm_menu_popup_on<'r, 'w, 's>(
 
 /// Header kinds for [`ImmTab`]: which per-tab builders the handle carries.
 pub mod tab_header {
-    /// An [`ImmTabs::tab`](super::ImmTabs::tab) header — a label plus an optional icon.
+    /// An [`ImmTabs::tab`](super::ImmTabs::tab) header - a label plus an optional icon.
     pub struct Labeled;
-    /// An [`ImmTabs::tab_container`](super::ImmTabs::tab_container) header — content
+    /// An [`ImmTabs::tab_container`](super::ImmTabs::tab_container) header - content
     /// built by a closure, so plume contributes no label or icon of its own.
     pub struct Custom;
 }
@@ -1257,7 +1257,7 @@ impl<'t, 'w, 's, T> ImmTabs<'t, 'w, 's, T> {
     }
 
     /// Declare a tab standing for `key` whose header `header` builds instead of a
-    /// label — a dirty marker, a badge, a close button.
+    /// label - a dirty marker, a badge, a close button.
     ///
     /// Every header is built each frame, so several cannot each hold a `&mut` to the
     /// same value; share a `Cell` to report back.
@@ -1321,7 +1321,7 @@ impl<'t, 'w, 's, T, H> ImmTab<'_, 't, 'w, 's, T, H> {
         self
     }
 
-    /// Fix the tab's width. On its own it is absolute — a crowded strip scrolls
+    /// Fix the tab's width. On its own it is absolute - a crowded strip scrolls
     /// rather than squeezing the tab; with [`min_width`](Self::min_width) the tab
     /// squeezes to that floor first.
     pub fn width(self, width: Val) -> Self {
@@ -1340,14 +1340,14 @@ impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
     }
 }
 
-/// A dialog the app places and the user drags — [`ImmDialog`]'s default mode.
+/// A dialog the app places and the user drags - [`ImmDialog`]'s default mode.
 pub struct Floating;
 
 /// A dialog centred on a barrier that blocks the app behind it, answered before
 /// the app behind it can be touched.
 pub struct Modal;
 
-/// A headerless surface floating over the app — no title bar, ✕ or drag. The one
+/// A headerless surface floating over the app - no title bar, ✕ or drag. The one
 /// mode that can hang off another entity's rect, via [`Self::at_corner_of`].
 pub struct Panel;
 
@@ -1413,12 +1413,12 @@ impl<'e, 'w, 's, M> ImmDialog<'e, 'w, 's, M> {
     }
 }
 
-// Placement. Not a modal's: it would work — the frame is absolute inside its
-// barrier — but one placed off-centre is a different widget, and the mode is
+// Placement. Not a modal's: it would work - the frame is absolute inside its
+// barrier - but one placed off-centre is a different widget, and the mode is
 // what holds that rule.
 impl<'e, 'w, 's, M: Placed> ImmDialog<'e, 'w, 's, M> {
     /// Position from the viewport's top-left (default `120, 120` for a dialog).
-    /// Spawn-time only where the user can drag it — after that the drag owns it.
+    /// Spawn-time only where the user can drag it - after that the drag owns it.
     pub fn at(mut self, left: Val, top: Val) -> Self {
         self.layout.inset = UiRect {
             left,
@@ -1497,7 +1497,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
         fn barrier_scene(closable: bool) -> impl Scene {
             bsn! {
                 @modal_barrier()
-                // Every dismissal — the ✕, a barrier click, Escape — arrives
+                // Every dismissal - the ✕, a barrier click, Escape - arrives
                 // here, since `RequestClose` propagates up out of the frame.
                 @{closable.then(|| bsn! {
                     on(|close: On<RequestClose>, mut commands: Commands| {
@@ -1594,7 +1594,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
 }
 
 // Keyed on call site and title, so several surfaces built in one system stay
-// distinct — and on whether it is anchored, because the two forms are different
+// distinct - and on whether it is anchored, because the two forms are different
 // entities. An anchored panel hangs in a socket applied *on spawn*, so a panel
 // that gains or loses its anchor has to be rebuilt: reusing the entity would
 // leave the socket unapplied and nest a second frame inside the first.
@@ -1603,8 +1603,8 @@ fn surface_id(caller: &'static Location<'static>, title: &str, anchored: bool) -
 }
 
 // Which surface a frame is being built for. The chrome is otherwise identical:
-// what differs — the inset a modal leaves `Auto` for its barrier to centre on,
-// the drag a pinned surface does without — is already settled in `layout`.
+// what differs - the inset a modal leaves `Auto` for its barrier to centre on,
+// the drag a pinned surface does without - is already settled in `layout`.
 #[derive(Clone, Copy, PartialEq)]
 enum SurfaceChrome {
     Dialog,
@@ -1878,7 +1878,7 @@ impl<'r, 'w, 's, K> ImmPopup<'r, '_, 'w, 's, K> {
 
 // Reconcile a dialog/panel frame's app-owned size and fill its body, wrapping the
 // content in the scrolling machinery when a height knob bounds it. Position is not
-// re-applied — the user's dragging owns it after spawn.
+// re-applied - the user's dragging owns it after spawn.
 fn reconcile_frame_body<'e, 'w, 's>(
     mut entity: ImmEntity<'e, 'w, 's, PlumeCaps>,
     layout: DialogLayout,
@@ -1902,7 +1902,7 @@ fn reconcile_frame_body<'e, 'w, 's>(
             });
     }
     // Keyed on the asked-for inset alone, so a surface the user has dragged is
-    // only moved when its caller asks for somewhere new — a stack re-slotting
+    // only moved when its caller asks for somewhere new - a stack re-slotting
     // its panels, say.
     struct FrameInsetKey;
     if entity.hash_update_typ::<FrameInsetKey>(Some(imm_id(format!("{:?}", layout.inset)))) {
@@ -1992,8 +1992,8 @@ fn loc_id(key: impl core::hash::Hash) -> ImmIdBuilder {
 const OCCURRENCE_SALT: u32 = 0x506c_756d; // "Plum"
 
 // Child creation with plume-side occurrence disambiguation. `bevy_immediate` maps
-// each hierarchy id to one entity, so two widgets from the same call site — a helper
-// called in a loop — would collide. The first use of a `(parent, base id)` keeps the
+// each hierarchy id to one entity, so two widgets from the same call site - a helper
+// called in a loop - would collide. The first use of a `(parent, base id)` keeps the
 // plain id, so a widget appearing once never shifts; each repeat takes a suffix.
 // Doing it here rather than in the id resolver keeps upstream unpatched.
 trait PlumeChild<'w, 's> {
@@ -2196,7 +2196,7 @@ mod tests {
         }
         assert_eq!(
             recorded[0], recorded[1],
-            "retained entities must be reused across frames — proof the mapping is \
+            "retained entities must be reused across frames - proof the mapping is \
              populated, so a real collision would surface as a duplicate",
         );
     }

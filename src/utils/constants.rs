@@ -20,13 +20,13 @@ pub mod fonts {
 /// [`Val::Px`](bevy::ui::Val::Px) is what should look identical at any size:
 /// [`size::HAIRLINE`], the focus ring, and positions measured at runtime.
 ///
-/// "Any size" is deliberate in both directions — a px value here tracks neither
+/// "Any size" is deliberate in both directions - a px value here tracks neither
 /// the local font nor `RemSize`, so an app that scales its whole UI up still
 /// gets one-pixel borders. That is the point of a hairline: it is a property of
 /// the display, not of the type.
 ///
 /// Anything em-sized needs an `EmSize`, which plume mirrors onto text-chain
-/// nodes only — a node authoring em without one is a bug the debug-build
+/// nodes only - a node authoring em without one is a bug the debug-build
 /// `warn_em_without_em_size` lint names for you.
 pub mod size {
     use bevy::ui::{Val, Val2};
@@ -35,7 +35,7 @@ pub mod size {
 
     /// The standard font size in pixels: the px the em constants were designed
     /// at (see [`em_from_px`]), and the value the `RemSize` resource is set to
-    /// at plugin init. Runtime sizing reads `RemSize`, not this — an app is free
+    /// at plugin init. Runtime sizing reads `RemSize`, not this - an app is free
     /// to move it, and only the design ratios below stay pinned here.
     pub const MEDIUM_FONT_PX: f32 = 14.0;
 
@@ -58,7 +58,7 @@ pub mod size {
     pub const DIALOG_HEADER_HEIGHT: Val = em_from_px(40.0);
 
     /// Text size for dialog headers, as a multiple of the inherited
-    /// size — set it as `InheritableFont { font_size: … }`.
+    /// size - set it as `InheritableFont { font_size: … }`.
     pub const DIALOG_HEADER_TEXT_SIZE: PlumeFontSize = PlumeFontSize::Em(1.25);
 
     /// Width and height of a radio button
@@ -83,7 +83,7 @@ pub mod size {
     /// so they are the one part of the look that never scales.
     pub(crate) const HAIRLINE_PX: f32 = 1.0;
 
-    /// One crisp pixel — every border, divider and rule in the look. Also the
+    /// One crisp pixel - every border, divider and rule in the look. Also the
     /// unit for the odd padding or line width that wants to read as a hairline
     /// rather than as spacing.
     pub const HAIRLINE: Val = Val::Px(HAIRLINE_PX);
@@ -95,7 +95,7 @@ pub mod size {
     /// Height of a tab bar, a little higher than .
     pub const TAB_BAR_HEIGHT: Val = em_from_px(30.0);
 
-    /// How far a crowded tab is squeezed before its strip scrolls instead — room
+    /// How far a crowded tab is squeezed before its strip scrolls instead - room
     /// for a leading icon and a stub of label, so an icon tab shrinks to about
     /// the glyph. A header carrying more than that wants its own, wider floor.
     pub const TAB_MIN_WIDTH: Val = Val::Em(2.5);
@@ -148,7 +148,7 @@ pub mod size {
     pub const ICON_WIDTH: Val = Val::Em(1.0);
 }
 
-/// Global stacking layers, back to front. Only the order matters — bevy sorts
+/// Global stacking layers, back to front. Only the order matters - bevy sorts
 /// the roots by the value and then discards it.
 pub mod z_order {
     /// Where bevy's `DialogStack` starts placing floating dialogs, mirroring its

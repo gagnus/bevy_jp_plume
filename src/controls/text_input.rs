@@ -38,7 +38,7 @@ use crate::tokens;
 use crate::utils::hierarchy::nearest_with;
 
 /// A single-line text input: a themed frame (background, border, sizing) wrapping an
-/// inner editable field and an optional suffix label. Enter releases focus —
+/// inner editable field and an optional suffix label. Enter releases focus -
 /// an app treating blur as its commit signal gets Enter-to-commit with it.
 ///
 /// # Emitted events
@@ -78,7 +78,7 @@ pub struct PlumeTextInputProps {
     pub suffix: Option<String>,
     /// Optional content ahead of the text, inside the frame (e.g. a clear button).
     pub prefix_container: Option<Box<dyn SceneList>>,
-    /// Optional content after the text, inside the frame. Replaces `suffix` —
+    /// Optional content after the text, inside the frame. Replaces `suffix` -
     /// the trailing slot holds a unit label or content, never both.
     pub suffix_container: Option<Box<dyn SceneList>>,
 }
@@ -140,7 +140,7 @@ pub(crate) fn text_input_frame() -> impl Scene {
     }
 }
 
-// Plain root marker on every frame [`text_input_frame`] builds — the number input's
+// Plain root marker on every frame [`text_input_frame`] builds - the number input's
 // included, since it composes the same frame. The systems key on this, not the
 // [`PlumeTextInput`] scene component, which must not be inserted into a shared piece.
 #[derive(Component, Default, Clone, Reflect)]
@@ -207,7 +207,7 @@ pub(crate) fn text_input_field(
     }
 }
 
-// Enter releases focus — a single-line field's "done". Only on the plain text
+// Enter releases focus - a single-line field's "done". Only on the plain text
 // input's field: the number input's own key handler commits and steps too.
 fn text_input_on_enter(
     key_input: On<FocusedInput<KeyboardInput>>,
@@ -235,7 +235,7 @@ fn text_input_on_enter(
 }
 
 // Up and Down on a field whose frame carries [`NoVerticalArrows`]. Bevy's field
-// handler has already run — global observers precede entity ones at each hop —
+// handler has already run - global observers precede entity ones at each hop -
 // and queued a caret move (to the text's start on Up) and stopped the bubble;
 // both are undone here.
 fn text_input_on_vertical_arrow(
@@ -366,7 +366,7 @@ fn mirror_text_input_value(
     mut commands: Commands,
 ) {
     for (field_ent, child_of, editable_text) in q_changed.iter() {
-        // A queued (unapplied) edit means the buffer is stale — mirroring it now
+        // A queued (unapplied) edit means the buffer is stale - mirroring it now
         // would clobber the mirror with the pre-edit text for a frame.
         if !editable_text.pending_edits.is_empty() {
             continue;
@@ -432,7 +432,7 @@ struct TextInputPlaceholder;
 #[reflect(Component, Default)]
 struct TextInputDimText;
 
-// Dim hint over the field — a child of it, not the frame, so it starts where the
+// Dim hint over the field - a child of it, not the frame, so it starts where the
 // text it stands in for would, whatever adornments sit ahead of the field.
 // Absolute with auto vertical insets, so the field's align_items centers it.
 pub(crate) fn text_input_placeholder(text: impl Into<String>) -> impl Scene {
@@ -469,7 +469,7 @@ pub(crate) fn text_input_suffix(text: impl Into<String>) -> impl Scene {
 #[reflect(Component, Default)]
 pub(crate) struct TextInputPrefix;
 
-// Content ahead of the editable field, inside the frame — a clear button, an icon.
+// Content ahead of the editable field, inside the frame - a clear button, an icon.
 // Interactive, unlike the dim text pieces: clicks land on the content, not the field.
 pub(crate) fn text_input_prefix_container(content: Box<dyn SceneList>) -> impl Scene {
     bsn! {
@@ -701,7 +701,7 @@ fn get_field_ent(
         .copied()
 }
 
-// The [`TextInputOutline`] child of a frame — the entity carrying the border, so
+// The [`TextInputOutline`] child of a frame - the entity carrying the border, so
 // the border tokens go here rather than on the frame.
 fn get_outline_ent(
     frame_ent: Entity,

@@ -1,4 +1,4 @@
-//! The control gallery on its own — a thin mount of `common::gallery`. The same plugin
+//! The control gallery on its own - a thin mount of `common::gallery`. The same plugin
 //! is the full-screen backdrop the combined `showcase` example floats its dialogs over.
 #[path = "common/mod.rs"]
 mod common;

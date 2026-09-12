@@ -1,7 +1,7 @@
 //! The retained layer [`imm`](crate::imm) builds on: scene functions and the
 //! `PlumeX` scene components, spawned and driven by hand.
 //!
-//! Prefer `imm` — it drives all of this for you. Reach here to compose a widget
+//! Prefer `imm` - it drives all of this for you. Reach here to compose a widget
 //! plume does not offer, or to read a control's state off its entity.
 
 // The engine types a hand-built scene has to name: control state to read or

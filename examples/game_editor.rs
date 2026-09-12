@@ -308,7 +308,7 @@ fn left_panel(ui: &mut Ui, state: &mut Editor) {
         tabs.tab(LeftTab::Prefabs, "Prefabs")
             .icon(lucide::BOXES)
             .body(|ui| {
-                ui.caption("Prefab palette — drag a prefab into the scene.");
+                ui.caption("Prefab palette - drag a prefab into the scene.");
             });
     })
     .width(px(280));
@@ -381,7 +381,7 @@ fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
                 for line in [
                     "[info] Loaded dungeon seed 0xC0FFEE (42 rooms)",
                     "[info] Baked navmesh in 18.4 ms",
-                    "[warn] Cobweb has no collider — skipped",
+                    "[warn] Cobweb has no collider - skipped",
                     "[info] Play mode ready",
                 ] {
                     ui.caption(line);
@@ -390,7 +390,7 @@ fn bottom_dock(ui: &mut Ui, state: &mut Editor) {
         tabs.tab(BottomTab::Assets, "Assets")
             .icon(lucide::FOLDER_OPEN)
             .body(|ui| {
-                ui.caption("Asset browser — imported meshes, textures and materials appear here.");
+                ui.caption("Asset browser - imported meshes, textures and materials appear here.");
             });
     })
     .height(px(180));
@@ -409,7 +409,7 @@ fn right_panel(ui: &mut Ui, state: &mut Editor) {
         tabs.tab(RightTab::Add, "Add")
             .icon(lucide::PLUS)
             .body(|ui| {
-                ui.caption("Component browser — pick a component to add to the entity.");
+                ui.caption("Component browser - pick a component to add to the entity.");
             });
     })
     .width(px(320));

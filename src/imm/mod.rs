@@ -79,7 +79,7 @@ pub struct Ui<'w, 's>(pub(crate) Imm<'w, 's, PlumeCaps>);
 
 impl<'w, 's> Ui<'w, 's> {
     /// Is the pointer over the container this scope is filling, or anything inside it
-    /// — so chrome the container reveals doesn't vanish as the pointer reaches it.
+    /// - so chrome the container reveals doesn't vanish as the pointer reaches it.
     pub fn hovered(&mut self) -> bool {
         let Some(parent) = self.0.current_entity() else {
             return false;
@@ -153,8 +153,8 @@ impl<'r, 'w, 's> ImmEntityExt<'w, 's> for ImmEntity<'r, 'w, 's, PlumeCaps> {
     }
 }
 
-/// System param for immediate-mode UI: open a top-level surface —
-/// [`screen`](Self::screen) or [`dialog`](Self::dialog) — to get the [`Ui`] that
+/// System param for immediate-mode UI: open a top-level surface -
+/// [`screen`](Self::screen) or [`dialog`](Self::dialog) - to get the [`Ui`] that
 /// [`PlumeImm`] widgets are called on.
 ///
 /// Widgets are unreachable at root scope: the root is virtual, so one there would
@@ -182,7 +182,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
         self.imm.screen(f)
     }
 
-    /// Movable floating dialog — the other top-level surface. Configure via the
+    /// Movable floating dialog - the other top-level surface. Configure via the
     /// returned [`ImmDialog`] and build the body with [`ImmDialog::show`].
     #[track_caller]
     pub fn dialog<'a>(
@@ -193,7 +193,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
         self.imm.dialog(title, open)
     }
 
-    /// Modal dialog — centred over a barrier that blocks the app behind it until
+    /// Modal dialog - centred over a barrier that blocks the app behind it until
     /// it is answered. The same [`ImmDialog`] builder in its [`Modal`] mode, minus
     /// the placement and drag a centred surface has no use for.
     #[track_caller]
@@ -205,7 +205,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
         self.imm.modal(title, open)
     }
 
-    /// Headerless floating surface — a [`Self::dialog`] with no title bar, ✕ or
+    /// Headerless floating surface - a [`Self::dialog`] with no title bar, ✕ or
     /// drag. Top-level like the other two: it floats over the app, pinned to the
     /// viewport or, via [`ImmPanel::at_corner_of`], to another entity's rect.
     /// The same [`ImmDialog`] builder in its [`Panel`] mode.
@@ -215,7 +215,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
     }
 
     /// Scope surface ids by `id`, for keying several screens/dialogs built in a
-    /// loop by data rather than call order — the closure gets a root scoped to
+    /// loop by data rather than call order - the closure gets a root scoped to
     /// `id`, so it can build surfaces and nothing else. The `Ui` counterpart is
     /// [`PlumeImm::push_id`].
     pub fn push_id<R>(

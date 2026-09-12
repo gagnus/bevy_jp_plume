@@ -168,7 +168,7 @@ impl PlumeButton {
 
 // Rewrites the glyph of a button's icon, so the imm layer can toggle it without
 // respawning the button. Finds the first `Text` among the direct children, which
-// is the icon only because [`ButtonOutline`] below carries none — put a `Text` on
+// is the icon only because [`ButtonOutline`] below carries none - put a `Text` on
 // the outline and this silently rewrites that instead.
 pub(crate) fn set_icon_glyph(button: &mut EntityWorldMut, glyph: &'static str) {
     let children: Vec<Entity> = button

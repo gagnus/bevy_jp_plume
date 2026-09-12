@@ -1,5 +1,5 @@
 //! The non-themable look vocabulary: sizes, fonts, icons, corner sets and the
-//! button variants — the values that describe a control's shape rather than its color.
+//! button variants - the values that describe a control's shape rather than its color.
 
 pub use crate::controls::{ButtonCheckableVariant, ButtonVariant};
 pub use crate::utils::constants::{Icon, fonts, lucide, size, z_order};
