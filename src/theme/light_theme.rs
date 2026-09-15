@@ -13,7 +13,11 @@ pub const DEFAULT_LIGHT_COMPLEMENTARY_NEUTRAL: bool = false;
 pub fn default_light_palette() -> ThemeEditablePalette {
     // Blue, well clear of the fixed danger hue: a red accent would make a destructive
     // action indistinguishable from the confirm button next to it.
-    light_palette(DEFAULT_LIGHT_HUE, DEFAULT_LIGHT_COMPLEMENTARY_NEUTRAL, false)
+    light_palette(
+        DEFAULT_LIGHT_HUE,
+        DEFAULT_LIGHT_COMPLEMENTARY_NEUTRAL,
+        false,
+    )
 }
 
 /// Plume light palette editable inputs with given hue.

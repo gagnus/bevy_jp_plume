@@ -50,27 +50,29 @@ fn audio_settings_dialog(
 ) {
     let mut s = settings.clone();
     let mut open = registry.is_open(TITLE);
-    root.dialog(TITLE, &mut open).at_corner(Corner::TopLeft, em(10), em(5)).show(|ui| {
-        ui.horizontal(|ui| {
-            ui.caption("Volume");
-            ui.slider(&mut s.volume, 0.0..=1.0).enabled(!s.muted);
-            ui.number(&mut s.volume).enabled(!s.muted);
-        });
+    root.dialog(TITLE, &mut open)
+        .at_corner(Corner::TopLeft, em(10), em(5))
+        .show(|ui| {
+            ui.horizontal(|ui| {
+                ui.caption("Volume");
+                ui.slider(&mut s.volume, 0.0..=1.0).enabled(!s.muted);
+                ui.number(&mut s.volume).enabled(!s.muted);
+            });
 
-        ui.checkbox(&mut s.muted, "Mute");
-        ui.select(&mut s.output, |select| {
-            select.option(Output::Speakers, "Speakers");
-            select.option(Output::Headphones, "Headphones");
-        });
-        ui.separator();
+            ui.checkbox(&mut s.muted, "Mute");
+            ui.select(&mut s.output, |select| {
+                select.option(Output::Speakers, "Speakers");
+                select.option(Output::Headphones, "Headphones");
+            });
+            ui.separator();
 
-        ui.horizontal(|ui| {
-            ui.flex_spacer();
-            if ui.button("Reset").clicked {
-                s = AudioSettings::default();
-            }
+            ui.horizontal(|ui| {
+                ui.flex_spacer();
+                if ui.button("Reset").clicked {
+                    s = AudioSettings::default();
+                }
+            });
         });
-    });
     if open != registry.is_open(TITLE) {
         registry.set_open(TITLE, open);
     }
