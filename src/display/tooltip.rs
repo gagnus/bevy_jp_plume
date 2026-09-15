@@ -297,7 +297,7 @@ pub(crate) struct TooltipBox;
 // width is rem to match it: em would track the scaled subtree the tooltip
 // happens to hover over, px would stay put while the app's `RemSize` moved
 // the text it has to wrap.
-const TOOLTIP_WIDTH: Val = Val::Rem(20.0);
+const TOOLTIP_WIDTH: Val = Val::Rem(25.0);
 
 // Far enough off-screen that an unmeasured tooltip never flashes into view.
 const PARKED_LEFT_PX: f32 = -4000.0;
