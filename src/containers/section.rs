@@ -18,7 +18,7 @@ use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
 use bevy::ui::{
-    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform, Val,
+    AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform,
 };
 
 use crate::body::{BodyGap, BodyPadding, apply_body_style};
@@ -43,7 +43,8 @@ pub struct PlumeSection;
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionRoot;
 
-/// Marker for a collapsed [`PlumeSection`]; insert it to start collapsed.
+/// Marker for a collapsed [`PlumeSection`]; insert it to start collapsed. A
+/// non-collapsible section sheds it: with nothing to open it, it never stays shut.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct SectionCollapsed;
@@ -213,12 +214,16 @@ fn toggle_section_collapse(
 }
 
 fn update_section_collapse(
-    q_collapsed: Query<Entity, (With<SectionRoot>, Added<SectionCollapsed>)>,
+    q_collapsed: Query<
+        (Entity, Option<&SectionCollapsible>),
+        (With<SectionRoot>, Added<SectionCollapsed>),
+    >,
     mut removed: RemovedComponents<SectionCollapsed>,
     q_sections: Query<(), With<SectionRoot>>,
     q_children: Query<&Children>,
     mut q_body: Query<&mut Node, With<SectionBody>>,
     mut q_chevrons: Query<&mut AnimState, With<SectionChevron>>,
+    mut commands: Commands,
 ) {
     let mut apply = |root: Entity, collapsed: bool| {
         if let Some(mut node) = descendant_get_mut(root, &q_children, &mut q_body) {
@@ -232,7 +237,11 @@ fn update_section_collapse(
             chevron.set_target(if collapsed { 1.0 } else { 0.0 });
         }
     };
-    for root in q_collapsed.iter() {
+    for (root, collapsible) in q_collapsed.iter() {
+        if matches!(collapsible, Some(SectionCollapsible(false))) {
+            commands.entity(root).remove::<SectionCollapsed>();
+            continue;
+        }
         apply(root, true);
     }
     for root in removed.read() {
@@ -252,8 +261,14 @@ fn update_section_collapsible(
     >,
     q_children: Query<&Children>,
     mut q_chevrons: Query<(&mut Node, &mut AnimState), With<SectionChevron>>,
+    mut q_headers: Query<&mut EntityCursor, With<SectionHeader>>,
+    mut commands: Commands,
 ) {
     for (root, collapsible, collapsed) in q_changed.iter() {
+        let collapsed = collapsed && collapsible.0;
+        if !collapsed {
+            commands.entity(root).remove::<SectionCollapsed>();
+        }
         if let Some((mut node, mut anim)) = descendant_get_mut(root, &q_children, &mut q_chevrons) {
             node.display = if collapsible.0 {
                 Display::Flex
@@ -263,49 +278,12 @@ fn update_section_collapsible(
             // Settle the chevron without a spin.
             anim.set_target(if collapsed { 1.0 } else { 0.0 });
         }
-    }
-}
-
-// Header with `collapsible` false (`SectionCollapsible(false)`) is non-filled.
-fn update_section_header_style(
-    q_changed: Query<Entity, (With<SectionRoot>, Changed<SectionCollapsible>)>,
-    q_sections: Query<Option<&SectionCollapsible>, With<SectionRoot>>,
-    q_children: Query<&Children>,
-    mut q_headers: Query<(Entity, &mut Node), With<SectionHeader>>,
-    mut commands: Commands,
-) {
-    for root in q_changed.iter() {
-        let Ok(collapsible) = q_sections.get(root) else {
-            continue;
-        };
-        // Absent means collapsible (the component's Default); only explicit false is flat.
-        let collapsible = !matches!(collapsible, Some(SectionCollapsible(false)));
-
-        if let Some((header, mut node)) = descendant_get_mut(root, &q_children, &mut q_headers) {
-            let (bg_token, text_token, border, border_radius, cursor) = if !collapsible {
-                (
-                    tokens::SECTION_BODY_BG,
-                    tokens::SECTION_HEADER_MUTED_TEXT,
-                    UiRect::bottom(size::HAIRLINE),
-                    Val::ZERO,
-                    bevy::window::SystemCursorIcon::Default,
-                )
+        if let Some(mut cursor) = descendant_get_mut(root, &q_children, &mut q_headers) {
+            *cursor = EntityCursor::System(if collapsible.0 {
+                bevy::window::SystemCursorIcon::Pointer
             } else {
-                (
-                    tokens::SECTION_HEADER_BG,
-                    tokens::SECTION_HEADER_TEXT,
-                    UiRect::ZERO,
-                    size::CORNER_RADIUS,
-                    bevy::window::SystemCursorIcon::Pointer,
-                )
-            };
-            node.border = border;
-            node.border_radius = border_radius.into();
-            commands.entity(header).insert((
-                ThemeBackgroundToken(bg_token),
-                InheritableThemeTextToken(text_token),
-                EntityCursor::System(cursor),
-            ));
+                bevy::window::SystemCursorIcon::Default
+            });
         }
     }
 }
@@ -337,12 +315,7 @@ impl Plugin for SectionPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_systems(
             PreUpdate,
-            (
-                update_section_collapse,
-                update_section_collapsible,
-                update_section_header_style,
-            )
-                .in_set(PickingSystems::Last),
+            (update_section_collapse, update_section_collapsible).in_set(PickingSystems::Last),
         );
         app.add_systems(
             PostUpdate,

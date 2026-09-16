@@ -91,6 +91,7 @@ In the immediate column:
 | Space | `space(length)` | `ui.space(length)` |
 | Flex spacer | `flex_spacer()` | `ui.flex_spacer()` |
 | Tooltip | `Tooltip("text")` / `TooltipContent` components on the target control | `response.tooltip("text")` / `response.tooltip_container(\|ui\| …)` |
+| Tooltip, only when clipped | `TooltipWhenClipped("text")` on the text | `response.tooltip_if_clipped("text")` |
 
 ## Fonts
 

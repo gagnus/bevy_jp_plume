@@ -446,9 +446,6 @@ pub const COLOR_SWATCH_BORDER: ThemeToken = ThemeToken::new_static("plume.swatch
 pub const SECTION_HEADER_BG: ThemeToken = ThemeToken::new_static("plume.section.header.bg");
 /// Section header text color
 pub const SECTION_HEADER_TEXT: ThemeToken = ThemeToken::new_static("plume.section.header.text");
-/// Muted header text color, for the flat header a non-collapsible section wears
-pub const SECTION_HEADER_MUTED_TEXT: ThemeToken =
-    ThemeToken::new_static("plume.section.header.muted_text");
 /// Section body background
 pub const SECTION_BODY_BG: ThemeToken = ThemeToken::new_static("plume.section.body.bg");
 

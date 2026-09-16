@@ -93,7 +93,6 @@ pub enum ThemeSlot {
     /// - `CHECKBOX_TEXT`
     /// - `DIALOG_TEXT`
     /// - `RADIO_TEXT`
-    /// - `SECTION_HEADER_MUTED_TEXT`
     /// - `TAB_TEXT`
     /// - `TEXT_DIM`
     /// - `TOOLTIP_TEXT`
@@ -448,7 +447,6 @@ pub(crate) static DEFAULT_TOKEN_SLOTS: &[(ThemeToken, ThemeSlot)] = &[
     (tokens::COLOR_SWATCH_BORDER, ThemeSlot::Neutral4),
     (tokens::SECTION_HEADER_BG, ThemeSlot::Neutral2),
     (tokens::SECTION_HEADER_TEXT, ThemeSlot::Text0),
-    (tokens::SECTION_HEADER_MUTED_TEXT, ThemeSlot::Text1),
     (tokens::SECTION_BODY_BG, ThemeSlot::Neutral1),
     (tokens::TAB_TEXT, ThemeSlot::Text1),
     (tokens::TAB_TEXT_SELECTED, ThemeSlot::Text0),

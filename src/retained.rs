@@ -35,8 +35,8 @@ pub use crate::controls::{
 };
 pub use crate::default_width::DefaultWidth;
 pub use crate::display::{
-    SeparatorBleed, Tooltip, TooltipContent, TooltipSettings, caption, flex_spacer, icon,
-    separator, space,
+    SeparatorBleed, Tooltip, TooltipContent, TooltipSettings, TooltipWhenClipped, caption,
+    flex_spacer, icon, separator, space,
 };
 pub use crate::set_value::SetValue;
 // The propagation source a retained scene sets a subtree's [`ThemeId`] with.

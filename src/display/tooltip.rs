@@ -13,16 +13,17 @@ use bevy::ecs::resource::Resource;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::{Commands, Query, Res, ResMut};
 use bevy::log::warn;
+use bevy::math::Vec2;
 use bevy::picking::Pickable;
 use bevy::picking::events::{PointerMove, PointerPress};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
 use bevy::scene::prelude::*;
-use bevy::text::FontSourceTemplate;
+use bevy::text::{FontSourceTemplate, TextLayoutInfo};
 use bevy::time::{Real, Time};
 use bevy::ui::{
-    ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection, GlobalZIndex,
-    JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
+    CalculatedClip, ComputedNode, ComputedUiRenderTargetInfo, FixedNode, FlexDirection,
+    GlobalZIndex, JustifyContent, Node, PositionType, UiGlobalTransform, UiSystems, Val, px,
 };
 
 use crate::constants::{fonts, size, z_order};
@@ -39,6 +40,12 @@ use crate::utils::hierarchy::nearest_with;
 #[derive(Component, Clone, PartialEq, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct Tooltip(pub String);
+
+/// Tooltip shown only while a clipping ancestor cuts this text off: the full
+/// text on hover, nothing once it all fits. Not for use beside [`Tooltip`].
+#[derive(Component, Clone, PartialEq, Default, Reflect)]
+#[reflect(Component, Default)]
+pub struct TooltipWhenClipped(pub String);
 
 /// Rich tooltip contents: a scene spawned into the tooltip panel when it
 /// shows. Takes precedence over [`Tooltip`] text on the same control.
@@ -427,6 +434,44 @@ fn place_tooltip_box(
     }
 }
 
+// Text anchors at its node's top-left, so the visible text rect is that corner
+// plus the layout size - whatever the node itself was squeezed to.
+fn promote_clipped_tooltips(
+    q_sources: Query<(
+        Entity,
+        &TooltipWhenClipped,
+        &ComputedNode,
+        &UiGlobalTransform,
+        &TextLayoutInfo,
+        Option<&CalculatedClip>,
+        Option<&Tooltip>,
+    )>,
+    mut commands: Commands,
+) {
+    // Sub-pixel overhang from rounding is not a cut-off.
+    const TOLERANCE: f32 = 0.5;
+    for (entity, when_clipped, node, transform, layout, clip, tooltip) in q_sources.iter() {
+        let clipped = clip.is_some_and(|clip| {
+            let top_left = transform.translation - 0.5 * node.size() + Vec2::splat(TOLERANCE);
+            let bottom_right = top_left + layout.size - Vec2::splat(2.0 * TOLERANCE);
+            !clip.is_fully_clipped()
+                && !(clip.contains_point(top_left) && clip.contains_point(bottom_right))
+        });
+        match (clipped, tooltip) {
+            (true, Some(tooltip)) if tooltip.0 == when_clipped.0 => {}
+            (true, _) => {
+                commands
+                    .entity(entity)
+                    .insert(Tooltip(when_clipped.0.clone()));
+            }
+            (false, Some(_)) => {
+                commands.entity(entity).remove::<Tooltip>();
+            }
+            (false, None) => {}
+        }
+    }
+}
+
 // Rich content is app-authored, so its nodes spawn pickable by default; every
 // node appearing under a panel gets `Pickable::IGNORE` to keep the panel inert.
 fn shield_tooltip_content(
@@ -456,6 +501,11 @@ impl Plugin for TooltipPlugin {
             .add_systems(Update, (update_tooltips, shield_tooltip_content))
             // Ahead of layout, like `track_popup_anchors`: the box lands where
             // this frame's layout puts everything else.
-            .add_systems(PostUpdate, place_tooltip_box.in_set(UiSystems::Prepare));
+            .add_systems(PostUpdate, place_tooltip_box.in_set(UiSystems::Prepare))
+            // Clip rects are this frame's, so a resize flips the tooltip the same frame.
+            .add_systems(
+                PostUpdate,
+                promote_clipped_tooltips.after(UiSystems::PostLayout),
+            );
     }
 }

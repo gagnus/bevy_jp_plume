@@ -37,7 +37,9 @@ use crate::controls::{
     set_select_max_visible, text_input_placeholder, text_input_prefix_container, text_input_suffix,
     text_input_suffix_container,
 };
-use crate::display::{SeparatorBleed, Tooltip, TooltipUi, tooltip_box, tooltip_chrome};
+use crate::display::{
+    SeparatorBleed, Tooltip, TooltipUi, TooltipWhenClipped, tooltip_box, tooltip_chrome,
+};
 use crate::font_styles::{InheritableFont, PlumeFontSize};
 use crate::rounded_corners::RoundedCorners;
 use crate::style::fonts;
@@ -391,6 +393,17 @@ impl<K> ImmResponse<'_, '_, '_, K> {
         let text = text.into();
         if self.key_changed::<TooltipKey>(&text) {
             self.e.entity_commands().insert(Tooltip(text));
+        }
+        self
+    }
+
+    /// [`tooltip`](Self::tooltip) shown only while a clipping ancestor cuts the
+    /// caption off. Not for use beside `.tooltip()` on the same widget.
+    pub fn tooltip_if_clipped(mut self, text: impl Into<String>) -> Self {
+        struct TooltipIfClippedKey;
+        let text = text.into();
+        if self.key_changed::<TooltipIfClippedKey>(&text) {
+            self.e.entity_commands().insert(TooltipWhenClipped(text));
         }
         self
     }
@@ -1001,8 +1014,8 @@ impl ImmResponse<'_, '_, '_, kind::MenuItem> {
 }
 
 impl ImmResponse<'_, '_, '_, kind::Section> {
-    /// Seed the section collapsed on first spawn only; afterwards the retained entity
-    /// owns its collapse state, so this never fights the user.
+    /// Seed the section collapsed on first spawn only, so it never fights the user
+    /// afterwards. Ignored on a section locked with [`collapsible`](Self::collapsible)`(false)`.
     pub fn start_collapsed(mut self) -> Self {
         if self.will_be_spawned {
             self.e.entity_commands().insert(SectionCollapsed);
@@ -1010,7 +1023,8 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
         self
     }
 
-    /// Whether the header folds the body when clicked (default true).
+    /// Whether the header folds the body when clicked (default true). Locked, the
+    /// header keeps its look but loses the chevron.
     pub fn collapsible(mut self, collapsible: bool) -> Self {
         struct CollapsibleKey;
         if self.key_changed::<CollapsibleKey>(collapsible) {
