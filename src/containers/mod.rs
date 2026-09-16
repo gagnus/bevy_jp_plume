@@ -33,7 +33,9 @@ pub use screen::{Screen, screen};
 pub(crate) use scroll_area::*;
 pub use scroll_area::{PlumeScrollArea, PlumeScrollAreaProps, ScrollAxis};
 pub use section::{PlumeSection, PlumeSectionProps, SectionCollapsed};
-pub(crate) use section::{SectionCollapsible, SectionPlugin, section_body, section_frame};
+pub(crate) use section::{
+    SectionCollapsible, SectionHeaderCaption, SectionPlugin, section_body, section_frame,
+};
 pub use splitter::{
     PlumeSplitter, PlumeSplitterProps, SplitAxis, SplitCollapsible, SplitDividerAutoHide, SplitMin,
     SplitPane, SplitSize, SplitSized,

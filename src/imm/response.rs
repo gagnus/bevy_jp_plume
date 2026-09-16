@@ -28,8 +28,8 @@ use super::{ImmEntityExt, ImmPopup, PlumeCaps, Ui};
 use crate::body::{BodyGap, BodyPadding};
 use crate::constants::{size, z_order};
 use crate::containers::{
-    PopupAnchor, SectionCollapsed, SectionCollapsible, SplitCollapsible, SplitDividerAutoHide,
-    SplitMin, SplitPane, SplitSized,
+    PopupAnchor, SectionCollapsed, SectionCollapsible, SectionHeaderCaption, SplitCollapsible,
+    SplitDividerAutoHide, SplitMin, SplitPane, SplitSized,
 };
 use crate::controls::{
     ButtonCheckableVariant, ButtonOutline, ButtonVariant, MenuButtonRole, MenuShortcutText, NoDrag,
@@ -1017,6 +1017,48 @@ impl ImmResponse<'_, '_, '_, kind::Section> {
             self.e
                 .entity_commands()
                 .insert(SectionCollapsible(collapsible));
+        }
+        self
+    }
+
+    /// Whether the header renders in small caps (default true). `false` keeps the
+    /// header's own casing, for names where case carries meaning.
+    pub fn small_caps(mut self, small_caps: bool) -> Self {
+        struct SmallCapsKey;
+        if self.key_changed::<SmallCapsKey>(small_caps) {
+            self.e
+                .entity_commands()
+                .queue(move |mut root: EntityWorldMut| {
+                    // Root, header bar, caption: two levels, so a bounded walk beats
+                    // a marker on every rung.
+                    fn find_caption(world: &World, entity: Entity, depth: u8) -> Option<Entity> {
+                        if world.get::<SectionHeaderCaption>(entity).is_some() {
+                            return Some(entity);
+                        }
+                        if depth == 0 {
+                            return None;
+                        }
+                        world
+                            .get::<Children>(entity)?
+                            .iter()
+                            .find_map(|child| find_caption(world, *child, depth - 1))
+                    }
+                    let root_entity = root.id();
+                    root.world_scope(|world| {
+                        let Some(caption) = find_caption(world, root_entity, 2) else {
+                            return;
+                        };
+                        if let Some(mut font) = world.get_mut::<InheritableFont>(caption) {
+                            // `None` inherits, so an enclosing `small_caps()` still applies.
+                            font.font_features = small_caps.then(|| {
+                                FontFeatures::from([
+                                    FontFeatureTag::SMALL_CAPS,
+                                    FontFeatureTag::CAPS_TO_SMALL_CAPS,
+                                ])
+                            });
+                        }
+                    });
+                });
         }
         self
     }

@@ -64,6 +64,11 @@ impl Default for SectionCollapsible {
 #[reflect(Component, Clone, Default)]
 struct SectionHeader;
 
+// The imm section's header caption, so `.small_caps(_)` can find it after spawn.
+#[derive(Component, Default, Clone, Reflect)]
+#[reflect(Component, Clone, Default)]
+pub(crate) struct SectionHeaderCaption;
+
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub(crate) struct SectionBody;

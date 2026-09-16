@@ -28,11 +28,11 @@ use crate::body::{BodyGap, BodyPadding};
 use crate::constants::{Icon, size};
 use crate::containers::{
     CloseRequested, DialogChrome, DialogHeader, PlacementAnchor, PopupAnchor, PopupDismiss,
-    PopupPlacement, ScrollAxis, SplitAxis, SplitPane, SplitSize, column, dialog_body, dialog_frame,
-    imm_popup_scene, modal_barrier, popup_socket, reorderable_frame, reorderable_grip,
-    reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport, scrollbar,
-    section_body, section_frame, splitter_divider, splitter_frame, splitter_pane, tab_body,
-    tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
+    PopupPlacement, ScrollAxis, SectionHeaderCaption, SplitAxis, SplitPane, SplitSize, column,
+    dialog_body, dialog_frame, imm_popup_scene, modal_barrier, popup_socket, reorderable_frame,
+    reorderable_grip, reorderable_item, row, screen, scroll_content, scroll_frame, scroll_viewport,
+    scrollbar, section_body, section_frame, splitter_divider, splitter_frame, splitter_pane,
+    tab_body, tab_button, tab_chrome, tab_strip, tab_strip_frame, tabs_frame,
 };
 use crate::controls::{
     ColorSwatchValue, MenuButtonRole, PlumeButton, PlumeCheckbox, PlumeColorEdit, PlumeColorPicker,
@@ -180,7 +180,8 @@ pub trait PlumeImm<'w, 's> {
     ) -> ImmResponse<'_, 'w, 's, kind::Tabs>;
 
     /// Collapsible section with a small-caps `header`; `f` builds its body.
-    /// Collapse state persists across frames. Chain `.start_collapsed()`.
+    /// Collapse state persists across frames. Chain `.start_collapsed()`, or
+    /// `.small_caps(false)` for a header whose casing matters.
     fn section(
         &mut self,
         header: &str,
@@ -796,6 +797,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
                         bsn! {
                             @caption(header_owned)
                             @small_caps()
+                            SectionHeaderCaption
                         },
                         true,
                         ()
