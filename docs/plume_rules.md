@@ -26,7 +26,11 @@ Write a **scene function** (`fn x() -> impl Scene`) when either:
 - It is a *piece* of a composite (next rule).
 
 A scene component whose props are empty and whose scene is a single node
-is a scene function that hasn't been written yet.
+is a scene function that hasn't been written yet, unless the node has
+behavior of its own. `PlumeRadioGroup` (unchecks the other radios) and
+`PlumeMenuBar` (the root the menu machinery looks for) are single nodes
+with no props, but an app names them as widgets and they do more than lay
+out, so they stay scene components.
 
 ## Composites are cut into pieces both paths compose
 
@@ -54,8 +58,9 @@ half the widgets in the app.
 
 Every widget, composite or leaf, carries a plain `Component` marker
 inserted by its own scene, and the systems key on that: `SectionRoot`,
-`SplitterRoot`, `TabsRoot`, `ScrollArea`, `Dialog`, `MenuButtonRow`,
-`CheckboxFrame`. No exemption for leaves that happen to be spawned
+`SplitterRoot`, `TabsRoot`, `MenuButtonRow`, `CheckboxFrame`, or the
+headless component bevy already provides (`ScrollArea`, `Dialog`,
+`RadioButton`). No exemption for leaves that happen to be spawned
 through `@PlumeX` on both paths today: that is a property of how the
 imm layer builds them this week, not of the widget.
 
@@ -74,6 +79,12 @@ most of all, since `retained` exports both kinds in one list.
 Public scene *functions* stay unprefixed (`column`, `caption`), so the
 prefix keeps that single meaning. They are module-namespaced, and the
 common import is `prelude::*`, which exports no scene functions at all.
+
+One exception, and only one: `PlumeIgnore`. It is a plain component, not a
+scene component, and `@PlumeIgnore` is not legal. It keeps the prefix
+because the name says exactly what it does (tells Plume to leave this text
+alone), and an app reads it as an instruction to the library rather than
+as a widget. Do not add a second.
 
 ## Capabilities reach only the widget's root entity
 
@@ -117,8 +128,38 @@ both directions it can appear:
 There is no field-setting exception, because a scene component carries no
 state to set; see the rule above.
 
-## Content slots stretch, and that was tried the other way
+## Content slots stretch
 
 Content slots keep the feathers `Stretch` default. A `Start`/hug default
-was tried and broke every `grow`-based row and left sections ragged.
-Per-widget sizing is opt-in through the response builders instead.
+breaks every `grow`-based row and leaves sections ragged. Per-widget
+sizing is opt-in through the response builders instead.
+
+# Behavior
+
+## A scene declares its resting look
+
+The style systems (`update_*_styles`) run in `PreUpdate`, so a control
+spawned during `Update` is drawn once before its styler has seen it. Its
+`bsn!` scene must be complete for the resting state: tokens, gradient,
+cursor, text token. The styler only departs from that for hover, press,
+disabled and checked.
+
+When a control looks wrong for a frame, fix the scene, not the schedule.
+The stylers write background, text color and cursor, which want three
+different slots in the frame, so moving them swaps a one-frame spawn
+artifact for a permanent one-frame lag.
+
+## Close a popup with `close_popup`, never by despawning it
+
+Closing usually happens in the middle of a cascade (a row click, a
+dismiss press), and later commands in that cascade still target the
+popup's entities. `close_popup` hides it at once and a `Last` system
+despawns it; despawning it directly from an observer panics.
+
+## Text sits under a surface that establishes its style
+
+Font and text color propagate down to every descendant from the surfaces
+that establish them: `screen`, dialogs and popups. Text spawned outside
+one resolves neither, falls back to white in the engine font, and trips
+the `warn_once!` in the theme module. Text that styles itself opts out
+with `PlumeIgnore`.
