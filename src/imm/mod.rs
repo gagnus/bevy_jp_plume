@@ -207,7 +207,7 @@ impl<'w, 's> PlumeRoot<'w, 's> {
 
     /// Headerless floating surface - a [`Self::dialog`] with no title bar, ✕ or
     /// drag. Top-level like the other two: it floats over the app, pinned to the
-    /// viewport or, via [`ImmPanel::at_corner_of`], to another entity's rect.
+    /// viewport or, via [`ImmDialog::at_corner_of`], to another entity's rect.
     /// The same [`ImmDialog`] builder in its [`Panel`] mode.
     #[track_caller]
     pub fn panel(&mut self) -> ImmDialog<'_, 'w, 's, Panel> {

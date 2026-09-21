@@ -1350,7 +1350,7 @@ pub struct Floating;
 pub struct Modal;
 
 /// A headerless surface floating over the app - no title bar, ✕ or drag. The one
-/// mode that can hang off another entity's rect, via [`Self::at_corner_of`].
+/// mode that can hang off another entity's rect, via [`ImmDialog::at_corner_of`].
 pub struct Panel;
 
 /// Modes the app positions itself. Excludes [`Modal`], which its barrier centres.
@@ -1724,8 +1724,8 @@ struct DialogLayout {
     movable: bool,
 }
 
-/// Corner a floating surface pins to, via [`ImmPanel::at_corner`] or
-/// [`ImmDialog::at_corner`].
+/// Corner a floating surface pins to, via [`ImmDialog::at_corner`] or
+/// [`ImmDialog::at_corner_of`].
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Corner {
     /// Top-left.
