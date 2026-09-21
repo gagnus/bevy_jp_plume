@@ -15,13 +15,13 @@ state rather than pushing on.
 ## Testing Philosophy
 
 The default is: don't write a test. A test that doesn't catch a real
-regression is net negative — it has to be maintained, it can give false
+regression is net negative: it has to be maintained, it can give false
 confidence, and it adds noise to failures.
 
 Pure-functional rule combinations with subtle interactions where a wrong
 result would be silent are the right place for tests. Asset loading,
 rendering output, UI layout, anything that's immediately obvious when
-you run the app — not the right place.
+you run the app: not the right place.
 
 ## Descriptive names over short or generic ones
 
@@ -40,7 +40,7 @@ Acceptable exceptions:
 
 ## Newtype IDs over type aliases
 
-Wrap IDs in a tuple struct so the compiler keeps them distinct —
+Wrap IDs in a tuple struct so the compiler keeps them distinct:
 `struct RoomId(usize)`, not `type RoomId = usize`. A type alias is
 interchangeable with every other alias of the same underlying type, so
 nothing stops you passing a `RoomId` where a `KeyId` was meant; the
@@ -64,7 +64,7 @@ Thing {
 }
 ```
 
-Not a field-by-field copy of every default — the diff against
+Not a field-by-field copy of every default: the diff against
 `default()` is what makes the call site readable.
 
 ## Don't duplicate logic
@@ -95,14 +95,14 @@ intentional, leave a one-line comment at the call site.
 
 **Every `.rs` file** gets a `//!` at the top, max 2 lines: what the file
 is. A `lib.rs` may add a one-line "how to use this module" (e.g. "Add
-`FooPlugin` and spawn `Foo` entities.") — the reader of a crate root
+`FooPlugin` and spawn `Foo` entities."), since the reader of a crate root
 *is* the caller. History and process are still off-limits.
 
 **Every `pub` type, trait, and free function** gets a `///`, max 2 lines.
-`pub(crate)` and `pub(super)` items use `//` like private items — they are internal details, not API.
+`pub(crate)` and `pub(super)` items use `//` like private items: they are internal details, not API.
 Methods too, unless both the verb *and* the subject are clear from the
 name alone (`with_grid`, `iter` on an obviously-named type). Never
-document icon/glyph constant tables — the name is the documentation.
+document icon/glyph constant tables: the name is the documentation.
 
 **Inline `//`:** default to silence. Add one only when the WHY is
 non-obvious: a constraint, an invariant, a cross-module link, a
@@ -123,7 +123,7 @@ none.
   what parameters/return types already express.
 - Filler framing ("Important:", "Note that:", "Mutable runtime state
   for the pipeline." before a struct named exactly that).
-- Stale cross-references — if `Foo::bar` no longer exists, delete the
+- Stale cross-references: if `Foo::bar` no longer exists, delete the
   comment, not just the link.
 
 ## Run `cargo +nightly fmt` after every edit
@@ -151,7 +151,7 @@ When a variable holds an `Entity`, suffix it `_entity` whenever the
 name would otherwise be ambiguous with a higher-level concept:
 `armature_entity`, `player_entity`, `target_entity`. In obvious
 one-line contexts (`for child in children.iter()`), the suffix is
-overkill — `Children` only yields `Entity` and the reader can see it.
+overkill: `Children` only yields `Entity` and the reader can see it.
 
 ## `_handle` suffix for `Handle` variables
 
@@ -163,28 +163,28 @@ name would otherwise be ambiguous with a higher-level concept.
 System parameters of type `Query<...>` use a `query_` prefix:
 `query_players`, `query_pending_armatures`. Helps readers spot the ECS
 fan-out at a glance. Doesn't extend to `Res`, `EventReader`,
-`Commands`, or other system params — there's no equivalent ambiguity.
+`Commands`, or other system params: there's no equivalent ambiguity.
 
 # Clippy
 
 ## `type_complexity` and `too_many_arguments` are accepted in systems
 
 Bevy systems naturally produce gnarly `Query<...>` types and long
-parameter lists — that's the framework, not a smell. Don't restructure a
+parameter lists. That's the framework, not a smell. Don't restructure a
 system, bundle params into an ad-hoc struct, or add a type alias purely
 to silence `clippy::type_complexity` ("very complex type used") or
 `clippy::too_many_arguments`. Leave the system idiomatic. Reach for a
 `#[derive(SystemParam)]` bundle only when it groups params that are
-genuinely a unit and improves readability on its own merit — never just
+genuinely a unit and improves readability on its own merit, never just
 to appease the lint.
 
 Suppress these two with an `#[allow(...)]` attribute, not by reshaping
 the code:
 
-- `clippy::type_complexity` — allow crate-wide as an inner attribute at
+- `clippy::type_complexity`: allow crate-wide as an inner attribute at
   the top of `lib.rs` / `main.rs` (`#![allow(clippy::type_complexity)]`),
   since it's pervasive. This matches what Bevy's own crates do.
-- `clippy::too_many_arguments` — allow per-system
+- `clippy::too_many_arguments`: allow per-system
   (`#[allow(clippy::too_many_arguments)]` on the fn), since it's the rare
   exception, not the rule.
 
@@ -192,6 +192,6 @@ the code:
 
 These two are the only ones we silence. Everything else clippy reports is
 a real, cheap improvement (`map_or` → `is_none_or`, needless clones,
-redundant closures, …) — fix it, don't `#[allow]` it. If some other lint
+redundant closures, …): fix it, don't `#[allow]` it. If some other lint
 later turns out to genuinely fight Bevy idiom, we add it to the list
-above then, case-by-case — never pre-emptively.
+above then, case-by-case, never pre-emptively.
