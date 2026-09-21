@@ -11,7 +11,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::world::{EntityWorldMut, World};
 use bevy::picking::Pickable;
-use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn};
+use bevy::scene::{EntityCommandsSceneExt, WorldSceneExt, bsn, bsn_list};
 use bevy::text::{FontFeatureTag, FontFeatures, FontSource, LineBreak, TextLayout};
 use bevy::ui::widget::Text;
 use bevy::ui::{
@@ -916,7 +916,7 @@ impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
     pub fn prefix_container(mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
         self.e = self.e.add_ui(|ui| {
             ui.ch_id("text_input_prefix")
-                .on_spawn_apply_scene(|| text_input_prefix_container(Box::new(())))
+                .on_spawn_apply_scene(|| text_input_prefix_container(Box::new(bsn_list! {})))
                 .add_ui(f);
         });
         self
@@ -928,7 +928,7 @@ impl<'w, 's> ImmResponse<'_, 'w, 's, kind::Text> {
     pub fn suffix_container(mut self, f: impl FnOnce(&mut Ui<'w, 's>)) -> Self {
         self.e = self.e.add_ui(|ui| {
             ui.ch_id("text_input_suffix")
-                .on_spawn_apply_scene(|| text_input_suffix_container(Box::new(())))
+                .on_spawn_apply_scene(|| text_input_suffix_container(Box::new(bsn_list! {})))
                 .add_ui(f);
         });
         self

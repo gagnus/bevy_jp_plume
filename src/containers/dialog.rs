@@ -12,7 +12,7 @@ use bevy::ecs::system::{Commands, Query};
 use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::ui::{
     AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, LayoutConfig, Node,
     PositionType, UiRect, UiSystems, Val,
@@ -63,8 +63,8 @@ pub struct PlumeDialogProps {
 impl Default for PlumeDialogProps {
     fn default() -> Self {
         Self {
-            title: Box::new(()),
-            contents: Box::new(()),
+            title: Box::new(bsn_list! {}),
+            contents: Box::new(bsn_list! {}),
             width: Val::Auto,
             height: Val::Auto,
             max_height: Val::Auto,
@@ -236,7 +236,7 @@ pub(crate) fn dialog_frame(chrome: DialogChrome) -> impl Scene {
                     border: UiRect::bottom(size::HAIRLINE),
                     border_radius: BorderRadius::top(size::DIALOG_RADIUS),
                 }
-                @{movable.then(|| bsn! { DialogDragHandle })}
+                @{movable.then_some(bsn! { DialogDragHandle })}
                 InheritableThemeTextToken(tokens::DIALOG_HEADER_TEXT)
                 ThemeBackgroundToken(tokens::DIALOG_HEADER_BG)
                 ThemeBorderToken(tokens::DIALOG_BORDER)

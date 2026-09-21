@@ -58,7 +58,7 @@ impl Default for TooltipContent {
     fn default() -> Self {
         Self(Arc::new(|| {
             warn!("TooltipContent contents not specified");
-            Box::new(())
+            Box::new(bsn_list! {})
         }))
     }
 }

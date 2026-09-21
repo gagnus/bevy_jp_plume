@@ -51,7 +51,7 @@ pub struct PlumeRadioProps {
 impl Default for PlumeRadioProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(()),
+            caption: Box::new(bsn_list! {}),
         }
     }
 }

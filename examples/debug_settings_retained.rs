@@ -219,7 +219,7 @@ fn debug_options_dialog() -> impl Scene {
             },
             @width: em(600.0 / BASE_FONT_PX),
             @inset: {Corner::BottomLeft.inset(px(20), px(20))},
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @row()
                 Node { align_items: AlignItems::Start }
                 Children [
@@ -257,7 +257,7 @@ fn rendering_section(s: &DebugSettings) -> impl Scene {
                 @caption("Rendering")
                 @small_caps()
             },
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @checkbox("Wireframe", Bound::Wireframe, wireframe)
                 Tooltip("Draw all meshes as wireframe")
                 --
@@ -283,7 +283,7 @@ fn physics_section(s: &DebugSettings) -> impl Scene {
                 @caption("Physics")
                 @small_caps()
             },
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @checkbox("Pause simulation", Bound::PauseSim, pause_sim)
                 Tooltip("Halt the physics clock; rendering keeps running")
                 --
@@ -318,7 +318,7 @@ fn diagnostics_section(s: &DebugSettings) -> impl Scene {
                 @caption("Diagnostics")
                 @small_caps()
             },
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @toggle_row("FPS overlay", Bound::FpsOverlay, fps_overlay)
                 --
                 @toggle_row("Entity inspector", Bound::EntityInspector, entity_inspector)
@@ -418,7 +418,7 @@ fn cheats_section(s: &DebugSettings) -> impl Scene {
                 @caption("Cheats")
                 @small_caps()
             },
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @checkbox("Noclip", Bound::Noclip, noclip)
                 --
                 @checkbox("Infinite health", Bound::InfiniteHealth, infinite_health)
@@ -470,7 +470,7 @@ fn reset_confirm_popup() -> impl Scene {
         @PlumePopup {
             @placement: PopupPlacement::Below,
             @dismiss: PopupDismiss::OutsideClick,
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @caption("Reset all settings to defaults?")
                 TextLayout { linebreak: LineBreak::NoWrap }
                 Node { min_width: Val::ZERO }
@@ -514,14 +514,14 @@ fn footer() -> impl Scene {
             @row()
             Children [
                 @PlumeButton {
-                    @caption: bsn! {
+                    @caption: bsn_list! {
                         @icon(lucide::UNDO_2)
                         --
                         @caption("Reset to defaults")
                     },
                     @variant: ButtonVariant::Outline,
                 }
-                TooltipContent::new(|| bsn! {
+                TooltipContent::new(|| bsn_list! {
                     @row()
                     Children [
                         @icon(lucide::UNDO_2)
@@ -565,7 +565,7 @@ fn debug_column() -> impl Scene {
 }
 
 fn maybe_checked(checked: bool) -> impl Scene {
-    checked.then(|| bsn! { Checked })
+    checked.then_some(bsn! { Checked })
 }
 
 fn checkbox(label: &str, bound: Bound, checked: bool) -> impl Scene {

@@ -16,7 +16,7 @@ use bevy::picking::PickingSystems;
 use bevy::picking::events::PointerClick;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::ui::{
     AlignItems, Display, FlexDirection, JustifyContent, Node, UiRect, UiSystems, UiTransform,
 };
@@ -91,8 +91,8 @@ pub struct PlumeSectionProps {
 impl Default for PlumeSectionProps {
     fn default() -> Self {
         Self {
-            header: Box::new(()),
-            contents: Box::new(()),
+            header: Box::new(bsn_list! {}),
+            contents: Box::new(bsn_list! {}),
             collapsible: true,
         }
     }

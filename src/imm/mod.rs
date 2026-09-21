@@ -315,12 +315,7 @@ unsafe impl SystemParam for PlumeRoot<'_, '_> {
         let mut imm = ctx.build_immediate_root(("plume_ui_root", state.root_id));
         // Occurrence counts are per pass: this system run starts fresh, so a
         // widget built at the same call site as last frame keeps its id.
-        if let Ok(mut occurrences) = imm
-            .ctx_mut()
-            .cap_resources
-            .resources
-            .get_mut::<PlumeOccurrences>()
-        {
+        if let Ok(mut occurrences) = imm.ctx_mut().cap_resources.get_mut::<PlumeOccurrences>() {
             occurrences.0.clear();
         }
         Ok(PlumeRoot { imm: Ui(imm) })

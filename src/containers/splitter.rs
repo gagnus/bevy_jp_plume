@@ -222,8 +222,8 @@ impl Default for PlumeSplitterProps {
             auto_hide: false,
             collapsible_first: false,
             collapsible_second: false,
-            first: Box::new(()),
-            second: Box::new(()),
+            first: Box::new(bsn_list! {}),
+            second: Box::new(bsn_list! {}),
         }
     }
 }

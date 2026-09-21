@@ -188,7 +188,7 @@ pub struct PlumePopupProps {
 impl Default for PlumePopupProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(()),
+            contents: Box::new(bsn_list! {}),
             placement: Default::default(),
             dismiss: Default::default(),
             movable: false,
@@ -264,12 +264,12 @@ impl PlumePopup {
             // Parentless socket: resolves to the standard font. Empty braces
             // stop bsn claiming the next interpolation block as a field list.
             InheritableFont {}
-            @{(props.dismiss == PopupDismiss::FocusOut).then(|| bsn! { MenuPopup })}
-            @{(props.dismiss == PopupDismiss::OutsideClick).then(|| bsn! { DismissOnOutsideClick })}
+            @{(props.dismiss == PopupDismiss::FocusOut).then_some(bsn! { MenuPopup })}
+            @{(props.dismiss == PopupDismiss::OutsideClick).then_some(bsn! { DismissOnOutsideClick })}
             // A focus-out popup's focus is owned by the menu machinery; the rest
             // scope Tab traversal like a dialog does.
-            @{(props.dismiss != PopupDismiss::FocusOut).then(|| bsn! { TabGroup::new(0) })}
-            @{props.movable.then(|| bsn! { on(on_popup_drag) })}
+            @{(props.dismiss != PopupDismiss::FocusOut).then_some(bsn! { TabGroup::new(0) })}
+            @{props.movable.then_some(bsn! { on(on_popup_drag) })}
             // A popup floats over whatever its anchor sits in, so pointer activity
             // inside it must not bubble on to that surface: a retained socket is a
             // hierarchy child, and its anchor's ancestors would read the popup's

@@ -307,7 +307,7 @@ pub struct PlumeScrollAreaProps {
 impl Default for PlumeScrollAreaProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(()),
+            contents: Box::new(bsn_list! {}),
             axis: ScrollAxis::default(),
         }
     }

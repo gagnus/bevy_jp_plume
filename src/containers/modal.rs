@@ -12,7 +12,7 @@ use bevy::ecs::reflect::ReflectComponent;
 use bevy::ecs::system::{Commands, Query};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::ui::{
     AlignItems, BackgroundColor, Display, FixedNode, GlobalZIndex, JustifyContent, Node,
     OverrideClip, PositionType, UiRect, Val, px,
@@ -48,8 +48,8 @@ pub struct PlumeModalProps {
 impl Default for PlumeModalProps {
     fn default() -> Self {
         Self {
-            title: Box::new(()),
-            contents: Box::new(()),
+            title: Box::new(bsn_list! {}),
+            contents: Box::new(bsn_list! {}),
             width: Val::Auto,
             closable: true,
         }
@@ -76,7 +76,7 @@ impl PlumeModal {
             // Every dismissal - the ✕, a barrier click, Escape - arrives here,
             // since `RequestClose` propagates up out of the frame. Closing
             // despawns the modal, as it does for [`PlumeDialog`].
-            @{closable.then(|| bsn! {
+            @{closable.then_some(bsn! {
                 on(|close: On<RequestClose>, mut commands: Commands| {
                     commands.entity(close.event_target()).despawn();
                 })

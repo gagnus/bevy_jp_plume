@@ -102,7 +102,7 @@ pub struct PlumeButtonProps {
 impl Default for PlumeButtonProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(()),
+            caption: Box::new(bsn_list! {}),
             variant: ButtonVariant::default(),
             border_radius: RoundedCorners::All.to_border_radius(size::CORNER_RADIUS),
             checkable: false,
@@ -123,7 +123,7 @@ impl PlumeButton {
         let box_shadow = props
             .variant
             .filled()
-            .then(|| bsn! { control_box_shadow() });
+            .then_some(bsn! { control_box_shadow() });
         bsn! {
             Node {
                 height: size::ROW_HEIGHT,
@@ -136,7 +136,7 @@ impl PlumeButton {
             Button
             props.variant
             @box_shadow
-            @{props.checkable.then(|| bsn! { Checkable })}
+            @{props.checkable.then_some(bsn! { Checkable })}
             Hovered
             TabIndex(0)
             FocusIndicator

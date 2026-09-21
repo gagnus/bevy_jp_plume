@@ -480,7 +480,7 @@ fn export_modal() -> impl Scene {
         @PlumeModal {
             @title: bsn! { @modal_title("Export Scene") },
             @width: em(26.0),
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @caption("Nothing behind this takes a click until it is answered.")
                 --
                 @row()
@@ -686,7 +686,7 @@ fn documents() -> impl Scene {
 fn document_tab(slot: usize) -> impl Scene {
     bsn! {
         @PlumeTab {
-            @caption: bsn! {
+            @caption: bsn_list! {
                 @icon(lucide::FILE_CODE)
                 --
                 // `tab_label`'s box, hand-built because the caption inside it
@@ -840,9 +840,9 @@ fn tab_row() -> impl Scene {
         Node { padding: UiRect::right(size::SPACE) }
         Children [
             @PlumeTabs {
-                @header: bsn! {
+                @header: bsn_list! {
                     @PlumeTab {
-                        @caption: bsn! {
+                        @caption: bsn_list! {
                             @icon(lucide::PALETTE)
                             --
                             @caption("Material")
@@ -851,7 +851,7 @@ fn tab_row() -> impl Scene {
                     Selected
                     --
                     @PlumeTab {
-                        @caption: bsn! {
+                        @caption: bsn_list! {
                             @icon(lucide::FOLDER_TREE)
                             --
                             @caption("Hierarchy")
@@ -887,7 +887,7 @@ fn tab_row() -> impl Scene {
             }
             Flat
             Tooltip("More material actions")
-            @menu_anchor(bsn! {
+            @menu_anchor(bsn_list! {
                 @PlumeMenuButton {
                     @label: "Copy Values",
                     @shortcut: {Some("Ctrl+C".to_string())},
@@ -937,13 +937,13 @@ fn material_tab(m: Material) -> impl Scene {
     let layers = m.layers;
     bsn! {
         @PlumeScrollArea {
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @PlumeSection {
                     @header: bsn! {
                         @caption("Surface")
                         @small_caps()
                     },
-                    @contents: bsn! {
+                    @contents: bsn_list! {
                         @row()
                         Children [
                             @field_label("Name")
@@ -969,7 +969,7 @@ fn material_tab(m: Material) -> impl Scene {
                         @caption("Shading")
                         @small_caps()
                     },
-                    @contents: bsn! {
+                    @contents: bsn_list! {
                         @radio_row("Blend", blend, Bound::Blend)
                         --
                         @radio_row("Cull", cull, Bound::Cull)
@@ -1030,7 +1030,7 @@ fn layer_row(layer: Layer) -> impl Scene {
     let label_width = GUTTER * 0.6;
     bsn! {
         @PlumeReorderableItem {
-            @contents: bsn! {
+            @contents: bsn_list! {
                 @icon(glyph)
                 --
                 @caption(name)
@@ -1047,7 +1047,7 @@ fn layer_row(layer: Layer) -> impl Scene {
                 --
                 @PlumeToggleSwitch
                 LayerEnabled(id)
-                @{enabled.then(|| bsn! { Checked })}
+                @{enabled.then_some(bsn! { Checked })}
                 on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
                     if let Some(layer) = layer_mut(&mut s, id) {
                         layer.enabled = ev.value;
@@ -1094,7 +1094,7 @@ fn node_row(index: usize, node: SceneNode) -> impl Scene {
             --
             @PlumeDisclosure
             NodeBound::Expanded(index)
-            @{parent_of_next.then(|| bsn! { Checked })}
+            @{parent_of_next.then_some(bsn! { Checked })}
             on(move |ev: On<ValueChange<bool>>, mut s: ResMut<Inspector>| {
                 s.hierarchy.nodes[index].expanded = ev.value;
             })
@@ -1185,7 +1185,7 @@ fn radio_row<T: Options>(label: &str, selected: T, bound: Bound) -> impl Scene {
             let checked = option == selected;
             bsn! {
                 @PlumeRadio { @caption: bsn! { @caption(option.label().to_string()) } }
-                @{checked.then(|| bsn! { Checked })}
+                @{checked.then_some(bsn! { Checked })}
             }
         })
         .collect();

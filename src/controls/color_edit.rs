@@ -108,7 +108,7 @@ impl PlumeColorEdit {
             initial_color,
             alpha,
         } = props;
-        let rgb_only = (!alpha).then(|| bsn! { ColorEditRgbOnly });
+        let rgb_only = (!alpha).then_some(bsn! { ColorEditRgbOnly });
         bsn! {
             Node {
                 align_items: AlignItems::Start,
@@ -119,7 +119,7 @@ impl PlumeColorEdit {
             Children [
                 // The button is the click target that toggles the popup.
                 @PlumeButton {
-                    @caption: bsn! {
+                    @caption: bsn_list! {
                         @PlumeColorSwatch {
                             @initial_color: initial_color,
                             @alpha: alpha,

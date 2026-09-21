@@ -10,7 +10,7 @@ use bevy::ecs::event::EntityEvent;
 use bevy::ecs::observer::On;
 use bevy::ecs::system::Commands;
 use bevy::ecs::world::EntityWorldMut;
-use bevy::scene::{Scene, bsn, on};
+use bevy::scene::{Scene, bsn, bsn_list, on};
 use bevy::ui::widget::Text;
 use bevy::ui::{BackgroundColor, JustifyContent, Node, UiRect, Val};
 use bevy::ui_widgets::{ModalDialog, RequestClose};
@@ -494,7 +494,7 @@ impl<'w, 's> PlumeImm<'w, 's> for Ui<'w, 's> {
         let mut entity = self.ch_loc(loc_id(label)).on_spawn_apply_scene(move || {
             bsn! {
                 @PlumeButton {
-                    @caption: bsn! {
+                    @caption: bsn_list! {
                         @display::icon(icon)
                         --
                         @caption(label_owned)
@@ -1501,7 +1501,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
                 @modal_barrier()
                 // Every dismissal - the ✕, a barrier click, Escape - arrives
                 // here, since `RequestClose` propagates up out of the frame.
-                @{closable.then(|| bsn! {
+                @{closable.then_some(bsn! {
                     on(|close: On<RequestClose>, mut commands: Commands| {
                         commands.entity(close.event_target()).insert(CloseRequested);
                     })
@@ -1646,14 +1646,14 @@ fn dialog_frame_scene(title: String, layout: DialogLayout, chrome: SurfaceChrome
         // Empty body: the imm layer reconciles the body itself.
         @dialog_frame(DialogChrome {
             name: name.into(),
-            body: Box::new(()),
+            body: Box::new(bsn_list! {}),
             header,
             width,
             height,
             max_height,
             inset,
         })
-        @{(chrome == SurfaceChrome::Modal).then(|| bsn! { ModalDialog })}
+        @{(chrome == SurfaceChrome::Modal).then_some(bsn! { ModalDialog })}
     }
 }
 
@@ -2013,7 +2013,6 @@ impl<'w, 's> PlumeChild<'w, 's> for Ui<'w, 's> {
             let mut table = self
                 .ctx_mut()
                 .cap_resources
-                .resources
                 .get_mut::<PlumeOccurrences>()
                 .expect("PlumeOccurrences is registered by CapabilityPlumeIds");
             let counter = table.0.entry(parent.with(base)).or_insert(0);

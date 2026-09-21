@@ -16,7 +16,7 @@ use bevy::picking::hover::Hovered;
 use bevy::picking::{Pickable, PickingSystems};
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::text::{LineBreak, TextLayout};
 use bevy::time::Time;
 use bevy::ui::{
@@ -69,8 +69,8 @@ pub struct PlumeTabsProps {
 impl Default for PlumeTabsProps {
     fn default() -> Self {
         Self {
-            header: Box::new(()),
-            body: Box::new(()),
+            header: Box::new(bsn_list! {}),
+            body: Box::new(bsn_list! {}),
         }
     }
 }
@@ -125,7 +125,7 @@ pub struct PlumeTabProps {
 impl Default for PlumeTabProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(()),
+            caption: Box::new(bsn_list! {}),
             target: EntityTemplate::default(),
         }
     }

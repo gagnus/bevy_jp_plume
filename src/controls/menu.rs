@@ -217,10 +217,10 @@ pub(crate) fn imm_menu_anchor(
         @menu_button_row(label, shortcut)
         MenuSelfManaged
         role
-        @{bar.then(|| bsn! { MenuButton })}
-        @{item.then(|| bsn! { MenuItem })}
+        @{bar.then_some(bsn! { MenuButton })}
+        @{item.then_some(bsn! { MenuItem })}
         @{submenu.then(|| bsn! { AccessibilityNode(accesskit::Node::new(Role::MenuItem)) })}
-        @{checkable.then(|| bsn! { Checkable })}
+        @{checkable.then_some(bsn! { Checkable })}
     }
 }
 
@@ -280,7 +280,7 @@ pub(crate) fn imm_menu_frame(
         MenuAnchorLink(anchor)
         popover_for(role)
         on(imm_frame_on_menu_event)
-        @{(!submenu).then(|| bsn! { MenuPopup })}
+        @{(!submenu).then_some(bsn! { MenuPopup })}
         @{submenu.then(|| bsn! {
             TabGroup::modal()
             AccessibilityNode(accesskit::Node::new(Role::MenuListPopup))

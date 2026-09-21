@@ -51,7 +51,7 @@ pub struct PlumeCheckboxProps {
 impl Default for PlumeCheckboxProps {
     fn default() -> Self {
         Self {
-            caption: Box::new(()),
+            caption: Box::new(bsn_list! {}),
         }
     }
 }

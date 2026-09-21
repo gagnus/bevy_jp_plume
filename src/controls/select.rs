@@ -226,8 +226,8 @@ fn option_rows(options: &[(String, bool)], selected: usize) -> Box<dyn SceneList
                 bsn! {
                     @option_row(label)
                     SelectOptionIndex(index)
-                    @{disabled.then(|| bsn! { InteractionDisabled })}
-                    @{(index == selected).then(|| bsn! { Selected })}
+                    @{disabled.then_some(bsn! { InteractionDisabled })}
+                    @{(index == selected).then_some(bsn! { Selected })}
                 }
             })
             .collect::<Vec<_>>(),
@@ -249,7 +249,7 @@ struct PlumeSelectOptionsProps {
 impl Default for PlumeSelectOptionsProps {
     fn default() -> Self {
         Self {
-            options: Box::new(()),
+            options: Box::new(bsn_list! {}),
         }
     }
 }

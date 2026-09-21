@@ -18,7 +18,7 @@ use bevy::picking::events::{
 use bevy::picking::hover::Hovered;
 use bevy::reflect::Reflect;
 use bevy::reflect::prelude::ReflectDefault;
-use bevy::scene::{Scene, SceneComponent, SceneList, bsn, on};
+use bevy::scene::{Scene, SceneComponent, SceneList, bsn, bsn_list, on};
 use bevy::text::{EmSize, RemSize};
 use bevy::ui::{
     AlignItems, ComputedNode, ComputedUiRenderTargetInfo, Display, FlexDirection,
@@ -56,7 +56,7 @@ pub struct PlumeReorderableProps {
 impl Default for PlumeReorderableProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(()),
+            contents: Box::new(bsn_list! {}),
         }
     }
 }
@@ -90,7 +90,7 @@ pub struct PlumeReorderableItemProps {
 impl Default for PlumeReorderableItemProps {
     fn default() -> Self {
         Self {
-            contents: Box::new(()),
+            contents: Box::new(bsn_list! {}),
         }
     }
 }
