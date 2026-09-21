@@ -244,9 +244,9 @@ fn update_radio_styles(
         ),
         (
             With<RadioButton>,
-            // Added<PlumeRadio> guarantees the initial style pass on spawn.
+            // Added<RadioButton> guarantees the initial style pass on spawn.
             Or<(
-                Added<PlumeRadio>,
+                Added<RadioButton>,
                 Added<Checked>,
                 Added<InteractionDisabled>,
             )>,
