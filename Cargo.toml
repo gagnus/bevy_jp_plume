@@ -2,12 +2,12 @@
 name = "bevy_jp_plume"
 version = "0.20.0"
 edition = "2024"
-description = "Plume: a bevy_ui control framework for game editors"
+description = "Plume: bevy_ui controls with an immediate-mode front end, for game debug and editor UI"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
 # bevy umbrella (path dep into the local fork; uses main-only APIs).
-# default-features off keeps the pull lean — only the crates plume's controls
+# default-features off keeps the pull lean: only the crates plume's controls
 # reference are enabled. `ui_picking` forwards to bevy_ui + bevy_input_focus's
 # picking backends; `bevy_window` is what re-exports `bevy::a11y`.
 bevy = { path = "../3rdParty/bevy", default-features = false, features = [

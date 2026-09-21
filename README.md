@@ -7,18 +7,71 @@ Original code MIT OR Apache-2.0 (see LICENSE-MIT / LICENSE-APACHE).
 
 See CLAUDE.md for the design rules that distinguish Plume from feathers.
 
+## Quick start
+
+Add `PlumePlugins`, then describe your UI from an ordinary system. Call the
+widgets every frame; Plume keeps the real ones on screen in step:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_jp_plume::prelude::*;
+
+#[derive(Resource, Clone, PartialEq)]
+struct Audio {
+    open: bool,
+    volume: f32,
+    muted: bool,
+}
+
+fn audio_dialog(mut root: PlumeRoot, mut audio: ResMut<Audio>) {
+    // Edit a copy, so bevy only sees the resource change when something did.
+    let mut a = audio.clone();
+    root.dialog("Audio", &mut a.open).show(|ui| {
+        ui.horizontal(|ui| {
+            ui.caption("Volume");
+            ui.slider(&mut a.volume, 0.0..=1.0).enabled(!a.muted);
+        });
+        ui.checkbox(&mut a.muted, "Mute");
+        if ui.button("Reset").clicked {
+            a.volume = 0.5;
+            a.muted = false;
+        }
+    });
+    audio.set_if_neq(a);
+}
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PlumePlugins))
+        .insert_resource(Audio { open: true, volume: 0.5, muted: false })
+        .add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Camera2d);
+        })
+        .add_systems(Update, audio_dialog)
+        .run();
+}
+```
+
+The `imm` module docs explain what is going on underneath. To see everything
+at once, run the showcase:
+
+```sh
+cargo run --example showcase
+```
+
 ## Screenshots
 
-The showcase example — the feature dialogs floating over the debug hub:
+The showcase example: the feature dialogs floating over the debug hub:
 
 ![The showcase example: feature dialogs over the debug hub](docs/showcase.png)
 
-The gallery example — every control in its enabled and disabled state, on each
+The gallery example: every control in its enabled and disabled state, on each
 of the three neutral surfaces:
 
 ![The gallery example: all controls across the three neutral surfaces](docs/gallery.png)
 
-The inspector_panel example — a docked editor panel built from tabs, splitter,
+The inspector_panel example (available as imm version by default and a retained copy 
+to see the difference): a docked editor panel built from tabs, splitter,
 sections and the color widgets:
 
 ![The inspector_panel example: a docked editor panel](docs/inspector_panel.png)
@@ -33,7 +86,7 @@ Every widget is available in both modes: retained scenes built with `bsn!`
 (names from `bevy_jp_plume::retained`; `PlumeXxx` is a scene component spawned
 as `@PlumeXxx { … }` with a matching `PlumeXxxProps`, lowercase names are scene
 functions spawned as `@name(…)`), and immediate mode (from
-`bevy_jp_plume::prelude`). `—` marks a side that has no public counterpart.
+`bevy_jp_plume::prelude`).
 
 In the immediate column:
 
@@ -79,7 +132,7 @@ In the immediate column:
 | Color swatch | `PlumeColorSwatch` | `ui.color_swatch(color)` (`_rgb` variant) |
 | Disclosure | `PlumeDisclosure` | `ui.disclosure(&mut open)` |
 | Menu | `PlumeMenuBar`, `PlumeMenuButton`, `menu_anchor()` | `ui.menu_bar(\|bar\| …)` |
-| Scrollbar | `PlumeScrollbar` | — (scroll areas manage their own) |
+| Scrollbar | `PlumeScrollbar` | none (scroll areas manage their own) |
 
 ### Display
 
@@ -92,6 +145,20 @@ In the immediate column:
 | Flex spacer | `flex_spacer()` | `ui.flex_spacer()` |
 | Tooltip | `Tooltip("text")` / `TooltipContent` components on the target control | `response.tooltip("text")` / `response.tooltip_container(\|ui\| …)` |
 | Tooltip, only when clipped | `TooltipWhenClipped("text")` on the text | `response.tooltip_if_clipped("text")` |
+
+## Credits
+
+Plume stands on two other projects:
+
+- [bevy_feathers](https://github.com/bevyengine/bevy/tree/main/crates/bevy_feathers),
+  Bevy's own widget set, created by Talin ([@viridia](https://github.com/viridia))
+  and built up by the Bevy contributors (MIT OR Apache-2.0). Plume's controls
+  and theming started life as a fork of it, and still sit on Bevy's headless
+  `bevy_ui_widgets` for their behavior.
+- [bevy_immediate](https://github.com/PPakalns/bevy_immediate) by Pēteris
+  Pakalns (MIT). It is the engine under Plume's immediate mode: it keeps track
+  of which call made which widget, spawns and removes them, and leaves Plume to
+  supply the widgets themselves.
 
 ## Fonts
 

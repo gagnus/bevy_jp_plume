@@ -1,5 +1,136 @@
-//! Immediate-mode API: write plain systems taking [`Ui`] and call widgets on it;
-//! a reconciler maps the calls onto retained plume scenes.
+//! Immediate-mode UI: describe your UI every frame from an ordinary system, and
+//! plume keeps the real widgets on screen in step with it.
+//!
+//! If you have used egui or Dear ImGui this will feel familiar. You don't spawn
+//! widgets, hold on to them, or listen for their events. You call
+//! `ui.slider(&mut volume, 0.0..=1.0)` every frame: the slider shows `volume`, and
+//! when the user drags it, `volume` changes.
+//!
+//! # A first dialog
+//!
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy_jp_plume::prelude::*;
+//!
+//! #[derive(Resource, Clone, PartialEq)]
+//! struct Audio {
+//!     open: bool,
+//!     volume: f32,
+//!     muted: bool,
+//! }
+//!
+//! fn audio_dialog(mut root: PlumeRoot, mut audio: ResMut<Audio>) {
+//!     // Edit a copy, so bevy only sees the resource change when something did.
+//!     let mut a = audio.clone();
+//!     root.dialog("Audio", &mut a.open).show(|ui| {
+//!         ui.horizontal(|ui| {
+//!             ui.caption("Volume");
+//!             ui.slider(&mut a.volume, 0.0..=1.0).enabled(!a.muted);
+//!         });
+//!         ui.checkbox(&mut a.muted, "Mute");
+//!         if ui.button("Reset").clicked {
+//!             a.volume = 0.5;
+//!             a.muted = false;
+//!         }
+//!     });
+//!     audio.set_if_neq(a);
+//! }
+//!
+//! fn main() {
+//!     App::new()
+//!         .add_plugins((DefaultPlugins, PlumePlugins))
+//!         .insert_resource(Audio { open: true, volume: 0.5, muted: false })
+//!         .add_systems(Startup, |mut commands: Commands| {
+//!             commands.spawn(Camera2d);
+//!         })
+//!         .add_systems(Update, audio_dialog)
+//!         .run();
+//! }
+//! ```
+//!
+//! Three names cover most of it:
+//!
+//! - [`PlumeRoot`] is what your system asks for. It opens the things that sit
+//!   straight on the screen: a [`screen`](PlumeRoot::screen), a
+//!   [`dialog`](PlumeRoot::dialog), a [`modal`](PlumeRoot::modal) or a
+//!   [`panel`](PlumeRoot::panel).
+//! - [`Ui`] is what each of those hands to your closure. Every widget is a method
+//!   on it, and containers such as `horizontal` or `section` pass a `Ui` on to a
+//!   closure of their own. The methods live in the [`PlumeImm`] trait, which the
+//!   prelude brings in.
+//! - [`ImmResponse`] is what every widget call gives back. Ask it what happened
+//!   (`.clicked`, `.changed`) or tack on extras (`.enabled(false)`,
+//!   `.tooltip("…")`).
+//!
+//! # What happens behind the scenes
+//!
+//! Unlike egui, nothing is rebuilt from scratch each frame. The first time a
+//! widget call runs, plume spawns a real `bevy_ui` widget for it. On later frames
+//! the same call finds that same widget again and only updates what is different.
+//! When a frame goes by without the call being made, the widget is removed.
+//!
+//! That bookkeeping is the work of [bevy_immediate], credited [below].
+//!
+//! Two things follow from that:
+//!
+//! - Widgets remember things for you. A dialog stays where the user dragged it, a
+//!   scroll area keeps its place, a text box keeps its cursor. None of it needs
+//!   storing on your side.
+//! - Showing something only some of the time is just an `if`. Skip the call and
+//!   the widget goes away; make it again and a fresh one appears. Dialogs lean on
+//!   the same idea: `root.dialog(title, &mut open)` shows nothing while `open` is
+//!   false, and the ✕ button sets it to false for you.
+//!
+//! # How plume tells widgets apart
+//!
+//! A widget is recognized by the line of code that made it and the container it
+//! is in. That is why an `if` around one widget doesn't disturb the ones after
+//! it. A call inside a loop makes one widget each time round, told apart by
+//! order: first, second, third.
+//!
+//! Order is the wrong thing to go by when the list itself gets shuffled, or loses
+//! entries from the middle - the third widget's memory would end up attached to a
+//! different item. Wrap each entry in [`push_id`](PlumeImm::push_id) with
+//! something that names the item (an id, a key) and its widgets follow the item
+//! instead.
+//!
+//! # Who wins, you or the user?
+//!
+//! Widgets that edit a value work in both directions, so there has to be a rule
+//! for when both sides want to change it:
+//!
+//! - Whatever the user does always reaches your value, and `.changed` is true on
+//!   the frame it lands.
+//! - When you change the value yourself, the widget updates to show it.
+//! - The exception is while the user is in the middle of something - dragging a
+//!   slider, typing in a text box. Your change is held back until they finish, so
+//!   the widget never jumps out from under their hands.
+//!
+//! # When plume doesn't have the widget you need
+//!
+//! [`scene`](PlumeImm::scene) drops a hand-built `bsn!` scene into the middle of
+//! an immediate-mode layout, and [`retained`](crate::retained) has the building
+//! blocks to make one from - the same ones every widget here is made of.
+//!
+//! # Built on bevy_immediate
+//!
+//! The immediate-mode engine underneath this module is [bevy_immediate] by
+//! Pēteris Pakalns, used under its MIT license. It does the part described in
+//! "What happens behind the scenes": remembering which call made which entity,
+//! spawning one the first time a call is seen, and removing it when the call
+//! stops coming. Plume could not have been written this way without it.
+//!
+//! What plume adds on top is everything specific to its own widgets: the widget
+//! methods themselves, the theming, the who-wins rules for values, and telling
+//! repeated calls in a loop apart.
+//!
+//! Plume keeps bevy_immediate out of sight so that an app only ever imports
+//! `bevy_jp_plume`, which means you won't meet its types here. If what you want is
+//! immediate mode over your own `bevy_ui` widgets rather than plume's, go straight
+//! to bevy_immediate - it is built to be extended that way.
+//!
+//! [bevy_immediate]: https://github.com/PPakalns/bevy_immediate
+//! [below]: #built-on-bevy_immediate
 mod caps;
 mod data;
 mod response;

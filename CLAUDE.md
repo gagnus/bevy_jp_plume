@@ -8,7 +8,7 @@ Forked from `bevy_feathers` and diverging deliberately.
 
 ## Plume rules (non-negotiable)
 
-### Comments: very, very minimal — HARD LIMIT
+### Comments: very, very minimal (HARD LIMIT)
 
 The Comments section of code_rules.md applies at maximum strictness. Never
 write plan/step references ("implements step 2"), history or attribution
@@ -27,7 +27,7 @@ reach down (e.g. `RadioGroup`), plume provides its own variant.
 ### Controls work when dropped in
 
 Every control must behave sensibly with nothing but its `@PlumeX { ... }`
-constructor — no obscure companion components required. Controls
+constructor, with no obscure companion components required. Controls
 self-update their own value (still emitting `ValueChange`); app-vs-widget
 conflicts are arbitrated by the immediate-mode layer, not per-entity markers.
 
@@ -53,10 +53,10 @@ Tabbable entities need a `TabGroup` ancestor: `PlumeDialog` carries one,
 app-built root panels add their own (re-exported at the crate root).
 Disabled controls leave the Tab order (`FocusPlugin` swaps `TabIndex` to
 -1 and back). Without a `TabIndex`, `PointerFocusPlugin` blurs on every
-press and focus-dependent widgets break — every control keeps one.
+press and focus-dependent widgets break, so every control keeps one.
 
 ## Layout
 
 `src/controls/`, `src/theme/` (palette → slot → token pipeline),
 `src/utils/` (cursor, fonts, corners, constants), `src/imm/`
-(immediate-mode API — the public surface), `src/display/`, `src/containers/`.
+(immediate-mode API, the public surface), `src/display/`, `src/containers/`.

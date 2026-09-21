@@ -1,7 +1,21 @@
-//! Plume: styled, themed bevy::ui controls for game editors, forked from `bevy_feathers`.
+//! Plume: debug and editor UI for bevy games. Themed `bevy_ui` controls with an
+//! immediate-mode front end, in the spirit of egui and Dear ImGui. The controls
+//! began as a fork of `bevy_feathers`, and the immediate mode is built on
+//! [bevy_immediate](https://github.com/PPakalns/bevy_immediate) by Pēteris Pakalns.
 //!
-//! Controls self-update their own value and work when simply dropped into a dialog.
-//! The parametric theme pipeline (palette → slot → token) styles everything.
+//! To get going, add [`PlumePlugins`], bring in the [`prelude`], and write a system
+//! that takes a [`PlumeRoot`](imm::PlumeRoot). The [`imm`] page walks through a
+//! first dialog.
+//!
+//! - [`imm`] is the everyday API: call widgets from a system, every frame.
+//! - [`retained`] is what `imm` is built from - the widgets themselves, as `bsn!`
+//!   scenes. Reach for it to build something `imm` doesn't offer.
+//! - [`theme`] is color. One small palette drives every control, so a whole new
+//!   look is a few numbers.
+//! - [`style`] is shape: sizes, fonts, icons and the button variants.
+//!
+//! Every control looks after its own value and works as soon as it is dropped into
+//! a dialog, with nothing extra to wire up.
 
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
@@ -99,3 +113,8 @@ impl PluginGroup for PlumePlugins {
         PluginGroupBuilder::start::<Self>().add(PlumeCorePlugin)
     }
 }
+
+// Compiles the README's code blocks under `cargo test --doc`.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;
