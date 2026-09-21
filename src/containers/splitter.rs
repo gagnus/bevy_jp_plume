@@ -328,12 +328,12 @@ struct SplitDivider {
     drag_px: f32,
 }
 
-// The grab strip, with the hairline centred inside it. Wider than the line it draws,
+// The grab strip, with the hairline centered inside it. Wider than the line it draws,
 // so it can be grabbed without being a gutter: positioned *over* the seam rather than
 // in the flow, leaving the panes flush and their shares summing to the whole.
 pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
     let cursor = axis.cursor();
-    // Along the axis: the grab width, centred on the seam by `apply_split`.
+    // Along the axis: the grab width, centered on the seam by `apply_split`.
     // Across it: pinned to both edges, so the strip spans the splitter.
     let (width, height) = match axis {
         SplitAxis::Horizontal => (DIVIDER_GRAB, Val::Auto),
@@ -807,7 +807,7 @@ fn drag_divider(
     let pointer = base + travel;
     divider.drag_px = pointer;
 
-    // An over-constrained splitter cannot honour both floors; the first pane
+    // An over-constrained splitter cannot honor both floors; the first pane
     // keeps its own and the second gives, which is what flexbox does anyway.
     let (seam, closed) = if collapse.first && pointer < low * COLLAPSE_POINT {
         (0.0, Some(SplitPane::First))

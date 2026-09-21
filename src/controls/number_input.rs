@@ -479,7 +479,7 @@ fn scrubber_on_drag_end(
     }
 }
 
-// End of the press: a release that never travelled past the click threshold
+// End of the press: a release that never traveled past the click threshold
 // focuses the field (select-all comes from `SelectAllOnFocus`); a scrub does not.
 fn scrubber_on_release(
     mut release: On<PointerRelease>,

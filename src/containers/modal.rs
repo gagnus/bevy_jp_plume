@@ -1,4 +1,4 @@
-//! Modal dialog: a frame centred over a barrier that blocks the app behind it.
+//! Modal dialog: a frame centered over a barrier that blocks the app behind it.
 use bevy::app::{App, Plugin};
 use bevy::camera::visibility::Visibility;
 use bevy::color::Color;
@@ -115,7 +115,7 @@ pub fn modal_title(title: impl Into<String>) -> impl Scene {
 }
 
 // The scrim: a full-viewport layout root that blocks the app behind it and
-// centres the frame on it. `ModalDialogBarrier` is what earns bevy's
+// centers the frame on it. `ModalDialogBarrier` is what earns bevy's
 // outside-click, Escape and focus handling.
 pub(crate) fn modal_barrier() -> impl Scene {
     bsn! {

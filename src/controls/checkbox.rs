@@ -329,7 +329,7 @@ fn set_checkbox_styles(
         false => bevy::window::SystemCursorIcon::Pointer,
     };
 
-    // Gradient only when ticked; the unticked fill is transparent.
+    // Gradient only when checked; the unchecked fill is transparent.
     let bg_amount = if checked {
         GradientAmount::STANDARD
     } else {

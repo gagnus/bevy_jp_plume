@@ -274,7 +274,7 @@ pub(crate) fn tab_chrome() -> impl Scene {
         TabIndex(0)
         FocusIndicator
         // A tab fills its strip's height, so an outset ring is clipped away by the
-        // strip's scroll frame on every edge but the ones lapping its neighbours.
+        // strip's scroll frame on every edge but the ones lapping its neighbors.
         InsetFocusRing
         EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
         ThemeBackgroundToken(tokens::TAB_BG)

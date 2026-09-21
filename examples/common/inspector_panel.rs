@@ -168,7 +168,7 @@ impl Documents {
         let closed = self.open.remove(index);
         info!("closed document {}", closed.name);
         if self.active == Some(id) {
-            // The neighbour that slid into its place, or the new last one.
+            // The neighbor that slid into its place, or the new last one.
             self.active = self
                 .open
                 .get(index)
@@ -522,9 +522,9 @@ fn document_strip(ui: &mut Ui, documents: &mut Documents) {
     }
 }
 
-/// The viewport's colour for a document: a hue per id, so switching documents
+/// The viewport's color for a document: a hue per id, so switching documents
 /// shows in the pane itself and not only in the strip. Shared with the retained
-/// twin, which has to write the same colour by hand.
+/// twin, which has to write the same color by hand.
 pub fn viewport_color(id: DocId) -> Color {
     Color::hsv(
         StdRng::seed_from_u64(id.0 as u64).random_range(0.0..360.0),

@@ -321,15 +321,15 @@ fn drag_start_grip(
         lift_px: 0.0,
         slot: spans[index].1,
     });
-    // Lifted out of document order, or the neighbour it is dragged over paints on
+    // Lifted out of document order, or the neighbor it is dragged over paints on
     // top of it.
     commands.entity(item).insert(ZIndex(1));
 }
 
 // The gesture: pointer travel grows the lift; once the lift passes half the
-// distance a step would move the item, the item steps past that neighbour and
+// distance a step would move the item, the item steps past that neighbor and
 // the lift is rebased by the step, so the item stays under the pointer. Steps
-// work on a snapshot of the neighbours' rects, moved arithmetically, since the
+// work on a snapshot of the neighbors' rects, moved arithmetically, since the
 // layout has not seen the swap yet.
 fn drag_grip(
     mut drag: On<PointerDrag>,
@@ -380,7 +380,7 @@ fn drag_grip(
     let mut moved: Option<ReorderMove> = None;
     loop {
         if let Some(&(below, below_span)) = spans.get(index + 1) {
-            // Moving down: the item lands where the neighbour ends.
+            // Moving down: the item lands where the neighbor ends.
             let shift = below_span.bottom - slot.bottom;
             if shift > 0.0 && lift_px > shift / 2.0 {
                 lift_px -= shift;
@@ -407,7 +407,7 @@ fn drag_grip(
         }
         if index > 0 {
             let (above, above_span) = spans[index - 1];
-            // Moving up: the item lands where the neighbour starts.
+            // Moving up: the item lands where the neighbor starts.
             let shift = slot.top - above_span.top;
             if shift > 0.0 && lift_px < -shift / 2.0 {
                 lift_px += shift;
@@ -435,7 +435,7 @@ fn drag_grip(
         break;
     }
 
-    // Past either end there is no neighbour to step past, so the lift would only
+    // Past either end there is no neighbor to step past, so the lift would only
     // carry the item out over chrome; it gets the list's padding plus
     // `OVERSHOOT`. Clamping the stored lift, not the transform, means the way
     // back answers at once.
@@ -494,7 +494,7 @@ fn drag_end_grip(
     }
 }
 
-// A cancelled pointer drops the item wherever the order currently has it.
+// A canceled pointer drops the item wherever the order currently has it.
 fn cancel_grip(
     cancel: On<PointerCancel>,
     q_child_of: Query<&ChildOf>,

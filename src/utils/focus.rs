@@ -33,7 +33,7 @@ pub struct FocusWithinIndicator;
 
 /// Modifier for either indicator: draw the ring inside the entity's box. For a
 /// control whose container clips the clearance an outset ring needs - a tab in
-/// its strip, say, where an outset ring survives only where it laps a neighbour.
+/// its strip, say, where an outset ring survives only where it laps a neighbor.
 #[derive(Component, Default, Clone, Reflect)]
 #[reflect(Component, Clone, Default)]
 pub struct InsetFocusRing;

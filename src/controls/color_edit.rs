@@ -385,7 +385,7 @@ fn sync_disabled(
     }
 }
 
-// Fulfil an outside-press close request on this control's popup.
+// Fulfill an outside-press close request on this control's popup.
 fn on_popup_close_requested(
     ev: On<Add<CloseRequested>>,
     q_popup: Query<(), With<ColorEditPopup>>,

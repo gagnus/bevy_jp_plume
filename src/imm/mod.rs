@@ -193,9 +193,9 @@ impl<'w, 's> PlumeRoot<'w, 's> {
         self.imm.dialog(title, open)
     }
 
-    /// Modal dialog - centred over a barrier that blocks the app behind it until
+    /// Modal dialog - centered over a barrier that blocks the app behind it until
     /// it is answered. The same [`ImmDialog`] builder in its [`Modal`] mode, minus
-    /// the placement and drag a centred surface has no use for.
+    /// the placement and drag a centered surface has no use for.
     #[track_caller]
     pub fn modal<'a>(
         &'a mut self,

@@ -167,7 +167,7 @@ fn attach_checker(
     }
 }
 
-// The classic two-grey transparency checker, one 2×2 pattern tile.
+// The classic two-gray transparency checker, one 2×2 pattern tile.
 fn checker_image() -> Image {
     const QUAD: usize = 4;
     const SIDE: usize = QUAD * 2;

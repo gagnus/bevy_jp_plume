@@ -102,7 +102,7 @@ pub trait PlumeImm<'w, 's> {
 
     /// A push button whose content is built by `f` instead of a single label.
     /// The row it lays that content out in is the app's: chain `.padding()` and
-    /// `.gap()`, which a labelled button doesn't take.
+    /// `.gap()`, which a labeled button doesn't take.
     fn button_container(
         &mut self,
         f: impl FnOnce(&mut Ui<'w, 's>),
@@ -319,7 +319,7 @@ impl<'w, 's> Ui<'w, 's> {
             layout: DialogLayout {
                 width: Val::Auto,
                 height: Val::Auto,
-                // A modal is centred on its barrier, so its ceiling is that box
+                // A modal is centered on its barrier, so its ceiling is that box
                 // and it leaves the inset for the barrier's flex to resolve.
                 max_height: Val::Percent(100.0),
                 inset: UiRect::AUTO,
@@ -1345,7 +1345,7 @@ impl<T> ImmTab<'_, '_, '_, '_, T, tab_header::Labeled> {
 /// A dialog the app places and the user drags - [`ImmDialog`]'s default mode.
 pub struct Floating;
 
-/// A dialog centred on a barrier that blocks the app behind it, answered before
+/// A dialog centered on a barrier that blocks the app behind it, answered before
 /// the app behind it can be touched.
 pub struct Modal;
 
@@ -1353,7 +1353,7 @@ pub struct Modal;
 /// mode that can hang off another entity's rect, via [`ImmDialog::at_corner_of`].
 pub struct Panel;
 
-/// Modes the app positions itself. Excludes [`Modal`], which its barrier centres.
+/// Modes the app positions itself. Excludes [`Modal`], which its barrier centers.
 pub trait Placed {}
 impl Placed for Floating {}
 impl Placed for Panel {}
@@ -1416,7 +1416,7 @@ impl<'e, 'w, 's, M> ImmDialog<'e, 'w, 's, M> {
 }
 
 // Placement. Not a modal's: it would work - the frame is absolute inside its
-// barrier - but one placed off-centre is a different widget, and the mode is
+// barrier - but one placed off-center is a different widget, and the mode is
 // what holds that rule.
 impl<'e, 'w, 's, M: Placed> ImmDialog<'e, 'w, 's, M> {
     /// Position from the viewport's top-left (default `120, 120` for a dialog).
@@ -1525,7 +1525,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Modal> {
             barrier.entity_commands().despawn();
             return None;
         }
-        // The frame is the barrier's child, which is what centres it, so the body
+        // The frame is the barrier's child, which is what centers it, so the body
         // reconciles a level below the entity this mode owns.
         let barrier = barrier.add_ui(move |ui| {
             let frame = ui.ch_id("modal_frame").on_spawn_apply_scene(move || {
@@ -1553,7 +1553,7 @@ impl<'e, 'w, 's> ImmDialog<'e, 'w, 's, Panel> {
 
     /// Paint the panel from a theme slot in place of the dialog background.
     /// A panel's only, since a dialog's header keeps its own fill: a body
-    /// recoloured under a themed header is a different widget.
+    /// recolored under a themed header is a different widget.
     pub fn background_slot(mut self, slot: ThemeSlot) -> Self {
         self.style.background = Some(FrameBackground::Slot(slot));
         self
@@ -1605,7 +1605,7 @@ fn surface_id(caller: &'static Location<'static>, title: &str, anchored: bool) -
 }
 
 // Which surface a frame is being built for. The chrome is otherwise identical:
-// what differs - the inset a modal leaves `Auto` for its barrier to centre on,
+// what differs - the inset a modal leaves `Auto` for its barrier to center on,
 // the drag a pinned surface does without - is already settled in `layout`.
 #[derive(Clone, Copy, PartialEq)]
 enum SurfaceChrome {

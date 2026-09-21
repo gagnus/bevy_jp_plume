@@ -142,10 +142,10 @@ fn bridge_floating_anchor_style(
 /// Where a popup opens relative to its anchor.
 #[derive(Default, Clone, Copy, PartialEq)]
 pub enum PopupPlacement {
-    /// Below the anchor, centred; slides along it, then flips above, then beside.
+    /// Below the anchor, centered; slides along it, then flips above, then beside.
     #[default]
     Below,
-    /// Beside the anchor, centred; slides along it, tries right, left, then
+    /// Beside the anchor, centered; slides along it, tries right, left, then
     /// below, above.
     Beside,
 }
@@ -291,7 +291,7 @@ impl PlumePopup {
 // Auto-placement candidates for a [`PopupPlacement`], tried in order. `Popover`
 // measures them against the popup's parent - the socket, i.e. the anchor rect -
 // and takes the first that fits, never sliding one that does not: so each side
-// is offered centred, then aligned to either end, before the next side.
+// is offered centered, then aligned to either end, before the next side.
 fn popover_for(placement: PopupPlacement, place_very_close: bool) -> Popover {
     let sides = match placement {
         PopupPlacement::Below => &[
