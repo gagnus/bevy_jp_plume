@@ -32,7 +32,7 @@ is being counted or held.
 
 Acceptable exceptions:
 
-- Idiomatic maths: `x, y, z` for coordinates, `u, v` for UVs, `dx/dy`
+- Idiomatic math: `x, y, z` for coordinates, `u, v` for UVs, `dx/dy`
   for deltas, `n` for a surface normal when context is unambiguous.
 - Closure arguments used on the very next line when the element type
   is already obvious (`parts.iter().map(|part| part.id)` is fine;
