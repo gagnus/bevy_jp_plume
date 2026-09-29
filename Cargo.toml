@@ -4,9 +4,18 @@ version = "0.20.0"
 edition = "2024"
 description = "Plume: bevy_ui controls with an immediate-mode front end, for game debug and editor UI"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/gagnus/bevy_jp_plume"
+readme = "README.md"
+keywords = ["bevy", "ui", "gui", "immediate-mode", "widgets"]
+categories = ["game-development", "gui"]
+# bevy_immediate's MSRV, above bevy's 1.96.
+rust-version = "1.97"
+# README.md must stay in the package: lib.rs includes it for doctests. The README's
+# docs/*.png screenshots resolve against `repository` on crates.io.
+exclude = ["/docs", "/CLAUDE.md", "/.cargo"]
 
 [dependencies]
-# bevy umbrella (path dep into the local fork; uses main-only APIs).
+# bevy umbrella (path dep on a local release-0.20.0 checkout until 0.20 ships).
 # default-features off keeps the pull lean: only the crates plume's controls
 # reference are enabled. `ui_picking` forwards to bevy_ui + bevy_input_focus's
 # picking backends; `bevy_window` is what re-exports `bevy::a11y`.
@@ -26,7 +35,8 @@ bevy = { path = "../3rdParty/bevy", default-features = false, features = [
 ] }
 smol_str = { version = "0.2", default-features = false }
 
-# immediate-mode reconciler under `src/imm` (vendored fork wired to the bevy fork above)
+# immediate-mode reconciler under `src/imm` (local bevy-0.20 checkout, its bevy deps
+# pointed at the checkout above)
 bevy_immediate = { path = "../3rdParty/bevy_immediate", default-features = false, features = [
   "ui",
   "bevy_ui_widgets",
