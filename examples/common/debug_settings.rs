@@ -1,8 +1,8 @@
 //! Debug-menu dialog as a self-contained feature plugin: two columns of rendering,
 //! physics, interface, diagnostics and cheats controls, backed by one resource.
 use bevy::prelude::*;
-use bevy_jp_plume::imm::{ImmResponse, ImmSelect, kind};
-use bevy_jp_plume::prelude::*;
+use bevy_plume::imm::{ImmResponse, ImmSelect, kind};
+use bevy_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::{Options, log_on_change};

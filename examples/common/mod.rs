@@ -6,8 +6,8 @@
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
-use bevy_jp_plume::theme::palettes;
+use bevy_plume::prelude::*;
+use bevy_plume::theme::palettes;
 
 use crate::common::debug_hub::DebugDialogRegistry;
 use crate::common::gallery::GalleryPlugin;

@@ -1,10 +1,10 @@
 [package]
-name = "bevy_jp_plume"
+name = "bevy_plume"
 version = "0.20.0"
 edition = "2024"
 description = "Plume: bevy_ui controls with an immediate-mode front end, for game debug and editor UI"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/gagnus/bevy_jp_plume"
+repository = "https://github.com/gagnus/bevy_plume"
 readme = "README.md"
 keywords = ["bevy", "ui", "gui", "immediate-mode", "widgets"]
 categories = ["game-development", "gui"]

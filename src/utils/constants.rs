@@ -3,13 +3,13 @@
 /// Font asset paths
 pub mod fonts {
     /// Default regular font path
-    pub const REGULAR: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSans-Regular.ttf";
+    pub const REGULAR: &str = "embedded://bevy_plume/assets/fonts/NotoSans-Regular.ttf";
     /// Bold font path
-    pub const BOLD: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSans-Bold.ttf";
+    pub const BOLD: &str = "embedded://bevy_plume/assets/fonts/NotoSans-Bold.ttf";
     /// Monospace font path
-    pub const MONOSPACE: &str = "embedded://bevy_jp_plume/assets/fonts/NotoSansMono-Regular.ttf";
+    pub const MONOSPACE: &str = "embedded://bevy_plume/assets/fonts/NotoSansMono-Regular.ttf";
     /// Lucide
-    pub const LUCIDE: &str = "embedded://bevy_jp_plume/assets/fonts/Lucide.ttf";
+    pub const LUCIDE: &str = "embedded://bevy_plume/assets/fonts/Lucide.ttf";
 }
 
 /// Size constants.

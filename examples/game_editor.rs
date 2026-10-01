@@ -1,6 +1,6 @@
 //! A full-screen "mock" game editor built entirely from plume primitives.
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
+use bevy_plume::prelude::*;
 
 #[path = "common/mod.rs"]
 mod common;

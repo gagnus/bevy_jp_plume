@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::ecs::system::ScheduleSystem;
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
+use bevy_plume::prelude::*;
 
 /// Open/closed state for every registered dialog, keyed by title.
 #[derive(Resource, Default)]

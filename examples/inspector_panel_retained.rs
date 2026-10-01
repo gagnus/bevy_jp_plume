@@ -2,8 +2,8 @@
 //! the same `Inspector` resource, bound with `on()` observers instead of imm's `&mut`.
 #![allow(clippy::type_complexity)]
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
-use bevy_jp_plume::retained::{
+use bevy_plume::prelude::*;
+use bevy_plume::retained::{
     Activate, Checkable, Checked, Flat, InteractionDisabled, PlumeButton, PlumeColorEdit,
     PlumeColorPicker, PlumeColorSwatch, PlumeDialog, PlumeDisclosure, PlumeMenuBar,
     PlumeMenuButton, PlumeModal, PlumeRadio, PlumeRadioGroup, PlumeReorderable,

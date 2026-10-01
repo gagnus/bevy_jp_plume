@@ -1,7 +1,7 @@
 //! Control gallery feature plugin: a 3-by-2 grid of "one of each control" cards over
 //! the three neutral surface slots, enabled and disabled. The `showcase` backdrop.
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
+use bevy_plume::prelude::*;
 
 use super::log_on_change;
 

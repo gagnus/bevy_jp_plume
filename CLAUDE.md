@@ -1,4 +1,4 @@
-# bevy_jp_plume ("Plume")
+# bevy_plume ("Plume")
 
 A bevy_ui control framework with an immediate mode front-end for game debug UI. 
 Forked from `bevy_feathers` and diverging deliberately.
@@ -18,7 +18,7 @@ write no comment.
 
 ### Plume-only surface
 
-Apps import only `bevy_jp_plume`. Never require a consumer to mix plume
+Apps import only `bevy_plume`. Never require a consumer to mix plume
 types with the underlying `bevy_ui_widgets` types. Everything an app
 legitimately touches (`Checked`, `Selected`, `SliderValue`, `ValueChange`,
 `Activate`, ...) is re-exported or wrapped here. Where feathers made apps

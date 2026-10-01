@@ -1,7 +1,7 @@
 //! Player-profile dialog as a self-contained feature plugin: text/choice fields laid
 //! out on a single label gutter, grouped under flat section headers.
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
+use bevy_plume::prelude::*;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 use super::log_on_change;

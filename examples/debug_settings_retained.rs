@@ -1,8 +1,8 @@
 //! Retained (bsn!) twin of the `debug_settings` example: the same panel over the
 //! same `DebugSettings` resource, bound with `on()` observers instead of imm's `&mut`.
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
-use bevy_jp_plume::retained::{
+use bevy_plume::prelude::*;
+use bevy_plume::retained::{
     Activate, Checked, InheritableFont, PlumeButton, PlumeCheckbox, PlumeDialog, PlumeFontSize,
     PlumeNumberInput, PlumePopup, PlumeSection, PlumeSelect, PlumeSlider, PlumeTextInput,
     PlumeToggleSwitch, PlumeToolButton, PopupDismiss, PopupPlacement, PopupSocket, SetValue,

@@ -1,4 +1,4 @@
-# bevy_jp_plume ("Plume")
+# bevy_plume ("Plume")
 
 A bevy_ui control framework with an immediate mode front-end for game debug UI.
 Forked from `bevy_feathers` and diverging deliberately.
@@ -30,7 +30,7 @@ widgets every frame; Plume keeps the real ones on screen in step:
 
 ```rust,no_run
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
+use bevy_plume::prelude::*;
 
 #[derive(Resource, Clone, PartialEq)]
 struct Audio {
@@ -99,10 +99,10 @@ Simple theme editor:
 ## Widgets
 
 Every widget is available in both modes: retained scenes built with `bsn!`
-(names from `bevy_jp_plume::retained`; `PlumeXxx` is a scene component spawned
+(names from `bevy_plume::retained`; `PlumeXxx` is a scene component spawned
 as `@PlumeXxx { … }` with a matching `PlumeXxxProps`, lowercase names are scene
 functions spawned as `@name(…)`), and immediate mode (from
-`bevy_jp_plume::prelude`).
+`bevy_plume::prelude`).
 
 In the immediate column:
 

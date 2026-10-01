@@ -1,4 +1,4 @@
-//! Everything an app writes day to day: `use bevy_jp_plume::prelude::*;`.
+//! Everything an app writes day to day: `use bevy_plume::prelude::*;`.
 
 pub use crate::PlumePlugins;
 pub use crate::containers::{SplitPane, SplitSize};

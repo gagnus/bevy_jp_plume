@@ -10,7 +10,7 @@
 //!
 //! ```no_run
 //! use bevy::prelude::*;
-//! use bevy_jp_plume::prelude::*;
+//! use bevy_plume::prelude::*;
 //!
 //! #[derive(Resource, Clone, PartialEq)]
 //! struct Audio {
@@ -125,7 +125,7 @@
 //! repeated calls in a loop apart.
 //!
 //! Plume keeps bevy_immediate out of sight so that an app only ever imports
-//! `bevy_jp_plume`, which means you won't meet its types here. If what you want is
+//! `bevy_plume`, which means you won't meet its types here. If what you want is
 //! immediate mode over your own `bevy_ui` widgets rather than plume's, go straight
 //! to bevy_immediate - it is built to be extended that way.
 //!

@@ -1,8 +1,8 @@
 //! Theme-editor dialog as a self-contained feature plugin: hosts plume's
 //! tabbed `theme_editor_tabs`, editing the live `UiTheme` in place.
 use bevy::prelude::*;
-use bevy_jp_plume::prelude::*;
-use bevy_jp_plume::theme::theme_editor_tabs;
+use bevy_plume::prelude::*;
+use bevy_plume::theme::theme_editor_tabs;
 
 use super::debug_hub::{AddDebugDialog, DebugDialogRegistry};
 
