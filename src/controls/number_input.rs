@@ -32,7 +32,7 @@ use crate::controls::{
     TextInputField, set_editable_text, text_input_field, text_input_frame, text_input_outline,
     text_input_suffix,
 };
-use crate::cursor::{CursorLock, EntityCursor};
+use crate::cursor::{CapturePointer, EntityCursor};
 use crate::default_width::DefaultWidth;
 use crate::font_styles::InheritableFont;
 
@@ -172,7 +172,7 @@ impl PlumeNumberInput {
                 NumberInputScrubber
                 Pickable::default()
                 EntityCursor::System(SystemCursorIcon::Pointer)
-                CursorLock
+                CapturePointer
                 on(scrubber_on_press)
                 on(scrubber_on_release)
                 on(scrubber_on_drag_start)
@@ -380,8 +380,8 @@ fn scrubber_on_drag_start(
         return;
     };
     drag_start.propagate(false);
-    // Only now is this a scrub rather than a click-to-focus: `Pressed` pairs
-    // with the scrubber's `CursorLock` to hold the resize cursor swapped in here.
+    // Only now is this a scrub rather than a click-to-focus. The resize cursor swapped
+    // in here is held by the scrubber's `CapturePointer` for the rest of the drag.
     commands
         .entity(drag_start.event_target())
         .insert((Pressed, EntityCursor::System(SystemCursorIcon::EwResize)));

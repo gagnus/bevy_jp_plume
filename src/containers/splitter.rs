@@ -30,7 +30,7 @@ use bevy::ui_widgets::ValueChange;
 use bevy::window::SystemCursorIcon;
 
 use crate::constants::size;
-use crate::cursor::{CursorLock, EntityCursor};
+use crate::cursor::{CapturePointer, EntityCursor};
 use crate::theme::ThemeBackgroundToken;
 use crate::tokens;
 
@@ -371,7 +371,7 @@ pub(crate) fn splitter_divider(axis: SplitAxis) -> impl Scene {
         SplitDivider
         Hovered
         EntityCursor::System(cursor)
-        CursorLock
+        CapturePointer
         on(drag_divider)
         on(drag_start_divider)
         on(press_divider)

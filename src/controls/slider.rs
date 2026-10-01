@@ -32,7 +32,7 @@ use bevy::ui_widgets::{
 };
 
 use crate::constants::size;
-use crate::cursor::{CursorLock, EntityCursor};
+use crate::cursor::EntityCursor;
 use crate::default_width::DefaultWidth;
 use crate::focus::FocusIndicator;
 use crate::theme::{GradientAmount, ThemeBackgroundToken, ThemeId, UiTheme, control_box_shadow};
@@ -95,7 +95,6 @@ impl PlumeSlider {
             }
             SliderFrame
             EntityCursor::System(bevy::window::SystemCursorIcon::Pointer)
-            CursorLock
             on(slider_self_update)
             SliderValue({props.min})
             SliderRange::new(props.min, props.max)
@@ -413,8 +412,8 @@ fn set_slider_styles(
         GradientAmount::STANDARD
     };
 
-    // Resize arrows only for the grab itself, held by `CursorLock`; at rest the
-    // slider reads as clickable like every other control.
+    // Resize arrows only for the grab itself, held by `Slider`'s own pointer capture;
+    // at rest the slider reads as clickable like every other control.
     let cursor_shape = match (disabled, pressed) {
         (true, _) => bevy::window::SystemCursorIcon::NotAllowed,
         (_, true) => bevy::window::SystemCursorIcon::EwResize,

@@ -25,7 +25,7 @@ use bevy::ui::{
 };
 
 use crate::constants::size;
-use crate::cursor::{CursorLock, EntityCursor};
+use crate::cursor::{CapturePointer, EntityCursor};
 use crate::theme::ThemeBorderToken;
 use crate::tokens;
 
@@ -152,7 +152,7 @@ impl PlumeXyPad {
             XyPadValue
             ThemeBorderToken(tokens::COLOR_SWATCH_BORDER)
             EntityCursor::System(bevy::window::SystemCursorIcon::Crosshair)
-            CursorLock
+            CapturePointer
             Children [
                 Node {
                     align_self: AlignSelf::Stretch,
@@ -380,7 +380,7 @@ fn on_drag_start(
         drag_start.propagate(false);
         if !disabled {
             dragging.0 = true;
-            // `Pressed` on the root pairs with its `CursorLock`, holding the
+            // `Pressed` marks the root as mid-drag; its `CapturePointer` keeps the
             // crosshair while the drag pins values from outside the pad.
             commands.entity(parent.parent()).insert(Pressed);
         }

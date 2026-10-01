@@ -50,7 +50,3 @@ rand = "0.10.2"
 [dev-dependencies]
 bevy = { path = "../3rdParty/bevy", features = ["bevy_ui_widgets", "png"] }
 argh = "0.1.13"
-
-[features]
-default = []
-custom_cursor = ["bevy/custom_cursor"]

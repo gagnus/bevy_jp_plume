@@ -28,7 +28,7 @@ use bevy::ui_widgets::ValueChange;
 use bevy::window::SystemCursorIcon;
 
 use crate::constants::{lucide, size};
-use crate::cursor::{CursorLock, EntityCursor};
+use crate::cursor::{CapturePointer, EntityCursor};
 use crate::display::icon;
 use crate::theme::InheritableThemeTextToken;
 use crate::tokens;
@@ -237,8 +237,8 @@ pub(crate) fn reorderable_item() -> impl Scene {
     }
 }
 
-// The grip: a dim glyph that takes the drag. Its cursor is held by `CursorLock`
-// while pressed, so it survives the pointer outrunning the glyph mid-drag.
+// The grip: a dim glyph that takes the drag. `CapturePointer` keeps it hovered for
+// the whole drag, so its cursor survives the pointer outrunning the glyph.
 pub(crate) fn reorderable_grip() -> impl Scene {
     bsn! {
         @icon(lucide::GRIP_VERTICAL)
@@ -247,7 +247,7 @@ pub(crate) fn reorderable_grip() -> impl Scene {
         Hovered
         InheritableThemeTextToken(tokens::TEXT_DIM)
         EntityCursor::System(SystemCursorIcon::Grab)
-        CursorLock
+        CapturePointer
         on(press_grip)
         on(release_grip)
         on(drag_start_grip)

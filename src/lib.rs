@@ -30,7 +30,7 @@ use bevy::text::TextFont;
 // Short crate-internal paths for the modules the public surface re-exports
 // piecemeal through `style`, `retained` and `theme`.
 pub(crate) use theme::tokens;
-pub use utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
+pub use utils::cursor::{CapturePointer, DefaultCursor, EntityCursor, OverrideCursor};
 pub(crate) use utils::{
     body, constants, cursor, default_width, focus, font_styles, rounded_corners, set_value,
 };
@@ -38,7 +38,7 @@ pub(crate) use utils::{
 use crate::controls::ControlsPlugin;
 use crate::theme::ThemePlugin;
 use crate::utils::anim::UiAnimPlugin;
-use crate::utils::cursor::CursorIconPlugin;
+use crate::utils::cursor::PlumeCursorPlugin;
 
 mod containers;
 mod controls;
@@ -77,7 +77,7 @@ impl Plugin for PlumeCorePlugin {
             containers::TabsPlugin,
         ));
         app.add_plugins((
-            CursorIconPlugin,
+            PlumeCursorPlugin,
             default_width::DefaultWidthPlugin,
             set_value::SetValuePlugin,
             ThemePlugin,

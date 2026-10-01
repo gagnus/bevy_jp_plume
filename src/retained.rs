@@ -45,6 +45,6 @@ pub use crate::theme::components::{
     Flat, GradientAmount, Inert, InheritableTextColor, InheritableThemeTextSlot,
     ThemeBackgroundSlot, ThemeBorderSlot, ThemeTextSlot, control_box_shadow, dialog_box_shadow,
 };
-pub use crate::utils::cursor::{CursorLock, DefaultCursor, EntityCursor, OverrideCursor};
+pub use crate::utils::cursor::{CapturePointer, DefaultCursor, EntityCursor, OverrideCursor};
 pub use crate::utils::focus::{FocusIndicator, FocusWithinIndicator, InsetFocusRing};
 pub use crate::utils::font_styles::{FontStyleSystems, InheritableFont, PlumeFontSize, small_caps};
