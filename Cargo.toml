@@ -12,7 +12,7 @@ categories = ["game-development", "gui"]
 rust-version = "1.97"
 # README.md must stay in the package: lib.rs includes it for doctests. The README's
 # docs/*.png screenshots resolve against `repository` on crates.io.
-exclude = ["/docs", "/CLAUDE.md", "/.cargo"]
+exclude = ["/docs", "/CLAUDE.md", "/.cargo", "/.github"]
 
 [dependencies]
 # bevy umbrella (path dep on a local release-0.20.0 checkout until 0.20 ships).

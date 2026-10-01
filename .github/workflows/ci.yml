@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only token: the job only builds, it never writes to the repo.
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # No debug info: keeps the bevy target dir within the runner's disk budget.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  # Plume path-depends on ../3rdParty/{bevy,bevy_immediate} until both publish
+  # for bevy 0.20. Bump these alongside the local checkouts.
+  BEVY_REV: 343a0233d6788a49f224a3684c8995e246663df3 # release-0.20.0, 0.20.0-rc.2
+  BEVY_IMMEDIATE_REV: 1f37db11a2f36167f89b80ecec0608552b15862a # bevy-0.20, 0.9.0
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bevy_plume
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: bevy_plume
+
+      - name: Check out bevy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bevyengine/bevy
+          ref: ${{ env.BEVY_REV }}
+          path: 3rdParty/bevy
+
+      - name: Check out bevy_immediate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: PPakalns/bevy_immediate
+          ref: ${{ env.BEVY_IMMEDIATE_REV }}
+          path: 3rdParty/bevy_immediate
+
+      # Same edit as the local checkout: point bevy_immediate's bevy crates at
+      # the bevy checkout so the whole tree shares one bevy.
+      - name: Point bevy_immediate at the bevy checkout
+        working-directory: 3rdParty/bevy_immediate
+        run: |
+          sed -i -E 's#^(bevy_[a-z_]+) = \{ version = "0\.20\.0-rc\.1"#\1 = { path = "../bevy/crates/\1"#' Cargo.toml
+          grep -q 'path = "../bevy/crates/bevy_ecs"' Cargo.toml
+
+      - name: Install Linux dependencies
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev
+
+      # rustfmt.toml uses unstable options, so formatting runs on nightly.
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+        with:
+          toolchain: nightly
+          components: rustfmt
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+        with:
+          toolchain: stable
+          components: clippy
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: bevy_plume
+
+      - name: Format
+        run: cargo +nightly fmt --check
+
+      - name: Clippy
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: cargo build --locked --all-targets --all-features
+
+      - name: Test
+        run: cargo test --locked --all-features
+
+      - name: Docs
+        run: cargo doc --locked --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: -D warnings
